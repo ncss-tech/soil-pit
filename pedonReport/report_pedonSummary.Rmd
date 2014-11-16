@@ -1,0 +1,122 @@
+# Pedon report
+
+```{r}
+# Set Global Parameters
+series <- "Lecyr"
+p <- c(0, 0.10, 0.5, 0.90, 1)
+```
+
+```{r LoadPackages, include=FALSE}
+# load libraries
+library(aqp)
+library(soilDB)
+library(reshape)
+library(plyr)
+library(lattice)
+library(xtable)
+```
+
+```{r, load-data, echo=FALSE}
+# source custom R functions
+source("I:/R/pedonReport/soilDB/fetchNASIS.R")
+source("I:/R/pedonReport/soilDB/get_extended_data_from_NASIS_db.R")
+source("I:/R/pedonReport/soilDB/get_colors_from_NASIS_db.R")
+source("I:/R/pedonReport/soilDB/lab_fetch.R")
+
+# load NASIS data
+f <- fetchNASIS()
+f <- subsetProfiles(f, s="taxonname == series")
+
+# Function
+conditional.l.rv.h.summary <- function(x) {
+  variable <- unique(x$variable)
+  v <- na.omit(x$value) # extract column, from long-formatted input data
+  precision <- if(variable == 'phfield') 1 else 0
+  ci <- quantile(v, na.rm=TRUE, probs=p) 
+  d <- data.frame(min=ci[1], low=ci[2], rv=ci[3], high=ci[4], max=ci[5], stringsAsFactors=FALSE) # combine into DF
+  d$range <- with(d, paste("(", paste(round(c(min, low, rv, high, max), precision), collapse=', '), ")", sep="")) # add 'range' column for pretty-printing
+  return(d[6])
+  }
+```
+
+## Summary of Sites
+```{r, echo=FALSE}
+# Site information
+s <- site(f)
+subset(s, select=c("pedon_id", "taxonname", "pedon_type", "describer"))
+
+# Summarize surface rock fragments
+s$total_srf <- s$surface_gravel+s$surface_cobbles+s$surface_stones+s$surface_boulders+s$surface_flagstones+s$surface_channers
+s$gravel <- s$surface_fgravel-s$surface_gravel
+s.m <- melt(s, measure.vars=c("total_srf", "surface_fgravel", "surface_gravel", "surface_cobbles", "surface_stones", "surface_boulders", "surface_channers", "surface_flagstones"))
+s.summary <- ddply(s.m, .(variable), .fun=conditional.l.rv.h.summary)
+
+# Box plots of surface rock fragments
+bwplot(variable~value, data=s.m, scales=list(x="free"), xlab="percent")          
+
+# Range in characteristics of surface rock fragments (min, 10th, median, 90th, max)
+format(cast(s.summary, ~variable, value='range'), justify="centre")
+```
+
+## Summary of Pedons
+```{r, echo=TRUE}
+plot(f, label="pedon_id")
+
+h <- horizons(f)
+
+# Horizon designations by generic horizon
+addmargins(table(f@horizons$genhz, f@horizons$hzname))
+
+# Summarize numeric variables by generic horizon
+h$gravel <- h$gravel-h$fine_gravel
+h.m <- melt(h, id.vars="genhz", measure.vars=c('clay', 'sand', 'fine_gravel', 'gravel', 'cobbles', 'stones', 'total_frags_pct', 'phfield', 'cce', 'd_value', 'd_chroma', 'm_value', 'm_chroma'))
+h.summary <- ddply(h.m, .(variable,genhz), .fun=conditional.l.rv.h.summary)
+
+thk <- ddply(h, .(peiid, genhz), summarize, thickness=sum(hzdepb-hzdept))
+thk.m <- melt(thk, id.vars="genhz", measure.vars="thickness")
+thk.summary <- ddply(thk.m, .(variable, genhz), .fun=conditional.l.rv.h.summary)
+
+# Range in characteristics for generic horizons (min, 10th, median, 90th, max)
+format(cast(rbind(h.summary, thk.summary), genhz ~ variable, value='range'), justify="centre")
+
+# Box plots of numeric variables by generic horizon
+bwplot(genhz ~ value|variable, data=rbind(h.m, thk.m), scales=list(x="free"))          
+
+# Texture by generic horizon
+addmargins(table(h$genhz, h$texture_class))
+
+# Tex Mod & Class by generic horizon
+addmargins(table(h$genhz, h$texture))
+
+# Dry hue by generic horizon
+addmargins(table(h$genhz, h$d_hue))
+      
+# Moist hue by generic horizon
+addmargins(table(h$genhz, h$m_hue))
+      
+# Dry value by generic horizon
+addmargins(table(h$genhz, h$d_value))
+
+# Moist value by generic horizon
+addmargins(table(h$genhz, h$m_value))
+
+# Dry chroma by generic horizon
+addmargins(table(h$genhz, h$d_chroma))
+
+# Moist chroma by generic horizon
+addmargins(table(h$genhz, h$m_chroma))
+
+# Effervescence by generic horizon
+addmargins(table(h$genhz, h$effervescence))
+
+# Thickness of diagnostic horizons
+diag.thk <- ddply(f@diagnostic, .(peiid, diag_kind), summarize, thickness=sum(featdepb-featdept))
+diag.m <- melt(f@diagnostic, id.vars="diag_kind", measure.vars=c('featdept', 'featdepb'))
+diag.thk.m <- melt(diag.thk, id.vars="diag_kind", measure.vars='thickness')
+diag.m <- rbind(diag.m, diag.thk.m)
+d.cs <- ddply(diag.m, .(variable, diag_kind), .fun=conditional.l.rv.h.summary)
+format(cast(d.cs, diag_kind ~ variable, value='range'), justify="centre")
+
+bwplot(diag_kind ~ value|variable, data=diag.m, scales=list(x="free"), xlab="cm")          
+```
+

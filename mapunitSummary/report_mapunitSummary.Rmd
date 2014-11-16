@@ -1,0 +1,162 @@
+# Map Unit GIS Summary Report
+
+This report summarizes the geographic setting of list of musym within a file geodatabase. It is intented to be used to compare and contrast map units, and suggest possible Low, RV, and High values. 
+
+```{r LoadPackages, include=F}
+library(circular)
+library(gdalUtils)
+library(sp)
+library(raster)
+library(rgdal)
+library(reshape)
+library(plyr)
+library(lattice)
+library(xtable)
+```
+
+```{r load-data, echo=FALSE, results='hide', message=FALSE}
+setwd("E:/R/mapunitSummary")
+gdal_setInstallation(search_path="C:/OSGeo4W64/bin", rescan=T)
+musym <- c(10062, 10098)
+geodatabase <- "E:/geodata/project_data/11ATL/11ATL.gdb"
+samplePercent <- 10
+p <- c(0,0.25,0.5,0.75,1)
+
+# Load packages
+
+## local functions
+mapunit.summary<-function(musym,samplePercent){
+  # Import geodatabase
+  shp <- paste("mu", noquote(paste(musym, collapse=".", sep="")), sep="")
+  cache <- paste(strsplit(geodatabase, ".gdb"), "_cache/", shp, ".shp", sep="")
+  ogr2ogr(
+    src_datasource_name=geodatabase,
+    dst_datasource_name=cache,
+    layer="MUPOLYGON",
+    where=paste("MUSYM IN (", noquote(paste("'", musym, "'", collapse=",", sep="")),")", sep=""),
+    overwrite=T,
+    verbose=TRUE
+    )
+  mapunit.sp<-readOGR(dsn=cache,layer=shp, encoding="ESRI Shapefile")
+  mapunit.sp@data$Acres<- mapunit.sp@data$Shape_Area * 0.000247105
+  mapunit.sp@data$Circularity <- mapunit.sp@data$Shape_Leng/(2*sqrt(mapunit.sp@data$Shape_Area/pi)*pi)
+  n <- sum(data.frame(mapunit.sp)$Shape_Area)/900*samplePercent/100
+
+  # Sample soil map units
+  mapunit.sps<-spsample(mapunit.sp, n=n, "stratified")
+  mapunit.df<-cbind(mapunit.sps,over(mapunit.sps,mapunit.sp))
+
+  # Load grids
+  g10.st <- stack(paste(c(
+    "E:/geodata/project_data/11ATL/ned10m_11ATL_slope5.tif", 
+    "E:/geodata/project_data/11ATL/ned10m_11ATL_aspect5.tif"
+    )))
+  g30.st <- stack(paste(c(
+    "E:/geodata/project_data/11ATL/ned30m_11ATL.tif",
+    "E:/geodata/project_data/11ATL/ned30m_11ATL_wetness.tif",
+    "E:/geodata/project_data/11ATL/ned30m_11ATL_mvalleys.tif",
+    "E:/geodata/project_data/11ATL/ned30m_11ATL_z2stream.tif"
+    )))
+  g800.st <- stack(paste(c(
+    "E:/geodata/project_data/11REGION/prism800m_11R_ppt_1981_2010_annual_mm.tif", 
+    "E:/geodata/project_data/11REGION/prism800m_11R_tmean_1981_2010_annual_C.tif"
+    )))
+  g1000.st <- stack(
+  "E:/geodata/project_data/11REGION/rmrs1000m_11R_ffp_1961_1990_annual_days.tif")
+  names(g10.st) <- c("slope", "aspect")
+  names(g30.st) <- c("elev", "wetness", "valleys", "relief")
+  names(g800.st) <- c("ppt", "temp")
+  names(g1000.st) <- c("ffp")
+
+  # Extract geodata
+  g10.e <- extract(g10.st, mapunit.sps)
+  g30.e <- extract(g30.st, mapunit.sps)
+  g800.e <- extract(g800.st, mapunit.sps)
+  g1000.e <- extract(g1000.st, mapunit.sps)
+  geodata.df <- data.frame(g10.e, g30.e, g800.e, g1000.e)
+  
+  # Prep data
+  data <- cbind(mapunit.df$MUSYM, geodata.df)
+  names(data)[1] <- "MUSYM"
+  data$aspect <- circular(data$aspect, template="geographic", units="degrees", modulo="2pi")
+  
+  slope.list<-c(0,2,4,8,15,30,50,75,350)
+  aspect.list<-c(0,23,68,113,158,203,248,293,338,360) 
+  valleys.list<-c(0,0.5,30)
+  
+  data$slopeBreaks <- cut(data$slope,breaks=slope.list, right=FALSE)
+  data$aspectBreaks <- cut(data$aspect,breaks=aspect.list, right=FALSE)
+  data$valleysBreaks <- cut(data$valleys,breaks=valleys.list, right=FALSE)
+
+  levels(data$slopeBreaks) <- c("0-2","2-4","4-8","8-15","15-30","30-50","50-75","75-350")
+  levels(data$aspectBreaks) <- c("N","NE","E","SE","S","SW","W","NW","N")
+  levels(data$valleysBreaks) <- c("upland","lowland")
+  write.csv(data, paste(shp, format(Sys.time(), "%Y%m%d_%H%M%S"),".sample.csv", sep=""))
+  return(list(data, mapunit.sp))
+  }
+
+conditional.l.rv.h.summary <- function(x) {
+  variable <- unique(x$variable)
+  v <- na.omit(x$value) # extract column, from long-formatted input data
+  precision <- if(variable == c('Circularity') 1 else 0
+  ci <- quantile(v, na.rm=TRUE, probs=p) 
+  d <- data.frame(min=ci[1], low=ci[2], rv=ci[3], high=ci[4], max=ci[5], stringsAsFactors=FALSE) # combine into DF
+  d$range <- with(d, paste("(", paste(round(c(min, low, rv, high, max), precision),collapse=', '), ")", sep="")) # add 'range' column for pretty-printing
+  return(d[6])
+  }
+
+data.l <- mapunit.summary(musym, samplePercent)
+data <- data.frame(data.l[[1]])
+data <- na.exclude(data)
+mapunit.sp <- data.l[[2]]
+
+h <- length(levels(data$MUSYM))*3
+```
+
+## Polygon metrics
+```{r echo=FALSE, results='asis'}
+pol <- data.frame(mapunit.sp)
+pol.m <- melt(pol, id.vars="MUSYM", measure.vars=c("Acres", "Circularity"))
+pol.cs <- ddply(pol.m, .(variable, MUSYM), .fun=conditional.l.rv.h.summary)
+pol.n <- ddply(pol, .(MUSYM), .drop=T, summarize, n=length(MUSYM))
+pol.cs.c <-cast(pol.cs, MUSYM ~ variable, value='range')
+print(xtable(merge(pol.cs.c, pol.n, by="MUSYM")), type="html")
+```
+
+## Polygon Boxplots
+### *(min, 5th, 25th, median, 75th, 95th, max)*
+```{r echo=FALSE, fig.height=h}
+bwplot(MUSYM ~ value|variable, data=pol.m, scales=list(x="free"))          
+```
+
+## Percentages
+```{r echo=FALSE, results='asis'}
+## Create descriptive and graphical summary of map unit
+print(xtable(prop.table(xtabs(~MUSYM+slopeBreaks,data=data), margin=1)*100, digits=0, caption="Slope breaks"), type="html", caption.placement="top")
+print(xtable(prop.table(xtabs(~MUSYM+aspectBreaks,data=data), margin=1)*100, digits=0, caption="Aspect breaks"), type="html", caption.placement="top")
+print(xtable(prop.table(xtabs(~MUSYM+valleysBreaks,data=data), margin=1)*100, digits=0, caption="valleys breaks"), type="html", caption.placement="top")
+```
+
+## Percentiles
+### *(e.g. min, 25th, median, 75th, max)*
+```{r, echo=FALSE, results="asis"}
+data.m <- melt(data, id.vars="MUSYM", measure.vars=c("elev", "slope", "valleys", "wetness", "ppt", "temp", "ffp"))
+data.cs <- ddply(data.m, .(variable,MUSYM), .fun=conditional.l.rv.h.summary)
+print(xtable(cast(data.cs, MUSYM ~ variable, value='range')), type="html")
+aspect.m <- melt(data, id.vars="MUSYM", measure.vars=c("aspect"))
+aspect.m$value <- circular(aspect.m$value, template="geographic", units="degrees", modulo="2pi")
+aspect.cs <- ddply(aspect.m, .(variable,MUSYM), .fun=conditional.l.rv.h.summary)
+print(xtable(cast(aspect.cs, MUSYM ~ variable, value='range')), type="html")
+```
+
+## Plot of soil map units
+```{r echo=FALSE}
+spplot(mapunit.sp, zcol="MUSYM", scales=list(draw=T), col.regions=bpy.colors(length(musym)))
+```
+
+## Boxplots
+### *(min, 5th, 25th, median, 75th, 95th, max)*
+```{r echo=FALSE, fig.height=h}
+bwplot(MUSYM ~ value|variable, data=data.m, scales=list(x="free"))          
+```
+
