@@ -1,0 +1,66 @@
+# These figures don't compare with Alena's spreadsheets. Her spreadsheets have additional counties that aren't captured in the Project Record.
+
+setwd("I:/")
+
+library(plyr)
+
+# Summarize the NASIS web report "Identify surveys with projects ready to upload" for State Soil Scientists
+
+ssurgo.v <- c("ia.csv", "il.csv", "ks.csv", "in.csv", "mi.csv", "mn.csv", "mo.csv", "ne.csv", "oh.csv", "ok.csv", "sd.csv", "wi.csv")
+
+combine.df <- function(ssurgo.v){
+  l <- list()
+  l.s <- list()
+  l.l <- list()  
+  for(i in seq(ssurgo.v)){
+   l[[i]] <- read.csv(ssurgo.v[i])
+   l.s[[i]] <- subset(l[[i]], State.Responsible == "Indiana")
+   l.l[[i]] <- length(unique(l.s[[i]]$Area.Symbol))   
+  }
+  df <- ldply(l.s)
+  v <- unlist(l.l)
+  return(list(df=df, v=v))
+}
+
+nasis <- combine.df(ssurgo.v)
+nasis.df <- nasis$df
+
+length(unique(nasis.df$Project.Name)) # number of sdjr projects
+length(unique(nasis.df$Area.Symbol)) # number of ssa
+
+# Summarize DU report vs. Project_Record
+# Using the select by location function in ArcGIS I get a total of 99 counties need spatial recert, from the RTSD-SAPOLYGON, while 136 for the Region SSURGO
+# du.pr.m dataframe shows overlap between the DU report and Project Record Feature Class.
+# The DU report say 83 counties need to be updated, but the Project Record ID says 73.
+# When comparing the Project Record and SAPOLYGON for the Region I get 65 counties need spatial cert and an additional 8 need update outside our region
+
+# DU report
+du <- read.csv("du.csv") # du report
+du.r11 <- subset(du, State.Responsible == "Indiana") # subset for Region 11
+length(unique(du.r11$Project.Name)); # number of du projects
+length(unique(du.r11$Area.Symbol)); # number of du ssa
+du.r11.n <- ddply(du.r11, .(Project.Name), summarize, length(Project.Name)); # number of musym per project
+du.r11.n2 <- ddply(du.r11, .(Area.Symbol), summarize, length(Project.Name)); # number of musym per ssa
+
+# Project Record
+pr <- read.csv("Region_11_Project_Record_09092014.txt")
+pr.c <- subset(pr, RECERT_NEEDED == "Yes")
+length(unique(pr.c$PROJECT_NAME)); # number of projects
+length(unique(pr.c$AREASYMBOL)); # number of ssa
+pr.c.n <- ddply(pr.c, .(PROJECT_NAME, RECERT_NEEDED), summarize, length(PROJECT_NAME)); # number of polygons per project
+pr.c.n2 <- ddply(pr.c, .(AREASYMBOL, RECERT_NEEDED), summarize, length(PROJECT_NAME)); # number of polygons per area
+names(pr.c.n2) <- c("AREASYMBOL", "RECERT_NEEDED", "nMUSYM")
+
+# Compare DU Report vs Project Record by SDJR projects
+du.pr.m <- merge(pr.c.n, du.r11.n, by.x="PROJECT_NAME", by.y="Project.Name",  all=T)
+names(du.pr.m) <- c("Project.Name", "Recert.Needed", "npolyons", "nMUSYM")
+write.csv(du.pr.m, "Region11_DUcert.csv")
+
+# compare RTSD-SAPOLYGON vs
+sa <- read.csv("SAPOLYGON.txt")
+sa.n <- ddply(sa, .(AREASYMBOL), summarize, length(AREASYMBOL)); # number of polygons per ssa
+names(sa.n) <- c("AREASYMBOL", "nSSA")
+sa.pr.m <- merge(sa.n, pr.c.n2, by="AREASYMBOL") # number of musym per ssa that need recert
+length(unique(sa.pr.m$AREASYMBOL)) # number of ssa within Region 11 needing recert 
+sa.pr.m2 <- merge(subset(sa.pr.m, select=c("AREASYMBOL", "nMUSYM")), pr.c.n2, by="AREASYMBOL", all=T) # number of musym per ssa that need recert, 65 ssa in Region 11 need recert and 8 in other regions
+write.csv(sa.pr.m2, "Region11_SAcert.csv")
