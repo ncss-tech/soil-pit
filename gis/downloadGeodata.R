@@ -13,6 +13,26 @@ for(i in seq(img)){
   download.file(url=url[i], destfile=dest[i])
 }
 
+#Download hdf WELD tiles
+weld <- "http://e4ftl01.cr.usgs.gov/WELD/"
+yr <- "WELDUSYR.001/"
+years <- c(2010, 2011, 2012)
+yearp <- c("2010.12.01/", "2011.12.01/", "2012.12.01/")
+se <- "WELDUSSE.001/"
+seasons <- c(".12.01/", ".03.01/", ".06.01/", ".09.01/")
+
+
+SE <- unlist(lapply(years, paste0, seasons))
+yr.p <- paste0(weld, yr, yearp)
+se.p <- paste0(weld, se, SE)
+
+
+
+test <- getURL(url)
+test <- strsplit(strsplit(test, "CONUS.")[[1]], ".hdf")
+test <- grep(pattern="v1.5", x=unlist(test), value=T)
+
+
 # Download NHD by State
 # The FileGDB are to big to be read into R, so they need to be converted using ogr2ogr with gdalUtils. However these FileGDB first need to be upgrade to ArcGIS 10.0. The ESRI File Geodatabase driver doesn't work with 
 setwd("I:/geodata/hydrography/")
