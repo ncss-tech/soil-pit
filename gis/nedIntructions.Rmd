@@ -29,15 +29,15 @@ gdal_setInstallation(search_path="C:/OSGeo4W64/bin", rescan=T)
 Next numerous parameters need to be set which get used later by many of the functions or commands. Modify these file paths and lists as necessary. For example, I organized my files by "C:/geodata/project_data/11ATL"", so 11 will have to replace by 10 or 2 for your respective Regions.
 ```{r, eval=FALSE}
 # Set parameters
-source("C:/Users/Stephen/SkyDrive/R/gis/nedFunctions.R")
-source("C:/Users/Stephen/SkyDrive/R/gis/gdalUtilsFunctions.R")
-tile.p <- "C:/geodata/elevation/ned/tiles/img/"
+source("I:/R/stools/gis/nedFunctions.R")
+source("I:/R/stools/gis/gdalUtilsFunctions.R")
+tile.p <- "M:/geodata/elevation/ned/tiles/img/"
 office.l <- c("ATL", "AUR", "CAR", "CLI", "FIN", "GAL", "IND", "JUN", "SPR", "UNI", "WAV")
-pd.p <- "E:/geodata/project_data/11"
+pd.p <- "M:/geodata/project_data/11"
 geodatabase <- paste(pd.p, office.l,"/11", office.l, ".gdb", sep="")
 nlcd.p <- "D:/geodata/land_use_land_cover/nlcd_2011_landcover_2011_edition_2014_03_31.img"
 nlcd.p.l <- paste(pd.p, office.l,"/nlcd", 30, "m_11", office.l, "_lulc2011.tif", sep="")
-crsarg <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"
+crsarg <- CRS("+init=epsg:5070")
 ```
 
 

@@ -14,24 +14,60 @@ for(i in seq(img)){
 }
 
 #Download hdf WELD tiles
+library(RCurl)
+
 weld <- "http://e4ftl01.cr.usgs.gov/WELD/"
-yr <- "WELDUSYR.001/"
-years <- c(2010, 2011, 2012)
-yearp <- c("2010.12.01/", "2011.12.01/", "2012.12.01/")
-se <- "WELDUSSE.001/"
-seasons <- c(".12.01/", ".03.01/", ".06.01/", ".09.01/")
+
+weldyr <- "WELDUSYR.001/"
+yrs <- c("2009.12.01/", "2010.12.01/", "2011.12.01/")
+yr.p <- paste0(weld, weldyr, yrs)
+yr.p.l <- lapply(yr.p, getURL)
+f1 <- function(x) strsplit(strsplit(x, "CONUS.")[[1]], ".hdf")
+yr.p.l <- lapply(yr.p.l, f1)
+f2 <- function(x) grep(pattern="v1.5", x=unlist(x), value=T)
+yr.p.l <- lapply(yr.p.l, f2)
+
+weldse <- "WELDUSSE.001/"
+ses <- c(2009, rep(2010, 4), rep(2011, 4), rep(2012, 3))
+sesm <- rep(c(".12.01/", ".03.01/", ".06.01/", ".09.01/"), 3)
+se.p <- paste0(weld, weldse, ses, sesm)
+se.p.l1 <- lapply(se.p, getURL)
+f1 <- function(x) strsplit(strsplit(x, "CONUS.")[[1]], ".hdf")
+se.p.l <- lapply(se.p.l1, f1)
+f2 <- function(x) grep(pattern="v1.5", x=unlist(x), value=T)
+se.p.l <- lapply(se.p.l, f2)
 
 
-SE <- unlist(lapply(years, paste0, seasons))
-yr.p <- paste0(weld, yr, yearp)
-se.p <- paste0(weld, se, SE)
+#Download netCDF dSSURGO tiles
+library(RCurl)
 
+dssurgo <- "http://stream.princeton.edu/dSSURGO/"
 
+makeDssurgoList <- function(geodatabase, office){
+  ned.l <- list()
+  nedtiles <- readOGR(dsn="M:/geodata/elevation/ned/tiles", layer="ned_13arcsec_g", encoding="ESRI Shapefile")
+  nedtiles <- spTransform(nedtiles, CRS("+init=epsg:5070"))
+  for(i in seq(office)){
+    sapolygon <- readOGR(dsn=geodatabase[i], layer="SAPOLYGON", encoding="OpenFileGDB")
+    proj4string(sapolygon) <- CRS(as.character(NA))
+    proj4string(sapolygon) <- proj4string(nedtiles)
+    int <- intersect(sapolygon, nedtiles)
+    ned.l[[i]] <- sort(unique(as.character(paste0(int@data$UL_LAT, ",", abs(int@data$UL_LON)))))
+  }
+  return(ned.l=ned.l)
+}
 
-test <- getURL(url)
-test <- strsplit(strsplit(test, "CONUS.")[[1]], ".hdf")
-test <- grep(pattern="v1.5", x=unlist(test), value=T)
+test <- makeNedList(geodatabase, office.l)
+test2 <- lapply(test, strsplit, ",")
+g <- lapply(test2, function(x) lapply(x, function (x) paste0("lat", x[1], as.numeric(x[1])+1, "_lon-", x[2], "-", as.numeric(x[2])-1, ".nc")))
+g <- unlist(g)
 
+url <- paste0(dssurgo, g)
+dest <- paste0("M:/geodata/soils/dssurgo/tiles/", g)
+
+for(i in seq(url)){
+  download.file(url=url[i], destfile=dest[i])
+}
 
 # Download NHD by State
 # The FileGDB are to big to be read into R, so they need to be converted using ogr2ogr with gdalUtils. However these FileGDB first need to be upgrade to ArcGIS 10.0. The ESRI File Geodatabase driver doesn't work with 
