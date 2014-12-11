@@ -38,7 +38,8 @@ f2 <- function(x) grep(pattern="v1.5", x=unlist(x), value=T)
 se.p.l <- lapply(se.p.l, f2)
 
 
-#Download netCDF dSSURGO tiles
+# Download netCDF dSSURGO tiles
+# GDAL won't read netcdf files bigger than 2GB, not sure what the dssurgo dude is using to read/write his files
 library(RCurl)
 
 dssurgo <- "http://stream.princeton.edu/dSSURGO/"
