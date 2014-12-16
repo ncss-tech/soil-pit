@@ -17,7 +17,7 @@ gdal_SAGA2GTiff <- function(x, copylist, datatype, nodata){
       src_dataset=x[i],
       dst_dataset=copylist[i], 
       ot=datatype, 
-      co=c("TILED=YES", "COMPRESS=DEFLATE"),
+      co=c("TILED=YES", "COMPRESS=DEFLATE, BIGTIFF=YES"),
       stats=TRUE,
       a_nodata=nodata,
       verbose=T

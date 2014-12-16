@@ -96,3 +96,25 @@ ogr2ogr(
   layer="NHDFlowline",
   overwrite=T,
   verbose=T) 
+
+# PLSS
+setwd("M:/geodata/cadastral/")
+states <- c("ia", "il", "in", "ks", "ky", "mi", "mn", "mo", "ne", "oh", "ok", "sd", 
+            "wi")
+zipname <- paste0("alt_", states, ".zip")
+url <- paste0("http://www.geocommunicator.gov/shapefilesall/state/", zipname)
+dest <- paste0(getwd(), "/", zipname)
+
+for(i in seq(states)){
+  download.file(url=url[i], destfile=dest[i])
+}
+
+for(i in seq(states)){
+  unzip(zipfile=dest[i])
+}
+
+# Govunits
+download.file(
+  "ftp://rockyftp.cr.usgs.gov/vdelivery/Datasets/Staged/GovtUnit/FileGDB101/GOVTUNIT_NATIONAL.zip",
+  "M:/geodata/government_units/GOVTUNIT_NATIONAL.zip")
+
