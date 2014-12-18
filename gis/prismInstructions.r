@@ -14,8 +14,8 @@ tmax.txt <- paste("us_tmax_1971_2000.", months, ".txt", sep="")
 tmin.txt <- paste("us_tmin_1971_2000.", months, ".txt", sep="")
 prism.txt <- c(ppt.txt, tmax.txt, tmin.txt)
 
-tmean <- "D:/geodata/climate/prism/PRISM_tmean_30yr_normal_800mM2_all_asc/PRISM_tmean_30yr_normal_800mM2_annual_asc.asc"
-ppt <- "D:/geodata/climate/prism/PRISM_ppt_30yr_normal_800mM2_all_asc/PRISM_ppt_30yr_normal_800mM2_annual_asc.asc"
+tmean <- "M:/geodata/climate/prism/PRISM_tmean_30yr_normal_800mM2_all_asc/PRISM_tmean_30yr_normal_800mM2_annual_asc.asc"
+ppt <- "M:/geodata/climate/prism/PRISM_ppt_30yr_normal_800mM2_all_asc/PRISM_ppt_30yr_normal_800mM2_annual_asc.asc"
 
 for(i in seq(prism.gz)){
   gunzip(prism.gz[i], prism.txt[i])
@@ -147,14 +147,17 @@ rsaga.PEindex=function(ppt.list,tmax.list,tmin.list){
       FORMULA=paste(letters[1:12],sep="",collapse="+")))
 }
 
+office.l <- office.l[11]
 
-tmean.l <- "E:/geodata/project_data/11REGION/prism30m_11R_tmean_1981_2010_annual_C.tif"
-ppt.l <- "E:/geodata/project_data/11REGION/prism30m_11R_ppt_1981_2010_annual_mm.tif"
-ffp <- "D:/geodata/climate/rmrs/ffp.txt"
-ffp.l <- "E:/geodata/project_data/11REGION/rmrs1000m_11R_ffp_1961_1990_annual_days.tif"
+res <- "10"
+tmean.l <- paste0(pd.p, office.l, "/prism", res, "m_11", office.l, "_tmean_1981_2010_annual_C.tif")
+ppt.l <- paste0(pd.p, office.l, "/prism", res, "m_11", office.l, "_ppt_1981_2010_annual_mm.tif")
+ffp <- "M:/geodata/climate/rmrs/ffp.txt"
+ffp.l <- paste0(pd.p, office.l, "/rmrs", res, "m_11WAV_ffp_1961_1990_annual_days.tif")
+nlcd.p <- paste0(pd.p, office.l, "/nlcd", "30m_", office.l, "_lulc2011.tif")
 
-nlcd.p <- "E:/geodata/project_data/11REGION/nlcd30m_r11.tif"
+co=c("TILED=YES", "COMPRESS=DEFLATE")
+batchWarp(tmean, tmean.l, nlcd.p, res, "cubicspline", "EPSG:4269", crsarg, "Int16", "-32768", co)
+batchWarp(ppt, ppt.l, nlcd.p, res, "cubicspline", "EPSG:4269", crsarg, "Int16", "-32768", co)
+batchWarp(ffp, ffp.l, nlcd.p, res, "cubicspline", CRSargs(CRS("+init=EPSG:4326")), crsarg, "Int16", "-32768", co)
 
-batchWarp(tmean, tmean.l, nlcd.p, "800", "cubicspline", "EPSG:4269", crsarg, "Float32", "-99999")
-batchWarp(ppt, ppt.l, nlcd.p, "800", "cubicspline", "EPSG:4269", crsarg, "Int16", "-32768")
-batchWarp(ffp, ffp.l, nlcd.p, "1000", "cubicspline", "EPSG:4326", crsarg, "Int16", "-32768")

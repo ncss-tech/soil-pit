@@ -178,6 +178,12 @@ flt.tif <- unlist(lapply(strsplit(flt.sdat, "/sdat"), paste, collapse="", sep=""
 flt.tif <- paste(strsplit(flt.tif, ".sdat"), ".tif", sep="")
 gdal_SAGA2GTiff(flt.sdat, flt.tif, "Float32", -99999)
 
+office.l <- office.l[11]
+t.l <- c("wetness", "z2stream", "mvalleys")
+n30.l <- paste0(pd.p, office.l, "/sdat/ned", 30, "m_", office.l, "_", t.l, ".sdat")
+n10.l <- paste0(pd.p, office.l, "/ned", 10, "m_", office.l, "_", t.l, ".tif")
+co <- c("TILED=YES", "COMPRESS=DEFLATE", "BIGTIFF=YES")
+batchWarp(n30.l, n10.l, nlcd.p, 10, "cubicspline", crsarg, crsarg, "Float32", "-32768", co)
 
 mosaicList(list(slope), "E:/geodata/project_data/11REGION/ned10m_11R_slope5.tif", "Int16", c("COMPRESS=DEFLATE", "TILED=YES", "BIGTIFF=YES"), -32768)
 

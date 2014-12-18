@@ -150,7 +150,7 @@ mosaicNlcdList <- function(mosaiclist, dstpath){
 ### Warp 9d to 10m using -r bilinear
 ################################################################
 ### Notes: ArcGIS doesn't seem to recognize GDAL formatted files. To accommadate this the creation profile options are set to the vanilla GeoTIFF. Also the output projection is spelled out in it's entirey (e.g. "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0") 
-batchWarp <- function(inlist, warplist, reflist, resto, r, s_srs, t_srs, datatype, nodata){    
+batchWarp <- function(inlist, warplist, reflist, resto, r, s_srs, t_srs, datatype, nodata, co){    
   for(i in seq(inlist)){
     cat(paste(format(Sys.time(), "%Y-%m-%d %H:%M:%S"),"WARPING", inlist[i],"\n"))
   bb <- bbox(raster(reflist[i]))
@@ -164,6 +164,7 @@ batchWarp <- function(inlist, warplist, reflist, resto, r, s_srs, t_srs, datatyp
     tr=c(resto,resto),
     of="GTiff",
     ot=datatype,
+    co=co,
     dstnodata=nodata,
     overwrite=T,
     verbose=T

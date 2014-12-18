@@ -32,12 +32,12 @@ Next numerous parameters need to be set which get used later by many of the func
 source("C:/Users/stephen.roecker/Documents/stools/trunk/gis/nedFunctions.R")
 source("C:/Users/stephen.roecker/Documents/stools/trunk/gis/gdalUtilsFunctions.R")
 tile.p <- "M:/geodata/elevation/ned/tiles/img/"
-office.l <- c("ATL", "AUR", "CAR", "CLI", "FIN", "GAL", "IND", "JUN", "SPR", "UNI", "WAV")
-pd.p <- "M:/geodata/project_data/11"
+office.l <- c("11ATL", "11AUR", "11CAR", "11CLI", "11FIN", "11GAL", "11IND", "11JUN", "11SPR", "11UNI", "11WAV")
+pd.p <- "M:/geodata/project_data/"
 geodatabase <- paste(pd.p, office.l,"/11", office.l, ".gdb", sep="")
 nlcd.p <- "D:/geodata/land_use_land_cover/nlcd_2011_landcover_2011_edition_2014_03_31.img"
 nlcd.p.l <- paste(pd.p, office.l,"/nlcd", 30, "m_11", office.l, "_lulc2011.tif", sep="")
-crsarg <- CRS("+init=epsg:5070")
+crsarg <- CRSargs(CRS("+init=epsg:5070"))
 ```
 
 
