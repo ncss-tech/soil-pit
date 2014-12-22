@@ -15,28 +15,67 @@ for(i in seq(img)){
 
 #Download hdf WELD tiles
 library(RCurl)
+library(rgdal)
+library(raster)
 
-weld <- "http://e4ftl01.cr.usgs.gov/WELD/"
+url <- "http://e4ftl01.cr.usgs.gov/WELD/"
 
+# Year lists
 weldyr <- "WELDUSYR.001/"
 yrs <- c("2009.12.01/", "2010.12.01/", "2011.12.01/")
-yr.p <- paste0(weld, weldyr, yrs)
+yr.p <- paste0(url, weldyr, yrs)
 yr.p.l <- lapply(yr.p, getURL)
 f1 <- function(x) strsplit(strsplit(x, "CONUS.")[[1]], ".hdf")
 yr.p.l <- lapply(yr.p.l, f1)
 f2 <- function(x) grep(pattern="v1.5", x=unlist(x), value=T)
 yr.p.l <- lapply(yr.p.l, f2)
+yr.p.l <- lapply(yr.p.l, function(x) unique(x))
 
+# Season lists
 weldse <- "WELDUSSE.001/"
 ses <- c(2009, rep(2010, 4), rep(2011, 4), rep(2012, 3))
 sesm <- rep(c(".12.01/", ".03.01/", ".06.01/", ".09.01/"), 3)
-se.p <- paste0(weld, weldse, ses, sesm)
+se.p <- paste0(url, weldse, ses, sesm)
 se.p.l1 <- lapply(se.p, getURL)
 f1 <- function(x) strsplit(strsplit(x, "CONUS.")[[1]], ".hdf")
 se.p.l <- lapply(se.p.l1, f1)
 f2 <- function(x) grep(pattern="v1.5", x=unlist(x), value=T)
 se.p.l <- lapply(se.p.l, f2)
+se.p.l <- lapply(se.p.l, function(x) unique(x))
 
+# Weld tile list
+weldtiles <- readOGR(dsn="M:/geodata/imagery/landsat/WELD-ARC", layer="WeldConusTiles", encoding="ESRI Shapefile")
+weldtiles <- spTransform(weldtiles, CRS("+init=epsg:5070"))
+sapolygon <- readOGR(dsn="M:/geodata/soils/Region_11_FY14.gdb", layer="SAPOLYGON", encoding="OpenFileGDB")
+int <- raster::intersect(sapolygon, weldtiles)
+int.df <- slot(int, "data")
+h_v_fix <- sapply(int.df[1], function(x) ifelse(nchar(int.df$v)==1, paste0("h", int.df$h, "v0", int.df$v), as.character(int.df$h_v)))
+
+# Download year lists
+weld.l <- sort(unique(as.character(h_v_fix)))
+weld.l <- lapply(yr.p.l, function(y) sapply(weld.l, function(x) grep(x, y, value=TRUE)))
+weld.l <- lapply(weld.l, function(x) paste0("CONUS.", x, ".hdf"))
+
+url.yr <- paste0(rep(yr.p, each=length(unlist(weld.l))/3))
+url.yr <- paste0(url.yr, unlist(weld.l))  
+dest.yr <- unlist(lapply(weld.l, function(x) paste0("M:/geodata/imagery/landsat/WELD/year/", x)))
+
+for(i in seq(url.yr)){
+  download.file(url=url.yr[i], destfile=dest.yr[i])
+}
+
+# Download season lists
+se.l <- sort(unique(as.character(h_v_fix)))
+se.l <- lapply(se.p.l, function(y) sapply(se.l, function(x) grep(x, y, value=TRUE)))
+se.l <- lapply(se.l, function(x) paste0("CONUS.", x, ".hdf"))
+
+url.se <- paste0(rep(se.p, each=length(unlist(se.l))/12))
+url.se <- paste0(url.se, as.character(unlist(se.l))) 
+dest.se <- unlist(lapply(se.l, function(x) paste0("M:/geodata/imagery/landsat/WELD/season/", x)))
+
+for(i in seq(url.se)){
+  download.file(url=url.se[i], destfile=dest.se[i], mode="wb", cacheOK=TRUE)
+}
 
 # Download netCDF dSSURGO tiles
 # GDAL won't read netcdf files bigger than 2GB, not sure what the dssurgo dude is using to read/write his files
