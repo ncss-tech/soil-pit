@@ -61,7 +61,7 @@ url.yr <- paste0(url.yr, unlist(weld.l))
 dest.yr <- unlist(lapply(weld.l, function(x) paste0("M:/geodata/imagery/landsat/WELD/year/", x)))
 
 for(i in seq(url.yr)){
-  download.file(url=url.yr[i], destfile=dest.yr[i])
+  download.file(url=url.yr[i], destfile=dest.yr[i], mode="wb", cacheOK=TRUE)
 }
 
 # Download season lists
