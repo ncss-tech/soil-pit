@@ -1,6 +1,21 @@
+# Cadastral
+setwd("M:/geodata/cadastral/")
+states <- c("ia", "il", "in", "ks", "ky", "mi", "mn", "mo", "ne", "oh", "ok", "sd", 
+            "wi")
+zipname <- paste0("alt_", states, ".zip")
+url <- paste0("http://www.geocommunicator.gov/shapefilesall/state/", zipname)
+dest <- paste0(getwd(), "/", zipname)
 
-library(rgdal)
+for(i in seq(states)){
+  download.file(url=url[i], destfile=dest[i])
+}
 
+for(i in seq(states)){
+  unzip(zipfile=dest[i])
+}
+
+
+# Elevation
 # Download img NED tiles
 # For some reason this only works from the R console not Rstudio
 img <- readOGR(dsn="I:/geodata/elevation/ned/tiles", layer="ned_meta_R11", encoding="ESRI_Shapefile")
@@ -13,7 +28,9 @@ for(i in seq(img)){
   download.file(url=url[i], destfile=dest[i])
 }
 
-#Download hdf WELD tiles
+
+# Imagery
+# Download hdf WELD tiles
 library(RCurl)
 library(rgdal)
 library(raster)
@@ -77,6 +94,62 @@ for(i in seq(url.se)){
   download.file(url=url.se[i], destfile=dest.se[i], mode="wb", cacheOK=TRUE)
 }
 
+
+# Govunits
+download.file(
+  "ftp://rockyftp.cr.usgs.gov/vdelivery/Datasets/Staged/GovtUnit/FileGDB101/GOVTUNIT_NATIONAL.zip",
+  "M:/geodata/government_units/GOVTUNIT_NATIONAL.zip")
+
+dir.create(path="M:/geodata/transportation/", recursive=T) # create directory
+setwd("M:/geodata/transportation/")
+index <- c(19, 17, 18, 20, 21, 26, 27, 29, 31, 39, 40, 46, 55)
+states <- c("ia", "il", "in", "ks", "ky", "mi", "mn", "mo", "ne", "oh", "ok", "sd", 
+            "wi")
+zipname <- paste0("tlgdb_2014_a_", index, "_", states, ".gdb.zip")
+extra <- c("tlgdb_2014_a_us_addr.gdb.zip")
+zipname <- c(zipname, extra)
+url <- paste0("ftp://ftp2.census.gov/geo/tiger/TGRGDB14/", zipname)
+dest <- paste0(getwd(), "/", zipname)
+
+for(i in seq(states)){
+  download.file(url=url[i], destfile=dest[i])
+}
+
+for(i in seq(states)){
+  unzip(zipfile=dest[i])
+}
+
+
+# Hydrography
+# Download NHD by State
+# The FileGDB are to big to be read into R, so they need to be converted using ogr2ogr with gdalUtils. However these FileGDB first need to be upgrade to ArcGIS 10.0. The ESRI File Geodatabase driver doesn't work with 
+setwd("I:/geodata/hydrography/")
+states <- c("IA", "IL", "IN", "KS", "KY", "MI", "MN", "MO", "NE", "OH", "OK", "SD", 
+            "WI")
+version <- c("v210", "v220", "v220", "V210", "v210", "v210", "v220", "v220", "v220", "v220", "v210", "v220", "v210")
+zipname <- paste("NHDH_", states, "_931", version, ".zip", sep="")
+url <- paste("ftp://nhdftp.usgs.gov/DataSets/Staged/States/FileGDB/HighResolution/", zipname, sep="")
+dest <- paste(getwd(), "/", zipname, sep="")
+
+for(i in seq(states)){
+  download.file(url=url[i], destfile=dest[i])
+}
+
+for(i in seq(states)){
+  unzip(zipfile=dest[i])
+}
+
+gdal_setInstallation(search_path="C:/ProgramData/QGIS/QGISDufour/bin", rescan=T)
+
+ogr2ogr(
+  src_datasource_name="I:/geodata/hydrography/NHDH_IN.gdb",
+  dst_datasource_name="C:/Users/stephen.roecker/Documents/NHDH_IN_Flowline.shp",
+  layer="NHDFlowline",
+  overwrite=T,
+  verbose=T)
+
+
+# Soils
 # Download netCDF dSSURGO tiles
 # GDAL won't read netcdf files bigger than 2GB, not sure what the dssurgo dude is using to read/write his files
 library(RCurl)
@@ -109,39 +182,11 @@ for(i in seq(url)){
   download.file(url=url[i], destfile=dest[i])
 }
 
-# Download NHD by State
-# The FileGDB are to big to be read into R, so they need to be converted using ogr2ogr with gdalUtils. However these FileGDB first need to be upgrade to ArcGIS 10.0. The ESRI File Geodatabase driver doesn't work with 
-setwd("I:/geodata/hydrography/")
-states <- c("IA", "IL", "IN", "KS", "KY", "MI", "MN", "MO", "NE", "OH", "OK", "SD", 
-            "WI")
-version <- c("v210", "v220", "v220", "V210", "v210", "v210", "v220", "v220", "v220", "v220", "v210", "v220", "v210")
-zipname <- paste("NHDH_", states, "_931", version, ".zip", sep="")
-url <- paste("ftp://nhdftp.usgs.gov/DataSets/Staged/States/FileGDB/HighResolution/", zipname, sep="")
-dest <- paste(getwd(), "/", zipname, sep="")
 
-for(i in seq(states)){
-  download.file(url=url[i], destfile=dest[i])
-}
+# Transportation
+zipname <- "tlgdb_2014_a_us_roads.gdb.zip"
 
-for(i in seq(states)){
-  unzip(zipfile=dest[i])
-}
-
-gdal_setInstallation(search_path="C:/ProgramData/QGIS/QGISDufour/bin", rescan=T)
-
-ogr2ogr(
-  src_datasource_name="I:/geodata/hydrography/NHDH_IN.gdb",
-  dst_datasource_name="C:/Users/stephen.roecker/Documents/NHDH_IN_Flowline.shp",
-  layer="NHDFlowline",
-  overwrite=T,
-  verbose=T) 
-
-# PLSS
-setwd("M:/geodata/cadastral/")
-states <- c("ia", "il", "in", "ks", "ky", "mi", "mn", "mo", "ne", "oh", "ok", "sd", 
-            "wi")
-zipname <- paste0("alt_", states, ".zip")
-url <- paste0("http://www.geocommunicator.gov/shapefilesall/state/", zipname)
+url <- paste0("ftp://ftp2.census.gov/geo/tiger/TGRGDB14/", zipname)
 dest <- paste0(getwd(), "/", zipname)
 
 for(i in seq(states)){
@@ -152,8 +197,20 @@ for(i in seq(states)){
   unzip(zipfile=dest[i])
 }
 
-# Govunits
-download.file(
-  "ftp://rockyftp.cr.usgs.gov/vdelivery/Datasets/Staged/GovtUnit/FileGDB101/GOVTUNIT_NATIONAL.zip",
-  "M:/geodata/government_units/GOVTUNIT_NATIONAL.zip")
 
+# Wetlands
+dir.create(path="M:/geodata/wetlands/", recursive=T) # create directory
+setwd("M:/geodata/wetlands/")
+states <- c("IA", "IL", "IN", "KS", "KY", "MI", "MN", "MO", "NE", "OH", "OK", "SD", 
+            "WI")
+zipname <- paste0(states, "_wetlands.zip")
+url <- paste0("http://www.fws.gov/wetlands/Downloads/State/", zipname)
+dest <- paste0(getwd(), "/", zipname)
+
+for(i in seq(states)){
+  download.file(url=url[i], destfile=dest[i])
+}
+
+for(i in seq(states)){
+  unzip(zipfile=dest[i])
+}
