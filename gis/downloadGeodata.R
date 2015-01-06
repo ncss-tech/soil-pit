@@ -100,8 +100,6 @@ download.file(
   "ftp://rockyftp.cr.usgs.gov/vdelivery/Datasets/Staged/GovtUnit/FileGDB101/GOVTUNIT_NATIONAL.zip",
   "M:/geodata/government_units/GOVTUNIT_NATIONAL.zip")
 
-dir.create(path="M:/geodata/transportation/", recursive=T) # create directory
-setwd("M:/geodata/transportation/")
 index <- c(19, 17, 18, 20, 21, 26, 27, 29, 31, 39, 40, 46, 55)
 states <- c("ia", "il", "in", "ks", "ky", "mi", "mn", "mo", "ne", "oh", "ok", "sd", 
             "wi")
@@ -184,18 +182,17 @@ for(i in seq(url)){
 
 
 # Transportation
+# http://www.census.gov/geo/maps-data/data/tiger.html
+dir.create(path="M:/geodata/transportation/", recursive=T) # create directory
+setwd("M:/geodata/transportation/")
 zipname <- "tlgdb_2014_a_us_roads.gdb.zip"
 
 url <- paste0("ftp://ftp2.census.gov/geo/tiger/TGRGDB14/", zipname)
 dest <- paste0(getwd(), "/", zipname)
 
-for(i in seq(states)){
-  download.file(url=url[i], destfile=dest[i])
-}
+download.file(url=url, destfile=dest)
+unzip(zipfile=dest)
 
-for(i in seq(states)){
-  unzip(zipfile=dest[i])
-}
 
 
 # Wetlands
