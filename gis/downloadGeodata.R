@@ -94,6 +94,20 @@ for(i in seq(url.se)){
   download.file(url=url.se[i], destfile=dest.se[i], mode="wb", cacheOK=TRUE)
 }
 
+# Geographic names
+states <- c("IA", "IL", "IN", "KS", "KY", "MI", "MN", "MO", "NE", "OH", "OK", "SD", 
+            "WI")
+for(i in seq(states)){
+  test <- read.delim(paste0("M:/geodata/geographic_names/", states[i], "_Features_20141202.txt"), stringsAsFactors=F, header=T, sep="|")
+  test2 <- test[, c(1:11,16:20)]
+  test2$ELEV_IN_FT <- as.numeric(test2$ELEV_IN_FT)
+  test2$ELEV_IN_M <- test2$ELEV_IN_FT*0.3048
+  test3 <- na.exclude(test2)
+  coordinates(test3) <- ~PRIM_LONG_DEC+PRIM_LAT_DEC
+  proj4string(test3) <- CRS("+init=epsg:4326")
+  writeOGR(test3, dsn="M:/geodata/geographic_names", layer=paste0(states[i], "_Features_20141202"), driver="ESRI Shapefile")
+}
+
 
 # Govunits
 download.file(
