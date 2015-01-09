@@ -32,7 +32,7 @@ library(xtable)
 ```
 
 ```{r load-data, echo=FALSE, results='hide', message=FALSE}
-mukey <- c("678706", "160790", "160791") # List of mukey
+mukey <- c('159669','159758','160795','160824','162087','163213','164424','1612865','1613014') # List of mukey
 dir <- "M:/geodata/project_data/"
 geodatabase <- "RTSD_Region_11_IND_FY15.gdb"
 office <- "11IND"
@@ -40,20 +40,21 @@ office <- "11IND"
 # Defaults
 setwd("C:/R/stools/mapunitSummary")
 gdal_setInstallation(search_path="C:/Program Files/QGIS Dufour/bin", rescan=T)
-samplePercent <- 1
+samplePercent <- 10
 p <- c(0,0.25,0.5,0.75,1)
 
+pd <- paste0(dir, office, "/")
+rd <- paste0(dir, "11REGION/")
+shp <- paste("mu", noquote(paste(mukey, collapse=".", sep="")), sep="")
+cache <- paste0(pd, "cache/", shp, ".shp")
 
 # Load packages
 
 ## local functions
-mapunit.summary<-function(musym,samplePercent){
+mapunit.summary<-function(mukey, samplePercent){
   # Import geodatabase
-  shp <- paste("mu", noquote(paste(mukey, collapse=".", sep="")), sep="")
-  cache <- paste0(pd, "cache/", shp, ".shp")
-  if(ifelse(file.exists("mu678706.160790.160791.shp"), TRUE, FALSE))
-    function(){
-    ogr2ogr(
+  if(ifelse(file.exists(cache), "NA", 1) == 1) {
+   ogr2ogr(
       src_datasource_name=paste0(pd, geodatabase),
       dst_datasource_name=cache,
       layer="MUPOLYGON",
@@ -121,9 +122,12 @@ mapunit.summary<-function(musym,samplePercent){
     levels(data$slopeBreaks) <- c("0-2","2-4","4-8","8-15","15-30","30-50","50-75","75-350")
     levels(data$aspectBreaks) <- c("N","NE","E","SE","S","SW","W","NW","N")
     levels(data$valleysBreaks) <- c("upland","lowland")
-    save(data, file=paste0(shp, "_", samplePercent, ".sample.Rdata"))
-  return(list(data=data, mupolygon=mupolygon, sapolygon=sapolygon))
-  } else load(file=paste0(shp, "_", samplePercent, ".sample.Rdata"))
+  
+  data.l <- list(data=data, mupolygon=mupolygon, sapolygon=sapolygon)
+  save(data.l, file=paste0(cache, ".Rdata"))
+  return(data.l)
+  } else load(file=paste0(cache, ".Rdata")) #loading
+  return(data.l)
 }
 
 conditional.l.rv.h.summary <- function(x) {
@@ -136,13 +140,15 @@ conditional.l.rv.h.summary <- function(x) {
   return(d[6])
 }
 
-pd <- paste0(dir, office, "/")
-rd <- paste0(dir, "11REGION/")
+data.l <- mapunit.summary(mukey, samplePercent)
+data <- data.l$data
+mupolygon <- data.l$mupolygon
+sapolygon <- data.l$sapolygon
+h <- length(levels(data.l$MUKEY))*3
 
-data.l <- mapunit.summary(musym, samplePercent)
-attach(data.l)
-
-h <- length(levels(data$MUKEY))*3
+data2 <- data
+data2$MUKEY <- "representative"
+data <- rbind(data, data2)
 ```
 
 ## Polygon metrics
@@ -159,14 +165,13 @@ pol.as.m <- melt(pol, id.vars=c("MUKEY", "AREASYMBOL"), measure.vars=c("Acres"))
 pol.as.cs1 <- ddply(pol.as.m, .(MUKEY, AREASYMBOL, variable), .fun=conditional.l.rv.h.summary)
 pol.as.cs2 <- ddply(pol.as.m, .(MUKEY, AREASYMBOL, variable), summarize, nPolygons=length(value), nArces=sum(value))[, c(1,2,4,5)]
 pol.as.me <- merge(pol.as.cs1, pol.as.cs2, by=c("MUKEY", "AREASYMBOL"))
-print(xtable(pol.as.me, digits=0, caption="Summary of MUKEY per AREASYMBOL") type="html", caption.placement="top")
+print(xtable(pol.as.me, digits=0, caption="Summary of MUKEY per AREASYMBOL"), type="html", caption.placement="top")
 ```
 
 ## Polygon Boxplots
 ### *(min, 5th, 25th, median, 75th, 95th, max)*
-```{r echo=FALSE, fig.height=h}
+```{r echo=FALSE}
 bwplot(MUKEY ~ value|variable, data=pol.m, scales=list(x="free"))
-bwplot(MUKEY ~ value|variable*AREASYMBOL, data=pol.as.m, scales=list(x="free"))
 ```
 
 ## Percentages
@@ -200,7 +205,7 @@ spplot(mupolygon, zcol="MUKEY", scales=list(draw=T), col.regions=bpy.colors(leng
 
 ## Boxplots
 ### *(min, 5th, 25th, median, 75th, 95th, max)*
-```{r echo=FALSE, fig.height=h}
+```{r echo=FALSE}
 bwplot(MUKEY ~ value|variable, data=data.m, scales=list(x="free"))          
 ```
 
