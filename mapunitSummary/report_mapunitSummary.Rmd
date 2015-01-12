@@ -1,5 +1,6 @@
 ---
 output:
+  word_document: default
   html_document: default
 ---
 # Map Unit GIS Summary Report

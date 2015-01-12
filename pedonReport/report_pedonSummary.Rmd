@@ -18,10 +18,9 @@ library(xtable)
 
 ```{r, load-data, echo=FALSE}
 # source custom R functions
-source("I:/R/pedonReport/soilDB/fetchNASIS.R")
-source("I:/R/pedonReport/soilDB/get_extended_data_from_NASIS_db.R")
-source("I:/R/pedonReport/soilDB/get_colors_from_NASIS_db.R")
-source("I:/R/pedonReport/soilDB/lab_fetch.R")
+source("C:/Users/stephen.roecker/Documents/stools/trunk/pedonReport/soilDB/fetchNASIS.R")
+source("C:/Users/stephen.roecker/Documents/stools/trunk/pedonReport/soilDB/get_extended_data_from_NASIS_db.R")
+source("C:/Users/stephen.roecker/Documents/stools/trunk/pedonReport/soilDB/lab_fetch.R")
 
 # load NASIS data
 f <- fetchNASIS()
@@ -65,7 +64,9 @@ plot(f, label="pedon_id")
 h <- horizons(f)
 
 # Horizon designations by generic horizon
-addmargins(table(f@horizons$genhz, f@horizons$hzname))
+if(length(na.exclude(f@horizons$genhz))>0){
+addmargins(table(f@horizons$genhz, f@horizons$hzname, exclude=NULL))
+}
 
 # Summarize numeric variables by generic horizon
 h$gravel <- h$gravel-h$fine_gravel
@@ -83,31 +84,31 @@ format(cast(rbind(h.summary, thk.summary), genhz ~ variable, value='range'), jus
 bwplot(genhz ~ value|variable, data=rbind(h.m, thk.m), scales=list(x="free"))          
 
 # Texture by generic horizon
-addmargins(table(h$genhz, h$texture_class))
+addmargins(table(h$genhz, h$texture_class, exclude=NULL))
 
 # Tex Mod & Class by generic horizon
-addmargins(table(h$genhz, h$texture))
+addmargins(table(h$genhz, h$texture, exclude=NULL))
 
 # Dry hue by generic horizon
-addmargins(table(h$genhz, h$d_hue))
+addmargins(table(h$genhz, h$d_hue, exclude=NULL))
       
 # Moist hue by generic horizon
-addmargins(table(h$genhz, h$m_hue))
+addmargins(table(h$genhz, h$m_hue, exclude=NULL))
       
 # Dry value by generic horizon
-addmargins(table(h$genhz, h$d_value))
+addmargins(table(h$genhz, h$d_value, exclude=NULL))
 
 # Moist value by generic horizon
-addmargins(table(h$genhz, h$m_value))
+addmargins(table(h$genhz, h$m_value, exclude=NULL))
 
 # Dry chroma by generic horizon
-addmargins(table(h$genhz, h$d_chroma))
+addmargins(table(h$genhz, h$d_chroma, exclude=NULL))
 
 # Moist chroma by generic horizon
-addmargins(table(h$genhz, h$m_chroma))
+addmargins(table(h$genhz, h$m_chroma, exclude=NULL))
 
 # Effervescence by generic horizon
-addmargins(table(h$genhz, h$effervescence))
+addmargins(table(h$genhz, h$effervescence, exclude=NULL))
 
 # Thickness of diagnostic horizons
 diag.thk <- ddply(f@diagnostic, .(peiid, diag_kind), summarize, thickness=sum(featdepb-featdept))
