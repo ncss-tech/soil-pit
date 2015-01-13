@@ -18,9 +18,7 @@ library(xtable)
 
 ```{r, load-data, echo=FALSE}
 # source custom R functions
-source("C:/Users/stephen.roecker/Documents/stools/trunk/pedonReport/soilDB/fetchNASIS.R")
-source("C:/Users/stephen.roecker/Documents/stools/trunk/pedonReport/soilDB/get_extended_data_from_NASIS_db.R")
-source("C:/Users/stephen.roecker/Documents/stools/trunk/pedonReport/soilDB/lab_fetch.R")
+source("C:/Users/stephen.roecker/Documents/aqp/pkg/soilDB/R/get_extended_data_from_NASIS_db.R")
 
 # load NASIS data
 f <- fetchNASIS()
@@ -70,7 +68,7 @@ addmargins(table(f@horizons$genhz, f@horizons$hzname, exclude=NULL))
 
 # Summarize numeric variables by generic horizon
 h$gravel <- h$gravel-h$fine_gravel
-h.m <- melt(h, id.vars="genhz", measure.vars=c('clay', 'sand', 'fine_gravel', 'gravel', 'cobbles', 'stones', 'total_frags_pct', 'phfield', 'cce', 'd_value', 'd_chroma', 'm_value', 'm_chroma'))
+h.m <- melt(h, id.vars="genhz", measure.vars=c('clay', 'sand', 'fine_gravel', 'gravel', 'cobbles', 'stones', 'total_frags_pct', 'phfield', 'd_value', 'd_chroma', 'm_value', 'm_chroma'))
 h.summary <- ddply(h.m, .(variable,genhz), .fun=conditional.l.rv.h.summary)
 
 thk <- ddply(h, .(peiid, genhz), summarize, thickness=sum(hzdepb-hzdept))
