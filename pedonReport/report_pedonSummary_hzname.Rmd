@@ -1,0 +1,141 @@
+# Pedon report
+
+```{r}
+# Set Global Parameters
+series <- "Genesee"
+p <- c(0, 0.10, 0.5, 0.90, 1)
+```
+
+```{r LoadPackages, include=FALSE}
+# load libraries
+library(aqp)
+library(soilDB)
+library(reshape)
+library(plyr)
+library(lattice)
+library(xtable)
+```
+
+```{r, load-data, echo=FALSE, warning=FALSE}
+# source custom R functions
+
+
+# load NASIS data
+f <- fetchNASIS()
+f <- subsetProfiles(f, s="taxonname == series")
+
+# Function
+conditional.l.rv.h.summary <- function(x) {
+  variable <- unique(x$variable)
+  v <- na.omit(x$value) # extract column, from long-formatted input data
+  precision <- if(variable == 'phfield') 1 else 0
+  ci <- quantile(v, na.rm=TRUE, probs=p) 
+  d <- data.frame(min=ci[1], low=ci[2], rv=ci[3], high=ci[4], max=ci[5], stringsAsFactors=FALSE) # combine into DF
+  d$range <- with(d, paste("(", paste(round(c(min, low, rv, high, max), precision), collapse=', '), ")", sep="")) # add 'range' column for pretty-printing
+  return(d[6])
+  }
+```
+
+## Summary of Sites
+```{r, echo=FALSE}
+# Site information
+s <- site(f)
+subset(s, select=c("pedon_id", "taxonname", "pedon_type", "describer"))
+
+# Summarize surface rock fragments
+s$total_srf <- s$surface_gravel+s$surface_cobbles+s$surface_stones+s$surface_boulders+s$surface_flagstones+s$surface_channers
+s$gravel <- s$surface_fgravel-s$surface_gravel
+s.m <- melt(s, measure.vars=c("total_srf", "surface_fgravel", "surface_gravel", "surface_cobbles", "surface_stones", "surface_boulders", "surface_channers", "surface_flagstones"))
+s.summary <- ddply(s.m, .(variable), .fun=conditional.l.rv.h.summary)
+
+# Box plots of surface rock fragments
+bwplot(variable~value, data=s.m, scales=list(x="free"), xlab="percent")          
+
+# Range in characteristics of surface rock fragments (min, 10th, median, 90th, max)
+format(cast(s.summary, ~variable, value='range'), justify="centre")
+```
+
+## Summary of Pedons
+```{r, echo=FALSE, results="asis"}
+plot(f, label="pedon_id")
+
+h <- horizons(f)
+
+# Summarize numeric variables by generic horizon
+h$gravel <- h$gravel-h$fine_gravel
+hp.m <- melt(h, id.vars="hzname", measure.vars=c('clay', 'sand', 'fine_gravel', 'gravel', 'cobbles', 'stones', 'total_frags_pct'))
+hp.summary <- ddply(hp.m, .(variable,hzname), .fun=conditional.l.rv.h.summary)
+
+hc.m <- melt(h, id.vars="hzname", measure.vars=c('phfield', 'd_value', 'd_chroma', 'm_value'))
+hc.summary <- ddply(hc.m, .(variable,hzname), .fun=conditional.l.rv.h.summary)
+
+thk <- ddply(h, .(peiid, hzname), summarize, thickness=sum(hzdepb-hzdept))
+thk.m <- melt(thk, id.vars="hzname", measure.vars="thickness")
+thk.summary <- ddply(thk.m, .(variable, hzname), .fun=conditional.l.rv.h.summary)
+
+data.n <- ddply(h, .(hzname), .drop=T, summarize, n=length(hzname))
+
+## Percentiles
+### *(e.g. min, 25th, median, 75th, max)*
+# Range in characteristics for generic horizons (min, 10th, median, 90th, max)
+hp.c <- cast(hp.summary, hzname ~ variable, value='range')
+hc.c <- cast(hc.summary, hzname ~ variable, value='range')
+thk.c <- cast(thk.summary, hzname ~ variable, value='range')
+
+hp.c <- merge(hp.c, data.n, by="hzname")
+hc.c <-merge(hc.c, thk.c, by="hzname")
+hc.c <-merge(hc.c, data.n, by="hzname")
+
+print(xtable(hp.c), type="html")
+print(xtable(hc.c), type="html")
+
+# Box plots of numeric variables by generic horizon
+bwplot(hzname ~ value|variable, data=rbind(hp.m, hc.m), scales=list(x="free"))          
+
+# Texture by generic horizon
+print(table(addmargins(table(h$hzname, h$texture_class, exclude=NULL))), type="html")
+
+# Tex Mod & Class by generic horizon
+print(xtable(addmargins(table(h$hzname, h$texture, exclude=NULL)), type="html"))
+
+# Dry hue by generic horizon
+if(length(na.exclude(h$d_hue))>0){
+addmargins(table(h$hzname, h$d_hue, exclude=NULL))
+}
+
+# Moist hue by generic horizon
+if(length(na.exclude(h$m_hue))>0){
+  addmargins(table(h$hzname, h$m_hue, exclude=NULL))
+  }
+  
+      
+# Dry value by generic horizon
+if(length(na.exclude(h$d_value))>0){
+addmargins(table(h$hzname, h$d_value, exclude=NULL))
+}
+
+# Moist value by generic horizon
+addmargins(table(h$hzname, h$m_value, exclude=NULL))
+
+# Dry chroma by generic horizon
+if(length(na.exclude(h$d_chroma))>0){
+addmargins(table(h$hzname, h$d_chroma, exclude=NULL))
+}
+
+# Effervescence by generic horizon
+addmargins(table(h$hzname, h$effervescence, exclude=NULL))
+
+
+# Thickness of diagnostic horizons
+if(length(na.exclude(f@diagnostic$diag_kind))>0){
+diag.thk <- ddply(f@diagnostic, .(peiid, diag_kind), summarize, thickness=sum(featdepb-featdept))
+diag.m <- melt(f@diagnostic, id.vars="diag_kind", measure.vars=c('featdept', 'featdepb'))
+diag.thk.m <- melt(diag.thk, id.vars="diag_kind", measure.vars='thickness')
+diag.m <- rbind(diag.m, diag.thk.m)
+d.cs <- ddply(diag.m, .(variable, diag_kind), .fun=conditional.l.rv.h.summary)
+format(cast(d.cs, diag_kind ~ variable, value='range'), justify="centre")
+
+bwplot(diag_kind ~ value|variable, data=diag.m, scales=list(x="free"), xlab="cm")
+} else("diagnostic horizons missing")
+```
+
