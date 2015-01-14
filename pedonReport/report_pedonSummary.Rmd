@@ -23,6 +23,10 @@ source("C:/Users/stephen.roecker/Documents/aqp/pkg/soilDB/R/get_extended_data_fr
 # load NASIS data
 f <- fetchNASIS()
 f <- subsetProfiles(f, s="taxonname == series")
+f@horizons$hzname[is.na(f@horizons$hzname)] <- "NA"
+names(f@horizons)[15] <- "fragvoltot"
+f@horizons$d_chroma <- as.numeric("NA")
+h@horizons$m_chroma <- as.numeric("NA")
 
 # Function
 conditional.l.rv.h.summary <- function(x) {
@@ -56,7 +60,7 @@ format(cast(s.summary, ~variable, value='range'), justify="centre")
 ```
 
 ## Summary of Pedons
-```{r, echo=TRUE}
+```{r, echo=FALSE, results='asis', options("xtable.type" = "html")}
 plot(f, label="pedon_id")
 
 h <- horizons(f)
@@ -68,45 +72,52 @@ addmargins(table(f@horizons$genhz, f@horizons$hzname, exclude=NULL))
 
 # Summarize numeric variables by generic horizon
 h$gravel <- h$gravel-h$fine_gravel
-h.m <- melt(h, id.vars="genhz", measure.vars=c('clay', 'sand', 'fine_gravel', 'gravel', 'cobbles', 'stones', 'total_frags_pct', 'phfield', 'd_value', 'd_chroma', 'm_value', 'm_chroma'))
-h.summary <- ddply(h.m, .(variable,genhz), .fun=conditional.l.rv.h.summary)
 
-thk <- ddply(h, .(peiid, genhz), summarize, thickness=sum(hzdepb-hzdept))
-thk.m <- melt(thk, id.vars="genhz", measure.vars="thickness")
-thk.summary <- ddply(thk.m, .(variable, genhz), .fun=conditional.l.rv.h.summary)
+hp.m <- melt(h, id.vars="hzname", measure.vars=c('clay', 'sand', 'fine_gravel', 'gravel', 'cobbles', 'stones', 'fragvoltot'))
+hp.cs <- ddply(hp.m, .(variable, hzname), .fun=conditional.l.rv.h.summary)
+
+hc.m <- melt(h, id.vars="hzname", measure.vars=c('phfield', 'd_value', 'd_chroma', 'm_value', 'm_chroma'))
+hc.cs <- ddply(hc.m, .(variable, hzname), .fun=conditional.l.rv.h.summary)
+
+thk <- ddply(h, .(peiid, hzname), summarize, thickness=sum(hzdepb-hzdept))
+thk.m <- melt(thk, id.vars="hzname", measure.vars="thickness")
+thk.cs <- ddply(thk.m, .(variable, hzname), .fun=conditional.l.rv.h.summary)
+
+data.n <- ddply(h, .(hzname), .drop=T, summarize, n=length(hzname))
 
 # Range in characteristics for generic horizons (min, 10th, median, 90th, max)
-format(cast(rbind(h.summary, thk.summary), genhz ~ variable, value='range'), justify="centre")
+hp.csm <- merge(hp.cs, data.n, by="hzname")
+print.xtable(cast(hp.csm, hzname ~ variable, value='range'))
 
 # Box plots of numeric variables by generic horizon
-bwplot(genhz ~ value|variable, data=rbind(h.m, thk.m), scales=list(x="free"))          
+bwplot(hzname ~ value|variable, data=rbind(h.m, thk.m), scales=list(x="free"))          
 
 # Texture by generic horizon
-addmargins(table(h$genhz, h$texture_class, exclude=NULL))
+print.xtable(addmargins(table(h$hzname, h$texture_class, exclude=NULL)))
 
 # Tex Mod & Class by generic horizon
-addmargins(table(h$genhz, h$texture, exclude=NULL))
+addmargins(table(h$hzname, h$texture, exclude=NULL))
 
 # Dry hue by generic horizon
-addmargins(table(h$genhz, h$d_hue, exclude=NULL))
+addmargins(table(h$hzname, h$d_hue, exclude=NULL))
       
 # Moist hue by generic horizon
-addmargins(table(h$genhz, h$m_hue, exclude=NULL))
+addmargins(table(h$hzname, h$m_hue, exclude=NULL))
       
 # Dry value by generic horizon
-addmargins(table(h$genhz, h$d_value, exclude=NULL))
+addmargins(table(h$hzname, h$d_value, exclude=NULL))
 
 # Moist value by generic horizon
-addmargins(table(h$genhz, h$m_value, exclude=NULL))
+addmargins(table(h$hzname, h$m_value, exclude=NULL))
 
 # Dry chroma by generic horizon
-addmargins(table(h$genhz, h$d_chroma, exclude=NULL))
+addmargins(table(h$hzname, h$d_chroma, exclude=NULL))
 
 # Moist chroma by generic horizon
-addmargins(table(h$genhz, h$m_chroma, exclude=NULL))
+addmargins(table(h$hzname, h$m_chroma, exclude=NULL))
 
 # Effervescence by generic horizon
-addmargins(table(h$genhz, h$effervescence, exclude=NULL))
+addmargins(table(h$hzname, h$effervescence, exclude=NULL))
 
 # Thickness of diagnostic horizons
 diag.thk <- ddply(f@diagnostic, .(peiid, diag_kind), summarize, thickness=sum(featdepb-featdept))
