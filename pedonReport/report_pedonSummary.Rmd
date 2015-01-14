@@ -2,7 +2,7 @@
 
 ```{r}
 # Set Global Parameters
-series <- "Lecyr"
+series <- "Genesee"
 p <- c(0, 0.10, 0.5, 0.90, 1)
 ```
 
@@ -25,7 +25,6 @@ f <- fetchNASIS()
 f <- subsetProfiles(f, s="taxonname == series")
 f@horizons$hzname[is.na(f@horizons$hzname)] <- "NA"
 names(f@horizons)[15] <- "fragvoltot"
-f@horizons$d_chroma <- as.numeric("NA")
 f@horizons$m_chroma <- as.numeric("NA")
 
 # Function
@@ -83,15 +82,20 @@ thk <- ddply(h, .(peiid, hzname), summarize, thickness=sum(hzdepb-hzdept))
 thk.m <- melt(thk, id.vars="hzname", measure.vars="thickness")
 thk.cs <- ddply(thk.m, .(variable, hzname), .fun=conditional.l.rv.h.summary)
 
-data.n <- ddply(h, .(hzname), .drop=T, summarize, n=as.character(length(hzname)))
+data.n <- ddply(h, .(hzname), .drop=T, summarize, n=length(hzname))
 
 # Range in characteristics for generic horizons (min, 10th, median, 90th, max)
 hp.c <- cast(hp.cs, hzname ~ variable, value='range')
 hp.cm <- merge(hp.c, data.n, by="hzname")
-print.xtable(hp.cm)
+
+hc.c <- cast(hc.cs, hzname ~ variable, value='range')
+hc.cm <- merge(hc.c, data.n, by="hzname")
+
+print(xtable(hp.cm))
+print(xtable(hc.cm))
 
 # Box plots of numeric variables by generic horizon
-bwplot(hzname ~ value|variable, data=rbind(hp.m, thk.m), scales=list(x="free"))          
+bwplot(hzname ~ value|variable, data=rbind(hp.m, hc.m, thk.m), scales=list(x="free"))          
 
 # Texture by generic horizon
 print(xtable(addmargins(table(h$hzname, h$texture_class, exclude=NULL))))
