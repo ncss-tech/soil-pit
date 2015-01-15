@@ -7,11 +7,17 @@ gen.hz.rules <- list(
   'cajon'=list(
     n=c('A', 'Bk', 'Ck'),
     p=c('^A', '^BA|^Bk|^Bw', '^C|BC')
-  )
+  ),
+  "genesee"=list(
+    n=c("A", "Ap", "Bw", "C", "Cg", "2Bt", "NA"),
+    p=c("A|A1|A2|A3|Ab", "^Ap|AP", "^B", "C|C1|C10|C2|C3|C4|C5|C6|C7|C8|C9", "^Cg", "^2Bt","NA")
+    )
 )
+ghr <- gen.hz.rules
 
-summary(factor(f$genhz))
-f$genhz <- as.character(f$genhz)
-f$genhz <- ifelse(is.na(f@horizons$genhz), generalize.hz(f$hzname, gen.hz.rules$carrizo$n, gen.hz.rules$carrizo$p), f@horizons$genhz)
-f$genhz <- factor(f$genhz, levels=gen.hz.rules$carrizo$n, ordered=T) 
-summary(factor(f$genhz))
+# summary(factor(f$genhz))
+# f$genhz <- as.character(f$genhz)
+# f$genhz <- ifelse(is.na(f@horizons$genhz), generalize.hz(f$hzname, 
+# gen.hz.rules$carrizo$n, gen.hz.rules$carrizo$p), f@horizons$genhz)
+# f$genhz <- factor(f$genhz, levels=gen.hz.rules$carrizo$n, ordered=T) 
+# summary(factor(f$genhz))
