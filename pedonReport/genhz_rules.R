@@ -9,8 +9,8 @@ gen.hz.rules <- list(
     p=c('^A', '^BA|^Bk|^Bw', '^C|BC')
   ),
   "genesee"=list(
-    n=c("A", "Ap", "Bw", "C", "Cg", "2Bt", "NA"),
-    p=c("A|A1|A2|A3|Ab", "^Ap|AP", "^B", "C|C1|C10|C2|C3|C4|C5|C6|C7|C8|C9", "^Cg", "^2Bt","NA")
+    n=c("Ap", "A", "Bw", "C", "Cg", "2Bt", "NA"),
+    p=c("^Ap|AP", "A|A1|A2|A3|Ab", "^B", "C|C1|C10|C2|C3|C4|C5|C6|C7|C8|C9", "^Cg", "^2Bt","NA")
     )
 )
 ghr <- gen.hz.rules

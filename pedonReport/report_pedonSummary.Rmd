@@ -1,7 +1,6 @@
 ---
 output:
-  html_document:
-    theme: journal
+  html_document: default
 ---
 # Pedon report
 
@@ -23,7 +22,7 @@ library(xtable)
 
 ```{r, load-data, echo=FALSE, warning=FALSE}
 # source custom R functions
-source("C:/Users/Stephen/Documents/soilRwb/trunk/pedonReport/genhz_rules.R")
+source("C:/Users/stephen.roecker/Documents/soilRwb/trunk/pedonReport/genhz_rules.R")
 
 # load NASIS data
 f <- fetchNASIS()
@@ -38,25 +37,28 @@ d_munsell <- rgb2munsell(d_rgb)
 m_rgb <- f@horizons[, c("m_r", "m_g", "m_b")]
 m_munsell <- rgb2munsell(m_rgb)
 
-f@horizons$d_hue <- d_munsell$hue
-f@horizons$d_value <- d_munsell$value
-f@horizons$d_chroma <- d_munsell$chroma
-f@horizons$m_hue <- m_munsell$hue
-f@horizons$m_value <- m_munsell$value
-f@horizons$m_chroma <- d_munsell$chroma
+f@horizons$d_hue <- as.character(d_munsell$hue)
+f@horizons$d_value <- as.integer(d_munsell$value)
+f@horizons$d_chroma <- as.integer(d_munsell$chroma)
+f@horizons$m_hue <- as.character(m_munsell$hue)
+f@horizons$m_value <- as.integer(m_munsell$value)
+f@horizons$m_chroma <- as.integer(d_munsell$chroma)
 
 naReplace <- function(h){
   l <- list()
   for(i in seq(names(h))){
     if(class(h[,i])=="character") {l[[i]] <- replace(h[,i], is.na(h[,i]), "NA")} else(l[[i]] <-  h[,i])
   }
-  l <- data.frame(l)
+  l <- data.frame(l, stringsAsFactors=FALSE)
   names(l) <- names(h)
   return(l)
 }
 
 h2 <- naReplace(f@horizons)
 f@horizons <- h2
+
+h <- horizons(f)
+s <- site(f)
 
 # Function
 conditional.l.rv.h.summary <- function(x) {
@@ -67,42 +69,41 @@ conditional.l.rv.h.summary <- function(x) {
   d <- data.frame(min=ci[1], low=ci[2], rv=ci[3], high=ci[4], max=ci[5], stringsAsFactors=FALSE) # combine into DF
   d$range <- with(d, paste("(", paste(round(c(min, low, rv, high, max), precision), collapse=', '), ")", sep="")) # add 'range' column for pretty-printing
   return(d[6])
-  }
+}
+```
+## Plot of all pedons in selected set
+```{r}
+plot(f, label="pedon_id")
 ```
 
-## Summary of Sites
+
+# Summary of Sites
 ```{r, echo=FALSE}
 # Site information
-s <- site(f)
-subset(s, select=c("pedon_id", "taxonname", "pedon_type", "describer"))
+subset(s, select=c("pedon_id", "taxonname", "tax_subgroup", "part_size_class", "pedon_type", "describer"))
 
 # Summarize surface rock fragments
 s$total_srf <- s$surface_gravel+s$surface_cobbles+s$surface_stones+s$surface_boulders+s$surface_flagstones+s$surface_channers
 s$gravel <- s$surface_fgravel-s$surface_gravel
 s.m <- melt(s, measure.vars=c("total_srf", "surface_fgravel", "surface_gravel", "surface_cobbles", "surface_stones", "surface_boulders", "surface_channers", "surface_flagstones"))
 s.summary <- ddply(s.m, .(variable), .fun=conditional.l.rv.h.summary)
-
-# Box plots of surface rock fragments
-bwplot(variable~value, data=s.m, scales=list(x="free"), xlab="percent")          
-
-# Range in characteristics of surface rock fragments (min, 10th, median, 90th, max)
-format(cast(s.summary, ~variable, value='range'), justify="centre")
 ```
 
-## Summary of Pedons
+
+## Box plots of surface rock fragments
+```{r}
+bwplot(variable~value, data=s.m, scales=list(x="free"), xlab="percent")          
+```
+
+
+## Range in characteristics of surface rock fragments (min, 10th, median, 90th, max)
+```{r, results='asis'}
+print(xtable(cast(s.summary, ~variable, value='range')), type="html")
+```
+
+# Summary of Pedons
+
 ```{r, echo=FALSE, results='asis'}
-options("xtable.type" = "html")
-options(digits = 0)
-
-plot(f, label="pedon_id")
-
-h <- horizons(f)
-
-# Horizon designations by generic horizon
-if(length(na.exclude(is.na(f@horizons$genhz)))){
-print(xtable(addmargins(table(f@horizons$genhz, f@horizons$hzname)), digits=0))
-}
-
 # Summarize numeric variables by generic horizon
 h$gravel <- h$gravel-h$fine_gravel
 
@@ -116,54 +117,72 @@ thk <- ddply(h, .(peiid, genhz), summarize, thickness=sum(hzdepb-hzdept))
 thk.m <- melt(thk, id.vars="genhz", measure.vars="thickness")
 thk.cs <- ddply(thk.m, .(variable, genhz), .fun=conditional.l.rv.h.summary)
 
-data.n <- ddply(h, .(genhz), .drop=T, summarize, n=length(genhz))
-
-# Range in characteristics for generic horizons (min, 10th, median, 90th, max)
 hp.c <- cast(hp.cs, genhz ~ variable, value='range')
-hp.cm <- merge(hp.c, data.n, by="genhz")
-
 hc.c <- cast(hc.cs, genhz ~ variable, value='range')
-hc.cm <- merge(hc.c, data.n, by="genhz")
+```
+## Horizon designations by generic horizon
+```{r, echo=FALSE, results='asis'}
+if(length(na.exclude(is.na(f@horizons$genhz)))){
+print(xtable(addmargins(table(f@horizons$genhz, f@horizons$hzname)), digits=0), type="html")
+}
+```
+## Range in characteristics for generic horizons (min, 10th, median, 90th, max)
+```{r, results='asis'}
+print(xtable(hp.c), type="html")
+print(xtable(hc.c), type="html")
+```
 
-print(xtable(hp.cm))
-print(xtable(hc.cm))
-
-# Box plots of numeric variables by generic horizon
+## Box plots of numeric variables by generic horizon
+```{r}
 bwplot(genhz ~ value|variable, data=rbind(hp.m, hc.m, thk.m), scales=list(x="free"))          
+```
 
-# Texture by generic horizon
+## Texture by generic horizon
+```{r, echo=FALSE, results='asis'}
 if(length(na.exclude(f@horizons$genhz))>0){
-print(xtable(addmargins(table(h$genhz, h$texture_class)), digits=0))
+print(xtable(addmargins(table(h$genhz, h$texture_class)), digits=0), type="html")
 }
+```
 
-# Tex Mod & Class by generic horizon
+## Tex Mod & Class by generic horizon
+```{r, echo=FALSE, results='asis'}
 if(length(na.exclude(f@horizons$genhz))>0){
-print(xtable(addmargins(table(h$genhz, h$texture)), digits=0))
+print(xtable(addmargins(table(h$genhz, h$texture)), digits=0), type="html")
 }
+```
 
-# Dry hue by generic horizon
+## Dry hue by generic horizon
+```{r, echo=FALSE, results='asis'}
 if(length(na.exclude(f@horizons$genhz))>0){
-print(xtable(addmargins(table(h$genhz, h$d_hue)), digits=0))
+print(xtable(addmargins(table(h$genhz, h$d_hue)), digits=0), type="html")
 }
+```
 
-# Moist hue by generic horizon
+## Moist hue by generic horizon
+```{r, echo=FALSE, results='asis'}
 if(length(na.exclude(f@horizons$genhz))>0){
-print(xtable(addmargins(table(h$genhz, h$m_hue)), digits=0))
+print(xtable(addmargins(table(h$genhz, h$m_hue)), digits=0), type="html")
 }
+```
 
-# Effervescence by generic horizon
+## Effervescence by generic horizon
+```{r, echo=FALSE, results='asis'}
 if(length(na.exclude(f@horizons$genhz))>0){
 print(xtable(addmargins(table(h$genhz, h$effervescence)), digits=0))
 }
+```
 
-# Thickness of diagnostic horizons
+## Thickness of diagnostic horizons
+```{r, echo=FALSE, results='asis'}
 diag.thk <- ddply(f@diagnostic, .(peiid, diag_kind), summarize, thickness=sum(featdepb-featdept))
 diag.m <- melt(f@diagnostic, id.vars="diag_kind", measure.vars=c('featdept', 'featdepb'))
 diag.thk.m <- melt(diag.thk, id.vars="diag_kind", measure.vars='thickness')
 diag.m <- rbind(diag.m, diag.thk.m)
 d.cs <- ddply(diag.m, .(variable, diag_kind), .fun=conditional.l.rv.h.summary)
-print(xtable(cast(d.cs, diag_kind ~ variable, value='range'), digits=0))
-
+print(xtable(cast(d.cs, diag_kind ~ variable, value='range'), digits=0), type="html")
+```
+## Boxplot of diagnostic horizon thicknesses
+```{r}
 bwplot(diag_kind ~ value|variable, data=diag.m, scales=list(x="free"), xlab="cm")          
 ```
 
