@@ -1,16 +1,10 @@
----
-output:
-  html_document: default
----
 # Pedon report
-
-```{r}
+```{r enter soil series name}
 # Set Global Parameters
-series <- "Genesee"
-p <- c(0, 0.10, 0.5, 0.90, 1)
+series <- "Lecyr"
 ```
 
-```{r LoadPackages, include=FALSE}
+```{r load packages, include=FALSE}
 # load libraries
 library(aqp)
 library(soilDB)
@@ -20,29 +14,35 @@ library(lattice)
 library(xtable)
 ```
 
-```{r, load-data, echo=FALSE, warning=FALSE}
+```{r fetch and format, load-data, echo=FALSE, warning=FALSE}
 # source custom R functions
-source("C:/Users/Stephen/Documents/soilRwb/pedonReport/genhz_rules.R")
+source("genhz_rules.R")
+
+p <- c(0, 0.10, 0.5, 0.90, 1)
 
 # load NASIS data
 f <- fetchNASIS()
 f <- subsetProfiles(f, s="taxonname == series")
-f@horizons$hzname[is.na(f@horizons$hzname)] <- "NA"
-f@horizons$genhz <- generalize.hz(f@horizons$hzname, ghr$genesee$n, ghr$genesee$p)
-names(f@horizons)[15] <- "fragvoltotc"
-names(f@horizons)[16] <- "fragvoltot"
 
-d_rgb <- f@horizons[, c("d_r", "d_g", "d_b")]
+h <- horizons(f)
+s <- site(f)
+
+h$hzname[is.na(h$hzname)] <- "NA"
+h$genhz <- generalize.hz(h$hzname, ghr$genesee$n, ghr$genesee$p)
+names(h)[15] <- "fragvoltotc"
+names(h)[16] <- "fragvoltot"
+
+d_rgb <- horizons(f)[, c("d_r", "d_g", "d_b")]
 d_munsell <- rgb2munsell(d_rgb)
-m_rgb <- f@horizons[, c("m_r", "m_g", "m_b")]
+m_rgb <- h[, c("m_r", "m_g", "m_b")]
 m_munsell <- rgb2munsell(m_rgb)
 
-f@horizons$d_hue <- as.character(d_munsell$hue)
-f@horizons$d_value <- as.integer(d_munsell$value)
-f@horizons$d_chroma <- as.integer(d_munsell$chroma)
-f@horizons$m_hue <- as.character(m_munsell$hue)
-f@horizons$m_value <- as.integer(m_munsell$value)
-f@horizons$m_chroma <- as.integer(d_munsell$chroma)
+h$d_hue <- as.character(d_munsell$hue)
+h$d_value <- as.integer(d_munsell$value)
+h$d_chroma <- as.integer(d_munsell$chroma)
+h$m_hue <- as.character(m_munsell$hue)
+h$m_value <- as.integer(m_munsell$value)
+h$m_chroma <- as.integer(d_munsell$chroma)
 
 naReplace <- function(h){
   l <- list()
@@ -54,11 +54,8 @@ naReplace <- function(h){
   return(l)
 }
 
-h2 <- naReplace(f@horizons)
-f@horizons <- h2
+h <- naReplace(h)
 
-h <- horizons(f)
-s <- site(f)
 
 # Function
 conditional.l.rv.h.summary <- function(x) {
@@ -72,26 +69,28 @@ conditional.l.rv.h.summary <- function(x) {
 }
 ```
 ## Plot of all pedons in selected set
-```{r}
+```{r plot(f)}
 plot(f, label="pedon_id")
 ```
 
 
 # Summary of Sites
-```{r, echo=FALSE}
+```{r format site data, echo=FALSE}
 # Site information
 subset(s, select=c("pedon_id", "taxonname", "tax_subgroup", "part_size_class", "pedon_type", "describer"))
 
 # Summarize surface rock fragments
-s$total_srf <- s$surface_gravel+s$surface_cobbles+s$surface_stones+s$surface_boulders+s$surface_flagstones+s$surface_channers
-s$gravel <- s$surface_fgravel-s$surface_gravel
-s.m <- melt(s, measure.vars=c("total_srf", "surface_fgravel", "surface_gravel", "surface_cobbles", "surface_stones", "surface_boulders", "surface_channers", "surface_flagstones"))
+s.rf <- subset(s, select=c("surface_fgravel", "surface_gravel", "surface_cobbles", "surface_stones", "surface_boulders", "surface_flagstones", "surface_channers"))
+s.rf <- replace(s.rf, is.na(s.rf), 0)
+s.rf$total_srf <- s.rf$surface_gravel+s.rf$surface_cobbles+s.rf$surface_stones+s.rf$surface_boulders+s.rf$surface_flagstones+s.rf$surface_channers
+s.rf$surface_gravel <- s.rf$surface_gravel-s.rf$surface_fgravel
+s.m <- melt(s.rf, measure.vars=c("total_srf", "surface_fgravel", "surface_gravel", "surface_cobbles", "surface_stones", "surface_boulders", "surface_channers", "surface_flagstones"))
 s.summary <- ddply(s.m, .(variable), .fun=conditional.l.rv.h.summary)
 ```
 
 
 ## Box plots of surface rock fragments
-```{r}
+```{r bwplot for rf}
 bwplot(variable~value, data=s.m, scales=list(x="free"), xlab="percent")          
 ```
 
@@ -123,7 +122,7 @@ hc.c <- cast(hc.cs, genhz ~ variable, value='range')
 
 ## Horizon designations by generic horizon
 ```{r, echo=FALSE, results='asis'}
-print(xtable(addmargins(table(f@horizons$genhz, f@horizons$hzname)), digits=0), type="html") 
+print(xtable(addmargins(table(h$genhz, h$hzname)), digits=0), type="html") 
 ```
 
 
@@ -134,8 +133,8 @@ print(xtable(hc.c), type="html")
 ```
 
 ## Box plots of numeric variables by generic horizon
-```{r}
-bwplot(genhz ~ value|variable, data=rbind(hp.m, hc.m, thk.m), scales=list(x="free"))          
+```{r, echo=FALSE}
+bwplot(factor(genhz, levels=levels(h$genhz)[length(levels(h$genhz)):1]) ~ value|variable, data=rbind(hp.m, hc.m, thk.m), scales=list(x="free"))          
 ```
 
 ## Texture by generic horizon
@@ -176,8 +175,8 @@ print(xtable(cast(d.cs, genhz ~ variable, value='range'), digits=0), type="html"
 
 
 ## Boxplot of generic horizon thicknesses
-```{r}
-bwplot(genhz ~ value|variable, data=genhz.m, scales=list(x="free"), xlab="cm", horizontal=T)          
+```{r, echo=FALSE}
+bwplot(factor(genhz, levels=levels(h$genhz)[length(levels(h$genhz)):1]) ~ value|variable, data=genhz.m, scales=list(x="free"), xlab="cm", horizontal=T)          
 ```
 
 ## Thickness of diagnostic horizons
