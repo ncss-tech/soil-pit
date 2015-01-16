@@ -22,7 +22,7 @@ library(xtable)
 
 ```{r, load-data, echo=FALSE, warning=FALSE}
 # source custom R functions
-source("C:/Users/stephen.roecker/Documents/soilRwb/trunk/pedonReport/genhz_rules.R")
+source("C:/Users/Stephen/Documents/soilRwb/trunk/pedonReport/genhz_rules.R")
 
 # load NASIS data
 f <- fetchNASIS()
@@ -122,9 +122,7 @@ hc.c <- cast(hc.cs, genhz ~ variable, value='range')
 ```
 ## Horizon designations by generic horizon
 ```{r, echo=FALSE, results='asis'}
-if(length(na.exclude(is.na(f@horizons$genhz)))){
-print(xtable(addmargins(table(f@horizons$genhz, f@horizons$hzname)), digits=0), type="html")
-}
+print(xtable(addmargins(table(f@horizons$genhz, f@horizons$hzname)), digits=0), type="html") 
 ```
 ## Range in characteristics for generic horizons (min, 10th, median, 90th, max)
 ```{r, results='asis'}
@@ -139,37 +137,27 @@ bwplot(genhz ~ value|variable, data=rbind(hp.m, hc.m, thk.m), scales=list(x="fre
 
 ## Texture by generic horizon
 ```{r, echo=FALSE, results='asis'}
-if(length(na.exclude(f@horizons$genhz))>0){
 print(xtable(addmargins(table(h$genhz, h$texture_class)), digits=0), type="html")
-}
 ```
 
 ## Tex Mod & Class by generic horizon
 ```{r, echo=FALSE, results='asis'}
-if(length(na.exclude(f@horizons$genhz))>0){
 print(xtable(addmargins(table(h$genhz, h$texture)), digits=0), type="html")
-}
 ```
 
 ## Dry hue by generic horizon
 ```{r, echo=FALSE, results='asis'}
-if(length(na.exclude(f@horizons$genhz))>0){
 print(xtable(addmargins(table(h$genhz, h$d_hue)), digits=0), type="html")
-}
 ```
 
 ## Moist hue by generic horizon
 ```{r, echo=FALSE, results='asis'}
-if(length(na.exclude(f@horizons$genhz))>0){
 print(xtable(addmargins(table(h$genhz, h$m_hue)), digits=0), type="html")
-}
 ```
 
 ## Effervescence by generic horizon
 ```{r, echo=FALSE, results='asis'}
-if(length(na.exclude(f@horizons$genhz))>0){
-print(xtable(addmargins(table(h$genhz, h$effervescence)), digits=0))
-}
+print(xtable(addmargins(table(h$genhz, h$effervescence)), digits=0), type="html")
 ```
 
 ## Thickness of diagnostic horizons
