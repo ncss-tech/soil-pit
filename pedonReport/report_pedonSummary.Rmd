@@ -22,7 +22,7 @@ library(xtable)
 
 ```{r, load-data, echo=FALSE, warning=FALSE}
 # source custom R functions
-source("C:/Users/Stephen/Documents/soilRwb/trunk/pedonReport/genhz_rules.R")
+source("C:/Users/Stephen/Documents/soilRwb/pedonReport/genhz_rules.R")
 
 # load NASIS data
 f <- fetchNASIS()
@@ -102,7 +102,6 @@ print(xtable(cast(s.summary, ~variable, value='range')), type="html")
 ```
 
 # Summary of Pedons
-
 ```{r, echo=FALSE, results='asis'}
 # Summarize numeric variables by generic horizon
 h$gravel <- h$gravel-h$fine_gravel
@@ -120,10 +119,14 @@ thk.cs <- ddply(thk.m, .(variable, genhz), .fun=conditional.l.rv.h.summary)
 hp.c <- cast(hp.cs, genhz ~ variable, value='range')
 hc.c <- cast(hc.cs, genhz ~ variable, value='range')
 ```
+
+
 ## Horizon designations by generic horizon
 ```{r, echo=FALSE, results='asis'}
 print(xtable(addmargins(table(f@horizons$genhz, f@horizons$hzname)), digits=0), type="html") 
 ```
+
+
 ## Range in characteristics for generic horizons (min, 10th, median, 90th, max)
 ```{r, results='asis'}
 print(xtable(hp.c), type="html")
@@ -158,6 +161,23 @@ print(xtable(addmargins(table(h$genhz, h$m_hue)), digits=0), type="html")
 ## Effervescence by generic horizon
 ```{r, echo=FALSE, results='asis'}
 print(xtable(addmargins(table(h$genhz, h$effervescence)), digits=0), type="html")
+```
+
+
+## Thickness of generic horizons
+```{r, echo=FALSE, results='asis'}
+genhz.thk <- ddply(h, .(phiid, genhz), summarize, thickness=sum(hzdepb-hzdept))
+genhz.m <- melt(h, id.vars="genhz", measure.vars=c('hzdept', 'hzdepb'))
+genhz.thk.m <- melt(genhz.thk, id.vars="genhz", measure.vars='thickness')
+genhz.m <- rbind(genhz.m, genhz.thk.m)
+d.cs <- ddply(genhz.m, .(variable, genhz), .fun=conditional.l.rv.h.summary)
+print(xtable(cast(d.cs, genhz ~ variable, value='range'), digits=0), type="html")
+```
+
+
+## Boxplot of generic horizon thicknesses
+```{r}
+bwplot(genhz ~ value|variable, data=genhz.m, scales=list(x="free"), xlab="cm", horizontal=T)          
 ```
 
 ## Thickness of diagnostic horizons
