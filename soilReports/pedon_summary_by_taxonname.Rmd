@@ -1,6 +1,6 @@
 # Pedon report
 ```{r enter soil series name}
-# Set Global Parameters
+# Set soil series
 series <- "Lecyr"
 ```
 

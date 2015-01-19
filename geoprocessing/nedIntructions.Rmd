@@ -13,7 +13,8 @@ The primary workhorse of these batch functions is GDAL (Geospatial Data Abstract
 
 Once you begin this sequence of commands will last several days. However it is not terribly memory intensize, so you should be able to work on other projects while it is running. The first thing that needs to be done, is loading the necessary R libraries. If they're not already installed you will have to do this the first time (e.g. "install.packages("gdalUtils", dependencies=TRUE)").
 
-```{r, eval=FALSE}
+```{r install and load packages, eval=FALSE}
+install.packages(c("gdalUtils", "foreign", "rgdal", "raster"))
 library(gdalUtils)
 library(foreign)
 library(rgdal)
@@ -21,7 +22,7 @@ library(raster)
 ```
 
 Next the proper GDAL path has to be set. The first location is the default path on my work computer, the second my personal computer. If this isn't set gdalUtils will do a brute force search of your computer, which usually finds GDAL 1.7 instead of the GDAL 10.1. The new version has additional features, which many these batch functions use. 
-```{r, eval=FALSE}
+```{r set gdal path, eval=FALSE}
 gdal_setInstallation(search_path="C:/Program Files/QGIS Dufour/bin", rescan=T)
 gdal_setInstallation(search_path="C:/OSGeo4W64/bin", rescan=T)
 ```
@@ -102,6 +103,4 @@ batchTerrain(dem.p)
 hil.p <- paste(pd.p, office.l, "/", sep="")
 hil.p.l <- paste(hil.p, "ned10m_11", office.l, "_hillshade.tif", sep="")
 mosaicList(list(hil.p.l), "E:/geodata/project_data/11REGION/ned10m_11R_hillshade.tif", "Byte", c("COMPRESS=DEFLATE", "TILED=YES", "BIGTIFF=YES"), 0)
-
-
 ```

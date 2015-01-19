@@ -1,8 +1,15 @@
 # Map Unit GIS Summary Report
 
 This report summarizes the geographic setting of musym within a file geodatabase. It is intented to be used to compare and contrast map units, and suggest possible Low, RV, and High values. 
+```{r set parameters}
+setwd("D:/")
+musym <- c()
+sampleSize <- 1000
+p <- c(0,0.25,0.5,0.75,1)
+```
 
-```{r LoadPackages, include=F}
+```{r load packages, include=F}
+# Load packages
 library(circular)
 library(sp)
 library(raster)
@@ -14,14 +21,7 @@ library(xtable)
 ```
 
 ```{r load-data, echo=FALSE, results='hide', message=FALSE}
-setwd("D:/")
-musym <- c()
-sampleSize <- 1000
-p <- c(0,0.25,0.5,0.75,1)
-
-# Load packages
-
-## local functions
+## Load data
 mapunit.summary<-function(musym,sampleSize){
   # Import geodatabase
   mapunit.sp<-readOGR(dsn="D:/geodata/soils/soil_ca795/FG795_OFFICIAL.gdb",layer="ca795_a", encoding="OpenFileGDB")
