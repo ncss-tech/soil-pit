@@ -162,8 +162,12 @@ ogr2ogr(
 
 
 # Soils
+# OSDs
+"ftp://ftp-fc.sc.egov.usda.gov/NSSC/pub/OSD_QA_QC_Files/NASIS_designated_OSDS.zip"
+
 # Download netCDF dSSURGO tiles
 # GDAL won't read netcdf files bigger than 2GB, not sure what the dssurgo dude is using to read/write his files
+
 library(RCurl)
 
 dssurgo <- "http://stream.princeton.edu/dSSURGO/"

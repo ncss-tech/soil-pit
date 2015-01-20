@@ -1,7 +1,7 @@
 ---
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
   word_document: default
 ---
 # Map Unit GIS Summary Report
@@ -47,7 +47,7 @@ p <- c(0,0.25,0.5,0.75,1)
 
 pd <- paste0(dir, office, "/")
 rd <- paste0(dir, "11REGION/")
-shp <- paste("mu", noquote(paste(mukey, collapse=".", sep="")), sep="")
+shp <- paste("mu", noquote(paste(mukey[c(1, length(mukey))], collapse=".", sep="")), sep="")
 cache <- paste0(pd, "cache/", shp, ".shp")
 
 # Load packages
@@ -153,16 +153,17 @@ data2$MUKEY <- "representative"
 data <- rbind(data, data2)
 ```
 
+
+## Plot of soil map units
+```{r plot soil map units}
+spplot(mupolygon, zcol="MUKEY", scales=list(draw=T), col.regions=bpy.colors(length(mukey)), lty=0, sp.layout=list("sp.polygons", sapolygon))
+```
+
+
 ## Polygon metrics
 ```{r echo=FALSE, results='asis'}
 pol <- data.frame(mupolygon)
 pol.m <- melt(pol, id.vars="MUKEY", measure.vars=c("Acres", "Circularity"))
-pol.cs <- ddply(pol.m, .(variable, MUKEY), .fun=conditional.l.rv.h.summary)
-pol.n <- ddply(pol, .(MUKEY), .drop=T, summarize, nPolygons=length(MUKEY), nAcres=sum(Acres))
-pol.cs.c <-cast(pol.cs, MUKEY ~ variable, value='range')
-pol.me <- merge(pol.cs.c, pol.n, by="MUKEY")
-print(xtable(pol.me, caption="Five number summary (e.g. min, 25th, median, 75th, max)", digits=0), type="html", caption.placement="top")
-
 pol.as.m <- melt(pol, id.vars=c("MUKEY", "AREASYMBOL"), measure.vars=c("Acres"))
 pol.as.cs1 <- ddply(pol.as.m, .(MUKEY, AREASYMBOL, variable), .fun=conditional.l.rv.h.summary)
 pol.as.cs2 <- ddply(pol.as.m, .(MUKEY, AREASYMBOL, variable), summarize, nPolygons=length(value), nArces=sum(value))[, c(1,2,4,5)]
@@ -172,7 +173,7 @@ print(xtable(pol.as.me, digits=0, caption="Summary of MUKEY per AREASYMBOL"), ty
 
 ## Polygon Boxplots
 ### *(min, 5th, 25th, median, 75th, 95th, max)*
-```{r echo=FALSE}
+```{r bwplot of polygon metrics}
 bwplot(MUKEY ~ value|variable, data=pol.m, scales=list(x="free"))
 ```
 
@@ -200,14 +201,8 @@ aspect.cs.c <- cast(aspect.cs, MUKEY ~ variable, value='range')
 print(xtable(merge(aspect.cs.c, data.n, by="MUKEY")), type="html")
 ```
 
-## Plot of soil map units
-```{r echo=FALSE}
-spplot(mupolygon, zcol="MUKEY", scales=list(draw=T), col.regions=bpy.colors(length(mukey)), lty=0, sp.layout=list("sp.polygons", sapolygon))
-```
-
-## Boxplots
+## Boxplots of map unit properties
+```{r bwplot of map unit properties}
 ### *(min, 5th, 25th, median, 75th, 95th, max)*
-```{r echo=FALSE}
 bwplot(MUKEY ~ value|variable, data=data.m, scales=list(x="free"))          
 ```
-

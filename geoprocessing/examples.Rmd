@@ -44,10 +44,19 @@ ned <- unlist(l)
 # Definition query
 # Copy Mapunit table out of NASIS 
 setwd("C:/Users/stephen.roecker/Documents")
-test <- read.csv("mapunit.table.csv")
+test <- read.csv("test.csv")
 mukey <- test$Rec.ID
-paste("'", mukey[1:length(mukey)-1], "'",collapse=",", sep='')
-# Paste results after the following, "MUKEY" IN ...
+paste("'", mukey[1:length(mukey)-1], "'",collapse=",", sep="")
+# Paste results after the following, "MUKEY" IN ...(    )
+
+mukey <- read.csv("C:/Users/stephen.roecker/Documents/test.csv")
+mukey <- as.character(mukey$Rec.ID)
+mukey <- data.frame(mukey=mukey, stringsAsFactors=FALSE)
+test <- read.dbf("M:/geodata/project_data/11REGION/muaggatt.dbf")
+test$mukey <- as.character(test$mukey)
+
+test2 <- merge(test, mukey, by.y="mukey")
+paste("(", noquote(paste("'", test2$mukey, "'", collapse=",", sep="")),")", sep="")
 ```
 
 ```{r gdal examples}
@@ -59,7 +68,7 @@ ogr2ogr -f "ESRI Shapefile" test.shp test.gdb ca794_a -nln ca794_a
 library(raster)
 library(rgdal)
 
-ind <- readOGR(dsn="H:/Region_11_Soils_SSURGO_07302014/MLRA_11-IND_FY14.gdb", layer="SAPOLYGON", encoding="OpenFileGDB")
+ind <- readOGR(dsn="M:/geodata/soils/Region_11_Soils_SSURGO_FY2015/MLRA_11_IND_FY15.gdb", layer="chtext", encoding="OpenFileGDB")
 
 ogr2ogr(
   src_datasource_name="E:/geodata/project_data/11ATL/11ATL.gdb",
@@ -85,11 +94,14 @@ ogr2ogr(
 
 bb <- bbox(readOGR(dsn="M:/geodata/project_data/11REGION/MLRA_Soil_Survey_Areas_May2014_r11.shp", layer="MLRA_Soil_Survey_Areas_May2014_r11"))
 
+# Clip shapefile by extent
 system(paste('"C:/Program Files/QGIS Dufour/bin/ogr2ogr.exe"', '-overwrite -t_srs EPSG:5070 -clipdst -49675.0230520471 1329474.02694086 1175426.50953029 2591124.11923647 M:/geodata/project_data/11REGION/us_eco_l4_no_r11.shp M:/geodata/ecology/us_eco_l4_no_st.shp'))
 
 system(paste('"C:/Program Files/QGIS Dufour/bin/ogr2ogr.exe"', '-overwrite -t_srs EPSG:5070 -clipdst -49675.0230520471 1329474.02694086 1175426.50953029 2591124.11923647 M:/geodata/project_data/11REGION/geology_a_r11.shp M:/geodata/geology/geology_a_mbr.shp'))
 
 system(paste('"C:/Program Files/QGIS Dufour/bin/ogr2ogr.exe"', '-overwrite -t_srs EPSG:5070 -clipdst -49675.0230520471 1329474.02694086 1175426.50953029 2591124.11923647 M:/geodata/project_data/11REGION/physiography_polygon_r11.shp M:/geodata/geology/physiography_polygon.shp'))
+
+system(paste('"C:/Program Files/QGIS Dufour/bin/ogr2ogr.exe"', '-overwrite -t_srs EPSG:5070 -clipdst -49675.0230520471 1329474.02694086 1175426.50953029 2591124.11923647 M:/geodata/project_data/11REGION/mlra_a_r11.shp M:/geodata/soils/mlra_a_mbr.shp'))
 ```
 
 
