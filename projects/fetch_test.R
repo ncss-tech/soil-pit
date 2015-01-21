@@ -1,10 +1,8 @@
-test <- function () {
+mapunit.t <- function () {
   if (!require(RODBC)) 
     stop("please install the `RODBC` package", call. = FALSE)
-  q <- "SELECT muname, projectmapunitiid, projectiidref
-  FROM (
-mapunit_View_1
-INNER JOIN projectmapunit_View_1 ON projectmapunit_View_1.muiidref = mapunit_View_1.muiid);"
+  q <- "SELECT muname, muiid
+  FROM mapunit_View_1;"
   channel <- odbcConnect("nasis_local", uid = "NasisSqlRO", 
                          pwd = "nasisRe@d0n1y")
   d <- sqlQuery(channel, q, stringsAsFactors = FALSE)
@@ -12,5 +10,36 @@ INNER JOIN projectmapunit_View_1 ON projectmapunit_View_1.muiidref = mapunit_Vie
   return(d)
 }
 
-test2 <- test()
+mapunit.df <-mapunit.t()
 
+projectmapunit.t <- function () {
+  if (!require(RODBC)) 
+    stop("please install the `RODBC` package", call. = FALSE)
+  q <- "SELECT projectiidref, muiidref
+  FROM projectmapunit_View_1;"
+  channel <- odbcConnect("nasis_local", uid = "NasisSqlRO", 
+                         pwd = "nasisRe@d0n1y")
+  d <- sqlQuery(channel, q, stringsAsFactors = FALSE)
+  odbcClose(channel)
+  return(d)
+}
+
+projectmapunit.df <- projectmapunit.t()
+
+project.t <- function () {
+  if (!require(RODBC)) 
+    stop("please install the `RODBC` package", call. = FALSE)
+  q <- "SELECT projectiid, projectname
+  FROM project_View_1;"
+  channel <- odbcConnect("nasis_local", uid = "NasisSqlRO", 
+                         pwd = "nasisRe@d0n1y")
+  d <- sqlQuery(channel, q, stringsAsFactors = FALSE)
+  odbcClose(channel)
+  return(d)
+}
+
+project.df <- project.t()
+
+
+test.me <- merge(mapunit.df, projectmapunit.df, by.x="muiid", by.y="muiidref", all=TRUE)
+test.me <- merge(project.df, test.me, by.x="projectiid", by.y="projectiidref", , all=TRUE)
