@@ -1,7 +1,7 @@
 # Pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Genesee"
+series <- "Miamian"
 ```
 
 ```{r load packages, include=FALSE}
@@ -29,7 +29,7 @@ h <- horizons(f)
 s <- site(f)
 
 h$hzname[is.na(h$hzname)] <- "NA"
-h$genhz <- generalize.hz(h$hzname, ghr$genesee$n, ghr$genesee$p)
+h$genhz <- generalize.hz(h$hzname, ghr$Miamian$n, ghr$Miamian$p)
 names(h)[15] <- "fragvoltotc"
 names(h)[16] <- "fragvoltot"
 
@@ -71,9 +71,9 @@ conditional.l.rv.h.summary <- function(x) {
 ```
 ## Plot of all pedons in selected set
 ```{r plot of pedons and locations, echo=FALSE}
-test <- s[complete.cases(c(s$x_std)),]
-test <- s[complete.cases(c(s$y_std)),]
-coordinates(test) <- ~x_std+y_std
+test <- s[complete.cases(c(s$x)),]
+test <- s[complete.cases(c(s$y)),]
+coordinates(test) <- ~x+y
 plot(test, pch=16)
 map("county", add=T)
 map("state",lwd=2,add=T)
