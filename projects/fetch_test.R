@@ -1,3 +1,6 @@
+library(foreign)
+library(soilDB)
+
 mapunit.t <- function () {
   if (!require(RODBC)) 
     stop("please install the `RODBC` package", call. = FALSE)
@@ -43,3 +46,15 @@ project.df <- project.t()
 
 test.me <- merge(mapunit.df, projectmapunit.df, by.x="muiid", by.y="muiidref", all=TRUE)
 test.me <- merge(project.df, test.me, by.x="projectiid", by.y="projectiidref", , all=TRUE)
+names(test.me)[3] <- "mukey"
+test.me <- subset(test.me, select=c("mukey"))
+test.me <- unique(test.me)
+
+# Definition query
+muaggatt <- read.dbf("M:/geodata/project_data/11REGION/muaggatt.dbf")
+muaggatt$mukey <- as.character(muaggatt$mukey)
+
+test2 <- merge(muaggatt, test.me, by="mukey", )
+paste("MUKEY IN (", noquote(paste("'", test2$mukey, "'", collapse=",", sep="")),")", sep="")
+write.table(test2, "ES_MLRA_109_mupolygons.txt", quote=TRUE)
+

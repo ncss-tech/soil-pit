@@ -49,14 +49,6 @@ mukey <- test$Rec.ID
 paste("'", mukey[1:length(mukey)-1], "'",collapse=",", sep="")
 # Paste results after the following, "MUKEY" IN ...(    )
 
-mukey <- read.csv("C:/Users/stephen.roecker/Documents/test.csv")
-mukey <- as.character(mukey$Rec.ID)
-mukey <- data.frame(mukey=mukey, stringsAsFactors=FALSE)
-test <- read.dbf("M:/geodata/project_data/11REGION/muaggatt.dbf")
-test$mukey <- as.character(test$mukey)
-
-test2 <- merge(test, mukey, by.y="mukey")
-paste("(", noquote(paste("'", test2$mukey, "'", collapse=",", sep="")),")", sep="")
 ```
 
 ```{r gdal examples}
