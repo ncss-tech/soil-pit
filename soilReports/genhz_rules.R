@@ -17,8 +17,8 @@ gen.hz.rules <- list(
     p=c("Ap|AP|1A|A1|A2|A p", "^A$", "E", "BE", "Bt|BT|1B|B2|B3|BA|B1|B t1|B t2", "BC", "^B$", "C", "Cd","NA")
   ),
   "Crosby"=list(
-    n=c("Ap", "A", "E", "Bt", "BC", "C", "Cd", "NA"),
-    p=c("Ap|AP|1A|A1|A2|A p", "^A$", "E", "BE", "Bt|BT|1B|B2|B3|BA|B1|B t1|B t2", "BC", "^B$", "C", "Cd","NA")
+    n=c("Ap", "A", "BE", "E", "Bt", "Btg", "CB", "2BCt", "2CB", "Cd", "2Cd", "NA"),
+    p=c("Ap|AP|1A|A1|A2|A p", "^A$", "E", "BE", "Bt|BT|1B|B2|B3|BA|B1|B t1|B t2|2B t3|2B t4", "BC", "^B$", "C", "Cd","NA")
   )
 )
 ghr <- gen.hz.rules
