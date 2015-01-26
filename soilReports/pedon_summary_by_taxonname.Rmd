@@ -1,7 +1,7 @@
 # Pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Xenia"
+series <- "Genesee"
 ```
 
 ```{r load packages, include=FALSE}
@@ -29,7 +29,7 @@ h <- horizons(f)
 s <- site(f)
 
 h$hzname[is.na(h$hzname)] <- "NA"
-h$genhz <- generalize.hz(h$hzname, ghr$Xenia$n, ghr$Xenia$p)
+h$genhz <- generalize.hz(h$hzname, ghr$Genesee$n, ghr$Genesee$p)
 names(h)[15] <- "fragvoltotc"
 names(h)[16] <- "fragvoltot"
 
