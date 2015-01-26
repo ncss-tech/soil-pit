@@ -3,19 +3,23 @@
 
 This report summarizes the geographic setting of a list of musym within a file geodatabase. It is intented to be used to compare and contrast map units, and suggest possible Low, RV, and High values for components. 
 
-### Units
-Measure | Units
-------- | -----
-Elevation | meters
-Slope | percent
-Aspect | degrees
-Valley | unitless
-Wetness | unitless
-Relief | meters
-Ppt | millimeters
-Temp | Celsius
-Ffp | days
-Circularity | mupolygon length / mupolygon circumference
+
+```{r load-data, echo=FALSE, results='hide', message=FALSE}
+mukey <- c('159669','160795','163213','164424','159758','162087','1612865','1613014') # List of mukey
+dir <- "M:/geodata/project_data/"
+geodatabase <- "RTSD_Region_11_IND_FY15.gdb"
+office <- "11IND"
+
+# Defaults
+gdalpath <- "C:/Program Files/QGIS Dufour/bin"
+samplePercent <- 10
+p <- c(0,0.25,0.5,0.75,1)
+
+pd <- paste0(dir, office, "/")
+rd <- paste0(dir, "11REGION/")
+shp <- paste("mu", noquote(paste(mukey[c(1, length(mukey))], collapse=".", sep="")), sep="")
+cache <- paste0(pd, "cache/", shp, ".shp")
+```
 
 
 ```{r LoadPackages, include=F}
@@ -28,26 +32,10 @@ library(reshape)
 library(plyr)
 library(lattice)
 library(xtable)
+
+gdal_setInstallation(search_path=gdalpath, rescan=T)
 ```
-
-```{r load-data, echo=FALSE, results='hide', message=FALSE}
-mukey <- c('159669','160795','163213','164424','159758','162087','1612865','1613014') # List of mukey
-dir <- "M:/geodata/project_data/"
-geodatabase <- "RTSD_Region_11_IND_FY15.gdb"
-office <- "11IND"
-
-# Defaults
-gdal_setInstallation(search_path="C:/Program Files/QGIS Dufour/bin", rescan=T)
-samplePercent <- 10
-p <- c(0,0.25,0.5,0.75,1)
-
-pd <- paste0(dir, office, "/")
-rd <- paste0(dir, "11REGION/")
-shp <- paste("mu", noquote(paste(mukey[c(1, length(mukey))], collapse=".", sep="")), sep="")
-cache <- paste0(pd, "cache/", shp, ".shp")
-
-# Load packages
-
+```{r, echo=FALSE}
 ## local functions
 mapunit.summary<-function(mukey, samplePercent){
   # Import geodatabase
@@ -202,3 +190,17 @@ print(xtable(merge(aspect.cs.c, data.n, by="MUKEY")), type="html")
 ### *(min, 5th, 25th, median, 75th, 95th, max)*
 bwplot(MUKEY ~ value|variable, data=data.m, scales=list(x="free"))          
 ```
+
+### Units
+Measure | Units
+------- | -----
+Elevation | meters
+Slope | percent
+Aspect | degrees
+Valley | unitless
+Wetness | unitless
+Relief | meters
+Ppt | millimeters
+Temp | Celsius
+Ffp | days
+Circularity | mupolygon length / mupolygon circumference
