@@ -34,13 +34,13 @@ library(xtable)
 ```
 
 ```{r load-data, echo=FALSE, results='hide', message=FALSE}
-mukey <- c('159669','159758','160795','160824','162087','163213','164424','1612865','1613014') # List of mukey
+mukey <- c('159669','160795','163213','164424','159758','162087','1612865','1613014') # List of mukey
 dir <- "M:/geodata/project_data/"
 geodatabase <- "RTSD_Region_11_IND_FY15.gdb"
 office <- "11IND"
 
 # Defaults
-setwd("C:/R/stools/mapunitSummary")
+setwd("C:/R/soil-pit/soilReports")
 gdal_setInstallation(search_path="C:/Program Files/QGIS Dufour/bin", rescan=T)
 samplePercent <- 10
 p <- c(0,0.25,0.5,0.75,1)
