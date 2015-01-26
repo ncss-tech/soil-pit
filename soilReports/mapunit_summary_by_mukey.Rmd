@@ -40,7 +40,6 @@ geodatabase <- "RTSD_Region_11_IND_FY15.gdb"
 office <- "11IND"
 
 # Defaults
-setwd("C:/R/soil-pit/soilReports")
 gdal_setInstallation(search_path="C:/Program Files/QGIS Dufour/bin", rescan=T)
 samplePercent <- 10
 p <- c(0,0.25,0.5,0.75,1)
