@@ -1,24 +1,21 @@
----
-output:
-  html_document: default
-  pdf_document: default
-  word_document: default
----
+
 # Map Unit GIS Summary Report
 
 This report summarizes the geographic setting of a list of musym within a file geodatabase. It is intented to be used to compare and contrast map units, and suggest possible Low, RV, and High values for components. 
 
 ### Units
-Elevation = meters,
-Slope = percent,
-Aspect = degrees,
-Valley = unitless,
-Wetness = unitless,
-Relief = meters,
-Ppt = millimeters,
-Temp = Celsius,
-Ffp = days,
-Circularity is a ratio of polygon length / circumference of the polygon were it a perfect circle. So the circularity of a perfect circle = 1. This is an estimate of shape complexity.
+Measure | Units
+------- | -----
+Elevation | meters
+Slope | percent
+Aspect | degrees
+Valley | unitless
+Wetness | unitless
+Relief | meters
+Ppt | millimeters
+Temp | Celsius
+Ffp | days
+Circularity | mupolygon length / mupolygon circumference
 
 
 ```{r LoadPackages, include=F}
