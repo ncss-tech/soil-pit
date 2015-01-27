@@ -139,7 +139,14 @@ print(xtable(prop.table(xtabs(~MUSYM+mrvbfBreaks,data=data), margin=1)*100, digi
 ```{r, echo=FALSE, results="asis"}
 data.m <- melt(data, id.vars="MUSYM", measure.vars=c("elev", "slope", "aspect", "mast", "temp", "ppt", "ffp"))
 data.cs <- ddply(data.m, .(variable,MUSYM), .fun=conditional.l.rv.h.summary)
-print(xtable(cast(data.cs, MUSYM ~ variable, value='range')), type="html")
+data.cs.c <- cast(data.cs, MUSYM ~ variable, value='range')
+data.n <- ddply(data, .(MUSYM), .drop=T, summarize, n=length(MUSYM))
+print(xtable(merge(data.cs.c, data.n, by="MUSYM")), type="html")
+aspect.m <- melt(data, id.vars="MUSYM", measure.vars=c("aspect"))
+aspect.m$value <- circular(aspect.m$value, template="geographic", units="degrees", modulo="2pi")
+aspect.cs <- ddply(aspect.m, .(variable,MUSYM), .fun=conditional.l.rv.h.summary)
+aspect.cs.c <- cast(aspect.cs, MUSYM ~ variable, value='range')
+print(xtable(merge(aspect.cs.c, data.n, by="MUSYM")), type="html")
 ```
 
 ## Plot of soil map units
