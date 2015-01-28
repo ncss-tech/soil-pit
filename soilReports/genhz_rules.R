@@ -35,8 +35,13 @@ gen.hz.rules <- list(
   "Patton"=list(
     n=c("Ap", "A", "E", "Bg", "Bt", "2Bt", "BCt", "CB", "2BCt", "2CB", "Cd", "2Cd", "Cg", "NA"),
     p=c("Ap|AP|1A|A1|A2|A3|A p|AB|A&B|Ab|Ag1", "^A$", "E", "BE", "Bg|Bg1|Bg2|Bg21|Bg22|Bg3|Bg4", "Bt|BT|1B|B2|B3|B4|BA|B1|B t1|B t2|2B t3|2B t4|2Bk|BW|Bw|B&A|Bt3|Btk|2B5|B t3|B t4|B t5|2Bd3", "BC|Bc2", "^B$", "C", "Cd", "2H2|2H3|2H4|2H5d|2R|3R|3H3|3H4|3H5|3H6d|H1|H2|H3|H4|H5|H6|H7", "^H$", "Oi", "R", "NA")
+  ),
+  "Cincinnati"=list(
+    n=c("Ap", "Btx", "2Bt", "3Bt", "3B't", "3C", "NA"),
+    p=c("^A", "^B t|^Bt|^B |^B1", "^2B|^B21|^B22|^B23|^B24|^IIB", "^3B|^IIIB", "3B't", "3C", "NA")
   )
 )
+
 ghr <- gen.hz.rules
 
 # summary(factor(f$genhz))
