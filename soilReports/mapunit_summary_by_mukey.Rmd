@@ -32,6 +32,7 @@ library(reshape)
 library(plyr)
 library(lattice)
 library(xtable)
+library(maps)
 
 gdal_setInstallation(search_path=gdalpath, rescan=T)
 ```
@@ -132,64 +133,78 @@ mupolygon <- data.l$mupolygon
 sapolygon <- data.l$sapolygon
 h <- length(levels(data.l$MUKEY))*3
 
-data$MUKEY_AS_MUSYM <- as.character(paste(data$MUKEY, data$AREASYMBOL, data$MUSYM))
+data$SSA_MUSYM_MUKEY <- as.character(paste(data$AREASYMBOL, data$MUSYM, data$MUKEY))
 data2 <- data
 data2$MUKEY <- "representative"
-data2$MUKEY_AS_MUSYM <- "representative"
+data2$SSA_MUSYM_MUKEY <- "representative"
 data <- rbind(data, data2)
 ```
 
 
 ## Plot of soil map units
 ```{r plot soil map units, echo=FALSE}
-spplot(mupolygon, zcol="MUKEY", scales=list(draw=T), col.regions=bpy.colors(length(mukey)), lty=0, sp.layout=list("sp.polygons", sapolygon))
+temp <- spTransform(mupolygon, CRS("+init=epsg:4326"))
+plot(temp)
+map("county", add=T)
+map("state",lwd=2,add=T)
+map.axes()
 ```
 
 
 ## Soil polygon metrics
+Five number summary (min, 25th, median, 75th, max)(percentiles) and contingency table (counts) 
+
 ```{r soil polygon metrics, echo=FALSE, results='asis'}
 pol <- data.frame(mupolygon)
 pol.m <- melt(pol, id.vars="MUKEY", measure.vars=c("Acres", "Circularity"))
-pol.as.m <- melt(pol, id.vars=c("MUKEY", "AREASYMBOL"), measure.vars=c("Acres"))
-pol.as.cs1 <- ddply(pol.as.m, .(MUKEY, AREASYMBOL, variable), .fun=conditional.l.rv.h.summary)
-pol.as.cs2 <- ddply(pol.as.m, .(MUKEY, AREASYMBOL, variable), summarize, nPolygons=length(value), nArces=sum(value))[, c(1,2,4,5)]
-pol.as.me <- merge(pol.as.cs1, pol.as.cs2, by=c("MUKEY", "AREASYMBOL"))
+pol.as.m <- melt(pol, id.vars=c("AREASYMBOL", "MUSYM", "MUKEY"), measure.vars=c("Acres"))
+pol.as.cs1 <- ddply(pol.as.m, .(AREASYMBOL, MUSYM, MUKEY, variable), .fun=conditional.l.rv.h.summary)
+pol.as.cs2 <- ddply(pol.as.m, .(AREASYMBOL, MUSYM, variable), summarize, nPolygons=length(value), nArces=sum(value))[, c(1, 2, 4, 5)]
+pol.as.me <- merge(pol.as.cs1, pol.as.cs2, by=c("AREASYMBOL", "MUSYM"))
 print(xtable(pol.as.me, digits=0, caption="Summary of MUKEY by AREASYMBOL"), type="html", caption.placement="top")
 ```
 
 ## Polygon Boxplots
-### *(min, 5th, 25th, median, 75th, 95th, max)*
+Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles)
+
 ```{r bwplot of polygon metrics, echo=FALSE}
 bwplot(MUKEY ~ value|variable, data=pol.m, scales=list(x="free"))
 ```
 
 ## Percentages
+Contingency tables (percent) 
+
 ```{r percentage by mukey, echo=FALSE, results='asis'}
 ## Create descriptive and graphical summary of map unit
-print(xtable(prop.table(xtabs(~MUKEY_AS_MUSYM+slopeBreaks,data=data), margin=1)*100, digits=0, caption="Slope breaks"), type="html", caption.placement="top")
-print(xtable(prop.table(xtabs(~MUKEY_AS_MUSYM+aspectBreaks,data=data), margin=1)*100, digits=0, caption="Aspect breaks"), type="html", caption.placement="top")
-print(xtable(prop.table(xtabs(~MUKEY_AS_MUSYM+valleysBreaks,data=data), margin=1)*100, digits=0, caption="Upland vs. lowland"), type="html", caption.placement="top")
+print(xtable(prop.table(xtabs(~SSA_MUSYM_MUKEY+slopeBreaks,data=data), margin=1)*100, digits=0, caption="Slope breaks"), type="html", caption.placement="top")
+print(xtable(prop.table(xtabs(~SSA_MUSYM_MUKEY+aspectBreaks,data=data), margin=1)*100, digits=0, caption="Aspect breaks"), type="html", caption.placement="top")
+print(xtable(prop.table(xtabs(~SSA_MUSYM_MUKEY+valleysBreaks,data=data), margin=1)*100, digits=0, caption="Upland vs. lowland"), type="html", caption.placement="top")
 ```
 
 ## Percentiles
-### *(e.g. min, 25th, median, 75th, max)*
+Five number summary (min, 25th, median, 75th, max)(percentiles)
+
 ```{r quantiles by mukey, echo=FALSE, results="asis"}
-data.m <- melt(data, id.vars="MUKEY_AS_MUSYM", measure.vars=c("elev", "slope", "valleys", "wetness", "relief", "ppt", "temp", "ffd"))
-data.cs <- ddply(data.m, .(variable, MUKEY_AS_MUSYM), .fun=conditional.l.rv.h.summary)
-data.cs.c <- cast(data.cs, MUKEY_AS_MUSYM ~ variable, value='range')
-data.n <- ddply(data, .(MUKEY_AS_MUSYM), .drop=T, summarize, n=length(MUKEY))
-print(xtable(merge(data.cs.c, data.n, by="MUKEY_AS_MUSYM")), type="html")
-aspect.m <- melt(data, id.vars="MUKEY_AS_MUSYM", measure.vars=c("aspect"))
+data.m <- melt(data, id.vars="SSA_MUSYM_MUKEY", measure.vars=c("elev", "slope", "valleys", "wetness", "relief", "ppt", "temp", "ffd"))
+data.cs <- ddply(data.m, .(variable, SSA_MUSYM_MUKEY), .fun=conditional.l.rv.h.summary)
+data.cs.c <- cast(data.cs, SSA_MUSYM_MUKEY ~ variable, value='range')
+data.n <- ddply(data, .(SSA_MUSYM_MUKEY), .drop=T, summarize, n=length(MUKEY))
+print(xtable(merge(data.cs.c, data.n, by="SSA_MUSYM_MUKEY")), type="html")
+aspect.m <- melt(data, id.vars="SSA_MUSYM_MUKEY", measure.vars=c("aspect"))
 aspect.m$value <- circular(aspect.m$value, template="geographic", units="degrees", modulo="2pi")
-aspect.cs <- ddply(aspect.m, .(variable, MUKEY_AS_MUSYM), .fun=conditional.l.rv.h.summary)
-aspect.cs.c <- cast(aspect.cs, MUKEY_AS_MUSYM ~ variable, value='range')
-print(xtable(merge(aspect.cs.c, data.n, by="MUKEY_AS_MUSYM")), type="html")
+aspect.cs <- ddply(aspect.m, .(variable, SSA_MUSYM_MUKEY), .fun=conditional.l.rv.h.summary)
+aspect.cs.c <- cast(aspect.cs, SSA_MUSYM_MUKEY ~ variable, value='range')
+print(xtable(merge(aspect.cs.c, data.n, by="SSA_MUSYM_MUKEY")), type="html")
 ```
 
 ## Boxplots of map unit properties
+Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles)
+
 ```{r bwplot of map unit properties, echo=FALSE}
 ### *(min, 5th, 25th, median, 75th, 95th, max)*
-bwplot(MUKEY_AS_MUSYM ~ value|variable, data=data.m, scales=list(x="free"))          
+temp <- factor(unique(data$SSA_MUSYM_MUKEY))
+
+bwplot(factor(SSA_MUSYM_MUKEY, levels=levels(temp)[length(levels(temp)):1]) ~ value|variable, data=data.m, scales=list(x="free"))          
 ```
 
 ### Units

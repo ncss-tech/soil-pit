@@ -73,6 +73,18 @@ test
 
 ogr2ogr -where "MUSYM==362" "E:/geodata/project_data/11ATL/cache/11ATL.shp" "E:/geodata/project_data/11ATL/11ATL.gdb" "MUPOLYGON"
 
+# Subset by SQL query
+   ogr2ogr(
+      src_datasource_name="M:/geodata/project_data/11GAL/RTSD_Region_11_GAL_FY15.gdb",
+      dst_datasource_name="M:/geodata/project_data/11GAL/cache/temp.shp",
+      layer="MUPOLYGON",
+      where=test,
+      s_srs=CRS("+init=epsg:5070"),
+      t_srs=CRS("+init=epsg:5070"),
+      overwrite=T,
+      verbose=TRUE
+      )
+
 # Clip polygon using extent
 ogr2ogr(
   src_datasource_name="M:/geodata/soils/MLRA_Soil_Survey_Areas_May2014.shp",

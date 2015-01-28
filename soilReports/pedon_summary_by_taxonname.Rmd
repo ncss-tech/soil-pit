@@ -123,7 +123,7 @@ hc.c <- cast(hc.cs, genhz ~ variable, value='range')
 
 
 ## Horizon designations by generic horizon
-Contigency table (counts) 
+Contingency table (counts) 
 
 ```{r, echo=FALSE, results='asis'}
 print(xtable(addmargins(table(h$genhz, h$hzname)), digits=0), type="html", width=10) 
@@ -160,21 +160,21 @@ print(xtable(addmargins(table(h$genhz, h$texture)), digits=0), type="html")
 ```
 
 ## Dry hue by generic horizon
-Contigency table (counts) 
+Contingency table (counts) 
 
 ```{r, echo=FALSE, results='asis'}
 print(xtable(addmargins(table(h$genhz, h$d_hue)), digits=0), type="html")
 ```
 
 ## Moist hue by generic horizon
-Contigency table (counts) 
+Contingency table (counts) 
 
 ```{r, echo=FALSE, results='asis'}
 print(xtable(addmargins(table(h$genhz, h$m_hue)), digits=0), type="html")
 ```
 
 ## Effervescence by generic horizon
-Contigency table (counts) 
+Contingency table (counts) 
 
 ```{r, echo=FALSE, results='asis'}
 print(xtable(addmargins(table(h$genhz, h$effervescence)), digits=0), type="html")
