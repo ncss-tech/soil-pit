@@ -58,6 +58,8 @@ conditional.l.rv.h.summary <- function(x) {
 }
 ```
 ## Plot of all pedons in selected set
+Pedons that do not have their Std_Latitude and Std_Longitude columns populated in the NASIS Site table are currently not ploted on the map.
+
 ```{r plot of pedons and locations, echo=FALSE}
 test <- s[complete.cases(c(s$x)),]
 test <- s[complete.cases(c(s$y)),]
@@ -86,13 +88,17 @@ s.summary <- ddply(s.m, .(variable), .fun=conditional.l.rv.h.summary)
 
 
 ## Box plots of surface rock fragments
-```{r bwplot for rf}
+Graphical five number summary (outliers, 5th, 25th, median, 75th, 95th, outliers)
+
+```{r bwplot for rf, echo=FALSE}
 bwplot(variable~value, data=s.m, scales=list(x="free"), xlab="percent")          
 ```
 
 
-## Range in characteristics of surface rock fragments (min, 10th, median, 90th, max)
-```{r, results='asis'}
+## Range in characteristics of surface rock fragments
+Five number summary (min, 25th, median, 75th, max)(percentiles)
+
+```{r, echo=FALSE, results='asis'}
 print(xtable(cast(s.summary, ~variable, value='range')), type="html")
 ```
 
@@ -117,49 +123,67 @@ hc.c <- cast(hc.cs, genhz ~ variable, value='range')
 
 
 ## Horizon designations by generic horizon
+Contigency table (counts) 
+
 ```{r, echo=FALSE, results='asis'}
 print(xtable(addmargins(table(h$genhz, h$hzname)), digits=0), type="html", width=10) 
 ```
 
 
-## Range in characteristics for generic horizons (min, 10th, median, 90th, max)
-```{r, results='asis'}
+## Range in characteristics for generic horizons 
+Five number summary (min, 25th, median, 75th, max)(percentiles)
+
+```{r, echo=FALSE, results='asis'}
 print(xtable(hp.c), type="html")
 print(xtable(hc.c), type="html")
 ```
 
 ## Box plots of numeric variables by generic horizon
+Graphical five number summary (outliers, 5th, 25th, median, 75th, 95th, outliers)
+
 ```{r, echo=FALSE}
 bwplot(factor(genhz, levels=levels(h$genhz)[length(levels(h$genhz)):1]) ~ value|variable, data=rbind(hp.m, hc.m, thk.m), scales=list(x="free"))          
 ```
 
 ## Texture by generic horizon
+Contigency table (counts) 
+
 ```{r, echo=FALSE, results='asis'}
 print(xtable(addmargins(table(h$genhz, h$texture_class)), digits=0), type="html")
 ```
 
 ## Tex Mod & Class by generic horizon
+Contigency table (counts) 
+
 ```{r, echo=FALSE, results='asis'}
 print(xtable(addmargins(table(h$genhz, h$texture)), digits=0), type="html")
 ```
 
 ## Dry hue by generic horizon
+Contigency table (counts) 
+
 ```{r, echo=FALSE, results='asis'}
 print(xtable(addmargins(table(h$genhz, h$d_hue)), digits=0), type="html")
 ```
 
 ## Moist hue by generic horizon
+Contigency table (counts) 
+
 ```{r, echo=FALSE, results='asis'}
 print(xtable(addmargins(table(h$genhz, h$m_hue)), digits=0), type="html")
 ```
 
 ## Effervescence by generic horizon
+Contigency table (counts) 
+
 ```{r, echo=FALSE, results='asis'}
 print(xtable(addmargins(table(h$genhz, h$effervescence)), digits=0), type="html")
 ```
 
 
 ## Depths and thickness of generic horizons
+Five number summary (min, 25th, median, 75th, max)(percentiles)
+
 ```{r, echo=FALSE, results='asis'}
 genhz.thk <- ddply(h, .(phiid, genhz), summarize, thickness=sum(hzdepb-hzdept))
 genhz.m <- melt(h, id.vars="genhz", measure.vars=c('hzdept', 'hzdepb'))
@@ -171,11 +195,15 @@ print(xtable(cast(d.cs, genhz ~ variable, value='range'), digits=0), type="html"
 
 
 ## Boxplot of generic horizon thicknesses
+Graphical five number summary (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles)
+
 ```{r, echo=FALSE}
 bwplot(factor(genhz, levels=levels(h$genhz)[length(levels(h$genhz)):1]) ~ value|variable, data=genhz.m, scales=list(x="free"), xlab="cm", horizontal=T)          
 ```
 
 ## Depths and thickness of diagnostic horizons
+Five number summary (min, 25th, median, 75th, max)(percentiles)
+
 ```{r, echo=FALSE, results='asis'}
 diag.thk <- ddply(f@diagnostic, .(peiid, diag_kind), summarize, thickness=sum(featdepb-featdept))
 diag.m <- melt(f@diagnostic, id.vars="diag_kind", measure.vars=c('featdept', 'featdepb'))
@@ -184,8 +212,11 @@ diag.m <- rbind(diag.m, diag.thk.m)
 d.cs <- ddply(diag.m, .(variable, diag_kind), .fun=conditional.l.rv.h.summary)
 print(xtable(cast(d.cs, diag_kind ~ variable, value='range'), digits=0), type="html")
 ```
+
 ## Boxplot of diagnostic horizon thicknesses
-```{r}
+Graphical five number summary (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles)
+
+```{r, echo=FALSE}
 bwplot(diag_kind ~ value|variable, data=diag.m, scales=list(x="free"), xlab="cm")          
 ```
 
