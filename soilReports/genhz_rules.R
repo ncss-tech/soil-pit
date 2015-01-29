@@ -18,27 +18,27 @@ gen.hz.rules <- list(
   ),
   "Crosby"=list(
     n=c("Ap", "A", "BE", "E", "Bt", "Btg", "CB", "2BCt", "2CB", "Cd", "2Cd", "NA"),
-    p=c("Ap|AP|1A|A1|A2|A p", "^A$", "E", "BE", "Bt|BT|1B|B2|B3|BA|B1|B t1|B t2|2B t3|2B t4", "BC", "^B$", "C", "Cd","NA")
+    p=c("^Ap|AP", "^A$", "BE", "E", "^B", "BC", "C", "Cd","NA")
   ),
   "Miami"=list(
     n=c("Ap", "A", "Bt", "BCt", "CB", "2BCt", "2CB", "Cd", "2Cd", "NA"),
-    p=c("Ap|AP|1A|A1|A2|A3|A p|AB|A&B", "^A$", "E", "BE", "Bt|BT|1B|B2|B3|B4|BA|B1|B t1|B t2|2B t3|2B t4|2Bk|BW|B&A|Bt3|Btk", "BC", "^B$", "C", "Cd", "2H3|2H4|2H5d|2R|3H4|3H5|3H6d|H1|H2|H3|H4|H5|H6|H7", "^H$", "Oi", "R", "NA")
+    p=c("Ap|AP", "^A", "Bt|BT|1B|B2|B3|B4|BA|B1|B t1|B t2|2B t3|2B t4|2Bk|BW|B&A|Bt3|Btk", "BC", "^B$", "C", "Cd", "NA")
   ),
   "Mahalasville"=list(
     n=c("Ap", "A", "Bt", "BCt", "CB", "2BCt", "2CB", "Cd", "2Cd", "NA"),
-    p=c("Ap|AP|1A|A1|A2|A3|A p|AB|A&B", "^A$", "E", "BE", "Bt|BT|1B|B2|B3|B4|BA|B1|B t1|B t2|2B t3|2B t4|2Bk|BW|B&A|Bt3|Btk", "BC", "^B$", "C", "Cd", "2H2|2H3|2H4|2H5d|2R|3H3|3H4|3H5|3H6d|H1|H2|H3|H4|H5|H6|H7", "^H$", "Oi", "R", "NA")
+    p=c("Ap|AP", "^A", "Bt|BT|1B|B2|B3|B4|BA|B1|B t1|B t2|2B t3|2B t4|2Bk|BW|B&A|Bt3|Btk", "BC", "^B$", "C", "Cd", "NA")
   ),
   "Xenia"=list(
     n=c("Ap", "A", "E", "Bt", "2Bt", "BCt", "CB", "2BCt", "2CB", "Cd", "2Cd", "NA"),
-    p=c("Ap|AP|1A|A1|A2|A3|A p|AB|A&B|Ab", "^A$", "E", "BE", "Bt|BT|1B|B2|B3|B4|BA|B1|B t1|B t2|2B t3|2B t4|2Bk|BW|B&A|Bt3|Btk|2B5|B t3|B t4|B t5|2Bd3", "BC|Bc2", "^B$", "C", "Cd", "2H2|2H3|2H4|2H5d|2R|3R|3H3|3H4|3H5|3H6d|H1|H2|H3|H4|H5|H6|H7", "^H$", "Oi", "R", "NA")
+    p=c("Ap", "^A", "E", "Bt|BT|1B|B2|B3|B4|BA|B1|B t1|B t2|2B t3|2B t4|2Bk|BW|B&A|Bt3|Btk|2B5|B t3|B t4|B t5|2Bd3", "BC|Bc2", "^B$", "C", "Cd", "NA")
   ),
   "Patton"=list(
     n=c("Ap", "A", "E", "Bg", "Bt", "2Bt", "BCt", "CB", "2BCt", "2CB", "Cd", "2Cd", "Cg", "NA"),
-    p=c("Ap|AP|1A|A1|A2|A3|A p|AB|A&B|Ab|Ag1", "^A$", "E", "BE", "Bg|Bg1|Bg2|Bg21|Bg22|Bg3|Bg4", "Bt|BT|1B|B2|B3|B4|BA|B1|B t1|B t2|2B t3|2B t4|2Bk|BW|Bw|B&A|Bt3|Btk|2B5|B t3|B t4|B t5|2Bd3", "BC|Bc2", "^B$", "C", "Cd", "2H2|2H3|2H4|2H5d|2R|3R|3H3|3H4|3H5|3H6d|H1|H2|H3|H4|H5|H6|H7", "^H$", "Oi", "R", "NA")
+    p=c("Ap", "^A", "E", "^Bg", "^Bt|BT|1B|B2|B3|B4|BA|B1|^B t|2Bk|BW|Bw|B&A|Bt3|Btk|2B5|2Bd3", "BC|Bc2", "C", "Cd", "NA")
   ),
   "Cincinnati"=list(
-    n=c("Ap", "Btx", "2Bt", "3Bt", "3B't", "3C", "NA"),
-    p=c("^A", "^B t|^Bt|^B |^B1", "^2B|^B21|^B22|^B23|^B24|^IIB", "^3B|^IIIB", "3B't", "3C", "NA")
+    n=c("Ap", "Bt", "Btx", "2Bt", "3Bt", "3B't", "3C", "NA"),
+    p=c("^A", "^Bt1|^Bt2|^B21t|^B22T|BT", "^BX|Bx2|^2Btx|^2Bx|^Btx", "^IIB", "^3Btb|^3B t|Bt3|^IIIB", "3B't", "3C|^C|IIIC", "^2C|^4B|^4C|^5|BA|E|R")
   )
 )
 
