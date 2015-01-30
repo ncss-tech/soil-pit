@@ -4,10 +4,11 @@
 ############################################################################
 makeNedList <- function(geodatabase, office){
   ned.l <- list()
-  nedtiles <- readOGR(dsn="C:/geodata/elevation/ned/tiles", layer="ned_13arcsec_g", encoding="ESRI Shapefile")
+  nedtiles <- readOGR(dsn="M:/geodata/elevation/ned/tiles", layer="ned_13arcsec_g", encoding="ESRI Shapefile")
   nedtiles <- spTransform(nedtiles, CRS("+init=epsg:5070"))
   for(i in seq(office)){
-    sapolygon <- readOGR(dsn=geodatabase[i], layer="SAPOLYGON", encoding="OpenFileGDB")
+    sapolygon <- readOGR(dsn=geodatabase[i], layer="ca795_b", encoding="OpenFileGDB")
+    sapolygon <- spTransform(sapolygon, CRS("+init=epsg:5070"))
     proj4string(sapolygon) <- CRS(as.character(NA))
     proj4string(sapolygon) <- proj4string(nedtiles)
     int <- intersect(sapolygon, nedtiles)
@@ -59,7 +60,7 @@ batchNlcdSubset <- function(nlcdpath, nlcdpathlist){
       r="near",
       tr=c(30,30),
       cutline=geodatabase[i],
-      cl="SAPOLYGON",
+      cl="ca795_b",
       crop_to_cutline=T,
       tap=T,
       ot="Byte",

@@ -30,13 +30,13 @@ gdal_setInstallation(search_path="C:/OSGeo4W64/bin", rescan=T)
 Next numerous parameters need to be set which get used later by many of the functions or commands. Modify these file paths and lists as necessary. For example, I organized my files by "C:/geodata/project_data/11ATL"", so 11 will have to replace by 10 or 2 for your respective Regions.
 ```{r, eval=FALSE}
 # Set parameters
-source("C:/Users/stephen.roecker/Documents/stools/trunk/gis/nedFunctions.R")
-source("C:/Users/stephen.roecker/Documents/stools/trunk/gis/gdalUtilsFunctions.R")
+source("C:/Users/stephen.roecker/Documents/soil-pit/trunk/geoprocessing/nedFunctions.R")
+source("C:/Users/stephen.roecker/Documents/soil-pit/trunk/geoprocessing/gdalUtilsFunctions.R")
 tile.p <- "M:/geodata/elevation/ned/tiles/img/"
-office.l <- c("11ATL", "11AUR", "11CAR", "11CLI", "11FIN", "11GAL", "11IND", "11JUN", "11SPR", "11UNI", "11WAV")
+office.l <- c("8VIC")
 pd.p <- "M:/geodata/project_data/"
-geodatabase <- paste(pd.p, office.l,"/11", office.l, ".gdb", sep="")
-nlcd.p <- "D:/geodata/land_use_land_cover/nlcd_2011_landcover_2011_edition_2014_03_31.img"
+geodatabase <- paste("M:/geodata/project_data/8VIC/FG795_OFFICIAL.gdb")
+nlcd.p <- "M:/geodata/land_use_land_cover/nlcd_2011_landcover_2011_edition_2014_03_31.img"
 nlcd.p.l <- paste(pd.p, office.l,"/nlcd", 30, "m_11", office.l, "_lulc2011.tif", sep="")
 crsarg <- CRSargs(CRS("+init=epsg:5070"))
 ```
@@ -61,9 +61,9 @@ The NLCD layer is used as a standard coordinate reference system from which to w
 ## Mosaic tile list. 
 ```{r, eval=FALSE}
 mo.l <- lapply(ned.l, function(x) paste(tile.p, "img", x, "_13.img", sep=""))
-dst.p <- paste(pd.p, office.l[i], "/ned09d_11", office.l[i], ".tif", sep="")
+dst.p <- paste(pd.p, office.l, "/ned09d_11", office.l, ".tif", sep="")
 
-mosaicList(mo.l, dst.p)
+mosaicList(mo.l, dst.p, "Float32", c("COMPRESS=DEFLATE", "TILED=YES", "BIGTIFF=YES"), -99999)
 ```
 
 

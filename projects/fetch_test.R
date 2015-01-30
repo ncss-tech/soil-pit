@@ -56,14 +56,16 @@ legend.m.t <- function () {
 }
 
 legend.m.df <- unique(legend.m.t())
-names(legend.m.df)[2] <- "mukey"
-test <- unique(legend.m.df)
-test$ES109 <- 109
 
 test.me <- merge(mapunit.df, projectmapunit.df, by.x="muiid", by.y="muiidref", all=TRUE)
 test.me <- merge(project.df, test.me, by.x="projectiid", by.y="projectiidref", , all=TRUE)
+test.me <- merge(legend.m.df, test.me, by.x="mapunitiid", by.y="projectiidref", , all=TRUE)
 names(test.me)[3] <- "mukey"
 test.me <- subset(test.me, select=c("mukey"))
+
+
+
+
 
 
 # Definition query
