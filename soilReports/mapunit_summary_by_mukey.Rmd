@@ -81,7 +81,7 @@ mapunit.summary<-function(mukey, samplePercent){
       )
   
     names(g10.st) <- c("slope", "aspect")
-    names(g30.st) <- c("elev", "wetness", "valleys", "relief")
+    names(g30.st) <- c("elev", "wetness", "valley", "relief")
     names(g800.st) <- c("ppt", "temp")
     names(g1000.st) <- c("ffd")
 
@@ -100,15 +100,15 @@ mapunit.summary<-function(mukey, samplePercent){
   
     slope.list<-c(0,2,4,8,15,30,50,75,350)
     aspect.list<-c(0,23,68,113,158,203,248,293,338,360) 
-    valleys.list<-c(0,0.5,30)
+    valley.list<-c(0,0.5,30)
   
     data$slopeBreaks <- cut(data$slope,breaks=slope.list, right=FALSE)
     data$aspectBreaks <- cut(data$aspect,breaks=aspect.list, right=FALSE)
-    data$valleysBreaks <- cut(data$valleys,breaks=valleys.list, right=FALSE)
+    data$valleyBreaks <- cut(data$valley,breaks=valley.list, right=FALSE)
 
     levels(data$slopeBreaks) <- c("0-2","2-4","4-8","8-15","15-30","30-50","50-75","75-350")
     levels(data$aspectBreaks) <- c("N","NE","E","SE","S","SW","W","NW","N")
-    levels(data$valleysBreaks) <- c("upland","lowland")
+    levels(data$valleyBreaks) <- c("upland","lowland")
   
   data.l <- list(data=data, mupolygon=mupolygon, sapolygon=sapolygon)
   save(data.l, file=paste0(cache, ".Rdata"))
@@ -135,8 +135,8 @@ h <- length(levels(data.l$MUKEY))*3
 
 data$SSA_MUSYM_MUKEY <- as.character(paste(data$AREASYMBOL, data$MUSYM, data$MUKEY))
 data2 <- data
-data2$MUKEY <- "representative"
-data2$SSA_MUSYM_MUKEY <- "representative"
+data2$MUKEY <- "new_mlra_mapunit"
+data2$SSA_MUSYM_MUKEY <- "new_mlra_mapunit"
 data <- rbind(data, data2)
 ```
 
@@ -178,14 +178,14 @@ Contingency tables (percent)
 ## Create descriptive and graphical summary of map unit
 print(xtable(prop.table(xtabs(~SSA_MUSYM_MUKEY+slopeBreaks,data=data), margin=1)*100, digits=0, caption="Slope breaks"), type="html", caption.placement="top")
 print(xtable(prop.table(xtabs(~SSA_MUSYM_MUKEY+aspectBreaks,data=data), margin=1)*100, digits=0, caption="Aspect breaks"), type="html", caption.placement="top")
-print(xtable(prop.table(xtabs(~SSA_MUSYM_MUKEY+valleysBreaks,data=data), margin=1)*100, digits=0, caption="Upland vs. lowland"), type="html", caption.placement="top")
+print(xtable(prop.table(xtabs(~SSA_MUSYM_MUKEY+valleyBreaks,data=data), margin=1)*100, digits=0, caption="Upland vs. lowland"), type="html", caption.placement="top")
 ```
 
 ## Percentiles
 Five number summary (min, 25th, median, 75th, max)(percentiles)
 
 ```{r quantiles by mukey, echo=FALSE, results="asis"}
-data.m <- melt(data, id.vars="SSA_MUSYM_MUKEY", measure.vars=c("elev", "slope", "valleys", "wetness", "relief", "ppt", "temp", "ffd"))
+data.m <- melt(data, id.vars="SSA_MUSYM_MUKEY", measure.vars=c("elev", "slope", "valley", "wetness", "relief", "ppt", "temp", "ffd"))
 data.cs <- ddply(data.m, .(variable, SSA_MUSYM_MUKEY), .fun=conditional.l.rv.h.summary)
 data.cs.c <- cast(data.cs, SSA_MUSYM_MUKEY ~ variable, value='range')
 data.n <- ddply(data, .(SSA_MUSYM_MUKEY), .drop=T, summarize, n=length(MUKEY))
@@ -207,7 +207,7 @@ temp <- factor(unique(data$SSA_MUSYM_MUKEY))
 bwplot(factor(SSA_MUSYM_MUKEY, levels=levels(temp)[length(levels(temp)):1]) ~ value|variable, data=data.m, scales=list(x="free"))          
 ```
 
-### Units
+### Variables
 Abbreviation| Measure                             | Units
 ------------|-------------------------------------| -----
 elev        | elevation                           | meters
