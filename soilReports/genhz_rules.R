@@ -17,8 +17,8 @@ gen.hz.rules <- list(
     p=c("Ap|AP|1A|A1|A2|A p", "^A$", "E", "BE", "Bt|BT|1B|B2|B3|BA|B1|B t1|B t2", "BC", "^B$", "C", "Cd","NA")
   ),
   "Crosby"=list(
-    n=c("Ap", "A", "BE", "E", "Bt", "Btg", "CB", "2BCt", "2CB", "Cd", "2Cd", "NA"),
-    p=c("^Ap|AP", "^A$", "BE", "E", "^B", "BC", "C", "Cd","NA")
+    n=c("Ap", "A", "BE", "Bt", "BCt", "Cd", "NA"),
+    p=c("^Ap|1A p", "1A|A", "BE|^E", "^1B t|^2B t|^2Bt|^B1|^B2", "^BC|1C|^2C|^C|", "Cd","^H|NA")
   ),
   "Miami"=list(
     n=c("Ap", "A", "Bt", "BCt", "CB", "2BCt", "2CB", "Cd", "2Cd", "NA"),
@@ -33,8 +33,8 @@ gen.hz.rules <- list(
     p=c("Ap", "^A", "E", "Bt|BT|1B|B2|B3|B4|BA|B1|B t1|B t2|2B t3|2B t4|2Bk|BW|B&A|Bt3|Btk|2B5|B t3|B t4|B t5|2Bd3", "BC|Bc2", "^B$", "C", "Cd", "NA")
   ),
   "Patton"=list(
-    n=c("Ap", "A", "E", "Bg", "Bt", "2Bt", "BCt", "CB", "2BCt", "2CB", "Cd", "2Cd", "Cg", "NA"),
-    p=c("Ap", "^A", "E", "^Bg", "^Bt|BT|1B|B2|B3|B4|BA|B1|^B t|2Bk|BW|Bw|B&A|Bt3|Btk|2B5|2Bd3", "BC|Bc2", "C", "Cd", "NA")
+    n=c("Ap", "Bg", "Cg", "NA"),
+    p=c("^A|1A", "^1B g|^B", "^2C|^C",  "Eg|^H|NA")
   ),
   "Cincinnati"=list(
     n=c("Ap", "Bt", "Btx", "2Bt", "3Bt", "3B't", "3C", "NA"),
