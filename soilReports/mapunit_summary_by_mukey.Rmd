@@ -5,7 +5,7 @@ This report summarizes the geographic setting of a list of MUKEY within a file g
 
 
 ```{r load-data, echo=FALSE, results='hide', message=FALSE}
-mukey <- c('159669','160795','163213','164424','159758','162087','1612865','1613014') # List of mukey
+mukey <- c('162342') # List of mukey
 dir <- "M:/geodata/project_data/"
 geodatabase <- "RTSD_Region_11_IND_FY15.gdb"
 office <- "11IND"
@@ -84,7 +84,7 @@ mapunit.summary<-function(mukey, samplePercent){
     names(g10.st) <- c("slope", "aspect")
     names(g30.st) <- c("elev", "wetness", "valley", "relief", "lulc")
     names(g800.st) <- c("ppt", "temp")
-    names(g1000.st) <- c("ffd")
+    names(g1000.st) <- c("ffp")
 
   
     # Extract geodata
@@ -190,7 +190,7 @@ print(xtable(prop.table(xtabs(~SSA_MUSYM_MUKEY+lulcBreaks,data=data), margin=1)*
 Five number summary (min, 25th, median, 75th, max)(percentiles)
 
 ```{r quantiles by mukey, echo=FALSE, results="asis"}
-data.m <- melt(data, id.vars="SSA_MUSYM_MUKEY", measure.vars=c("elev", "slope", "valley", "wetness", "relief", "ppt", "temp", "ffd"))
+data.m <- melt(data, id.vars="SSA_MUSYM_MUKEY", measure.vars=c("elev", "slope", "valley", "wetness", "relief", "ppt", "temp", "ffp"))
 data.cs <- ddply(data.m, .(variable, SSA_MUSYM_MUKEY), .fun=conditional.l.rv.h.summary)
 data.cs.c <- cast(data.cs, SSA_MUSYM_MUKEY ~ variable, value='range')
 data.n <- ddply(data, .(SSA_MUSYM_MUKEY), .drop=T, summarize, n=length(MUKEY))
@@ -223,5 +223,5 @@ wetness     | topographic wetness index           | unitless
 relief      | height above channel                | meters
 ppt         | annual precipitation                | millimeters
 temp        | anuual air temperature              | Celsius
-ffd         | frost free days                     | days
+ffp         | frost free period                   | days
 circularity | shape complexity                    | mupolygon length / mupolygon circumference
