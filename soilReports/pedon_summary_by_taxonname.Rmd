@@ -1,7 +1,11 @@
 # Pedon report
 ```{r enter soil series name}
 # Set soil series
+<<<<<<< .mine
+series <- "Genesee"
+=======
 series <- "Crosby"
+>>>>>>> .r81
 ```
 
 ```{r load packages, include=FALSE}
@@ -29,7 +33,11 @@ h <- horizons(f)
 s <- site(f)
 
 h$hzname[is.na(h$hzname)] <- "NA"
+<<<<<<< .mine
+h$genhz <- generalize.hz(h$hzname, ghr$Genesee$n, ghr$Genesee$p)
+=======
 h$genhz <- generalize.hz(h$hzname, ghr$Crosby$n, ghr$Crosby$p)
+>>>>>>> .r81
 names(h)[15] <- "fragvoltotc"
 names(h)[16] <- "fragvoltot"
 
