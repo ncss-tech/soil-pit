@@ -18,23 +18,23 @@ gen.hz.rules <- list(
   ),
   "Crosby"=list(
     n=c("Ap", "A", "BE", "Bt", "BCt", "Cd", "NA"),
-    p=c("^Ap|1A p", "1A|A", "BE|^E", "^1B t|^2B t|^2Bt|^B1|^B2", "^BC|1C|^2C|^C|", "Cd","^H|NA")
+    p=c("Ap|1A p", "1A|A", "BE|^E|1E", "^1B t|^2B t|^2Bt|^B1|^B2|^Btg|BTG|^Bg|^Bt|^BT", "1BC|2BC|3BC|^BC|BCT|1C|^2C|^C", "Cd","^2H|^3H|^4H|^5H|^H|R|NA")
   ),
   "Miami"=list(
-    n=c("Ap", "A", "Bt", "BCt", "CB", "2BCt", "2CB", "Cd", "2Cd", "NA"),
-    p=c("Ap|AP", "^A", "Bt|BT|1B|B2|B3|B4|BA|B1|B t1|B t2|2B t3|2B t4|2Bk|BW|B&A|Bt3|Btk", "BC", "^B$", "C", "Cd", "NA")
+    n=c("Ap", "E", "Bt", "BCt", "Cd", "2Cd", "NA"),
+    p=c("Ap|AP", "E", "Bt|BT|1B|B2|B3|B4|BA|B1|B t1|B t2|2B t3|2B t4|2Bk|BW|B&A|Bt3|Btk", "BC", "^B$", "C", "Cd", "NA")
   ),
   "Mahalasville"=list(
-    n=c("Ap", "A", "Bt", "BCt", "CB", "2BCt", "2CB", "Cd", "2Cd", "NA"),
-    p=c("Ap|AP", "^A", "Bt|BT|1B|B2|B3|B4|BA|B1|B t1|B t2|2B t3|2B t4|2Bk|BW|B&A|Bt3|Btk", "BC", "^B$", "C", "Cd", "NA")
+    n=c("Ap", "Btg", "2Btg", "2BCg", "2Cg", "NA"),
+    p=c("Ap|AP", "Bt|BT|1B|B2|B3|B4|BA|B1|B t1|B t2|2B t3|2B t4|2Bk|BW|B&A|Bt3|Btk", "BC", "^B$", "C", "Cd", "NA")
   ),
   "Xenia"=list(
-    n=c("Ap", "A", "E", "Bt", "2Bt", "BCt", "CB", "2BCt", "2CB", "Cd", "2Cd", "NA"),
-    p=c("Ap", "^A", "E", "Bt|BT|1B|B2|B3|B4|BA|B1|B t1|B t2|2B t3|2B t4|2Bk|BW|B&A|Bt3|Btk|2B5|B t3|B t4|B t5|2Bd3", "BC|Bc2", "^B$", "C", "Cd", "NA")
+    n=c("Ap", "E", "Bt", "2Bt", "2BCt", "2Cd", "NA"),
+    p=c("Ap", "E", "Bt|BT|1B|B2|B3|B4|BA|B1|B t1|B t2|2B t3|2B t4|2Bk|BW|B&A|Bt3|Btk|2B5|B t3|B t4|B t5|2Bd3", "BC|Bc2", "^B$", "C", "Cd", "NA")
   ),
   "Patton"=list(
     n=c("Ap", "Bg", "Cg", "NA"),
-    p=c("^A|1A", "^1B g|^B", "^2C|^C",  "Eg|^H|NA")
+    p=c("^A|1A", "^1B g|^B", "1C g|^2C|^C",  "Eg|^H|NA")
   ),
   "Cincinnati"=list(
     n=c("Ap", "Bt", "Btx", "2Bt", "3Bt", "3B't", "3C", "NA"),
