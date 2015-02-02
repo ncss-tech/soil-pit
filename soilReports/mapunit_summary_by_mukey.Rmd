@@ -198,7 +198,7 @@ print(xtable(merge(aspect.cs.c, data.n, by="SSA_MUSYM_MUKEY")), type="html")
 ```
 
 ## Boxplots of map unit properties
-Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles)
+Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles) 
 
 ```{r bwplot of map unit properties, echo=FALSE}
 ### *(min, 5th, 25th, median, 75th, 95th, max)*
