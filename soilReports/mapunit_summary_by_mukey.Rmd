@@ -5,7 +5,7 @@ This report summarizes the geographic setting of a list of MUKEY within a file g
 
 
 ```{r load-data, echo=FALSE, results='hide', message=FALSE}
-mukey <- c('162342') # List of mukey
+mukey <- c('159669','160795','163213','164424','159758','162087','1612865','1613014') # List of mukey
 dir <- "M:/geodata/project_data/"
 geodatabase <- "RTSD_Region_11_IND_FY15.gdb"
 office <- "11IND"
@@ -148,10 +148,18 @@ data <- rbind(data, data2)
 ## Plot of soil map units
 ```{r plot soil map units, echo=FALSE}
 temp <- spTransform(mupolygon, CRS("+init=epsg:4326"))
-plot(temp)
+
+test <- data.frame(t(bbox(temp)))
+coordinates(test) <- ~x+y
+
+plot(temp, xlim=test$x+c(0, 0.5), ylim=test$y)
 map("county", add=T)
 map("state",lwd=2,add=T)
 map.axes()
+legend("right", legend=c("Major rivers", "Reservoirs", "Dams"),
+    title="Legend", bty="n",
+    lty=c( 1,-1,-1), pch=c(-1,15, 1),
+    col=c("dodgerblue3", "darkgreen", "darkred"), bg="antiquewhite1")
 ```
 
 
