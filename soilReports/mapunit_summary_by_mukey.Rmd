@@ -12,12 +12,12 @@ office <- "11IND"
 
 # Defaults
 gdalpath <- "C:/Program Files/QGIS Dufour/bin"
-samplePercent <- 10
+samplePercent <- 15
 p <- c(0,0.25,0.5,0.75,1)
 
 pd <- paste0(dir, office, "/")
 rd <- paste0(dir, "11REGION/")
-shp <- paste("mu", noquote(paste(mukey[c(1, length(mukey))], collapse=".", sep="")), sep="")
+shp <- paste("mukey", noquote(paste(mukey[c(1, length(mukey))], collapse=".", sep="")), sep="")
 cache <- paste0(pd, "cache/", shp, ".shp")
 ```
 
@@ -40,7 +40,7 @@ gdal_setInstallation(search_path=gdalpath, rescan=T)
 ## local functions
 mapunit.summary<-function(mukey, samplePercent){
   # Import geodatabase
-  if(ifelse(file.exists(cache), "NA", 1) == 1) {
+  if(ifelse(file.exists(paste0(cache, ".Rdata")), "NA", 1) == 1) {
    ogr2ogr(
       src_datasource_name=paste0(pd, geodatabase),
       dst_datasource_name=cache,
@@ -143,32 +143,37 @@ data2$MUKEY <- "new_mlra_mapunit"
 data2$SSA_MUSYM_MUKEY <- "new_mlra_mapunit"
 data <- rbind(data, data2)
 ```
+### Variables
+Abbreviation| Measure                             | Units                                      | Source
+------------|-------------------------------------|------------------------------------------- |-------
+elev        | elevation                           | meters                                     | 30-meter USGS National Elevation Dataset (NED)  
+slope       | slope gradient                      | percent                                    | 10-meter NED
+aspect      | slope aspect                        | degrees                                    | 10-meter NED
+valley      | multiresolution valley bottom index | unitless                                   | 30-meter NED
+wetness     | topographic wetness index           | unitless                                   | 30-meter NED  
+relief      | height above channel                | meters                                     | 30-meter NED
+ppt         | annual precipitation                | millimeters                                | 800-meter 30-year normals (1981-2010) from PRISM Climate Dataset
+temp        | anuual air temperature              | degrees Celsius                            | 800-meter 30-year normals (1981-2010) from PRISM Climate Dataset
+ffp         | frost free period                   | days                                       | 1000-meter 30-year normals (1961-1990) from USFS RMRS
+lulc        | land use and land cover             | landcover class (e.g. Woody Wetlands)      | 2011 National Land Cover Dataset (NLCD)
 
 
 ## Plot of soil map units
 ```{r plot soil map units, echo=FALSE}
 temp <- spTransform(mupolygon, CRS("+init=epsg:4326"))
-
-test <- data.frame(t(bbox(temp)))
-coordinates(test) <- ~x+y
-
-plot(temp, xlim=test$x+c(0, 0.5), ylim=test$y)
+plot(temp)
 map("county", add=T)
-map("state",lwd=2,add=T)
+map("state",lwd=3,add=T)
 map.axes()
-legend("right", legend=c("Major rivers", "Reservoirs", "Dams"),
-    title="Legend", bty="n",
-    lty=c( 1,-1,-1), pch=c(-1,15, 1),
-    col=c("dodgerblue3", "darkgreen", "darkred"), bg="antiquewhite1")
 ```
 
-
 ## Soil polygon metrics
-Five number summary (min, 25th, median, 75th, max)(percentiles) and contingency table (counts) 
+Five number summary (min, 25th, median, 75th, max)(percentiles) and contingency table (counts)(n) 
 
 ```{r soil polygon metrics, echo=FALSE, results='asis'}
 pol <- data.frame(mupolygon)
-pol.m <- melt(pol, id.vars="MUKEY", measure.vars=c("Acres", "Circularity"))
+pol$SSA_MUSYM_MUKEY <- as.character(paste(pol$AREASYMBOL, pol$MUSYM, pol$MUKEY))
+pol.m <- melt(pol, id.vars="SSA_MUSYM_MUKEY", measure.vars=c("Acres", "Circularity"))
 pol.as.m <- melt(pol, id.vars=c("AREASYMBOL", "MUSYM", "MUKEY"), measure.vars=c("Acres"))
 pol.as.cs1 <- ddply(pol.as.m, .(AREASYMBOL, MUSYM, MUKEY, variable), .fun=conditional.l.rv.h.summary)
 pol.as.cs2 <- ddply(pol.as.m, .(AREASYMBOL, MUSYM, variable), summarize, nPolygons=length(value), nArces=sum(value))[, c(1, 2, 4, 5)]
@@ -177,14 +182,14 @@ print(xtable(pol.as.me, digits=0, caption="Summary of MUKEY by AREASYMBOL"), typ
 ```
 
 ## Polygon Boxplots
-Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles)
+Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles). 
+Circularity is a meature of shape complexity (Hole and Campbell, 1975), computed as mupolygon length / mupolygon circumference, with 1 being equal to a percent circle.
 
 ```{r bwplot of polygon metrics, echo=FALSE}
-bwplot(MUKEY ~ value|variable, data=pol.m, scales=list(x="free"))
+bwplot(SSA_MUSYM_MUKEY ~ value|variable, data=pol.m, scales=list(x="free"))
 ```
 
-## Percentages
-Contingency tables (percent) 
+## Contingency tables (percent) 
 
 ```{r percentage by mukey, echo=FALSE, results='asis'}
 ## Create descriptive and graphical summary of map unit
@@ -194,8 +199,8 @@ print(xtable(prop.table(xtabs(~SSA_MUSYM_MUKEY+valleyBreaks,data=data), margin=1
 print(xtable(prop.table(xtabs(~SSA_MUSYM_MUKEY+lulcBreaks,data=data), margin=1)*100, digits=0, caption="Landuse and Landcover"), type="html", caption.placement="top")
 ```
 
-## Percentiles
-Five number summary (min, 25th, median, 75th, max)(percentiles)
+## Quantile breaks
+Five number summary (min, 25th, median, 75th, max)(percentiles) and number of random samples (n)
 
 ```{r quantiles by mukey, echo=FALSE, results="asis"}
 data.m <- melt(data, id.vars="SSA_MUSYM_MUKEY", measure.vars=c("elev", "slope", "valley", "wetness", "relief", "ppt", "temp", "ffp"))
@@ -219,17 +224,3 @@ temp <- factor(unique(data$SSA_MUSYM_MUKEY))
 
 bwplot(factor(SSA_MUSYM_MUKEY, levels=levels(temp)[length(levels(temp)):1]) ~ value|variable, data=data.m, scales=list(x="free"))          
 ```
-
-### Variables
-Abbreviation| Measure                             | Units
-------------|-------------------------------------| -----
-elev        | elevation                           | meters
-slope       | slope gradient                      | percent
-aspect      | slope aspect                        | degrees
-valley      | multiresolution valley bottom index | unitless
-wetness     | topographic wetness index           | unitless
-relief      | height above channel                | meters
-ppt         | annual precipitation                | millimeters
-temp        | anuual air temperature              | Celsius
-ffp         | frost free period                   | days
-circularity | shape complexity                    | mupolygon length / mupolygon circumference

@@ -148,6 +148,21 @@ test2 <- SpatialPolygonsDataFrame(test, data.frame(s$names))
 proj4string(test2) <- CRS('+proj=longlat +datum=WGS84')
 test3 <- spTransform(test2, CRS("+init=epsg:5070"))
 writeOGR(dsn=getwd(), test3, 'states4', driver='ESRI Shapefile')
+
+# Expand and insert legend
+temp <- spTransform(mupolygon, CRS("+init=epsg:4326"))
+
+test <- data.frame(t(bbox(temp)))
+coordinates(test) <- ~x+y
+
+plot(temp, xlim=test$x+c(0, 0.5), ylim=test$y)
+map("county", add=T)
+map("state",lwd=2,add=T)
+map.axes()
+legend("right", legend=c("Major rivers", "Reservoirs", "Dams"),
+    title="Legend", bty="n",
+    lty=c( 1,-1,-1), pch=c(-1,15, 1),
+    col=c("dodgerblue3", "darkgreen", "darkred"), bg="antiquewhite1")
 ```
 
 ```{r ratify}
