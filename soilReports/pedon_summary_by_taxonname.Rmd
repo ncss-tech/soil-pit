@@ -1,7 +1,7 @@
 # Pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Genesee"
+series <- "Crosby"
 ```
 
 ```{r load packages, include=FALSE}
@@ -29,7 +29,7 @@ h <- horizons(f)
 s <- site(f)
 
 h$hzname[is.na(h$hzname)] <- "NA"
-h$genhz <- generalize.hz(h$hzname, ghr$Genesee$n, ghr$Genesee$p)
+h$genhz <- generalize.hz(h$hzname, ghr$Crosby$n, ghr$Crosby$p)
 names(h)[15] <- "fragvoltotc"
 names(h)[16] <- "fragvoltot"
 
@@ -60,10 +60,11 @@ conditional.l.rv.h.summary <- function(x) {
 Pedons that do not have their Std_Latitude and Std_Longitude columns populated in the NASIS Site table are currently not ploted on the map.
 
 ```{r Map of pedons and locations, echo=FALSE}
-test <- s[complete.cases(c(s$x)),]
-test <- s[complete.cases(c(s$y)),]
-coordinates(test) <- ~x+y
-plot(test, pch=16)
+temp <- s
+temp <- temp[complete.cases(c(temp$x_std)),]
+temp <- temp[complete.cases(c(temp$y_std)),]
+coordinates(temp) <- ~x_std+y_std
+plot(temp, pch=16)
 map("county", add=T)
 map("state",lwd=2,add=T)
 map.axes()
