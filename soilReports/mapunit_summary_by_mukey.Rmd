@@ -158,10 +158,10 @@ ffp         | frost free period                   | days                        
 lulc        | land use and land cover             | landcover class (e.g. Woody Wetlands)      | 2011 National Land Cover Dataset (NLCD)
 
 
-## Plot of soil map units
+## Map of soil map units
 ```{r plot soil map units, echo=FALSE}
 temp <- spTransform(mupolygon, CRS("+init=epsg:4326"))
-plot(temp)
+plot(temp, col=4, lty=0)
 map("county", add=T)
 map("state",lwd=3,add=T)
 map.axes()

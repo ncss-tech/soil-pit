@@ -56,10 +56,10 @@ conditional.l.rv.h.summary <- function(x) {
   return(d[6])
 }
 ```
-## Plot of all pedons in selected set
+## Map of all pedons in selected set
 Pedons that do not have their Std_Latitude and Std_Longitude columns populated in the NASIS Site table are currently not ploted on the map.
 
-```{r plot of pedons and locations, echo=FALSE}
+```{r Map of pedons and locations, echo=FALSE}
 test <- s[complete.cases(c(s$x)),]
 test <- s[complete.cases(c(s$y)),]
 coordinates(test) <- ~x+y
@@ -67,6 +67,10 @@ plot(test, pch=16)
 map("county", add=T)
 map("state",lwd=2,add=T)
 map.axes()
+```
+
+## Soil profile plots (depth, color, horizonation, and user pedon id)
+```{r Soil plots, echo=FALSE}
 plot(f, label="pedon_id")
 ```
 
