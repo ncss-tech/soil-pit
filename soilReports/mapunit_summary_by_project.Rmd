@@ -1,11 +1,11 @@
 
-# Map Unit GIS Summary Report
+# Map Unit Spatial Summary Report
 
 This report summarizes the geographic setting of a list of MUKEY within a file geodatabase. It is intented to be used to compare and contrast map units, and suggest possible Low, RV, and High values for components. 
 
 
 ```{r load-data, echo=FALSE, results='hide', message=FALSE}
-project <- c('SDJR - MLRA 111D - Miami-Crosby silt loams, 2 to 6 percent slopes') # List of project
+project <- c('SDJR - MLRA 114A - Genesee silt loam,  0 to 2 percent slopes, frequently flooded') # List of project
 dir <- "M:/geodata/project_data/"
 geodatabase <- "RTSD_Region_11_IND_FY15.gdb"
 office <- "11IND"
@@ -99,7 +99,7 @@ mapunit.summary<-function(project, samplePercent){
     names(data)[1:2] <- c("AREASYMBOL", "MUSYM")
     data$aspect <- circular(data$aspect, template="geographic", units="degrees", modulo="2pi")
   
-    slope.list<-c(0, 2, 4, 8, 15, 30, 50, 75, 350)
+    slope.list<-c(0, 2, 6, 12, 18, 30, 50, 75, 350)
     aspect.list<-c(0, 23, 68, 113, 158, 203, 248, 293, 338, 360) 
     valley.list<-c(0, 0.5, 30)
     lulc.list <- 1:256-1
@@ -109,7 +109,7 @@ mapunit.summary<-function(project, samplePercent){
     data$valleyBreaks <- cut(data$valley, breaks=valley.list, right=FALSE)
     data$lulcBreaks <- cut(data$lulc, breaks=lulc.list, right=FALSE)
 
-    levels(data$slopeBreaks) <- c("0-2","2-4","4-8","8-15","15-30","30-50","50-75","75-350")
+    levels(data$slopeBreaks) <- c("0-2","2-6","6-12","12-18","18-30","30-50","50-75","75-350")
     levels(data$aspectBreaks) <- c("N","NE","E","SE","S","SW","W","NW","N")
     levels(data$valleyBreaks) <- c("upland","lowland")
     levels(data$lulcBreaks) <- c('Unclassified','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','Open Water','Perennial Snow/Ice','NA','NA','NA','NA','NA','NA','NA','NA','Developed, Open Space','Developed, Low Intensity','Developed, Medium Intensity','Developed, High Intensity','NA','NA','NA','NA','NA','NA','Barren Land','NA','NA','NA','NA','NA','NA','NA','NA','NA','Deciduous Forest','Evergreen Forest','Mixed Forest','NA','NA','NA','NA','NA','NA','NA','NA','Shrub/Scrub','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','Herbaceuous','NA','NA','NA','NA','NA','NA','NA','NA','NA','Hay/Pasture','Cultivated Crops','NA','NA','NA','NA','NA','NA','NA','Woody Wetlands','NA','NA','NA','NA','Emergent Herbaceuous Wetlands','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA')
@@ -158,6 +158,7 @@ lulc        | land use and land cover             | landcover class (e.g. Woody 
 
 
 ## Map of soil map units
+Don't be concerned if the soil map units don't line up with the counties. The county layer being used is an internal R layer that is highly generalized.
 ```{r plot soil map units, echo=FALSE}
 temp <- spTransform(mupolygon, CRS("+init=epsg:4326"))
 plot(temp, col=4, lty=0)
