@@ -20,10 +20,12 @@ gen.hz.rules <- list(
     n=c("Ap", "A", "BE", "Bt", "BCt", "Cd", "NA"),
     p=c("Ap|1A p", "1A|A", "BE|^E|1E", "^1B t|^2B t|^2Bt|^B1|^B2|^Btg|BTG|^Bg|^Bt|^BT", "1BC|2BC|3BC|^BC|BCT|1C|^2C|^C", "Cd","^2H|^3H|^4H|^5H|^H|R|NA")
   ),
+  
   "Miami"=list(
-    n=c("Ap", "E", "Bt", "BCt", "Cd", "2Cd", "NA"),
-    p=c("Ap|AP", "E", "Bt|BT|1B|B2|B3|B4|BA|B1|B t1|B t2|2B t3|2B t4|2Bk|BW|B&A|Bt3|Btk", "BC", "^B$", "C", "Cd", "NA")
+    n=c("Ap", "A", "E", "Bt", "2Bt", "BCt", "2Cd", "NA"),
+    p=c("Ap|AP|A p", "A1|A2|A3", "^E", "B1|B22t|B22t|Bt1|Bt2", "2B t1|2b1|2B2|2B22T|2B22T|2B23T|2B3|2Bt1", "BC", "Cd", "NA")
   ),
+  
   "Mahalasville"=list(
     n=c("Ap", "Btg", "2Btg", "2BCg", "2Cg", "NA"),
     p=c("Ap|AP", "Bt|BT|1B|B2|B3|B4|BA|B1|B t1|B t2|2B t3|2B t4|2Bk|BW|B&A|Bt3|Btk", "BC", "^B$", "C", "Cd", "NA")
