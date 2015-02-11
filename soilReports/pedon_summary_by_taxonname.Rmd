@@ -17,7 +17,7 @@ library(xtable)
 
 ```{r fetch and format, load-data, echo=FALSE, warning=FALSE}
 # source custom R functions
-source("genhz_rules.R")
+source(paste0("./genhz_rules/", series, "_rules.R"))
 
 p <- c(0, 0.25, 0.5, 0.75, 1)
 
@@ -29,7 +29,7 @@ h <- horizons(f)
 s <- site(f)
 
 h$hzname[is.na(h$hzname)] <- "NA"
-h$genhz <- generalize.hz(h$hzname, ghr[[series]]$n, ghr[[series]]$n)
+h$genhz <- generalize.hz(h$hzname, ghr[[series]]$n, ghr[[series]]$p)
 names(h)[15] <- "fragvoltotc"
 names(h)[16] <- "fragvoltot"
 
@@ -77,9 +77,9 @@ plot(f, label="pedon_id")
 
 
 # Summary of Sites
-```{r format site data, echo=FALSE}
+```{r format site data, results='asis', echo=FALSE}
 # Site information
-subset(s, select=c("pedon_id", "taxonname", "tax_subgroup", "part_size_class", "pedon_type", "describer"))
+print(xtable(subset(s, select=c("pedon_id", "taxonname", "tax_subgroup", "part_size_class", "pedon_type", "describer"))), type="html")
 
 # Summarize surface rock fragments
 s.rf <- subset(s, select=c("surface_fgravel", "surface_gravel", "surface_cobbles", "surface_stones", "surface_boulders", "surface_flagstones", "surface_channers"))
