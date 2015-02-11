@@ -5,7 +5,7 @@ This report summarizes the geographic setting of a list of MUKEY within a file g
 
 
 ```{r load-data, echo=FALSE, results='hide', message=FALSE}
-project <- c('SDJR - MLRA 114A - Genesee silt loam,  0 to 2 percent slopes, frequently flooded') # List of project
+project <- c('SDJR - MLRA 111A - Crosby-Miami silt loams, 0 to 6 percent slopes') # List of project
 dir <- "M:/geodata/project_data/"
 geodatabase <- "RTSD_Region_11_IND_FY15.gdb"
 office <- "11IND"
@@ -135,7 +135,7 @@ data.l <- mapunit.summary(project, samplePercent)
 data <- data.l$data
 mupolygon <- data.l$mupolygon
 sapolygon <- data.l$sapolygon
-h <- length(levels(data.l$PROJECT_NA))*3
+h <- 2+length(levels(data$AREASYMBOL))*.75
 
 data$SSA_MUSYM <- as.character(paste(data$AREASYMBOL, data$MUSYM))
 data2 <- data
@@ -185,7 +185,7 @@ print(xtable(pol.as.me, digits=0, caption="Summary of MUSYM by AREASYMBOL"), typ
 Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles). 
 Circularity is a meature of shape complexity (Hole and Campbell, 1975), computed as mupolygon length / mupolygon circumference, with 1 being equal to a percent circle.
 
-```{r bwplot of polygon metrics, echo=FALSE}
+```{r bwplot of polygon metrics, echo=FALSE, fig.height=h}
 bwplot(SSA_MUSYM ~ value|variable, data=pol.m, scales=list(x="free"))
 ```
 
@@ -218,7 +218,7 @@ print(xtable(merge(aspect.cs.c, data.n, by="SSA_MUSYM")), type="html")
 ## Boxplots of map unit properties
 Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles) 
 
-```{r bwplot of map unit properties, echo=FALSE}
+```{r bwplot of map unit properties, echo=FALSE, fig.height=h}
 ### *(min, 5th, 25th, median, 75th, 95th, max)*
 temp <- factor(unique(data$SSA_MUSYM))
 

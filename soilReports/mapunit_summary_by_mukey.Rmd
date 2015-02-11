@@ -5,7 +5,7 @@ This report summarizes the geographic setting of a list of MUKEY within a file g
 
 
 ```{r load-data, echo=FALSE, results='hide', message=FALSE}
-mukey <- c('162342') # List of mukey
+mukey <- c('162342', '160710') # List of mukey
 dir <- "M:/geodata/project_data/"
 geodatabase <- "RTSD_Region_11_IND_FY15.gdb"
 office <- "11IND"

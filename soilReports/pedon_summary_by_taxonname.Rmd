@@ -1,7 +1,7 @@
 # Pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Crosby"
+series <- "Cincinnati"
 ```
 
 ```{r load packages, include=FALSE}
@@ -52,6 +52,7 @@ naReplace <- function(h){
 }
 
 h <- naReplace(h)
+l <- length(unique(h$peiid))
 
 # Function
 conditional.l.rv.h.summary <- function(x) {
@@ -91,7 +92,6 @@ print(xtable(subset(s, select=c("pedon_id", "taxonname", "tax_subgroup", "part_s
 
 # Summarize surface rock fragments
 s.rf <- subset(s, select=c("surface_fgravel", "surface_gravel", "surface_cobbles", "surface_stones", "surface_boulders", "surface_flagstones", "surface_channers"))
-s.rf <- replace(s.rf, is.na(s.rf), 0)
 s.rf$total_srf <- s.rf$surface_gravel+s.rf$surface_cobbles+s.rf$surface_stones+s.rf$surface_boulders+s.rf$surface_flagstones+s.rf$surface_channers
 s.rf$surface_gravel <- s.rf$surface_gravel-s.rf$surface_fgravel
 s.m <- melt(s.rf, measure.vars=c("total_srf", "surface_fgravel", "surface_gravel", "surface_cobbles", "surface_stones", "surface_boulders", "surface_channers", "surface_flagstones"))
