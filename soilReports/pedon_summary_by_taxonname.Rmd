@@ -1,7 +1,7 @@
 # Pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Cincinnati"
+series <- "Crosby"
 ```
 
 ```{r load packages, include=FALSE}
