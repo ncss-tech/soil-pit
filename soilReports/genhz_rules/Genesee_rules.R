@@ -7,7 +7,7 @@ ghr <- list(
         "^B", "C|C1|C10|C2|C3|C4|C5|C6|C7|C8|C9",
         "^Cg",
         "Ab",
-        "^2Bt",
+        "2Bt",
         "NA")
   )
 )

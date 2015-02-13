@@ -1,7 +1,8 @@
+
+
 ```{r setup, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
 ## load packages
 library(knitr)
-library(aqp)
 library(soilDB)
 library(reshape2)
 library(plyr)
@@ -13,7 +14,6 @@ library(sharpshootR)
 library(MASS)
 library(rgdal)
 library(raster)
-library(gridExtra)
 
 ## local functions
 source('../local_functions.R')
@@ -22,9 +22,13 @@ source('../local_functions.R')
 source('../report-rules.R')
 
 ## get the current component to analyze
-# manually specify with:
-# comp <- 'amador'
 load('this.component.Rda')
+
+## determine subsetting rule:
+## pattern: matching based on the component name specified in report-rules.R
+## pedon.id.list: matching based on list of pedon IDs specified in report-rules.R
+subset.rule <- 'pattern'
+# subset.rule <- 'pedon.id.list'
 
 ## report formatting:
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', dpi=100, fig.align='center', dev='CairoPNG', dev.args=list(pointsize=10), tidy=FALSE)
@@ -79,11 +83,20 @@ projection(r[['gis_mast']]) <- projection(r[['gis_elev']])
 proj4string(mu) <- CRS('')
 proj4string(mu) <- projection(r[['gis_elev']])
 
-## load all pedons in the selected set, do not apply horizonation check / removal
+## load all pedons from the selected set, do not apply horizonation check / removal
 f <- fetchNASIS(rmHzErrors=FALSE)
 
-## subset just the named component(s)
-f <- f[which(f$pedon_id %in% gen.hz.rules[[comp]]$pedons), ]
+## generate index to subset using pedon IDs listed in report-rules.R
+if(subset.rule == 'pedon.id.list')
+  subset.idx <- which(f$pedon_id %in% gen.hz.rules[[comp]]$pedons)
+
+## generate index to subset using regular expression
+if(subset.rule == 'pattern')
+  subset.idx <- grep(pattern=comp, f$taxonname, ignore.case=TRUE)
+
+# perform subset
+f <- f[subset.idx, ]
+
 
 ## TODO: this may be overly restrictive
 # keep only those pedons with coordinates
@@ -147,7 +160,11 @@ s <- summarize.component(f)
 max.comp.profiles <- s$n
 ```
 
-## Component Report
+Component Report
+==================
+<br>
+`r format(Sys.time(), "%Y-%m-%d")`
+<br>
 <center>**`r comp`**
 
 ranges are (`r p.low.rv.high`) percentiles
@@ -340,6 +357,9 @@ this.align <- c('l', rep('c', times=ncol(this.data)))
 print(xtable(this.data, align=this.align), type='html', table.placement="H", caption.placement="top", include.rownames=FALSE, html.table.attributes='cellpadding="3" cellspacing="5"')
 ```
 
+```{r diagnostic-prop-plot, echo=FALSE, fig.width=10, fig.height=10}
+diagnosticPropertyPlot2(f, v=c('lithic.contact', 'paralithic.contact', 'argillic.horizon', 'cambic.horizon', 'ochric.epipedon', 'mollic.epipedon', 'very.shallow', 'shallow', 'mod.deep', 'deep', 'very.deep'), k=4)
+```
 
 
 ### Pedon GIS Summary
@@ -363,3 +383,5 @@ par(mar=c(0,0,0,0))
 aspect.plot(f$aspect_field, q=p.low.rv.high, plot.title=comp, pch=21, bg='RoyalBlue', col='black', arrow.col=c('grey', 'red', 'grey'))
 ```
 
+===================================
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
