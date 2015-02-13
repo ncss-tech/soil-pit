@@ -38,8 +38,24 @@ h$genhz <- generalize.hz(h$hzname, ghr[[series]]$n, ghr[[series]]$p)
 # ds[order(ds$hzdepm), "genhz"]
 # h$genhz <- as.factor(h$genhz, levels=c(ghr[[series]]$n, "not-used"))
 
+d_rgb <- horizons(f)[, c("d_r", "d_g", "d_b")]
+d_munsell <- rgb2munsell(d_rgb)
+m_rgb <- h[, c("m_r", "m_g", "m_b")]
+m_munsell <- rgb2munsell(m_rgb)
+
+h$d_hue <- as.character(d_munsell$hue)
+h$d_value <- as.integer(d_munsell$value)
+h$d_chroma <- as.integer(d_munsell$chroma)
+h$m_hue <- as.character(m_munsell$hue)
+h$m_value <- as.integer(m_munsell$value)
+h$m_chroma <- as.integer(d_munsell$chroma)
+
 names(h)[15] <- "fragvoltotc"
 names(h)[16] <- "fragvoltot"
+
+h[, c("fine_gravel", "gravel", "cobbles", "stones", "boulders", "paragravel", "paracobbles", "channers", "flagstones")] <- lapply(h[, c("fine_gravel", "gravel", "cobbles", "stones", "boulders", "paragravel", "paracobbles", "channers", "flagstones")], as.integer)
+
+h$effervescence <- as.character(h$effervescence)
 
 naReplace <- function(h){
   l <- list()
@@ -52,6 +68,14 @@ naReplace <- function(h){
 }
 
 h <- naReplace(h)
+
+d <- diagnostic_hz(f)
+
+if(dim(d)[1] == 0)
+{d <- data.frame(peiid=h$peiid)
+d[ c("diag_kind", "featdept", "featdepb")] <- list(diag_kind=as.character("NA"), featdept=as.integer(NA), featdepb=as.integer(NA))}
+
+
 l <- length(unique(h$peiid))
 
 # Function
@@ -69,14 +93,16 @@ conditional.l.rv.h.summary <- function(x) {
 Pedons that do not have their Std_Latitude and Std_Longitude columns populated in the NASIS Site table are currently not ploted on the map.
 
 ```{r Map of pedons and locations, echo=FALSE}
-temp <- s
-temp <- temp[complete.cases(c(temp$x_std)),]
-temp <- temp[complete.cases(c(temp$y_std)),]
-coordinates(temp) <- ~x_std+y_std
-plot(temp, pch=16)
-map("county", add=T)
-map("state",lwd=2,add=T)
-map.axes()
+if(coordinates(f)[1] != 0) {
+  temp <- s
+  temp <- temp[complete.cases(c(temp$x_std)),]
+  temp <- temp[complete.cases(c(temp$y_std)),]
+  coordinates(temp) <- ~x_std+y_std
+  plot(temp, pch=16)
+  map("county", add=T)
+  map("state",lwd=2,add=T)
+  map.axes()
+  } else("no coordinates")
 ```
 
 ## Soil profile plots (depth, color, horizonation, and user pedon id)
@@ -217,8 +243,8 @@ bwplot(factor(genhz, levels=levels(h$genhz)[length(levels(h$genhz)):1]) ~ value|
 Five number summary (min, 25th, median, 75th, max)(percentiles)
 
 ```{r, echo=FALSE, results='asis'}
-diag.thk <- ddply(f@diagnostic, .(peiid, diag_kind), summarize, thickness=sum(featdepb-featdept))
-diag.m <- melt(f@diagnostic, id.vars="diag_kind", measure.vars=c('featdept', 'featdepb'))
+diag.thk <- ddply(d, .(peiid, diag_kind), summarize, thickness=sum(featdepb-featdept))
+diag.m <- melt(d, id.vars="diag_kind", measure.vars=c('featdept', 'featdepb'))
 diag.thk.m <- melt(diag.thk, id.vars="diag_kind", measure.vars='thickness')
 diag.m <- rbind(diag.m, diag.thk.m)
 d.cs <- ddply(diag.m, .(variable, diag_kind), .fun=conditional.l.rv.h.summary)
