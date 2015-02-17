@@ -1,10 +1,10 @@
-gdal_GTiff2SAGA <- function(demlist, copylist, datatype){
+gdal_GTiff2SAGA <- function(demlist, copylist){
   for(i in seq(demlist)){
     cat(paste(format(Sys.time(), "%Y-%m-%d %H:%M:%S"),"copying", copylist[i],"\n"))
     gdal_translate(
       src_dataset=demlist[i],
       dst_dataset=copylist[i], 
-      of=type,  
+      of="SAGA",  
       stats=TRUE,
       verbose=T)
   }

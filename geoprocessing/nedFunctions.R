@@ -2,15 +2,13 @@
 ############################################################################
 ### Generate list from intersection of SAPOLYGON and NED metadata layer
 ############################################################################
-makeNedList <- function(geodatabase, office){
+makeNedList <- function(tiles, dsn, office){
   ned.l <- list()
-  nedtiles <- readOGR(dsn="M:/geodata/elevation/ned/tiles", layer="ned_13arcsec_g", encoding="ESRI Shapefile")
-  nedtiles <- spTransform(nedtiles, CRS("+init=epsg:5070"))
+  nedtiles <- readOGR(dsn=tiles, layer="ned_13arcsec_g")
+  nedtiles <- spTransform(nedtiles, CRS(crsarg))
   for(i in seq(office)){
-    sapolygon <- readOGR(dsn=geodatabase[i], layer="ca795_b", encoding="OpenFileGDB")
-    sapolygon <- spTransform(sapolygon, CRS("+init=epsg:5070"))
-    proj4string(sapolygon) <- CRS(as.character(NA))
-    proj4string(sapolygon) <- proj4string(nedtiles)
+    sapolygon <- readOGR(dsn=dsn[i], layer=layer)
+    sapolygon <- spTransform(sapolygon, CRS(crsarg))
     int <- intersect(sapolygon, nedtiles)
     ned.l[[i]] <- sort(unique(as.character(int@data$FILE_ID)))
   }
@@ -36,7 +34,7 @@ batchUnzip <- function(ned.l){
   for(i in seq(ned.l)){
     nedsub <- ned.l[[i]]
     for(i in seq(nedsub)){
-      cat(paste("unzipping", nedsub[i], "\n"))
+      cat(paste(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "unzipping", nedsub[i], "\n"))
       unzip(zipfile=paste(nedsub[i], ".zip", sep=""), files=paste("img", nedsub[i], "_13.img", sep=""), overwrite=F)
     }
   }
@@ -50,31 +48,30 @@ batchUnzip <- function(ned.l){
 # In order to correct for the half cell shift due to the GTIFF library its necessary to set --config GTIFF_POINT_GEO_IGNORE=TRUE preceding the other gdwarp arguements
 batchNlcdSubset <- function(nlcdpath, nlcdpathlist){
   nlcd_temp <- paste(unlist(strsplit(nlcdpathlist, ".tif")), "_temp.tif", sep="")
-  
   for(i in seq(nlcdpathlist)){
     cat(paste(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "WARPING", nlcdpathlist[i], "\n"))
+    te <- c(bbox(spTransform(readOGR(dsn=paste0(pd.p, office.l[i]), layer=layer), CRS(crsarg))))
     gdalwarp(
       srcfile=nlcdpath,
       dstfile=nlcd_temp[i],
       of="GTiff",
       r="near",
+      te=te,
       tr=c(30,30),
-      cutline=geodatabase[i],
-      cl="ca795_b",
-      crop_to_cutline=T,
       tap=T,
       ot="Byte",
       co=c("TILED=YES", "COMPRESS=DEFLATE"),
       overwrite=T,
       verbose=T)
     
-    bb <- bbox(raster(nlcd_temp[i]))
+    bb <- c(bbox(raster(nlcd_temp[i])))
     rat <- raster(nlcdpath)@data@attributes
-    write.dbf(rat, paste(strsplit(nlcdpathlist[i], ".tif"), ".tif.vat.dbf", sep=""))
+    foreign::write.dbf(rat, paste(strsplit(nlcdpathlist[i], ".tif"), ".tif.vat.dbf", sep=""))
+    
     gdal_translate(
       src_dataset=nlcd_temp[i],
       dst_dataset=nlcdpathlist[i],
-      a_ullr=c(bb[1,1]+15, bb[2,2]-15, bb[1,2]+15, bb[2,1]-15),
+      a_ullr=c(bb[1]+15, bb[4]-15, bb[3]+15, bb[2]-15),
       a_srs=crsarg,
       ot="Byte",
       co=c("TILED=YES", "COMPRESS=DEFLATE"),
@@ -113,7 +110,7 @@ mosaicList <- function(mosaiclist, dstpath, datatype, co, nodata){
       of="GTiff",
       ot=datatype,
       co=co,
-      a_nodata=nodata,
+      vrtnodata=nodata,
       overwrite=TRUE,
       verbose=T
     )
@@ -154,13 +151,13 @@ mosaicNlcdList <- function(mosaiclist, dstpath){
 batchWarp <- function(inlist, warplist, reflist, resto, r, s_srs, t_srs, datatype, nodata, co){    
   for(i in seq(inlist)){
     cat(paste(format(Sys.time(), "%Y-%m-%d %H:%M:%S"),"WARPING", inlist[i],"\n"))
-  bb <- bbox(raster(reflist[i]))
+  te <- c(bbox(raster(reflist[i])))
   gdalwarp(
     srcfile=inlist[i],
     dstfile=warplist[i],
     s_srs=s_srs,
     t_srs=t_srs,
-    te=c(bb[1,1], bb[2,1], bb[1,2], bb[2,2]),
+    te=te,
     r=r,
     tr=c(resto,resto),
     of="GTiff",
@@ -197,11 +194,12 @@ batchWarpAverage <- function(demlist, resfrom, resto){
     gdalwarp(
       srcfile=demlist[i],
       dstfile=demwarp[i],
+      s_srs=crsarg,
+      t_srs=crsarg,
       r="average",
       tr=c(res,res),
       of="GTiff",
       ot="Float32",
-      co=c("TILED=YES", "COMPRESS=DEFLATE"),
       dstnodata=-99999,
       overwrite=T,
       verbose=T
