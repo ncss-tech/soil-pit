@@ -1,7 +1,7 @@
 # Pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Cincinnati"
+series <- "Genesee"
 ```
 
 ```{r load packages, include=FALSE}
@@ -23,7 +23,6 @@ p <- c(0, 0.25, 0.5, 0.75, 1)
 
 # load NASIS data
 f <- fetchNASIS()
-f <- subsetProfiles(f, s="taxonname == series")
 
 h <- horizons(f)
 s <- site(f)
@@ -93,14 +92,13 @@ conditional.l.rv.h.summary <- function(x) {
 Pedons that do not have their Std_Latitude and Std_Longitude columns populated in the NASIS Site table are currently not ploted on the map.
 
 ```{r Map of pedons and locations, echo=FALSE}
-if(coordinates(f)[1] != 0) {
+if(any(complete.cases(c(s$x_std, s$y_std)) == TRUE)) {
   temp <- s
-  temp <- temp[complete.cases(c(temp$x_std)),]
-  temp <- temp[complete.cases(c(temp$y_std)),]
+  temp <- temp[complete.cases(temp[, c('x_std', 'y_std')]),]
   coordinates(temp) <- ~x_std+y_std
   plot(temp, pch=16)
-  map("county", add=T)
-  map("state",lwd=2,add=T)
+  map("county", lwd=0.5, add=T)
+  map("state",lwd=1,add=T)
   map.axes()
   } else("no coordinates")
 ```
@@ -126,7 +124,7 @@ s.summary <- ddply(s.m, .(variable), .fun=conditional.l.rv.h.summary)
 
 
 ## Box plots of surface rock fragments
-Graphical five number summary (outliers, 5th, 25th, median, 75th, 95th, outliers)
+Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)
 
 ```{r bwplot for rf, echo=FALSE}
 bwplot(variable~value, data=s.m, scales=list(x="free"), xlab="percent")          
@@ -177,7 +175,7 @@ print(xtable(hc.c), type="html")
 ```
 
 ## Box plots of numeric variables by generic horizon
-Graphical five number summary (outliers, 5th, 25th, median, 75th, 95th, outliers)
+Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)
 
 ```{r, echo=FALSE}
 bwplot(factor(genhz, levels=levels(h$genhz)[length(levels(h$genhz)):1]) ~ value|variable, data=rbind(hp.m, hc.m, thk.m), scales=list(x="free"))          
@@ -233,7 +231,7 @@ print(xtable(cast(d.cs, genhz ~ variable, value='range'), digits=0), type="html"
 
 
 ## Boxplot of generic horizon thicknesses
-Graphical five number summary (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles)
+Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles)
 
 ```{r, echo=FALSE}
 bwplot(factor(genhz, levels=levels(h$genhz)[length(levels(h$genhz)):1]) ~ value|variable, data=genhz.m, scales=list(x="free"), xlab="cm", horizontal=T)          
@@ -252,7 +250,7 @@ print(xtable(cast(d.cs, diag_kind ~ variable, value='range'), digits=0), type="h
 ```
 
 ## Boxplot of diagnostic horizon thicknesses
-Graphical five number summary (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles)
+Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles)
 
 ```{r, echo=FALSE}
 bwplot(diag_kind ~ value|variable, data=diag.m, scales=list(x="free"), xlab="cm")          

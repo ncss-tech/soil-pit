@@ -142,6 +142,14 @@ data2 <- data
 data2$SSA_MUSYM <- "new_mlra_mapunit"
 data <- rbind(data, data2)
 ```
+
+
+### Project Name
+```{r project name, echo=FALSE}
+project
+```
+
+
 ### Variables
 Abbreviation| Measure                             | Units                                      | Source
 ------------|-------------------------------------|------------------------------------------- |-------
