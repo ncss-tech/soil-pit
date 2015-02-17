@@ -26,17 +26,17 @@ gdal_setInstallation(search_path="C:/Program Files/QGIS Dufour/bin", rescan=T)
 gdal_setInstallation(search_path="C:/OSGeo4W64/bin", rescan=T)
 ```
 
-Next numerous parameters need to be set which get used later by many of the functions or commands. Modify these file paths and lists as necessary. For example, I organized my files by "D:/geodata/project_data/11ATL"", so 11 will have to replace by 10 or 2 for your respective Regions.
+Next numerous parameters need to be set which get used later by many of the functions or commands. Modify these file paths and lists as necessary. For example, I organized my files by "M:/geodata/project_data/11ATL"", so 11 will have to replace by 10 or 2 for your respective Regions.
 ```{r, eval=FALSE}
 # Set parameters
 source("C:/Users/stephen/Documents/Github/soil-pit/geoprocessing/nedFunctions.R")
 source("C:/Users/stephen/Documents/Github/soil-pit/geoprocessing/gdalUtilsFunctions.R")
-tile.p <- "D:/geodata/elevation/ned/tiles/img/"
-office.l <- c("8VIC")
-pd.p <- "D:/geodata/project_data/"
-dsn <- paste("D:/geodata/project_data/8VIC")
+tile.p <- "M:/geodata/elevation/ned/tiles/img/"
+office.l <- c("11IND")
+pd.p <- "M:/geodata/project_data/"
+dsn <- paste("M:/geodata/project_data/11IND/RTSD_Region_11_IND_FY15.gdb")
 layer <- "test3"
-nlcd.p <- "D:/geodata/land_use_land_cover/nlcd_2011_landcover_2011_edition_2014_03_31.img"
+nlcd.p <- "M:/geodata/land_use_land_cover/nlcd_2011_landcover_2011_edition_2014_03_31.img"
 nlcd.p.l <- paste(pd.p, office.l,"/nlcd", 30, "m_", office.l, "_lulc2011.tif", sep="")
 crsarg <- CRSargs(CRS("+init=epsg:5070"))
 ```
@@ -45,7 +45,7 @@ crsarg <- CRSargs(CRS("+init=epsg:5070"))
 ## Download and unzip tile list
 To start you need to download the 10-meter NED tiles from the USGS. Because the USGS manages these tiles using an ftp server it's easy for R download them one at a time with the following function. For whatever reason the downloading fuction doesn't work from RStudio, so this function needs to be run from the vanilla R console. Due to hickups in the downloading some files maynot download completely. I still need to write a function to identify corrupt or missing zip files.
 ```{r, eval=FALSE}
-tiles <- "D:/geodata/elevation/ned/tiles"
+tiles <- "M:/geodata/elevation/ned/tiles"
 setwd(paste0(tiles,"/img"))
 ned.l<- makeNedList(tiles, dsn, office.l)
 download.l <- sort(unlist(ned.l))
@@ -95,11 +95,11 @@ batchDEM(dem.l)
 # Mosaic the 30-meter MLRA office mosaics into a Region office mosaic
 ```{r, eval=FALSE}
 nlcd.l <- list(nlcd.p)
-dst.p <- "D:/geodata/project_data/REGION11/nlcd30m_R11.tif"
+dst.p <- "M:/geodata/project_data/REGION11/nlcd30m_R11.tif"
 mosaicNlcdList(nlcd.l, dst.p)
 
 dem.l <- list(paste(pd.p, office.l, "/ned30m_11", office.l, ".tif", sep=""))
-dem.p <- "D:/geodata/project_data/Region11/ned30m_R11.tif"
+dem.p <- "M:/geodata/project_data/Region11/ned30m_R11.tif"
 mosaicList(dem.l, dem.p)
 batchTerrain(dem.p)
 

@@ -172,12 +172,12 @@ library(RCurl)
 
 dssurgo <- "http://stream.princeton.edu/dSSURGO/"
 
-makeDssurgoList <- function(geodatabase, office){
+makeDssurgoList <- function(dsn, office){
   ned.l <- list()
   nedtiles <- readOGR(dsn="M:/geodata/elevation/ned/tiles", layer="ned_13arcsec_g", encoding="ESRI Shapefile")
   nedtiles <- spTransform(nedtiles, CRS("+init=epsg:5070"))
   for(i in seq(office)){
-    sapolygon <- readOGR(dsn=geodatabase[i], layer="SAPOLYGON", encoding="OpenFileGDB")
+    sapolygon <- readOGR(dsn=dsn[i], layer="SAPOLYGON", encoding="OpenFileGDB")
     proj4string(sapolygon) <- CRS(as.character(NA))
     proj4string(sapolygon) <- proj4string(nedtiles)
     int <- intersect(sapolygon, nedtiles)
@@ -186,7 +186,7 @@ makeDssurgoList <- function(geodatabase, office){
   return(ned.l=ned.l)
 }
 
-test <- makeNedList(geodatabase, office.l)
+test <- makeDssurgoList(dsn, office.l)
 test2 <- lapply(test, strsplit, ",")
 g <- lapply(test2, function(x) lapply(x, function (x) paste0("lat", x[1], as.numeric(x[1])+1, "_lon-", x[2], "-", as.numeric(x[2])-1, ".nc")))
 g <- unlist(g)
@@ -195,7 +195,7 @@ url <- paste0(dssurgo, g)
 dest <- paste0("M:/geodata/soils/dssurgo/tiles/", g)
 
 for(i in seq(url)){
-  download.file(url=url[i], destfile=dest[i])
+  download.file(url=url[i], destfile=dest[i], mode="wb", cacheOK=TRUE)
 }
 
 
