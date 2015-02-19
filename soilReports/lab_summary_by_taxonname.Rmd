@@ -22,16 +22,16 @@ source("genhz_rules.R")
 p <- c(0, 0.10, 0.5, 0.90, 1)
 
 # load NASIS data
+l <- fetchNASISLabData()
+l.h <- horizons(l)
+l.s <- site(l)
 f <- fetchNASIS()
-f <- subsetProfiles(f, s="taxonname == series")
-
-h <- horizons(f)
 s <- site(f)
 
-h$hzname[is.na(h$hzname)] <- "NA"
+l.h$hzname[is.na(l.h$hzname)] <- h$hznameoriginal
+l.h$hzname[is.na(l.h$hzname)] <- "NA"
+
 h$genhz <- generalize.hz(h$hzname, ghr$Genesee$n, ghr$Genesee$p)
-names(h)[15] <- "fragvoltotc"
-names(h)[16] <- "fragvoltot"
 
 naReplace <- function(h){
   l <- list()
@@ -60,14 +60,14 @@ conditional.l.rv.h.summary <- function(x) {
 Pedons that do not have their Std_Latitude and Std_Longitude columns populated in the NASIS Site table are currently not ploted on the map.
 
 ```{r plot of pedons and locations, echo=FALSE}
-test <- s[complete.cases(c(s$x)),]
-test <- s[complete.cases(c(s$y)),]
-coordinates(test) <- ~x+y
-plot(test, pch=16)
-map("county", add=T)
-map("state",lwd=2,add=T)
-map.axes()
-plot(f, label="pedon_id")
+if(dim(s.sub)[1] != 0) {
+  s.sub <- s[complete.cases(s[, c('x_std', 'y_std')]),]
+  coordinates(s.sub) <- ~x_std+y_std
+  plot(s.sub, pch=16)
+  map("county", lwd=0.5, add=T)
+  map("state",lwd=1,add=T)
+  map.axes()
+  } else("no coordinates")
 ```
 
 
