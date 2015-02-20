@@ -1,4 +1,4 @@
-# Pedon report
+# Lab pedon report
 ```{r enter soil series name}
 # Set soil series
 series <- "Genesee"
@@ -29,9 +29,12 @@ f <- fetchNASIS()
 s <- site(f)
 
 l.h$hzname[is.na(l.h$hzname)] <- h$hznameoriginal
-l.h$hzname[is.na(l.h$hzname)] <- "NA"
 
-h$genhz <- generalize.hz(h$hzname, ghr$Genesee$n, ghr$Genesee$p)
+l.h$hzname[is.na(l.h$hzname)] <- "NA"
+l.h$genhz <- generalize.hz(l.h$hzname, ghr[[series]]$n, ghr[[series]]$p)
+
+h$hzname[is.na(h$hzname)] <- "NA"
+h$genhz <- generalize.hz(h$hzname, ghr[[series]]$n, ghr[[series]]$p)
 
 naReplace <- function(h){
   l <- list()
@@ -43,6 +46,7 @@ naReplace <- function(h){
   return(l)
 }
 
+l.h <- naReplace(l.h)
 h <- naReplace(h)
 
 # Function
@@ -60,7 +64,7 @@ conditional.l.rv.h.summary <- function(x) {
 Pedons that do not have their Std_Latitude and Std_Longitude columns populated in the NASIS Site table are currently not ploted on the map.
 
 ```{r plot of pedons and locations, echo=FALSE}
-if(dim(s.sub)[1] != 0) {
+if(dim(s)[1] != 0) {
   s.sub <- s[complete.cases(s[, c('x_std', 'y_std')]),]
   coordinates(s.sub) <- ~x_std+y_std
   plot(s.sub, pch=16)
@@ -74,14 +78,11 @@ if(dim(s.sub)[1] != 0) {
 # Summary of Sites
 ```{r format site data, echo=FALSE}
 # Site information
-subset(s, select=c("pedon_id", "taxonname", "tax_subgroup", "part_size_class", "pedon_type", "describer"))
+print(xtable(subset(s, select=c("pedon_id", "taxonname", "tax_subgroup", "part_size_class", "pedon_type", "describer"))), type="html")
 
-# Summarize surface rock fragments
-s.rf <- subset(s, select=c("surface_fgravel", "surface_gravel", "surface_cobbles", "surface_stones", "surface_boulders", "surface_flagstones", "surface_channers"))
-s.rf <- replace(s.rf, is.na(s.rf), 0)
-s.rf$total_srf <- s.rf$surface_gravel+s.rf$surface_cobbles+s.rf$surface_stones+s.rf$surface_boulders+s.rf$surface_flagstones+s.rf$surface_channers
-s.rf$surface_gravel <- s.rf$surface_gravel-s.rf$surface_fgravel
-s.m <- melt(s.rf, measure.vars=c("total_srf", "surface_fgravel", "surface_gravel", "surface_cobbles", "surface_stones", "surface_boulders", "surface_channers", "surface_flagstones"))
+# Summarize site data
+s.sub <- subset(l.s, select=c("psctopdepth", "pscbotdepth", "noncarbclaywtavg", "claytotwtavg", "le0to100", "wf0175wtavgpsc", "volfractgt2wtavg", "cec7clayratiowtavg"))
+s.m <- melt(s.sub, measure.vars=c("psctopdepth", "pscbotdepth", "noncarbclaywtavg", "claytotwtavg", "le0to100", "wf0175wtavgpsc", "volfractgt2wtavg", "cec7clayratiowtavg"))
 s.summary <- ddply(s.m, .(variable), .fun=conditional.l.rv.h.summary)
 ```
 
@@ -90,7 +91,7 @@ s.summary <- ddply(s.m, .(variable), .fun=conditional.l.rv.h.summary)
 Graphical five number summary (outliers, 5th, 25th, median, 75th, 95th, outliers)
 
 ```{r bwplot for rf, echo=FALSE}
-bwplot(variable~value, data=s.m, scales=list(x="free"), xlab="percent")          
+bwplot(variable ~ value, data=s.m, scales=list(x="free"), xlab="percent")          
 ```
 
 
