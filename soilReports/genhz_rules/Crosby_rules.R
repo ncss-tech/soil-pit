@@ -1,6 +1,14 @@
 ghr <- list(
   "Crosby"=list(
-    n=c("Ap", "A", "BE", "Bt", "2Bt", "Btg", "BCt", "Cd", "NA"),
+    n=c("Ap", 
+         "A", 
+         "BE", 
+         "Bt", 
+         "2Bt", 
+         "Btg", 
+         "BCt", 
+         "Cd", 
+         "NA"),
     
     p=c("Ap|AP|A p",
         "A1|A2",
