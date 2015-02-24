@@ -68,7 +68,6 @@ conditional.l.rv.h.summary <- function(x) {
 ```
 ## Plot of all pedons in selected set
 Pedons that do not have their Std_Latitude and Std_Longitude columns populated in the NASIS Site table are currently not ploted on the map.
-
 ```{r plot of pedons and locations, echo=FALSE}
 if(dim(s)[1] != 0) {
   s.sub <- s[complete.cases(s[, c('x_std', 'y_std')]),]
@@ -97,19 +96,18 @@ lp.cs <- ddply(lp.m, .(variable), .fun=conditional.l.rv.h.summary)
 ```
 
 
+## Range in characteristics of NCSS Pedon Lab Data
+Five number summary (min, 25th, median, 75th, max)(percentiles)
+```{r, echo=FALSE, results='asis'}
+print(xtable(cast(lp.cs, ~variable, value='range')), type="html")
+```
+
 ## Box plots of NCSS Pedon Lab Data
 Graphical five number summary (outliers, 5th, 25th, median, 75th, 95th, outliers)
-
 ```{r bwplot for rf, echo=FALSE}
 bwplot(variable ~ value, data=lp.m, scales=list(x="free"), xlab="percent")          
 ```
 
-## Range in characteristics of NCSS Pedon Lab Data
-Five number summary (min, 25th, median, 75th, max)(percentiles)
-
-```{r, echo=FALSE, results='asis'}
-print(xtable(cast(lp.cs, ~variable, value='range')), type="html")
-```
 
 # Summary of NCSS Layer Lab Data
 ```{r, echo=FALSE, results='asis'}
@@ -189,7 +187,7 @@ print(xtable(lp.thk.cs, digits=0), type="html")
 Graphical five number summary (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles)
 
 ```{r, echo=FALSE}
-bwplot(factor(genhz, levels=levels(h$genhz)[length(levels(h$genhz)):1]) ~ value|variable, data=lh.thk.m, scales=list(x="free"), xlab="cm", horizontal=T)          
+bwplot(factor(genhz, levels=levels(lh$genhz)[length(levels(lh$genhz)):1]) ~ value|variable, data=lh.thk.m, scales=list(x="free"), xlab="cm", horizontal=T)          
 
 bwplot(factor(variable, levels=levels(lp.thk.m$variable)[length(levels(lp.thk.m$variable)):1]) ~ value|variable, data=lp.thk.m, scales=list(x="free"), xlab="cm", horizontal=T)          
 ```

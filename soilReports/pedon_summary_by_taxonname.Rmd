@@ -13,6 +13,7 @@ library(plyr)
 library(lattice)
 library(maps)
 library(xtable)
+library(RODBC)
 ```
 
 ```{r fetch and format, load-data, echo=FALSE, warning=FALSE}
@@ -255,4 +256,3 @@ Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 
 ```{r, echo=FALSE}
 bwplot(diag_kind ~ value|variable, data=diag.m, scales=list(x="free"), xlab="cm")          
 ```
-
