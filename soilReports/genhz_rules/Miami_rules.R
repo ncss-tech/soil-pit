@@ -1,6 +1,13 @@
 ghr <- list(
   "Miami"=list(
-    n=c("Ap", "A", "E", "Bt", "2Bt", "2BCt", "2Cd", "NA"),
+    n=c("Ap", 
+        "A", 
+        "E", 
+        "Bt", 
+        "2Bt", 
+        "2BCt", 
+        "2Cd", 
+        "NA"),
     
     p=c("Ap|AP|A p",
         "^A$,A1|A2|A3",

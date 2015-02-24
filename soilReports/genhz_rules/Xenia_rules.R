@@ -1,6 +1,12 @@
 ghr <- list(
   "Xenia"=list(
-    n=c("Ap", "E", "Bt", "2Bt", "2BCt", "2Cd", "NA"),
+    n=c("Ap", 
+        "E", 
+        "Bt", 
+        "2Bt", 
+        "2BCt", 
+        "2Cd", 
+        "NA"),
     
     p=c("Ap",
         "E",

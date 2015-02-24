@@ -1,6 +1,13 @@
 ghr <- list(
   "Rossmoyne"=list(
-    n=c("Ap", "A", "E", "Bt", "2Btx", "Btg", "2Bt", "2C"),
+    n=c("Ap", 
+        "A", 
+        "E", 
+        "Bt", 
+        "2Btx", 
+        "Btg", 
+        "2Bt", 
+        "2C"),
     
     p=c("Ap|AP",
         "^A$|A1|A2",
