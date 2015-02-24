@@ -1,6 +1,13 @@
 ghr <- list(
   "Genesee"=list(
-    n=c("Ap", "A", "Bw", "C", "Cg", "Ab", "2Bt", "NA"),
+    n=c("Ap", 
+        "A", 
+        "Bw", 
+        "C", 
+        "Cg", 
+        "Ab", 
+        "2Bt", 
+        "NA"),
     
     p=c("Ap|Ap1|Ap2|AP",
         "^A$|A1|A2|A3",
