@@ -1,6 +1,8 @@
 ghr <- list(
   'Cajon' = list(
-    n = c('A', 'Bk', 'Ck')
+    n = c('A', 
+          'Bk', 
+          'Ck')
     
     p=c('^A',
         '^BA|^Bk|^Bw',
