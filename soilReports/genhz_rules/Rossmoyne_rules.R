@@ -11,7 +11,7 @@ ghr <- list(
     
     p=c("Ap|AP",
         "^A$|A1|A2",
-        "^E$|^A2",
+        "^E$|^A2|^B1$",
         "^Bt$|^Bt1|^Bt2|BT1|BT2|B21T|B22T", 
         "Btx|BTX|BX", 
         "Bg",
