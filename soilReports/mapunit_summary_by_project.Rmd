@@ -201,10 +201,10 @@ bwplot(SSA_MUSYM ~ value|variable, data=pol.m, scales=list(x="free"))
 
 ```{r percentage by musym, echo=FALSE, results='asis'}
 ## Create descriptive and graphical summary of map unit
-print(xtable(prop.table(xtabs(~SSA_MUSYM+slopeBreaks,data=data), margin=1)*100, digits=0, caption="Slope breaks"), type="html", caption.placement="top")
-print(xtable(prop.table(xtabs(~SSA_MUSYM+aspectBreaks,data=data), margin=1)*100, digits=0, caption="Aspect breaks"), type="html", caption.placement="top")
-print(xtable(prop.table(xtabs(~SSA_MUSYM+valleyBreaks,data=data), margin=1)*100, digits=0, caption="Upland vs. lowland"), type="html", caption.placement="top")
-print(xtable(prop.table(xtabs(~SSA_MUSYM+lulcBreaks,data=data), margin=1)*100, digits=0, caption="Landuse and Landcover"), type="html", caption.placement="top")
+print(xtable(prop.table(xtabs(~SSA_MUSYM+slopeBreaks,data=data), margin=1)*100, align=rep("c", 1+length(levels(data$slopeBreaks))), digits=0, caption="Slope breaks"), type="html", caption.placement="top")
+print(xtable(prop.table(xtabs(~SSA_MUSYM+aspectBreaks,data=data), margin=1)*100, align=rep("c", 1+length(levels(data$aspectBreaks))), digits=0, caption="Aspect breaks"), type="html", caption.placement="top")
+print(xtable(prop.table(xtabs(~SSA_MUSYM+valleyBreaks,data=data), margin=1)*100, align=rep("c", 1+length(levels(data$valleyBreaks))), digits=0, caption="Upland vs. lowland"), type="html", caption.placement="top")
+print(xtable(prop.table(xtabs(~SSA_MUSYM+lulcBreaks,data=data), margin=1)*100, align=rep("c", 1+length(levels(data$lulcBreaks))), digits=0, caption="Landuse and Landcover"), type="html", caption.placement="top")
 ```
 
 ## Quantile breaks
@@ -215,7 +215,7 @@ data.m <- melt(data, id.vars="SSA_MUSYM", measure.vars=c("elev", "slope", "valle
 data.cs <- ddply(data.m, .(variable, SSA_MUSYM), .fun=conditional.l.rv.h.summary)
 data.cs.c <- cast(data.cs, SSA_MUSYM ~ variable, value='range')
 data.n <- ddply(data, .(SSA_MUSYM), .drop=T, summarize, n=length(SSA_MUSYM))
-print(xtable(merge(data.cs.c, data.n, by="SSA_MUSYM")), type="html")
+print(xtable(merge(data.cs.c, data.n, by="SSA_MUSYM"), align=rep("c", 2+ncol(data.cs.c))), type="html")
 aspect.m <- melt(data, id.vars="SSA_MUSYM", measure.vars=c("aspect"))
 aspect.m$value <- circular(aspect.m$value, template="geographic", units="degrees", modulo="2pi")
 aspect.cs <- ddply(aspect.m, .(variable, SSA_MUSYM), .fun=conditional.l.rv.h.summary)
