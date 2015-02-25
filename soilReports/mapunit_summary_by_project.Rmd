@@ -124,10 +124,9 @@ conditional.l.rv.h.summary <- function(x) {
   variable <- unique(x$variable)
   v <- na.omit(x$value) # extract column, from long-formatted input data
   precision <- if(variable == 'Circularity') 1 else 0
-  n <- length(v)
   ci <- quantile(v, na.rm=TRUE, probs=p) 
   d <- data.frame(min=ci[1], low=ci[2], rv=ci[3], high=ci[4], max=ci[5], stringsAsFactors=FALSE) # combine into DF
-  d$range <- with(d, paste0("(", paste0(round(c(min, low, rv, high, max), precision),collapse=', '), ")"), "(", n, ")")) # add 'range' column for pretty-printing
+  d$range <- with(d, paste0("(", paste0(round(c(min, low, rv, high, max), precision),collapse=', '), ")")) # add 'range' column for pretty-printing
   return(d[6])
 }
 
