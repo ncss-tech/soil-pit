@@ -2,10 +2,6 @@
 ```{r enter soil series name}
 # Set soil series
 series <- "Rossmoyne"
-
-## report formatting:
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', dpi=100, fig.align='center', dev='CairoPNG', dev.args=list(pointsize=10), tidy=FALSE)
-options(width=100, stringsAsFactors=FALSE)
 ```
 
 ```{r load packages, include=FALSE}

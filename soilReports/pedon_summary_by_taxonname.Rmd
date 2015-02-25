@@ -126,6 +126,14 @@ plot(f, label="pedon_id")
 print(xtable(subset(s, select=c("pedon_id", "taxonname", "tax_subgroup", "part_size_class", "pedon_type", "describer"))), type="html")
 ```
 
+## Range in characteristics of surface morphometry
+Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
+
+```{r, echo=FALSE, results='asis'}
+if(!all(is.na(s[, c("pmorigin", "pmkind", "landform.string")]))) {
+  pm.lf <- addmargins(table(factor(paste0(s$pmorigin, " ", s$pmkind)), factor(s$landform.string)))
+  print(xtable(pm.lf, digits=0, align=rep("c", 1+ncol(pm.lf)), caption="Parent material vs landform"), type="html", caption.placement="top")} else("no values have been populated for parent material or landform")
+```
 
 ## Range in characteristics of surface morphometry
 Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
@@ -292,9 +300,19 @@ Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total nu
 diag.thk <- ddply(d, .(peiid, diag_kind), summarize, thickness=sum(featdepb-featdept))
 diag.lo <- melt(d, id.vars="diag_kind", measure.vars=c('featdept', 'featdepb'))
 diag.lo2 <- melt(diag.thk, id.vars="diag_kind", measure.vars='thickness')
-diag.lo <- rbind(diag.lo, diag.lo2)
+
+names(s)[47] <- "featdept"
+names(s)[48] <- "featdepb"
+pscs.thk <- ddply(s, .(peiid), summarize, thickness=sum(featdepb-featdept))
+pscs.thk <- data.frame(peiid=pscs.thk$peiid, variable="thickness", value=pscs.thk$thickness)
+pscs.lo <- melt(s, id.vars="peiid", measure.vars=c('featdept', 'featdepb'))
+pscs.lo <- rbind(pscs.lo, pscs.thk)
+pscs.lo <- data.frame(diag_kind="particle size control section", variable=pscs.lo$variable, value=pscs.lo$value)
+
+diag.lo <- rbind(diag.lo, diag.lo2, pscs.lo)
 diag.5n <- ddply(diag.lo, .(variable, diag_kind), .fun=sum5n)
 diag.wi <- cast(diag.5n, diag_kind ~ variable, value='range')
+
 print(xtable(diag.wi, digits=0, align=rep("c", 1+ncol(diag.wi))), type="html")
 ```
 
