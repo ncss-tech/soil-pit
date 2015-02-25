@@ -293,7 +293,7 @@ bwplot(factor(genhz, levels=levels(h$genhz)[length(levels(h$genhz)):1]) ~ value|
 ```
 
 
-## Depths and thickness of diagnostic horizons
+## Depths and thickness of diagnostic horizons and features
 Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
 
 ```{r, echo=FALSE, results='asis'}
@@ -317,7 +317,7 @@ print(xtable(diag.wi, digits=0, align=rep("c", 1+ncol(diag.wi))), type="html")
 ```
 
 
-## Boxplot of diagnostic horizon thicknesses
+## Boxplot of diagnostic horizons and features depth
 Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles)
 
 ```{r, echo=FALSE}
