@@ -126,19 +126,14 @@ plot(f, label="pedon_id")
 print(xtable(subset(s, select=c("pedon_id", "taxonname", "tax_subgroup", "part_size_class", "pedon_type", "describer"))), type="html")
 ```
 
-## Range in characteristics of surface morphometry
+## Range in characteristics of geographic setting
 Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
 
 ```{r, echo=FALSE, results='asis'}
 if(!all(is.na(s[, c("pmorigin", "pmkind", "landform.string")]))) {
   pm.lf <- addmargins(table(factor(paste0(s$pmorigin, " ", s$pmkind)), factor(s$landform.string)))
   print(xtable(pm.lf, digits=0, align=rep("c", 1+ncol(pm.lf)), caption="Parent material vs landform"), type="html", caption.placement="top")} else("no values have been populated for parent material or landform")
-```
 
-## Range in characteristics of surface morphometry
-Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
-
-```{r, echo=FALSE, results='asis'}
 morf <- subset(s, select=c("elev_field", "slope_field"))
 morf.lo <- melt(morf, measure.vars=c("elev_field", "slope_field"))
 morf.5n <- ddply(morf.lo, .(variable), .fun=sum5n)
