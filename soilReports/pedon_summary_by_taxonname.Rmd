@@ -60,17 +60,20 @@ h[, c("fine_gravel", "gravel", "cobbles", "stones", "boulders", "paragravel", "p
 
 h$effervescence <- as.character(h$effervescence)
 
-naReplace <- function(h){
+naReplace <- function(x){
   l <- list()
-  for(i in seq(names(h))){
-    if(class(h[,i])=="character") {l[[i]] <- replace(h[,i], is.na(h[,i]), "NA")} else(l[[i]] <-  h[,i])
+  for(i in seq(ncol(x))){
+    if(class(x[,i])=="character") {l[[i]] <- replace(x[,i], is.na(x[,i]), "NA")} 
+    else(l[[i]] <-  x[,i])
   }
   l <- data.frame(l, stringsAsFactors=FALSE)
-  names(l) <- names(h)
+  names(l) <- names(x)
   return(l)
 }
 
 h <- naReplace(h)
+
+s <- naReplace(s)
 
 d <- diagnostic_hz(f)
 
@@ -144,12 +147,16 @@ if(!all(is.na(s$aspect_field))) {
 } else("no aspect values have been populated")         
 
 if(!all(is.na(s[, c("shapedown", "shapeacross")]))) {
-  s$shapedown <- as.factor(s$shapedown)
-  levels(s$shapedown) <- c("Convex", "Linear", "Concave")
-  s$shapeacross <- as.factor(s$shapeacross)
-  levels(s$shapeacross) <- c("Convex", "Linear", "Concave")
-  print(xtable(addmargins(table(s$shapedown, s$shapeacross)), digits=0, align=rep("c", 5), caption="Slope shape"), type="html", caption.placement="top")
+  s$shapedown <- factor(s$shapedown, levels=c("Convex", "Linear", "Concave", "NA"))
+  s$shapeacross <- factor(s$shapeacross, levels=c("Convex", "Linear", "Concave", "NA"))
+  print(xtable(addmargins(table(s$shapedown, s$shapeacross)), digits=0, align=rep("c", 6), caption="Down slope (y-axis) vs across slope (x-axis)"), type="html", caption.placement="top")
 } else("no slope shape values have been populated")
+
+if(!all(is.na(s[, c("hillslope_pos", "drainagecl")]))) {
+  s$hillslope_pos <- factor(s$hillslope_pos, levels=c("Summit", "Shoulder", "Backslope", "Footslope", "Toeslope", "NA"))
+  s$drainagecl <- factor(s$drainagecl, levels= c("Excessivelly drained", "Well drained", "Somewhat excessively well drained", "Moderately well drained", "Somewhat poorly drained", "Poorly drained", "Very poorly drained", "Subaqueous drainage", "NA"))
+  print(xtable(addmargins(table(s$drainagecl, s$hillslope_pos)), digits=0, align=rep("c", 8), caption="Drainage class vs hillslope position"), type="html", caption.placement="top")
+} else("no hillslope position or drainage class values have been populated")
 ```
 
 
