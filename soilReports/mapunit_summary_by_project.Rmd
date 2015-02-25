@@ -3,7 +3,6 @@
 
 This report summarizes the geographic setting of a list of MUKEY within a file geodatabase. It is intented to be used to compare and contrast map units, and suggest possible Low, RV, and High values for components. 
 
-
 ```{r load-data, echo=FALSE, results='hide', message=FALSE}
 project <- c('SDJR - MLRA 111A - Crosby-Miami silt loams, 0 to 6 percent slopes') # List of project
 dir <- "M:/geodata/project_data/"
@@ -125,9 +124,10 @@ conditional.l.rv.h.summary <- function(x) {
   variable <- unique(x$variable)
   v <- na.omit(x$value) # extract column, from long-formatted input data
   precision <- if(variable == 'Circularity') 1 else 0
+  n <- length(v)
   ci <- quantile(v, na.rm=TRUE, probs=p) 
   d <- data.frame(min=ci[1], low=ci[2], rv=ci[3], high=ci[4], max=ci[5], stringsAsFactors=FALSE) # combine into DF
-  d$range <- with(d, paste("(", paste(round(c(min, low, rv, high, max), precision),collapse=', '), ")", sep="")) # add 'range' column for pretty-printing
+  d$range <- with(d, paste0("(", paste0(round(c(min, low, rv, high, max), precision),collapse=', '), ")"), "(", n, ")")) # add 'range' column for pretty-printing
   return(d[6])
 }
 
