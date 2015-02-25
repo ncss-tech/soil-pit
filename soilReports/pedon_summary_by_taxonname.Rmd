@@ -124,8 +124,37 @@ print(xtable(subset(s, select=c("pedon_id", "taxonname", "tax_subgroup", "part_s
 ```
 
 
+## Range in characteristics of surface morphometry
+Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
+
+```{r, echo=FALSE, results='asis'}
+morf <- subset(s, select=c("elev_field", "slope_field"))
+morf.lo <- melt(morf, measure.vars=c("elev_field", "slope_field"))
+morf.5n <- ddply(morf.lo, .(variable), .fun=sum5n)
+morf.wi <- cast(morf.5n, ~variable, value='range')
+print(xtable(morf.wi), type="html")
+
+if(!all(is.na(s$aspect_field))) {
+  aspect <- subset(s, select=c("aspect_field"))
+  aspect.lo <- melt(aspect, measure.vars=c("aspect_field"))
+  aspect.lo$value <- circular(aspect.lo$value, template="geographic", units="degrees", modulo="2pi")
+  aspect.5n <- ddply(aspect.lo, .(variable), .fun=sum5n)
+  aspect.wi <- cast(aspect.5n, ~variable, value='range')
+  print(xtable(aspect.wi), type="html")
+} else("no aspect values have been populated")         
+
+if(!all(is.na(s[, c("shapedown", "shapeacross")]))) {
+  s$shapedown <- as.factor(s$shapedown)
+  levels(s$shapedown) <- c("Convex", "Linear", "Concave")
+  s$shapeacross <- as.factor(s$shapeacross)
+  levels(s$shapeacross) <- c("Convex", "Linear", "Concave")
+  print(xtable(addmargins(table(s$shapedown, s$shapeacross)), digits=0, align=rep("c", 5), caption="Slope shape"), type="html", caption.placement="top")
+} else("no slope shape values have been populated")
+```
+
+
 ## Range in characteristics of surface rock fragments
-Five number summary (min, 25th, median, 75th, max)(percentiles)
+Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
 
 ```{r, echo=FALSE, results='asis'}
 # Summarize surface rock fragments
@@ -150,28 +179,6 @@ if(!all(is.na(srf))) {
 ```
 
 
-## Range in characteristics of surface morphometry
-Five number summary (min, 25th, median, 75th, max)(percentiles)
-
-```{r, echo=FALSE, results='asis'}
-morf <- subset(s, select=c("elev_field", "slope_field"))
-morf.lo <- melt(morf, measure.vars=c("elev_field", "slope_field"))
-morf.5n <- ddply(morf.lo, .(variable), .fun=sum5n)
-morf.wi <- cast(morf.5n, ~variable, value='range')
-print(xtable(morf.wi), type="html")
-
-if(!all(is.na(s$aspect_field))) {
-  aspect <- subset(s, select=c("aspect_field"))
-  aspect.lo <- melt(aspect, measure.vars=c("aspect_field"))
-  aspect.lo$value <- circular(aspect.lo$value, template="geographic", units="degrees", modulo="2pi")
-  aspect.5n <- ddply(aspect.lo, .(variable), .fun=sum5n)
-  aspect.wi <- cast(aspect.5n, ~variable, value='range')
-  print(xtable(aspect.wi), type="html")
-} else("no aspect values have been populated")         
-
-```
-
-
 # Summary of Pedons
 ## Horizon designations by generic horizon
 Contingency table (counts) 
@@ -182,7 +189,7 @@ print(xtable(addmargins(table(h$genhz, h$hzname)), digits=0), type="html", width
 
 
 ## Range in characteristics for generic horizons 
-Five number summary (min, 25th, median, 75th, max)(percentiles)
+Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
 
 ```{r, echo=FALSE, results='asis'}
 # Summarize numeric variables by generic horizon
@@ -251,7 +258,7 @@ print(xtable(addmargins(table(h$genhz, h$effervescence)), digits=0, align=rep("c
 
 
 ## Depths and thickness of generic horizons
-Five number summary (min, 25th, median, 75th, max)(percentiles)
+Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
 
 ```{r, echo=FALSE, results='asis'}
 genhz.thk <- ddply(h, .(phiid, genhz), summarize, thickness=sum(hzdepb-hzdept))
@@ -272,7 +279,7 @@ bwplot(factor(genhz, levels=levels(h$genhz)[length(levels(h$genhz)):1]) ~ value|
 
 
 ## Depths and thickness of diagnostic horizons
-Five number summary (min, 25th, median, 75th, max)(percentiles)
+Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
 
 ```{r, echo=FALSE, results='asis'}
 diag.thk <- ddply(d, .(peiid, diag_kind), summarize, thickness=sum(featdepb-featdept))
