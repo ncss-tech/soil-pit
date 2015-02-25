@@ -88,9 +88,9 @@ sum5n <- function(x) {
   precision <- if(variable == 'phfield') 1 else 0
   n <- length(v)
   ci <- quantile(v, na.rm=TRUE, probs=p) 
-  d <- data.frame(min=ci[1], low=ci[2], rv=ci[3], high=ci[4], max=ci[5], stringsAsFactors=FALSE) # combine into DF
-  d$range <- with(d, paste0("(", paste0(round(c(min, low, rv, high, max), precision), collapse=', '), ")", "(", n, ")")) # add 'range' column for pretty-printing
-  return(d[6])
+  d <- data.frame(min=ci[1], low=ci[2], rv=ci[3], high=ci[4], max=ci[5], n=n, stringsAsFactors=FALSE) # combine into DF
+  d$range <- with(d, paste0("(", paste0(round(c(min, low, rv, high, max)), collapse=", "), ")", "(", n, ")")) # add 'range' column for pretty-printing
+  return(d[7])
 }
 ```
 
@@ -154,18 +154,21 @@ if(!all(is.na(srf))) {
 Five number summary (min, 25th, median, 75th, max)(percentiles)
 
 ```{r, echo=FALSE, results='asis'}
-morf.lo <- melt(s, measure.vars=c("elev_field", "slope_field"))
+morf <- subset(s, select=c("elev_field", "slope_field"))
+morf.lo <- melt(morf, measure.vars=c("elev_field", "slope_field"))
 morf.5n <- ddply(morf.lo, .(variable), .fun=sum5n)
 morf.wi <- cast(morf.5n, ~variable, value='range')
-
 print(xtable(morf.wi), type="html")
 
-aspect.lo <- melt(s, measure.vars=c("aspect_field"))
-aspect.lo$value <- circular(aspect.lo$value, template="geographic", units="degrees", modulo="2pi")
-aspect.5n <- ddply(aspect.lo, .(variable), .fun=sum5n)
-aspect.wi <- cast(aspect.5n, ~variable, value='range')
+if(!all(is.na(s$aspect_field))) {
+  aspect <- subset(s, select=c("aspect_field"))
+  aspect.lo <- melt(aspect, measure.vars=c("aspect_field"))
+  aspect.lo$value <- circular(aspect.lo$value, template="geographic", units="degrees", modulo="2pi")
+  aspect.5n <- ddply(aspect.lo, .(variable), .fun=sum5n)
+  aspect.wi <- cast(aspect.5n, ~variable, value='range')
+  print(xtable(aspect.wi), type="html")
+} else("no aspect values have been populated")         
 
-print(xtable(aspect.wi), type="html")
 ```
 
 

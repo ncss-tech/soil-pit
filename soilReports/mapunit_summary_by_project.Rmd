@@ -120,13 +120,13 @@ mapunit.summary<-function(project, samplePercent){
   return(data.l)
 }
 
-conditional.l.rv.h.summary <- function(x) {
+sum5n <- function(x) {
   variable <- unique(x$variable)
   v <- na.omit(x$value) # extract column, from long-formatted input data
   precision <- if(variable == 'Circularity') 1 else 0
   ci <- quantile(v, na.rm=TRUE, probs=p) 
   d <- data.frame(min=ci[1], low=ci[2], rv=ci[3], high=ci[4], max=ci[5], stringsAsFactors=FALSE) # combine into DF
-  d$range <- with(d, paste0("(", paste0(round(c(min, low, rv, high, max), precision),collapse=', '), ")")) # add 'range' column for pretty-printing
+  d$range <- with(d, paste0("(", paste0(round(c(min, low, rv, high, max), precision), collapse=', '), ")")) # add 'range' column for pretty-printing
   return(d[6])
 }
 
@@ -180,12 +180,12 @@ Five number summary (min, 25th, median, 75th, max)(percentiles) and contingency 
 ```{r soil polygon metrics, echo=FALSE, results='asis'}
 pol <- data.frame(mupolygon)
 pol$SSA_MUSYM <- as.character(paste(pol$AREASYMBOL, pol$MUSYM))
-pol.m <- melt(pol, id.vars="SSA_MUSYM", measure.vars=c("Acres", "Circularity"))
-pol.as.m <- melt(pol, id.vars=c("AREASYMBOL", "MUSYM"), measure.vars=c("Acres"))
-pol.as.cs1 <- ddply(pol.as.m, .(AREASYMBOL, MUSYM, variable), .fun=conditional.l.rv.h.summary)
-pol.as.cs2 <- ddply(pol.as.m, .(AREASYMBOL, MUSYM, variable), summarize, nPolygons=length(value), nArces=sum(value))[, c(1, 2, 4, 5)]
-pol.as.me <- merge(pol.as.cs1, pol.as.cs2, by=c("AREASYMBOL", "MUSYM"))
-print(xtable(pol.as.me, digits=0, caption="Summary of MUSYM by AREASYMBOL"), type="html", caption.placement="top")
+pol.lo1 <- melt(pol, id.vars="SSA_MUSYM", measure.vars=c("Acres", "Circularity"))
+pol.lo2 <- melt(pol, id.vars="SSA_MUSYM", measure.vars=c("Acres"))
+pol.5n1 <- ddply(pol.lo2, .(SSA_MUSYM, variable), .fun=sum5n)
+pol.5n2 <- ddply(pol, .(SSA_MUSYM), summarize, nPolygons=length(MUSYM), nArces=round(sum(Acres), 0))
+pol.5n <- merge(pol.5n1, pol.5n2, by=c("SSA_MUSYM"))
+print(xtable(pol.5n, digits=0, caption="Summary of MUSYM by AREASYMBOL"), type="html", caption.placement="top")
 ```
 
 ## Polygon Boxplots
@@ -193,7 +193,7 @@ Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 
 Circularity is a meature of shape complexity (Hole and Campbell, 1975), computed as mupolygon length / mupolygon circumference, with 1 being equal to a percent circle.
 
 ```{r bwplot of polygon metrics, echo=FALSE, fig.height=h}
-bwplot(SSA_MUSYM ~ value|variable, data=pol.m, scales=list(x="free"))
+bwplot(SSA_MUSYM ~ value|variable, data=pol.lo1, scales=list(x="free"))
 ```
 
 ## Contingency tables (percent) 
@@ -210,16 +210,17 @@ print(xtable(prop.table(xtabs(~SSA_MUSYM+lulcBreaks,data=data), margin=1)*100, a
 Five number summary (min, 25th, median, 75th, max)(percentiles) and number of random samples (n)
 
 ```{r quantiles by musym, echo=FALSE, results="asis"}
-data.m <- melt(data, id.vars="SSA_MUSYM", measure.vars=c("elev", "slope", "valley", "wetness", "relief", "ppt", "temp", "ffp"))
-data.cs <- ddply(data.m, .(variable, SSA_MUSYM), .fun=conditional.l.rv.h.summary)
-data.cs.c <- cast(data.cs, SSA_MUSYM ~ variable, value='range')
+data.lo <- melt(data, id.vars="SSA_MUSYM", measure.vars=c("elev", "slope", "valley", "wetness", "relief", "ppt", "temp", "ffp"))
+data.5n <- ddply(data.lo, .(variable, SSA_MUSYM), .fun=sum5n)
+data.5n.c <- cast(data.5n, SSA_MUSYM ~ variable, value='range')
 data.n <- ddply(data, .(SSA_MUSYM), .drop=T, summarize, n=length(SSA_MUSYM))
-print(xtable(merge(data.cs.c, data.n, by="SSA_MUSYM"), align=rep("c", 2+ncol(data.cs.c))), type="html")
-aspect.m <- melt(data, id.vars="SSA_MUSYM", measure.vars=c("aspect"))
-aspect.m$value <- circular(aspect.m$value, template="geographic", units="degrees", modulo="2pi")
-aspect.cs <- ddply(aspect.m, .(variable, SSA_MUSYM), .fun=conditional.l.rv.h.summary)
-aspect.cs.c <- cast(aspect.cs, SSA_MUSYM ~ variable, value='range')
-print(xtable(merge(aspect.cs.c, data.n, by="SSA_MUSYM")), type="html")
+print(xtable(merge(data.5n.c, data.n, by="SSA_MUSYM"), align=rep("c", 2+ncol(data.5n.c))), type="html")
+
+aspect.lo <- melt(data, id.vars="SSA_MUSYM", measure.vars=c("aspect"))
+aspect.lo$value <- circular(aspect.lo$value, template="geographic", units="degrees", modulo="2pi")
+aspect.5n <- ddply(aspect.lo, .(variable, SSA_MUSYM), .fun=sum5n)
+aspect.5n.c <- cast(aspect.5n, SSA_MUSYM ~ variable, value='range')
+print(xtable(merge(aspect.5n.c, data.n, by="SSA_MUSYM")), type="html")
 ```
 
 ## Boxplots of map unit properties
@@ -229,5 +230,5 @@ Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 
 ### *(min, 5th, 25th, median, 75th, 95th, max)*
 temp <- factor(unique(data$SSA_MUSYM))
 
-bwplot(factor(SSA_MUSYM, levels=levels(temp)[length(levels(temp)):1]) ~ value|variable, data=data.m, scales=list(x="free"))          
+bwplot(factor(SSA_MUSYM, levels=levels(temp)[length(levels(temp)):1]) ~ value|variable, data=data.lo, scales=list(x="free"))          
 ```
