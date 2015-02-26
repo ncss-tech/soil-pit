@@ -48,6 +48,7 @@ mapunit.summary<-function(project, samplePercent){
       s_srs=CRS("+init=epsg:5070"),
       t_srs=CRS("+init=epsg:5070"),
       overwrite=T,
+      simplify=2,
       verbose=TRUE
       )
     sapolygon <- readOGR(dsn=paste0(pd, geodatabase), layer="SAPOLYGON", encoding="OpenFileGDB")
