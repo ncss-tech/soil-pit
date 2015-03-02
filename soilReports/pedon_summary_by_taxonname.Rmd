@@ -1,7 +1,7 @@
 # Pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Crosby"
+series <- "Genesee"
 ```
 
 
@@ -130,15 +130,12 @@ print(xtable(subset(s, select=c("pedon_id", "taxonname", "tax_subgroup", "part_s
 Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
 
 ```{r, echo=FALSE, results='asis'}
-if(!all(is.na(s[, c("pmorigin", "pmkind", "landform.string")]))) {
-  pm.lf <- addmargins(table(factor(paste0(s$pmorigin, " ", s$pmkind)), factor(s$landform.string)))
-  print(xtable(pm.lf, digits=0, align=rep("c", 1+ncol(pm.lf)), caption="Parent material vs landform"), type="html", caption.placement="top")} else("no values have been populated for parent material or landform")
-
 morf <- subset(s, select=c("elev_field", "slope_field"))
 morf.lo <- melt(morf, measure.vars=c("elev_field", "slope_field"))
 morf.5n <- ddply(morf.lo, .(variable), .fun=sum5n)
 morf.wi <- cast(morf.5n, ~variable, value='range')
-print(xtable(morf.wi), type="html")
+print(xtable(morf.wi, caption="Elevation and slope gradient"), type="html", caption.placement="top")
+
 
 if(!all(is.na(s$aspect_field))) {
   aspect <- subset(s, select=c("aspect_field"))
@@ -146,8 +143,14 @@ if(!all(is.na(s$aspect_field))) {
   aspect.lo$value <- circular(aspect.lo$value, template="geographic", units="degrees", modulo="2pi")
   aspect.5n <- ddply(aspect.lo, .(variable), .fun=sum5n)
   aspect.wi <- cast(aspect.5n, ~variable, value='range')
-  print(xtable(aspect.wi), type="html")
+  print(xtable(aspect.wi, caption="Slope aspect"), type="html", caption.placement="top")
 } else("no aspect values have been populated")         
+
+
+if(!all(is.na(s[, c("pmorigin", "pmkind", "landform.string")]))) {
+  pm.lf <- addmargins(table(factor(paste0(s$pmorigin, " ", s$pmkind)), factor(s$landform.string)))
+  print(xtable(pm.lf, digits=0, align=rep("c", 1+ncol(pm.lf)), caption="Parent material vs landform"), type="html", caption.placement="top")} else("no values have been populated for parent material or landform")
+
 
 if(!all(is.na(s[, c("shapedown", "shapeacross")]))) {
   s$shapedown <- factor(s$shapedown, levels=c("Convex", "Linear", "Concave", "NA"))
@@ -194,7 +197,7 @@ if(!all(is.na(srf))) {
 Contingency table (counts) 
 
 ```{r, echo=FALSE, results='asis'}
-print(xtable(addmargins(table(h$genhz, h$hzname)), digits=0), type="html", width=10) 
+print(xtable(addmargins(table(h$genhz, h$hzname)), digits=0), type="html") 
 ```
 
 
@@ -216,13 +219,16 @@ h.wi2 <- cast(h.5n2, genhz ~ variable, value='range')
 
 print(xtable(h.wi1, align=rep("c", 1+ncol(h.wi1))), type="html", include.rownames=FALSE)
 print(xtable(h.wi2, align=rep("c", 1+ncol(h.wi2))), type="html", include.rownames=FALSE)
+
+n <- length(unique(h$genhz))
+nh <- ifelse(n < 4, 4, 4+(n-4)*.15*3)
 ```
 
 
 ## Box plots of numeric variables by generic horizon
 Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, fig.height=nh}
 bwplot(factor(genhz, levels=levels(h$genhz)[length(levels(h$genhz)):1]) ~ value|variable, data=rbind(h.lo1, h.lo2), scales=list(x="free"))          
 ```
 
