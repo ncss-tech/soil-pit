@@ -1,7 +1,7 @@
 # Lab pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Rossmoyne"
+series <- "Genesee"
 ```
 
 ```{r load packages, include=FALSE}
@@ -54,19 +54,20 @@ naReplace <- function(x){
 h <- naReplace(h)
 
 # Function
-conditional.l.rv.h.summary <- function(x) {
+sum5n <- function(x) {
   variable <- unique(x$variable)
   precision.table <- c(1, 1, 1, 1)
   precision.vars <- c('ph1to1h2o', 'ph01mcacl2', 'phoxidized', 'ph2osoluble')
 	v <- na.omit(x$value) # extract column, from long-formatted input data
   precision <- if(variable %in% precision.vars) precision.table[match(variable, precision.vars)] else 0
+  n <- length(v)
   ci <- quantile(v, na.rm=TRUE, probs=p) 
-  d <- data.frame(min=ci[1], low=ci[2], rv=ci[3], high=ci[4], max=ci[5], stringsAsFactors=FALSE) # combine into DF
-  precision <- if(variable %in% precision.vars) precision.table[match(variable, precision.vars)] else 0
-  d$range <- with(d, paste("(", paste(round(c(min, low, rv, high, max), precision), collapse=', '), ")", sep="")) # add 'range' column for pretty-printing
-  return(d[6])
+  d <- data.frame(min=ci[1], low=ci[2], rv=ci[3], high=ci[4], max=ci[5], n=n, stringsAsFactors=FALSE) # combine into DF
+  d$range <- with(d, paste0("(", paste0(round(c(min, low, rv, high, max)), collapse=", "), ")", "(", n, ")")) # add 'range' column for pretty-printing
+  return(d[7])
 }
 ```
+
 ## Plot of all pedons in selected set
 Pedons that do not have their Std_Latitude and Std_Longitude columns populated in the NASIS Site table are currently not ploted on the map.
 ```{r plot of pedons and locations, echo=FALSE}
@@ -89,37 +90,29 @@ plot(l, label="labpeiid")
 ```{r format site data, echo=FALSE, results='asis'}
 # Site information
 print(xtable(subset(s, select=c("pedon_id", "taxonname", "tax_subgroup", "part_size_class", "pedon_type", "describer"))), type="html")
-
-# Summarize site data
-lp.sub <- subset(lp, select=c("noncarbclaywtavg", "claytotwtavg", "le0to100", "wf0175wtavgpsc", "volfractgt2wtavg", "cec7clayratiowtavg"))
-lp.m <- melt(lp.sub, measure.vars=c("noncarbclaywtavg", "claytotwtavg", "le0to100", "wf0175wtavgpsc", "volfractgt2wtavg", "cec7clayratiowtavg"))
-lp.cs <- ddply(lp.m, .(variable), .fun=conditional.l.rv.h.summary)
 ```
 
 
 ## Range in characteristics of NCSS Pedon Lab Data
 Five number summary (min, 25th, median, 75th, max)(percentiles)
 ```{r, echo=FALSE, results='asis'}
-print(xtable(cast(lp.cs, ~variable, value='range')), type="html")
+# Summarize site data
+lp.sub <- subset(lp, select=c("noncarbclaywtavg", "claytotwtavg", "le0to100", "wf0175wtavgpsc", "volfractgt2wtavg", "cec7clayratiowtavg"))
+lp.lo <- melt(lp.sub, measure.vars=c("noncarbclaywtavg", "claytotwtavg", "le0to100", "wf0175wtavgpsc", "volfractgt2wtavg", "cec7clayratiowtavg"))
+lp.5n <- ddply(lp.lo, .(variable), .fun=sum5n)
+
+print(xtable(cast(lp.5n, ~variable, value='range')), type="html")
 ```
+
 
 ## Box plots of NCSS Pedon Lab Data
 Graphical five number summary (outliers, 5th, 25th, median, 75th, 95th, outliers)
 ```{r bwplot for rf, echo=FALSE}
-bwplot(variable ~ value, data=lp.m, scales=list(x="free"), xlab="percent")          
+bwplot(variable ~ value, data=lp.lo, scales=list(x="free"), xlab="percent")          
 ```
 
 
 # Summary of NCSS Layer Lab Data
-```{r, echo=FALSE, results='asis'}
-# Summarize numeric variables by generic horizon
-```{r, echo=FALSE, results='asis'}
-lh.num <- lh[, c(12:(ncol(lh)-3), ncol(lh))]
-lh.num <- Filter(function(x)!all(is.na(x)), lh.num)
-lh.m <- melt(lh.num, id.vars="genhz", measure.vars=names(lh.num)[c(1:(ncol(lh.num)-1))])
-lh.cs <- ddply(lh.m, .(variable, genhz), .fun=conditional.l.rv.h.summary)
-```
-
 
 ## Horizon designations by generic horizon
 Contingency table (counts) 
@@ -131,17 +124,25 @@ print(xtable(addmargins(table(lh$genhz, lh$hzname)), digits=0), type="html")
 
 ## Range in characteristics for generic horizons 
 Five number summary (min, 25th, median, 75th, max)(percentiles)
-
 ```{r, echo=FALSE}
-cast(lh.cs, genhz~variable, value='range')
+# Summarize numeric variables by generic horizon
+lh.num <- lh[, c(12:(ncol(lh)-3), ncol(lh))]
+lh.num <- Filter(f=function(x) !all(is.na(x)), x=lh.num)
+lh.lo <- melt(lh.num, id.vars="genhz", measure.vars=names(lh.num)[c(1:(ncol(lh.num)-1))])
+lh.5n <- ddply(lh.lo, .(variable, genhz), .fun=sum5n)
+lh.c <- cast(lh.5n, genhz~variable, value='range')
+
+lh.c
+
+nh <- ncol(lh.num)/2.5
 ```
 
 
 ## Box plots of numeric variables by generic horizon
 Graphical five number summary (outliers, 5th, 25th, median, 75th, 95th, outliers)
 
-```{r, echo=FALSE}
-bwplot(factor(genhz, levels=levels(lh$genhz)[length(levels(lh$genhz)):1]) ~ value|variable, data=rbind(lh.m), scales=list(x="free"))          
+```{r, echo=FALSE, fig.height=nh}
+bwplot(factor(genhz, levels=levels(lh$genhz)[length(levels(lh$genhz)):1]) ~ value|variable, data=rbind(lh.lo), scales=list(x="free"))          
 ```
 
 
@@ -165,22 +166,22 @@ print(xtable(addmargins(table(lh$genhz, lh$stratextsflag)), digits=0), type="htm
 Five number summary (min, 25th, median, 75th, max)(percentiles)
 
 ```{r, echo=FALSE, results='asis'}
-thk <- ddply(lh, .(labpeiid, genhz), summarize, thickness=sum(hzdepb-hzdept))
-thk.m <- melt(thk, id.vars="genhz", measure.vars="thickness")
+genhz.thk <- ddply(lh, .(labpeiid, genhz), summarize, thickness=sum(hzdepb-hzdept))
+genhz.lo <- melt(genhz.thk, id.vars="genhz", measure.vars="thickness")
 
-lh.m2 <- melt(lh, id.vars="genhz", measure.vars=c("hzdept", "hzdepb"))
+lh.lo <- melt(lh, id.vars="genhz", measure.vars=c("hzdept", "hzdepb"))
 
-lp.m <- melt(lp, id.vars="labpeiid", measure.vars=c("psctopdepth", "pscbotdepth"))
+lp.lo1 <- melt(lp, id.vars="labpeiid", measure.vars=c("psctopdepth", "pscbotdepth"))
 lp.thk <- ddply(lp, .(labpeiid), summarize, thickness=sum(pscbotdepth-psctopdepth))
-lp.thk.m <- melt(lp.thk, id.vars="labpeiid", measure.vars="thickness")
+lp.lo2 <- melt(lp.thk, id.vars="labpeiid", measure.vars="thickness")
 
-lh.thk.m <- rbind(lh.m2, thk.m)
-lp.thk.m <- rbind(lp.m, lp.thk.m)
+lh.lo <- rbind(lh.lo, genhz.lo)
+lp.lo <- rbind(lp.lo1, lp.lo2)
 
-lh.thk.cs <- ddply(lh.thk.m, .(variable, genhz), .fun=conditional.l.rv.h.summary)
-lp.thk.cs <- ddply(lp.thk.m, .(variable), .fun=conditional.l.rv.h.summary)
-print(xtable(cast(lh.thk.cs, genhz ~ variable, value='range'), digits=0), type="html")
-print(xtable(lp.thk.cs, digits=0), type="html")
+lh.5n <- ddply(lh.lo, .(variable, genhz), .fun=sum5n)
+lp.5n <- ddply(lp.lo, .(variable), .fun=sum5n)
+print(xtable(cast(lh.5n, genhz ~ variable, value='range'), digits=0), type="html")
+print(xtable(lp.5n, digits=0), type="html")
 ```
 
 
@@ -188,7 +189,7 @@ print(xtable(lp.thk.cs, digits=0), type="html")
 Graphical five number summary (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles)
 
 ```{r, echo=FALSE}
-bwplot(factor(genhz, levels=levels(lh$genhz)[length(levels(lh$genhz)):1]) ~ value|variable, data=lh.thk.m, scales=list(x="free"), xlab="cm", horizontal=T)          
+bwplot(factor(genhz, levels=levels(lh$genhz)[length(levels(lh$genhz)):1]) ~ value|variable, data=lh.lo, scales=list(x="free"), xlab="cm", horizontal=T)          
 
-bwplot(factor(variable, levels=levels(lp.thk.m$variable)[length(levels(lp.thk.m$variable)):1]) ~ value|variable, data=lp.thk.m, scales=list(x="free"), xlab="cm", horizontal=T)          
+bwplot(factor(variable, levels=levels(lp.lo$variable)[length(levels(lp.lo$variable)):1]) ~ value|variable, data=lp.lo, scales=list(x="free"), xlab="cm", horizontal=T)          
 ```
