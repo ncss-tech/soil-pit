@@ -1,7 +1,7 @@
 # Lab pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Genesee"
+series <- "Cincinnati"
 ```
 
 ```{r load packages, include=FALSE}
@@ -31,10 +31,12 @@ h <- horizons(f)
 s <- site(f)
 
 names(lh) <- unlist(strsplit(names(lh), "measured"))
+lh$cec7Clay <- lh$cec7/lh$claytot
 
 for(i in seq(nrow(lh))){
   if(is.na(lh$hzname[i])) {lh$hzname[i] <-lh$hznameoriginal[i]}
 }
+
 lh$hzname[is.na(lh$hzname)] <- "NA"
 lh$genhz <- generalize.hz(lh$hzname, ghr[[series]]$n, ghr[[series]]$p)
 
@@ -56,14 +58,14 @@ h <- naReplace(h)
 # Function
 sum5n <- function(x) {
   variable <- unique(x$variable)
-  precision.table <- c(1, 1, 1, 1)
-  precision.vars <- c('ph1to1h2o', 'ph01mcacl2', 'phoxidized', 'ph2osoluble')
-	v <- na.omit(x$value) # extract column, from long-formatted input data
+  precision.vars <- c('phfield', 'ph1to1h2o', 'ph01mcacl2', 'phoxidized', 'ph2osoluble', 'ecec', 'cec7', 'cecsumcations', 'sumbases', 'extracid', 'dbthirdbar', 'dbovendry', 'wthirdbarclod', 'wfifteenbar', 'wretentiondiffws', 'wfifteenbartoclay', 'cec7Clay')
+	precision.table <- c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 2)
+  v <- na.omit(x$value) # extract column, from long-formatted input data
   precision <- if(variable %in% precision.vars) precision.table[match(variable, precision.vars)] else 0
   n <- length(v)
   ci <- quantile(v, na.rm=TRUE, probs=p) 
   d <- data.frame(min=ci[1], low=ci[2], rv=ci[3], high=ci[4], max=ci[5], n=n, stringsAsFactors=FALSE) # combine into DF
-  d$range <- with(d, paste0("(", paste0(round(c(min, low, rv, high, max)), collapse=", "), ")", "(", n, ")")) # add 'range' column for pretty-printing
+  d$range <- with(d, paste0("(", paste0(round(c(min, low, rv, high, max), precision), collapse=", "), ")", "(", n, ")")) # add 'range' column for pretty-printing
   return(d[7])
 }
 ```
@@ -76,7 +78,7 @@ if(dim(s)[1] != 0) {
   coordinates(s.sub) <- ~x_std+y_std
   plot(s.sub, pch=16)
   map("county", lwd=0.5, add=T)
-  map("state",lwd=1,add=T)
+  map("state",lwd=2, add=T)
   map.axes()
   } else("no coordinates")
 ```
@@ -118,7 +120,7 @@ bwplot(variable ~ value, data=lp.lo, scales=list(x="free"), xlab="percent")
 Contingency table (counts) 
 
 ```{r, echo=FALSE, results='asis'}
-print(xtable(addmargins(table(lh$genhz, lh$hzname)), digits=0), type="html") 
+print(xtable(addmargins(table(lh$genhz, lh$hzname)), digits=0, align=rep("c", 2+length(unique(lh$hzname)))), type="html") 
 ```
 
 
@@ -126,13 +128,13 @@ print(xtable(addmargins(table(lh$genhz, lh$hzname)), digits=0), type="html")
 Five number summary (min, 25th, median, 75th, max)(percentiles)
 ```{r, echo=FALSE}
 # Summarize numeric variables by generic horizon
-lh.num <- lh[, c(12:(ncol(lh)-3), ncol(lh))]
+lh.num <- lh[, c(12:(ncol(lh)-4), ncol(lh)-1, ncol(lh))]
 lh.num <- Filter(f=function(x) !all(is.na(x)), x=lh.num)
 lh.lo <- melt(lh.num, id.vars="genhz", measure.vars=names(lh.num)[c(1:(ncol(lh.num)-1))])
 lh.5n <- ddply(lh.lo, .(variable, genhz), .fun=sum5n)
 lh.c <- cast(lh.5n, genhz~variable, value='range')
 
-lh.c
+format(lh.c, justify="centre")
 
 nh <- ncol(lh.num)/2.5
 ```
@@ -150,7 +152,7 @@ bwplot(factor(genhz, levels=levels(lh$genhz)[length(levels(lh$genhz)):1]) ~ valu
 Contigency table (counts) 
 
 ```{r, echo=FALSE, results='asis'}
-print(xtable(addmargins(table(lh$genhz, lh$lab_texcl)), digits=0), type="html")
+print(xtable(addmargins(table(lh$genhz, lh$lab_texcl)), digits=0, align=rep("c", 1+length(unique(lh$lab_texcl)))), type="html")
 ```
 
 
@@ -179,9 +181,10 @@ lh.lo <- rbind(lh.lo, genhz.lo)
 lp.lo <- rbind(lp.lo1, lp.lo2)
 
 lh.5n <- ddply(lh.lo, .(variable, genhz), .fun=sum5n)
+lh.c <- cast(lh.5n, genhz ~ variable, value='range')
 lp.5n <- ddply(lp.lo, .(variable), .fun=sum5n)
-print(xtable(cast(lh.5n, genhz ~ variable, value='range'), digits=0), type="html")
-print(xtable(lp.5n, digits=0), type="html")
+print(xtable(lh.c, digits=0, align=rep("c", 1+ncol(lh.c))), type="html")
+print(xtable(lp.5n, digits=0, align=rep("c", 1+ncol(lp.5n))), type="html")
 ```
 
 
