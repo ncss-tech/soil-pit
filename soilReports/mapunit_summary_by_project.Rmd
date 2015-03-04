@@ -4,10 +4,10 @@
 This report summarizes the geographic setting of a list of MUKEY within a file geodatabase. It is intented to be used to compare and contrast map units, and suggest possible Low, RV, and High values for components. 
 
 ```{r load-data, echo=FALSE, results='hide', message=FALSE}
-project <- c('SDJR - MLRA 111A - Crosby-Miami silt loams, 0 to 6 percent slopes') # List of project
+project <- c('SDJR - MLRA 104 - Downs silt loam, paha, 14 to 18 percent slopes, eroded') # List of project
 dir <- "M:/geodata/project_data/"
-geodatabase <- "RTSD_Region_11_IND_FY15.gdb"
-office <- "11IND"
+geodatabase <- "RTSD_Region_11_WAV_FY15.gdb"
+office <- "11WAV"
 
 # Defaults
 gdalpath <- "C:/Program Files/QGIS Dufour/bin"
@@ -39,7 +39,7 @@ gdal_setInstallation(search_path=gdalpath, rescan=T)
 ## local functions
 mapunit.summary<-function(project, samplePercent){
   # Import geodatabase
-  if(ifelse(file.exists(paste0(cache, ".Rdata")), "NA", 1) == 1) {
+  if(ifelse(file.exists(paste0(cache, ".Rdata")), FALSE, TRUE)) {
    ogr2ogr(
       src_datasource_name=paste0(pd, geodatabase),
       dst_datasource_name=cache,
@@ -135,11 +135,13 @@ data.l <- mapunit.summary(project, samplePercent)
 data <- data.l$data
 mupolygon <- data.l$mupolygon
 sapolygon <- data.l$sapolygon
-h <- 2+length(levels(data$AREASYMBOL))*.75
+
+n <- length(levels(data$AREASYMBOL))
+nh <- ifelse(n < 4, 4, 4+(n-4)*.2*4)
 
 data$SSA_MUSYM <- as.character(paste(data$AREASYMBOL, data$MUSYM))
 data2 <- data
-data2$SSA_MUSYM <- "new_mlra_mapunit"
+data2$SSA_MUSYM <- "*new_mlra_mapunit"
 data <- rbind(data, data2)
 ```
 
@@ -169,7 +171,7 @@ lulc        | land use and land cover             | landcover class (e.g. Woody 
 Don't be concerned if the soil map units don't line up with the counties. The county layer being used is an internal R layer that is highly generalized.
 ```{r plot soil map units, echo=FALSE}
 temp <- spTransform(mupolygon, CRS("+init=epsg:4326"))
-plot(temp, col=4, lty=0)
+plot(temp)
 map("county", add=T)
 map("state",lwd=3,add=T)
 map.axes()
@@ -181,19 +183,22 @@ Five number summary (min, 25th, median, 75th, max)(percentiles) and contingency 
 ```{r soil polygon metrics, echo=FALSE, results='asis'}
 pol <- data.frame(mupolygon)
 pol$SSA_MUSYM <- as.character(paste(pol$AREASYMBOL, pol$MUSYM))
+pol2 <- pol
+pol2$SSA_MUSYM <- "*new_mlra_mapunit"
+pol <- rbind(pol, pol2)
+
 pol.lo1 <- melt(pol, id.vars="SSA_MUSYM", measure.vars=c("Acres", "Circularity"))
 pol.lo2 <- melt(pol, id.vars="SSA_MUSYM", measure.vars=c("Acres"))
 pol.5n1 <- ddply(pol.lo2, .(SSA_MUSYM, variable), .fun=sum5n)
-pol.5n2 <- ddply(pol, .(SSA_MUSYM), summarize, nPolygons=length(MUSYM), nArces=round(sum(Acres), 0))
+pol.5n2 <- ddply(pol, .(SSA_MUSYM), summarize, nArces=round(sum(Acres), 0), nPolygons=length(MUSYM))
 pol.5n <- merge(pol.5n1, pol.5n2, by=c("SSA_MUSYM"))
-print(xtable(pol.5n, digits=0, caption="Summary of MUSYM by AREASYMBOL"), type="html", caption.placement="top")
+print(xtable(pol.5n, digits=0, , align=rep("c", 1+ncol(pol.5n)), caption="Summary of MUSYM by AREASYMBOL"), type="html", caption.placement="top")
 ```
 
 ## Polygon Boxplots
 Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles). 
-Circularity is a meature of shape complexity (Hole and Campbell, 1975), computed as mupolygon length / mupolygon circumference, with 1 being equal to a percent circle.
-
-```{r bwplot of polygon metrics, echo=FALSE, fig.height=h}
+Circularity is an estimate of shape complexity (Hole and Campbell, 1975), computed as a ratio of mupolygon length / mupolygon circumference. The shape complexity of a perfect circle would equal 1.
+```{r bwplot of polygon metrics, echo=FALSE}
 bwplot(SSA_MUSYM ~ value|variable, data=pol.lo1, scales=list(x="free"))
 ```
 
@@ -204,7 +209,7 @@ bwplot(SSA_MUSYM ~ value|variable, data=pol.lo1, scales=list(x="free"))
 print(xtable(prop.table(xtabs(~SSA_MUSYM+slopeBreaks,data=data), margin=1)*100, align=rep("c", 1+length(levels(data$slopeBreaks))), digits=0, caption="Slope breaks"), type="html", caption.placement="top")
 print(xtable(prop.table(xtabs(~SSA_MUSYM+aspectBreaks,data=data), margin=1)*100, align=rep("c", 1+length(levels(data$aspectBreaks))), digits=0, caption="Aspect breaks"), type="html", caption.placement="top")
 print(xtable(prop.table(xtabs(~SSA_MUSYM+valleyBreaks,data=data), margin=1)*100, align=rep("c", 1+length(levels(data$valleyBreaks))), digits=0, caption="Upland vs. lowland"), type="html", caption.placement="top")
-print(xtable(prop.table(xtabs(~SSA_MUSYM+lulcBreaks,data=data), margin=1)*100, align=rep("c", 1+length(levels(data$lulcBreaks))), digits=0, caption="Landuse and Landcover"), type="html", caption.placement="top")
+print(xtable(addmargins(prop.table(xtabs(~SSA_MUSYM+lulcBreaks,data=data), margin=1)*100), digits=0, align=rep("c", 2+length(levels(data$lulcBreaks))), caption="Landuse and Landcover"), type="html", caption.placement="top")
 ```
 
 ## Quantile breaks
@@ -213,21 +218,21 @@ Five number summary (min, 25th, median, 75th, max)(percentiles) and number of ra
 ```{r quantiles by musym, echo=FALSE, results="asis"}
 data.lo <- melt(data, id.vars="SSA_MUSYM", measure.vars=c("elev", "slope", "valley", "wetness", "relief", "ppt", "temp", "ffp"))
 data.5n <- ddply(data.lo, .(variable, SSA_MUSYM), .fun=sum5n)
-data.5n.c <- cast(data.5n, SSA_MUSYM ~ variable, value='range')
+data.c <- cast(data.5n, SSA_MUSYM ~ variable, value='range')
 data.n <- ddply(data, .(SSA_MUSYM), .drop=T, summarize, n=length(SSA_MUSYM))
-print(xtable(merge(data.5n.c, data.n, by="SSA_MUSYM"), align=rep("c", 2+ncol(data.5n.c))), type="html")
+print(xtable(merge(data.c, data.n, by="SSA_MUSYM"), align=rep("c", 2+ncol(data.c))), type="html")
 
 aspect.lo <- melt(data, id.vars="SSA_MUSYM", measure.vars=c("aspect"))
 aspect.lo$value <- circular(aspect.lo$value, template="geographic", units="degrees", modulo="2pi")
 aspect.5n <- ddply(aspect.lo, .(variable, SSA_MUSYM), .fun=sum5n)
-aspect.5n.c <- cast(aspect.5n, SSA_MUSYM ~ variable, value='range')
-print(xtable(merge(aspect.5n.c, data.n, by="SSA_MUSYM")), type="html")
+aspect.c <- cast(aspect.5n, SSA_MUSYM ~ variable, value='range')
+print(xtable(merge(aspect.c, data.n, by="SSA_MUSYM"), align=rep("c", 2+ncol(aspect.c))), type="html")
 ```
 
 ## Boxplots of map unit properties
 Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles) 
 
-```{r bwplot of map unit properties, echo=FALSE, fig.height=h}
+```{r bwplot of map unit properties, echo=FALSE, fig.height=nh}
 ### *(min, 5th, 25th, median, 75th, 95th, max)*
 temp <- factor(unique(data$SSA_MUSYM))
 
