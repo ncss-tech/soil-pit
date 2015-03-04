@@ -1,7 +1,7 @@
 # Pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Genesee"
+series <- "Cincinnati"
 ```
 
 
@@ -85,14 +85,17 @@ d[ c("diag_kind", "featdept", "featdepb")] <- list(diag_kind=as.character("NA"),
 l <- length(unique(h$peiid))
 
 # Function
+# Function
 sum5n <- function(x) {
   variable <- unique(x$variable)
+  precision.vars <- c('phfield', 'ph1to1h2o', 'ph01mcacl2', 'phoxidized', 'ph2osoluble', 'ecec', 'cec7', 'cecsumcations', 'sumbases', 'extracid', 'dbthirdbar', 'dbovendry', 'wthirdbarclod', 'wfifteenbar', 'wretentiondiffws', 'wfifteenbartoclay', 'cec7Clay')
+  precision.table <- c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 2)
   v <- na.omit(x$value) # extract column, from long-formatted input data
-  precision <- if(variable == 'phfield') 1 else 0
+  precision <- if(variable %in% precision.vars) precision.table[match(variable, precision.vars)] else 0
   n <- length(v)
   ci <- quantile(v, na.rm=TRUE, probs=p) 
   d <- data.frame(min=ci[1], low=ci[2], rv=ci[3], high=ci[4], max=ci[5], n=n, stringsAsFactors=FALSE) # combine into DF
-  d$range <- with(d, paste0("(", paste0(round(c(min, low, rv, high, max)), collapse=", "), ")", "(", n, ")")) # add 'range' column for pretty-printing
+  d$range <- with(d, paste0("(", paste0(round(c(min, low, rv, high, max), precision), collapse=", "), ")", "(", n, ")")) # add 'range' column for pretty-printing
   return(d[7])
 }
 ```
@@ -107,7 +110,7 @@ if(dim(s)[1] != 0) {
   coordinates(s.sub) <- ~x_std+y_std
   plot(s.sub, pch=16)
   map("county", lwd=0.5, add=T)
-  map("state",lwd=1,add=T)
+  map("state",lwd=2,add=T)
   map.axes()
 } else("no coordinates")
 ```
