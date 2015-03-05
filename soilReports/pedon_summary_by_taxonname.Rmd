@@ -1,7 +1,7 @@
 # Pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Cincinnati"
+series <- "Genesee"
 ```
 
 
@@ -16,6 +16,7 @@ library(maps)
 library(xtable)
 library(RODBC)
 library(circular)
+library(RColorBrewer)
 ```
 
 
@@ -26,13 +27,14 @@ source(paste0("./genhz_rules/", series, "_rules.R"))
 p <- c(0, 0.25, 0.5, 0.75, 1)
 
 # load NASIS data
-f <- fetchNASIS()
+pedons <- fetchNASIS()
 
-h <- horizons(f)
-s <- site(f)
+pedons$hzname[is.na(pedons$hzname)] <- "NA"
+pedons$genhz <- generalize.hz(pedons$hzname, ghr[[series]]$n, ghr[[series]]$p)
 
-h$hzname[is.na(h$hzname)] <- "NA"
-h$genhz <- generalize.hz(h$hzname, ghr[[series]]$n, ghr[[series]]$p)
+h <- horizons(pedons)
+s <- site(pedons)
+
 
 # Functions below need work, intended to preserve pre-existing genhz from comp_layer_id
 # h$genhz <- ifelse(is.na(h$genhz), as.character(generalize.hz(h$hzname, ghr[[series]]$n, ghr[[series]]$p)), h$genhz)
@@ -41,7 +43,7 @@ h$genhz <- generalize.hz(h$hzname, ghr[[series]]$n, ghr[[series]]$p)
 # ds[order(ds$hzdepm), "genhz"]
 # h$genhz <- as.factor(h$genhz, levels=c(ghr[[series]]$n, "not-used"))
 
-d_rgb <- horizons(f)[, c("d_r", "d_g", "d_b")]
+d_rgb <- horizons(pedons)[, c("d_r", "d_g", "d_b")]
 d_munsell <- rgb2munsell(d_rgb)
 m_rgb <- h[, c("m_r", "m_g", "m_b")]
 m_munsell <- rgb2munsell(m_rgb)
@@ -75,7 +77,7 @@ h <- naReplace(h)
 
 s <- naReplace(s)
 
-d <- diagnostic_hz(f)
+d <- diagnostic_hz(pedons)
 
 if(dim(d)[1] == 0)
 {d <- data.frame(peiid=h$peiid)
@@ -118,7 +120,12 @@ if(dim(s)[1] != 0) {
 
 ## Soil profile plots (depth, color, horizonation, and user pedon id)
 ```{r Soil plots, echo=FALSE}
-plot(f, label="pedon_id")
+cols <- brewer.pal(n=length(levels(pedons$genhz)), name="Paired")
+# assign a color to each generalized horizon label
+hz.names <- levels(pedons$genhz)
+pedons$genhz.soil_color <- cols[match(pedons$genhz, hz.names)]
+# plot generalized horizons via color and add a legend
+plot(pedons, name='hzname', color='genhz.soil_color')
 ```
 
 
