@@ -16,6 +16,10 @@ series <- "Lecyr"
 
 
 ```
+## Error in file(filename, "r", encoding = encoding): cannot open the connection
+```
+
+```
 ## converting Munsell to RGB ...
 ## replacing missing lower horizon depths with top depth + 1cm ... [2 horizons]
 ## finding horizonation errors ...
@@ -35,7 +39,7 @@ Pedons that do not have their Std_Latitude and Std_Longitude columns populated i
 # Summary of Sites
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Fri Mar 06 11:07:17 2015 -->
+<!-- Fri Mar 06 11:13:53 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> pedon_id </th> <th> taxonname </th> <th> tax_subgroup </th> <th> part_size_class </th> <th> pedon_type </th> <th> describer </th>  </tr>
   <tr> <td align="right"> 1 </td> <td> 1803-072-9 </td> <td> Lecyr </td> <td> petronodic ustic haplocalcids </td> <td> loamy-skeletal </td> <td> correlates to named soil </td> <td> Leon Lato, Stephen Roecker, Carrie-Ann Houdeshell </td> </tr>
@@ -55,21 +59,21 @@ Pedons that do not have their Std_Latitude and Std_Longitude columns populated i
 Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Fri Mar 06 11:07:17 2015 -->
+<!-- Fri Mar 06 11:13:53 2015 -->
 <table border=1>
 <caption align="top"> Elevation and slope gradient </caption>
 <tr> <th>  </th> <th> value </th> <th> elev_field </th> <th> slope_field </th>  </tr>
   <tr> <td align="right"> 1 </td> <td> (all) </td> <td> (1340, 1384, 1430, 1436, 1477)(11) </td> <td> (17, 20, 25, 26, 29)(11) </td> </tr>
    </table>
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Fri Mar 06 11:07:17 2015 -->
+<!-- Fri Mar 06 11:13:53 2015 -->
 <table border=1>
 <caption align="top"> Slope aspect </caption>
 <tr> <th>  </th> <th> value </th> <th> aspect_field </th>  </tr>
   <tr> <td align="right"> 1 </td> <td> (all) </td> <td> (15, 345, 225, 185, 68)(11) </td> </tr>
    </table>
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Fri Mar 06 11:07:17 2015 -->
+<!-- Fri Mar 06 11:13:53 2015 -->
 <table border=1>
 <caption align="top"> Parent material vs landform </caption>
 <tr> <th>  </th> <th> ballena </th> <th> Sum </th>  </tr>
@@ -82,7 +86,7 @@ Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total nu
   <tr> <td align="center"> Sum </td> <td align="center"> 11 </td> <td align="center"> 11 </td> </tr>
    </table>
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Fri Mar 06 11:07:17 2015 -->
+<!-- Fri Mar 06 11:13:53 2015 -->
 <table border=1>
 <caption align="top"> Down slope (y-axis) vs across slope (x-axis) </caption>
 <tr> <th>  </th> <th> Convex </th> <th> Linear </th> <th> Concave </th> <th> NA </th> <th> Sum </th>  </tr>
@@ -93,7 +97,7 @@ Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total nu
   <tr> <td align="center"> Sum </td> <td align="center"> 2 </td> <td align="center"> 9 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 11 </td> </tr>
    </table>
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Fri Mar 06 11:07:17 2015 -->
+<!-- Fri Mar 06 11:13:53 2015 -->
 <table border=1>
 <caption align="top"> Drainage class vs hillslope position </caption>
 <tr> <th>  </th> <th> Summit </th> <th> Shoulder </th> <th> Backslope </th> <th> Footslope </th> <th> Toeslope </th> <th> NA </th> <th> Sum </th>  </tr>
@@ -114,7 +118,7 @@ Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total nu
 Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Fri Mar 06 11:07:17 2015 -->
+<!-- Fri Mar 06 11:13:53 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> value </th> <th> total_srf </th> <th> surface_fgravel </th> <th> surface_gravel </th> <th> surface_cobbles </th> <th> surface_stones </th> <th> surface_boulders </th> <th> surface_channers </th> <th> surface_flagstones </th>  </tr>
   <tr> <td align="right"> 1 </td> <td> (all) </td> <td> (NA, NA, NA, NA, NA)(0) </td> <td> (5, 10, 10, 10, 20)(9) </td> <td> (0, 50, 50, 53, 67)(9) </td> <td> (2, 2, 5, 7, 20)(9) </td> <td> (1, 1, 1, 2, 3)(7) </td> <td> (NA, NA, NA, NA, NA)(0) </td> <td> (NA, NA, NA, NA, NA)(0) </td> <td> (2, 2, 2, 2, 2)(1) </td> </tr>
@@ -132,7 +136,7 @@ Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 
 Contingency table (counts) 
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Fri Mar 06 11:07:17 2015 -->
+<!-- Fri Mar 06 11:13:53 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> A </th> <th> Ak </th> <th> B'kk </th> <th> B'kkq </th> <th> BA </th> <th> BAk </th> <th> BAkq </th> <th> Bk </th> <th> Bk1 </th> <th> Bk2 </th> <th> Bkk </th> <th> Bkkq </th> <th> Bkkq1 </th> <th> Bkkq2 </th> <th> Bkkqm </th> <th> Bkq </th> <th> Bkq1 </th> <th> Bkq2 </th> <th> C </th> <th> Sum </th>  </tr>
   <tr> <td align="right"> C </td> <td align="right"> 0 </td> <td align="right"> 0 </td> <td align="right"> 0 </td> <td align="right"> 0 </td> <td align="right"> 0 </td> <td align="right"> 0 </td> <td align="right"> 0 </td> <td align="right"> 0 </td> <td align="right"> 0 </td> <td align="right"> 0 </td> <td align="right"> 0 </td> <td align="right"> 0 </td> <td align="right"> 0 </td> <td align="right"> 0 </td> <td align="right"> 0 </td> <td align="right"> 0 </td> <td align="right"> 0 </td> <td align="right"> 0 </td> <td align="right"> 2 </td> <td align="right"> 2 </td> </tr>
@@ -149,7 +153,7 @@ Contingency table (counts)
 Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Fri Mar 06 11:07:17 2015 -->
+<!-- Fri Mar 06 11:13:53 2015 -->
 <table border=1>
 <tr> <th> genhz </th> <th> clay </th> <th> sand </th> <th> fine_gravel </th> <th> gravel </th> <th> cobbles </th> <th> stones </th> <th> fragvoltot </th>  </tr>
   <tr> <td align="center"> C </td> <td align="center"> (NA, NA, NA, NA, NA)(0) </td> <td align="center"> (NA, NA, NA, NA, NA)(0) </td> <td align="center"> (6, 7, 8, 9, 10)(2) </td> <td align="center"> (24, 35, 46, 56, 67)(2) </td> <td align="center"> (2, 4, 6, 8, 10)(2) </td> <td align="center"> (1, 1, 1, 1, 1)(1) </td> <td align="center"> (40, 50, 60, 70, 80)(2) </td> </tr>
@@ -159,7 +163,7 @@ Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total nu
   <tr> <td align="center"> Bkkq </td> <td align="center"> (3, 6, 7, 9, 10)(11) </td> <td align="center"> (60, 65, 70, 76, 85)(11) </td> <td align="center"> (5, 6, 10, 10, 12)(11) </td> <td align="center"> (4, 19, 20, 22, 55)(11) </td> <td align="center"> (0, 2, 2, 5, 10)(10) </td> <td align="center"> (0, 0, 0, 1, 2)(3) </td> <td align="center"> (15, 27, 33, 39, 63)(12) </td> </tr>
    </table>
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Fri Mar 06 11:07:17 2015 -->
+<!-- Fri Mar 06 11:13:53 2015 -->
 <table border=1>
 <tr> <th> genhz </th> <th> phfield </th> <th> d_value </th> <th> d_chroma </th> <th> m_value </th> <th> m_chroma </th>  </tr>
   <tr> <td align="center"> C </td> <td align="center"> (NA, NA, NA, NA, NA)(0) </td> <td align="center"> (NA, NA, NA, NA, NA)(0) </td> <td align="center"> (NA, NA, NA, NA, NA)(0) </td> <td align="center"> (NA, NA, NA, NA, NA)(0) </td> <td align="center"> (NA, NA, NA, NA, NA)(0) </td> </tr>
@@ -180,7 +184,7 @@ Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 
 Contigency table (counts) 
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Fri Mar 06 11:07:17 2015 -->
+<!-- Fri Mar 06 11:13:53 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> cb </th> <th> gr </th> <th> l </th> <th> ls </th> <th> mat </th> <th> s </th> <th> sl </th> <th> Sum </th>  </tr>
   <tr> <td align="center"> C </td> <td align="center"> 0 </td> <td align="center"> 2 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 2 </td> </tr>
@@ -197,7 +201,7 @@ Contigency table (counts)
 Contigency table (counts) 
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Fri Mar 06 11:07:18 2015 -->
+<!-- Fri Mar 06 11:13:53 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> CB </th> <th> CEM-GR-LS </th> <th> CEM-GR-SL </th> <th> CEM-GRV-SL </th> <th> CEM-MAT </th> <th> GR </th> <th> GR-CEM-MAT </th> <th> GR-L </th> <th> GR-LS </th> <th> GR-SL </th> <th> GRV-L </th> <th> GRV-LS </th> <th> GRV-S </th> <th> GRV-SL </th> <th> GRX-LS </th> <th> GRX-S </th> <th> GRX-SL </th> <th> L </th> <th> Sum </th>  </tr>
   <tr> <td align="center"> C </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 2 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 2 </td> </tr>
@@ -214,7 +218,7 @@ Contigency table (counts)
 Contingency table (counts) 
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Fri Mar 06 11:07:18 2015 -->
+<!-- Fri Mar 06 11:13:54 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> 10YR </th> <th> NA </th> <th> Sum </th>  </tr>
   <tr> <td align="center"> C </td> <td align="center"> 0 </td> <td align="center"> 2 </td> <td align="center"> 2 </td> </tr>
@@ -231,7 +235,7 @@ Contingency table (counts)
 Contingency table (counts) 
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Fri Mar 06 11:07:18 2015 -->
+<!-- Fri Mar 06 11:13:54 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> 10YR </th> <th> 7.5YR </th> <th> NA </th> <th> Sum </th>  </tr>
   <tr> <td align="center"> C </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 2 </td> <td align="center"> 2 </td> </tr>
@@ -248,7 +252,7 @@ Contingency table (counts)
 Contingency table (counts) 
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Fri Mar 06 11:07:18 2015 -->
+<!-- Fri Mar 06 11:13:54 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> NA </th> <th> slight </th> <th> strong </th> <th> very slight </th> <th> violent </th> <th> Sum </th>  </tr>
   <tr> <td align="center"> C </td> <td align="center"> 2 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 2 </td> </tr>
@@ -265,7 +269,7 @@ Contingency table (counts)
 Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Fri Mar 06 11:07:18 2015 -->
+<!-- Fri Mar 06 11:13:54 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> genhz </th> <th> hzdept </th> <th> hzdepb </th> <th> thickness </th>  </tr>
   <tr> <td align="center"> 1 </td> <td align="center"> C </td> <td align="center"> (0, 0, 0, 0, 0)(2) </td> <td align="center"> (3, 4, 5, 6, 7)(2) </td> <td align="center"> (3, 4, 5, 6, 7)(2) </td> </tr>
@@ -286,7 +290,7 @@ Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 
 Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Fri Mar 06 11:07:18 2015 -->
+<!-- Fri Mar 06 11:13:54 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> diag_kind </th> <th> featdept </th> <th> featdepb </th> <th> thickness </th>  </tr>
   <tr> <td align="center"> 1 </td> <td align="center"> calcic horizon </td> <td align="center"> (6, 14, 22, 27, 38)(11) </td> <td align="center"> (50, 66, 76, 82, 150)(10) </td> <td align="center"> (39, 44, 50, 56, 136)(10) </td> </tr>
