@@ -4,10 +4,10 @@
 This report summarizes the geographic setting of a list of MUKEY within a file geodatabase. It is intented to be used to compare and contrast map units, and suggest possible Low, RV, and High values for components. 
 
 ```{r load-data, echo=FALSE, results='hide', message=FALSE}
-project <- c('SDJR - MLRA 104 - Downs silt loam, paha, 14 to 18 percent slopes, eroded') # List of project
+project <- c('SDJR - MLRA 114A - Cincinnati silt loam, 6 to 12 percent slopes, eroded') # List of project
 dir <- "M:/geodata/project_data/"
-geodatabase <- "RTSD_Region_11_WAV_FY15.gdb"
-office <- "11WAV"
+geodatabase <- "RTSD_Region_11_IND_FY15.gdb"
+office <- "11IND"
 
 # Defaults
 gdalpath <- "C:/Program Files/QGIS Dufour/bin"
