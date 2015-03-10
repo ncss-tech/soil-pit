@@ -1,7 +1,11 @@
+---
+output:
+  html_document: default
+---
 # Pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Genesee"
+series <- "Lecyr"
 ```
 
 
@@ -29,12 +33,13 @@ p <- c(0, 0.25, 0.5, 0.75, 1)
 # load NASIS data
 pedons <- fetchNASIS()
 
-pedons$hzname[is.na(pedons$hzname)] <- "NA"
-pedons$genhz <- generalize.hz(pedons$hzname, ghr[[series]]$n, ghr[[series]]$p)
+pedons$genhz <- if(any(is.na(pedons$genhz))) {pedons$hzname[generalize.hz(, ghr[[series]]$n, ghr[[series]]$p)]} else(pedons$genhz)
+pedons$genhz[is.na(pedons$genhz)] <- "NA"
+pedons$genhz <- factor(pedons$genhz, levels=ghr[[series]]$n)                                                                                                       
 
 h <- horizons(pedons)
 s <- site(pedons)
-
+d <- diagnostic_hz(pedons)
 
 # Functions below need work, intended to preserve pre-existing genhz from comp_layer_id
 # h$genhz <- ifelse(is.na(h$genhz), as.character(generalize.hz(h$hzname, ghr[[series]]$n, ghr[[series]]$p)), h$genhz)
@@ -74,10 +79,7 @@ naReplace <- function(x){
 }
 
 h <- naReplace(h)
-
 s <- naReplace(s)
-
-d <- diagnostic_hz(pedons)
 
 if(dim(d)[1] == 0)
 {d <- data.frame(peiid=h$peiid)
@@ -118,14 +120,14 @@ if(dim(s)[1] != 0) {
 ```
 
 
-## Soil profile plots (depth, color, horizonation, and user pedon id)
+## Soil profile plots (depth, color by genhz, horizonation, and user pedon id)
 ```{r Soil plots, echo=FALSE}
 cols <- brewer.pal(n=length(levels(pedons$genhz)), name="Paired")
 # assign a color to each generalized horizon label
 hz.names <- levels(pedons$genhz)
 pedons$genhz.soil_color <- cols[match(pedons$genhz, hz.names)]
 # plot generalized horizons via color and add a legend
-plot(pedons, name='hzname', color='genhz.soil_color')
+plot(pedons, name='hzname', color='genhz.soil_color', alt.label='pedon_id')
 ```
 
 
