@@ -27,18 +27,18 @@ source(paste0("./genhz_rules/", series, "_rules.R"))
 p <- c(0, 0.25, 0.5, 0.75, 1)
 
 # load NASIS data
-pedons <- fetchNASIS()
+pedons <- fetchNASIS(nullFragsAreZero=TRUE)
+
+h <- horizons(pedons)
+nai <- is.na(h$genhz)
+h[nai, "genhz"] <- as.character(sapply(h[nai, "hzname"], function(x) generalize.hz(x, ghr[[series]]$n, ghr[[series]]$p)))
+horizons(pedons) <- h
+pedons$genhz[is.na(pedons$genhz)] <- "NA"
+pedons$genhz <- factor(pedons$genhz, levels=ghr[[series]]$n)                                                                                                       
 
 h <- horizons(pedons)
 s <- site(pedons)
 d <- diagnostic_hz(pedons)
-
-nai <- is.na(h$genhz)
-h[nai, "genhz"] <- as.character(sapply(h[nai, "hzname"], function(x) generalize.hz(x, ghr[[series]]$n, ghr[[series]]$p)))
-
-horizons(pedons) <- h
-pedons$genhz[is.na(pedons$genhz)] <- "NA"
-pedons$genhz <- factor(pedons$genhz, levels=ghr[[series]]$n)                                                                                                       
 
 
 # Functions below need work, intended to preserve pre-existing genhz from comp_layer_id
@@ -127,7 +127,7 @@ cols <- brewer.pal(n=length(levels(pedons$genhz)), name="Paired")
 hz.names <- levels(pedons$genhz)
 pedons$genhz.soil_color <- cols[match(pedons$genhz, hz.names)]
 # plot generalized horizons via color and add a legend
-plot(pedons, name='hzname', color='genhz.soil_color', alt.label='pedon_id')
+plot(pedons, name='hzname', color='genhz.soil_color', label='pedon_id')
 ```
 
 
@@ -198,7 +198,7 @@ print(xtable(srf.wi), type="html")
 Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)
 
 ```{r bwplot for rf, echo=FALSE}
-if(!all(is.na(srf))) {
+if(sum(srf$total_srf) != 0) {
   bwplot(variable~value, data=srf.lo, scales=list(x="free"), xlab="percent") 
   } else("no surface rock fragments have been populated")         
 ```
