@@ -29,13 +29,17 @@ p <- c(0, 0.25, 0.5, 0.75, 1)
 # load NASIS data
 pedons <- fetchNASIS()
 
-pedons$genhz <- if(any(is.na(pedons$genhz))) {pedons$hzname[generalize.hz(pedons$hzname, ghr[[series]]$n, ghr[[series]]$p)]} else(pedons$genhz)
-pedons$genhz[is.na(pedons$genhz)] <- "NA"
-pedons$genhz <- factor(pedons$genhz, levels=ghr[[series]]$n)                                                                                                       
-
 h <- horizons(pedons)
 s <- site(pedons)
 d <- diagnostic_hz(pedons)
+
+nai <- is.na(h$genhz)
+h[nai, "genhz"] <- as.character(sapply(h[nai, "hzname"], function(x) generalize.hz(x, ghr[[series]]$n, ghr[[series]]$p)))
+
+horizons(pedons) <- h
+pedons$genhz[is.na(pedons$genhz)] <- "NA"
+pedons$genhz <- factor(pedons$genhz, levels=ghr[[series]]$n)                                                                                                       
+
 
 # Functions below need work, intended to preserve pre-existing genhz from comp_layer_id
 # h$genhz <- ifelse(is.na(h$genhz), as.character(generalize.hz(h$hzname, ghr[[series]]$n, ghr[[series]]$p)), h$genhz)
