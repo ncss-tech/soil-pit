@@ -1,11 +1,7 @@
----
-output:
-  html_document: default
----
 # Pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Lecyr"
+series <- "Cincinnati"
 ```
 
 
@@ -33,7 +29,7 @@ p <- c(0, 0.25, 0.5, 0.75, 1)
 # load NASIS data
 pedons <- fetchNASIS()
 
-pedons$genhz <- if(any(is.na(pedons$genhz))) {pedons$hzname[generalize.hz(, ghr[[series]]$n, ghr[[series]]$p)]} else(pedons$genhz)
+pedons$genhz <- if(any(is.na(pedons$genhz))) {pedons$hzname[generalize.hz(pedons$hzname, ghr[[series]]$n, ghr[[series]]$p)]} else(pedons$genhz)
 pedons$genhz[is.na(pedons$genhz)] <- "NA"
 pedons$genhz <- factor(pedons$genhz, levels=ghr[[series]]$n)                                                                                                       
 
