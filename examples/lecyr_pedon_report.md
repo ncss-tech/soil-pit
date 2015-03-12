@@ -5,15 +5,6 @@
 series <- "Lecyr"
 ```
 
-
-
-
-
-
-```
-## Error in file(filename, "r", encoding = encoding): cannot open the connection
-```
-
 ```
 ## converting Munsell to RGB ...
 ## replacing missing lower horizon depths with top depth + 1cm ... [2 horizons]
