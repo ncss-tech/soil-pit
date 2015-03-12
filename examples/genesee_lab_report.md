@@ -30,7 +30,7 @@ Pedons that do not have their Std_Latitude and Std_Longitude columns populated i
 
 # Summary of NCSS Pedon Lab Data
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Thu Mar 12 14:47:57 2015 -->
+<!-- Thu Mar 12 14:52:51 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> pedon_id </th> <th> taxonname </th> <th> tax_subgroup </th> <th> part_size_class </th> <th> pedon_type </th> <th> describer </th>  </tr>
   <tr> <td align="right"> 1 </td> <td> 97IN045052 </td> <td> Genesee </td> <td> fluventic hapludolls </td> <td> fine-silty </td> <td> correlates to named soil </td> <td> MLW </td> </tr>
@@ -81,7 +81,7 @@ Pedons that do not have their Std_Latitude and Std_Longitude columns populated i
 ## Range in characteristics of NCSS Pedon Lab Data
 Five number summary (min, 25th, median, 75th, max)(percentiles)
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Thu Mar 12 14:47:57 2015 -->
+<!-- Thu Mar 12 14:52:51 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> value </th> <th> noncarbclaywtavg </th> <th> claytotwtavg </th> <th> le0to100 </th> <th> wf0175wtavgpsc </th> <th> volfractgt2wtavg </th> <th> cec7clayratiowtavg </th>  </tr>
   <tr> <td align="right"> 1 </td> <td> (all) </td> <td> (NA, NA, NA, NA, NA)(0) </td> <td> (NA, NA, NA, NA, NA)(0) </td> <td> (NA, NA, NA, NA, NA)(0) </td> <td> (NA, NA, NA, NA, NA)(0) </td> <td> (NA, NA, NA, NA, NA)(0) </td> <td> (NA, NA, NA, NA, NA)(0) </td> </tr>
@@ -102,7 +102,7 @@ Graphical five number summary (outliers, 5th, 25th, median, 75th, 95th, outliers
 Contingency table (counts) 
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Thu Mar 12 14:47:57 2015 -->
+<!-- Thu Mar 12 14:52:51 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> A </th> <th> A1 </th> <th> A2 </th> <th> A3 </th> <th> Ap </th> <th> AP </th> <th> Ap1 </th> <th> Ap2 </th> <th> B </th> <th> B1 </th> <th> B2 </th> <th> B21 </th> <th> B22 </th> <th> B3 </th> <th> B4 </th> <th> BA </th> <th> BC </th> <th> Bw </th> <th> Bw1 </th> <th> Bw2 </th> <th> Bw3 </th> <th> Bw4 </th> <th> C </th> <th> C1 </th> <th> C10 </th> <th> C2 </th> <th> C3 </th> <th> C4 </th> <th> C5 </th> <th> C6 </th> <th> C7 </th> <th> C8 </th> <th> C9 </th> <th> Cg1 </th> <th> Cg2 </th> <th> Cg3 </th> <th> Cg4 </th> <th> Cv </th> <th> NA </th> <th> Sum </th>  </tr>
   <tr> <td align="center"> Ap </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 15 </td> <td align="center"> 3 </td> <td align="center"> 1 </td> <td align="center"> 1 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 20 </td> </tr>
@@ -219,7 +219,7 @@ Graphical five number summary (outliers, 5th, 25th, median, 75th, 95th, outliers
 Contigency table (counts) 
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Thu Mar 12 14:47:59 2015 -->
+<!-- Thu Mar 12 14:52:53 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> cl </th> <th> cos </th> <th> cosl </th> <th> fsl </th> <th> l </th> <th> lcos </th> <th> lfs </th> <th> ls </th> <th> s </th> <th> sicl </th> <th> sil </th> <th> sl </th> <th> Sum </th>  </tr>
   <tr> <td align="center"> Ap </td> <td align="center"> 1 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 3 </td> <td align="center"> 6 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 0 </td> <td align="center"> 5 </td> <td align="center"> 3 </td> <td align="center"> 2 </td> <td align="center"> 20 </td> </tr>
@@ -239,7 +239,7 @@ Contigency table (counts)
 Contingency table (counts) 
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Thu Mar 12 14:47:59 2015 -->
+<!-- Thu Mar 12 14:52:53 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> 0 </th> <th> Sum </th>  </tr>
   <tr> <td align="right"> Ap </td> <td align="right"> 20 </td> <td align="right"> 20 </td> </tr>
@@ -259,7 +259,7 @@ Contingency table (counts)
 Five number summary (min, 25th, median, 75th, max)(percentiles)
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Thu Mar 12 14:47:59 2015 -->
+<!-- Thu Mar 12 14:52:53 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> genhz </th> <th> hzdept </th> <th> hzdepb </th> <th> thickness </th>  </tr>
   <tr> <td align="center"> 1 </td> <td align="center"> Ap </td> <td align="center"> (0, 0, 0, 1, 15)(20) </td> <td align="center"> (13, 15, 20, 25, 30)(20) </td> <td align="center"> (10, 15, 20, 26, 30)(19) </td> </tr>
@@ -270,7 +270,7 @@ Five number summary (min, 25th, median, 75th, max)(percentiles)
   <tr> <td align="center"> 6 </td> <td align="center"> NA </td> <td align="center"> (0, 2, 54, 120, 122)(12) </td> <td align="center"> (15, 16, 68, 136, 183)(12) </td> <td align="center"> (15, 28, 82, 126, 137)(3) </td> </tr>
    </table>
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Thu Mar 12 14:47:59 2015 -->
+<!-- Thu Mar 12 14:52:53 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> variable </th> <th> range </th>  </tr>
   <tr> <td align="center"> 1 </td> <td align="center"> psctopdepth </td> <td align="center"> (25, 25, 25, 25, 25)(2) </td> </tr>
