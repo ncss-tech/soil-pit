@@ -35,22 +35,18 @@ length(unique(nasis.df$Area.Symbol)) # number of ssa
 # When comparing the Project Record and SAPOLYGON for the Region I get 65 counties need spatial cert and an additional 8 need update outside our region
 
 # DU report
-du <- read.csv("du.csv") # du report
-du.r11 <- subset(du, State.Responsible == "Indiana") # subset for Region 11
-length(unique(du.r11$Project.Name)); # number of du projects
-length(unique(du.r11$Area.Symbol)); # number of du ssa
-du.r11.n <- ddply(du.r11, .(Project.Name), summarize, length(Project.Name)); # number of musym per project
-du.r11.n2 <- ddply(du.r11, .(Area.Symbol), summarize, length(Project.Name)); # number of musym per ssa
+du <- read.csv("du.csv", stringsAsFactors = FALSE) # du report
+du.r11 <- subset(du, State.Responsible == "Indiana" & Office == "11-ATL") # subset for Region 11
 
-# Project Record
-pr <- read.csv("Region_11_Project_Record_09092014.txt")
-pr.c <- subset(pr, RECERT_NEEDED == "Yes")
-length(unique(pr.c$PROJECT_NAME)); # number of projects
-length(unique(pr.c$AREASYMBOL)); # number of ssa
-pr.c.n <- ddply(pr.c, .(PROJECT_NAME, RECERT_NEEDED), summarize, length(PROJECT_NAME)); # number of polygons per project
-pr.c.n2 <- ddply(pr.c, .(AREASYMBOL, RECERT_NEEDED), summarize, length(PROJECT_NAME)); # number of polygons per area
-names(pr.c.n2) <- c("AREASYMBOL", "RECERT_NEEDED", "nMUSYM")
+ddply(du.r11, .(Office), summarize, length(Project.Name)); # number of projects per office; print(du.r11.n)
+ddply(du.r11, .(Project.Name), summarize, length(Project.Name)); # number of musym per project
+ddply(du.r11, .(Area.Symbol), summarize, length(Project.Name)); # number of musym per ssa
 
+du.r11.df <- ddply(du.r11, .(Office, Area.Symbol, pname = abbreviate(Project.Name, 30)), summarize, musym = paste0(c(unique(musym)), collapse=", ")); # number of musym per project
+
+du.check <- ddply(du.r11, .(Office, Area.Symbol), summarize, musym = unique(musym))
+du.check$key <- paste(du.check$Area.Symbol, du.check$musym, sep=":")
+du.musym <- sort(unique(du.r11$musym))
 
 ```{r, summarize geodatabase tabular changes}
 # This assumes no changes have been made to the ORIG columns, could run a check against an unedited copy. Need to add addition scripts to see if the number of MUSYM edited = the total number of MUSYM.
@@ -65,12 +61,34 @@ edit <- mupolygon[id, ]
 id <- edit$MUSYM != edit$ORIG_MUSYM
 tab <- edit[id, ]
 
-ddply(tab, .(AREASYMBOL, ORIG_MUKEY), summarize, Check = all(ORIG_MUKEY = MUKEY), nPolygons = length(ORIG_MUKEY), ORIG_MUSYM = paste0(c(unique(ORIG_MUSYM)), collapse=","),  MUSYM = paste0(c(unique(MUSYM)), collapse=","), Acres = round(sum(Shape_Area*0.000247), 0))
 
-# Summarize spatial changes
-id <- edit$MUSYM == edit$ORIG_MUSYM
-spa <- edit[id, ]
+geotab <- ddply(tab, .(AREASYMBOL), summarize, Check = all(ORIG_MUKEY = MUKEY), nPolygons = length(ORIG_MUKEY), ORIG_MUSYM = paste(c(unique(ORIG_MUSYM)), collapse=", "),  MUSYM = paste(c(unique(MUSYM)), collapse=", "), Acres = round(sum(Shape_Area*0.000247), 0))
+
+geo.check <- ddply(tab, .(AREASYMBOL), summarize, ORIG_MUSYM = unique(ORIG_MUSYM))
+geo.check$key <- paste(geo.check$AREASYMBOL, geo.check$ORIG_MUSYM, sep=":")
+geo.musym <- sort(unique(tab$ORIG_MUSYM))
+  
+# DU report against mupolygon
+check1 <- join(geo.check, du.check, by="key", match="first") # SSA:MUSYM match
+print(check1[, -1]) # matches between du and geo
+
+# non-matches between du and geo
+# 11-ATL has 8 missing musym from geo
+all(du.musym %in% geo.musym)
+sum(sum(du.musym %in% geo.musym))
+id <- match(du.musym, geo.musym, incomparables=TRUE)
+du.musym[is.na(id)]
 ```
+
+
+# Project Record
+pr <- read.csv("Region_11_Project_Record_09092014.txt")
+pr.c <- subset(pr, RECERT_NEEDED == "Yes")
+length(unique(pr.c$PROJECT_NAME)); # number of projects
+length(unique(pr.c$AREASYMBOL)); # number of ssa
+pr.c.n <- ddply(pr.c, .(PROJECT_NAME, RECERT_NEEDED), summarize, length(PROJECT_NAME)); # number of polygons per project
+pr.c.n2 <- ddply(pr.c, .(AREASYMBOL, RECERT_NEEDED), summarize, length(PROJECT_NAME)); # number of polygons per area
+names(pr.c.n2) <- c("AREASYMBOL", "RECERT_NEEDED", "nMUSYM")
 
 
 # Compare DU Report vs Project Record by SDJR projects
