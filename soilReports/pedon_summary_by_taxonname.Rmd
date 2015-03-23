@@ -1,7 +1,7 @@
 # Pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Cincinnati"
+series <- "Genesee"
 ```
 
 
@@ -40,25 +40,17 @@ h <- horizons(pedons)
 s <- site(pedons)
 d <- diagnostic_hz(pedons)
 
-
-# Functions below need work, intended to preserve pre-existing genhz from comp_layer_id
-# h$genhz <- ifelse(is.na(h$genhz), as.character(generalize.hz(h$hzname, ghr[[series]]$n, ghr[[series]]$p)), h$genhz)
-# h$hzdepm <- h$hzdepb-h$hzdept
-# ds <- ddply(h, .(genhz), summarize, hzdepm = median(hzdepm))
-# ds[order(ds$hzdepm), "genhz"]
-# h$genhz <- as.factor(h$genhz, levels=c(ghr[[series]]$n, "not-used"))
-
-d_rgb <- horizons(pedons)[, c("d_r", "d_g", "d_b")]
-d_munsell <- rgb2munsell(d_rgb)
-m_rgb <- h[, c("m_r", "m_g", "m_b")]
-m_munsell <- rgb2munsell(m_rgb)
-
-h$d_hue <- as.character(d_munsell$hue)
-h$d_value <- as.integer(d_munsell$value)
-h$d_chroma <- as.integer(d_munsell$chroma)
-h$m_hue <- as.character(m_munsell$hue)
-h$m_value <- as.integer(m_munsell$value)
-h$m_chroma <- as.integer(d_munsell$chroma)
+# Temporary fix for missing colors
+# d_rgb <- horizons(pedons)[, c("d_r", "d_g", "d_b")]
+# d_munsell <- rgb2munsell(d_rgb)
+# m_rgb <- h[, c("m_r", "m_g", "m_b")]
+# m_munsell <- rgb2munsell(m_rgb)
+# h$d_hue <- as.character(d_munsell$hue)
+# h$d_value <- as.integer(d_munsell$value)
+# h$d_chroma <- as.integer(d_munsell$chroma)
+# h$m_hue <- as.character(m_munsell$hue)
+# h$m_value <- as.integer(m_munsell$value)
+# h$m_chroma <- as.integer(d_munsell$chroma)
 
 names(h)[15] <- "fragvoltotc"
 names(h)[16] <- "fragvoltot"
