@@ -92,7 +92,7 @@ dem.l <- paste0(pd.p, office.l, "/ned10m_", office.l, ".tif")
 batchDEM(dem.l)
 ```
 
-# Mosaic the 30-meter MLRA office mosaics into a Region office mosaic
+## Mosaic the 30-meter MLRA office mosaics into a Region office mosaic
 ```{r, eval=FALSE}
 nlcd.l <- list(nlcd.p)
 dst.p <- "D:/geodata/project_data/REGION11/nlcd30m_R11.tif"
