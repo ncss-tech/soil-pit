@@ -1,7 +1,7 @@
 # Lab pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Miami"
+series <- "Genesee"
 ```
 
 ```{r load packages, include=FALSE}
@@ -59,7 +59,7 @@ h <- naReplace(h)
 sum5n <- function(x) {
   variable <- unique(x$variable)
   precision.vars <- c('phfield', 'ph1to1h2o', 'ph01mcacl2', 'phoxidized', 'ph2osoluble', 'ecec', 'cec7', 'cecsumcations', 'sumbases', 'extracid', 'dbthirdbar', 'dbovendry', 'wthirdbarclod', 'wfifteenbar', 'wretentiondiffws', 'wfifteenbartoclay', 'cec7Clay')
-	precision.table <- c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 2)
+  precision.table <- c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 2)
   v <- na.omit(x$value) # extract column, from long-formatted input data
   precision <- if(variable %in% precision.vars) precision.table[match(variable, precision.vars)] else 0
   n <- length(v)
@@ -109,8 +109,10 @@ print(xtable(cast(lp.5n, ~variable, value='range')), type="html")
 
 ## Box plots of NCSS Pedon Lab Data
 Graphical five number summary (outliers, 5th, 25th, median, 75th, 95th, outliers)
-```{r bwplot for rf, echo=FALSE}
-bwplot(variable ~ value, data=lp.lo, scales=list(x="free"), xlab="percent")          
+```{r bwplot for pedon lab data, echo=FALSE}
+if(any(!is.na(lp.lo$value))) {
+  bwplot(variable ~ value, data=lp.lo, scales=list(x="free"), xlab="percent")
+  } else("no pedon lab data have been populated")         
 ```
 
 
