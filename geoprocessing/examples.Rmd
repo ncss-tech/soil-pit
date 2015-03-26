@@ -60,7 +60,8 @@ ogr2ogr -f "ESRI Shapefile" test.shp test.gdb ca794_a -nln ca794_a
 library(raster)
 library(rgdal)
 
-ind <- readOGR(dsn="M:/geodata/soils/Region_11_Soils_SSURGO_FY2015/MLRA_11_IND_FY15.gdb", layer="chtext", encoding="OpenFileGDB")
+ind <- readOGR(dsn="M:/geodata/soils/Region_11_Soils_SSURGO_FY2015/MLRA_11_IND_FY15.gdb", layer="SAPOLYGON", encoding="OpenFileGDB")
+ogrInfo("M:/geodata/project_data/11IND/RTSD_Region_11_IND_FY15.gdb", layer="SAPOLYGON")
 
 ogr2ogr(
   src_datasource_name="E:/geodata/project_data/11ATL/11ATL.gdb",

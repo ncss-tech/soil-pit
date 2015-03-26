@@ -229,3 +229,7 @@ for(i in seq(states)){
 for(i in seq(states)){
   unzip(zipfile=dest[i])
 }
+
+# FEMA
+http://www.floodmaps.fema.gov/NFHL/status.shtml
+https://hazards.fema.gov/nfhlv2/output/County/01013C_20090911.zip
