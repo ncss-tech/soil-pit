@@ -10,6 +10,7 @@ https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/gen-hz-assignme
 opts_chunk$set(message=FALSE, warning=FALSE, dpi=120, fig.align='center', dev='CairoPNG', dev.args=list(pointsize=10), tidy=TRUE, tidy.opts=list(width.cutoff=100), cache=TRUE)
 library(knitr)
 library(soilDB)
+library(RColorBrewer)
 ```
 
 
@@ -232,7 +233,8 @@ What do we have for this collection of pedons?
 - array collective horizonation by depth mid points
 
 ```{r horizon_counts, fig.width=10, fig.height=6, echo=FALSE}
-#sort(table(loafercreek$hzname), decreasing=TRUE)[1:8]
+data(loafercreek)
+# sort(table(loafercreek$hzname), decreasing=TRUE)[1:8]
 
 # compute horizon mid-points
 loafercreek$mid <- with(horizons(loafercreek), (hzdept + hzdepb) / 2)
@@ -277,13 +279,29 @@ p <- c('^A$|Ad|Ap',
 
 Assignment of GHL
 ========================================================
+```{r}
+loafercreek$genhz <- generalize.hz(loafercreek$hzname, n, p) 
+addmargins(table(loafercreek$genhz, loafercreek$hzname))[, 1:12] # cross-tabulate original horizon designations and GHL
+```
 
 
 Evaluation of GHL 1
 ========================================================
+```{r}
+n <- length(levels(loafercreek$genhz))
+cols <- brewer.pal(n, name="Paired")
+hz.names <- levels(loafercreek$genhz)
+loafercreek$genhz.soil_color <- cols[match(loafercreek$genhz, hz.names)]
+plot(loafercreek[1:15], color='genhz.soil_color', label='pedon_id') # plot the first 15 profiles
+```
+
 
 Evaluation of GHL 2
 ========================================================
+```{r}
+h <- horizons(loafercreek)
+bwplot(mid~genhz, data=h, ylim=c(155, -5), ylab="Depths (cm)", xlab="Generalized horizons")
+```
 
 Evaluation of GHL 3
 ========================================================
