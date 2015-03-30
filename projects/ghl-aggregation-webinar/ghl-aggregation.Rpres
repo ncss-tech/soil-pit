@@ -47,18 +47,22 @@ What can R do?
 class: small-code
 
 - Base R (*functionality is extended through packages*)
-  - exploratory data analysis
-  - graphical summaries
+  - repeatable, self-documenting work
+  - simple syntax for data exploration / summary
+  - simple graphical "grammar" used to plot data
   - report writing: summarizing and documenting
   - digital soil mapping: modeling properties and classes
 
 - Soil Science Specific Packages
- - visualization, aggregation, classification <span class="link-to-details">&#8594;&nbsp;[aqp package](http://aqp.r-forge.r-project.org/aqp-html-manual/index.html)</span>
- - access to commonly used soil databases <span class="link-to-details">&#8594;&nbsp;[soilDB package](http://aqp.r-forge.r-project.org/soilDB-html-manual/index.html)</span>
- - misc. soil survey specific functions <span class="link-to-details">&#8594;&nbsp;[sharpshootR package](http://aqp.r-forge.r-project.org/shapshootR-html-manual/index.html)</span>
+  - visualization, aggregation, classification <span class="link-to-details">&#8594;&nbsp;[aqp package](http://aqp.r-forge.r-project.org/aqp-html-manual/index.html)</span>
+  - access to commonly used soil databases <span class="link-to-details">&#8594;&nbsp;[soilDB package](http://aqp.r-forge.r-project.org/soilDB-html-manual/index.html)</span>
+  - misc. soil survey specific functions <span class="link-to-details">&#8594;&nbsp;[sharpshootR package](http://aqp.r-forge.r-project.org/shapshootR-html-manual/index.html)</span>
+ 
 
-
-
+ 
+ 
+ 
+ 
 
 Setup your local machine
 ========================================================
@@ -102,19 +106,6 @@ ODBC Setup
 <span class="link-to-details">&#8594;&nbsp;[ODBC setup instructions](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/setup_local_nasis.html?root=aqp)</span>
 
 
-Why implement soil data summaries in R?
-========================================================
-
-- repeatable, self-documenting work:
- - uni-variate / multivariate summaries
- - graphical representations of complex data
- - 2800+ packages on CRAN: 100+ packages on GIS, ecology, and **soils**!
- 
-- algorithm development by experts, application by trained users
- - testing by eye: simple graphical "grammar" used to plot data
- - formalized testing: correlation, regression, classification, ordination, ...
- - I/O capabilities: file, URL, SOAP, SQL, ODBC, PDF, PNG, SHP, KML, ...
- - optimizers, matrix operations, custom data structures, ...
 
 Assumptions
 ========================================================
@@ -193,6 +184,10 @@ points(mean(x) + c(2*sd(x), -2*sd(x)), y=c(0.45, 0.45), pch=0, col='darkgreen', 
 axis(side=1, at=pretty(x), cex.axis=1.5)
 ```
 blue: quantiles, green: mean +/- 2SD
+
+
+Jump to Final Report ??
+========================================================
 
 
 Aggregation of Pedon Data: Common Problems
