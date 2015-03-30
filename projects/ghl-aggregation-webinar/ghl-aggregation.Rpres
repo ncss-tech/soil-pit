@@ -31,72 +31,50 @@ css: custom.css
 What is R?
 ================
 - an analysis platform: calculator, statistics program, gis, etc...
-- an integrator, R+NASIS+GIS, via GDAL and ODBC
-
+- an environment and vocabulary to explore, summarize, and model
 ![alt text](static-figures/rstudio.png)
+
+
+What is R?
+================
+- an integrator: anaylsis + GIS + database connectivity
+- ODBC and GDAL link R to nearly all possible formats/interfaces
+![alt text](static-figures/triangle.png)
 
 
 What can R do?
 ========================================================
 class: small-code
 
-- Base R
-  
+- Base R (*functionality is extended through packages*)
+  - exploratory data analysis
+  - graphical summaries
   - report writing: summarizing and documenting
   - digital soil mapping: modeling properties and classes
 
-- Soil Survey Tasks and Access to Common Soil Databases
+- Soil Science Specific Packages
  - visualization, aggregation, classification <span class="link-to-details">&#8594;&nbsp;[aqp package](http://aqp.r-forge.r-project.org/aqp-html-manual/index.html)</span>
- - <span class="link-to-details">&#8594;&nbsp;[soilDB package](http://aqp.r-forge.r-project.org/soilDB-html-manual/index.html)</span>
- - <span class="link-to-details">&#8594;&nbsp;[sharpshootR package](http://aqp.r-forge.r-project.org/shapshootR-html-manual/index.html)</span>
+ - access to commonly used soil databases <span class="link-to-details">&#8594;&nbsp;[soilDB package](http://aqp.r-forge.r-project.org/soilDB-html-manual/index.html)</span>
+ - misc. soil survey specific functions <span class="link-to-details">&#8594;&nbsp;[sharpshootR package](http://aqp.r-forge.r-project.org/shapshootR-html-manual/index.html)</span>
 
 
-
-AQP and soilDB discuss they make it possible to analyze soil data in their native format.
-========================================================
-
-```{r load-data, fig.width=12, fig.height=5, htmlcap='15 pedons correlated to the Loafercreek soil series.'}
-
-library(aqp)
-library(soilDB)
-pedons <- fetchNASIS()[1:10] # load Loafercreek sample data from NASIS
-plot(pedons)
-```
-
-Example 2 [get everyone's attention]
-========================================================
-
-```{r}
-# insert report snapshot or summary
-```
-
-Example 3 [get everyone's attention]
-========================================================
-
-```{r}
-# insert digital soil map
-```
 
 
 Setup your local machine
 ========================================================
-class: small-code
 
 - Be sure to follow embedded links to full documentation.
 - Check out the [AQP project website](http://aqp.r-forge.r-project.org/).
 - You can reproduce much of this document with:
 
+ - the first time you run R
 ```{r install-packages, tidy=FALSE, eval=FALSE}
-# install stable versions
 install.packages('aqp', dep=TRUE) 
-install.packages("RODBC", dep=TRUE) # stable version from CRAN + dependencies
+install.packages("RODBC", dep=TRUE)
 install.packages('soilDB', dep=TRUE)
-
-# install latest versions from R-Forge:
-
-# I'M NOT SURE I'D RECOMMEND INSTALLING FROM THE SOURCE for the majority of users, in my experience the library system is already confusing to most, thus I wouldn't complicate it further for beginners
-install.packages('soilDB', repos="http://R-Forge.R-project.org", type='source')
 ```
+
+ - every time you run R
 ```{r make-repeatable, tidy=FALSE}
 # load libraries
 library(aqp)
@@ -149,11 +127,39 @@ Assumptions
 - **IMPORTANT POINT:** these reports and data summaries are a useful starting point for the aggregation process
 
 
-This is a great graphic, just not sure where it should go Summarizing Data with Quantiles (i.e. Percentiles)
+Summarizing Data with Quantiles (Percentiles)
 ========================================================
 
-```{r quantiles, fig.width=10, fig.height=6, echo=FALSE}
+```{r quantiles-normal-dist, fig.width=10, fig.height=6, echo=FALSE}
 # simulate 500 values from the normal distribution: with mean = 10, sd= 2
+set.seed(1010101)
+x <- rnorm(n=500, mean = 10, sd=2)
+
+# compute the 5th, 25th, 50th, 75th, and 95th percentiles of x
+q <- c(quantile(x, probs=c(0.05, 0.25, 0.5, 0.75, 0.95)))
+
+# plot a smoothed frequency distribution
+plot(density(x), main=list('Normal Distibution', cex=2), ylim=c(0, 0.8), ylab='', xlab='', axes=FALSE)
+
+# mark quantiles we computed above
+abline(v=q, lty=3, col='red')
+text(x=q, y=0.1, labels=c('5th', '25th', '50th', '75th', '95th'))
+
+# overlay a box-whisker plot
+boxplot(x, at=0.25, add=TRUE, horizontal=TRUE, boxwex=0.1, border='DarkBlue', axes=FALSE)
+
+# overlay lines at the original values
+rug(x, side=3, col='DarkBlue')
+
+# add x-axis
+axis(side=1, at=pretty(x))
+```
+
+Summarizing Data with Quantiles (Percentiles)
+========================================================
+
+```{r quantiles-exp-dist, fig.width=10, fig.height=6, echo=FALSE}
+# simulate 500 values from the exponential distribution
 set.seed(1010101)
 x <- rexp(n=500)
 
@@ -161,7 +167,7 @@ x <- rexp(n=500)
 q <- c(quantile(x, probs=c(0.05, 0.25, 0.5, 0.75, 0.95)))
 
 # plot a smoothed frequency distribution
-plot(density(x), main='Quantile Demonstration', ylim=c(0, 0.8), ylab='', xlab='', axes=FALSE)
+plot(density(x), main=list('Exponential Distibution', cex=2), ylim=c(0, 0.8), ylab='', xlab='', axes=FALSE)
 
 # mark quantiles we computed above
 abline(v=q, lty=3, col='red')
@@ -202,6 +208,22 @@ Generalized Horizon Labels: Micro-correlation
  - GHL process allows for flexibility
 - horizon redundancy - how many Bt horizons are necessary?
 - outlier horizons - what happens to them?
+
+
+
+A Sample Dataset
+=======================================================
+
+```{r load-data, fig.width=12, fig.height=5, htmlcap='15 pedons correlated to the Loafercreek soil series.', echo=FALSE}
+# load sample data from the soilDB package
+data(loafercreek, package = 'soilDB')
+# keep only the first 15 pedons
+pedons <- loafercreek[1:15, ]
+# plot profile sketches
+par(mar=c(0,0,0,0))
+plot(pedons, name='hzname', print.id=FALSE, cex.names=0.8, axis.line.offset=-4)
+```
+
 
 Horizonation: a first look.....
 ========================================================
