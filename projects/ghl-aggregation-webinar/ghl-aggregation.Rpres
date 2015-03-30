@@ -92,8 +92,7 @@ install.packages('soilDB', dep=TRUE)
 ```{r make-repeatable}
 library(aqp)
 library(soilDB)
-library(lattice)
-library(plyr)
+library(latticeExtra)
 
 # misc. options used in this presentation
 options(width=100, stringsAsFactors=FALSE)
@@ -294,6 +293,7 @@ p <- c('^A$|Ad|Ap',
 Assignment of GHL
 ========================================================
 
+- cross-tabulation of original names (columns) vs. GHL (rows)
 
 ```{r assign-ghl-print-table, results='asis', echo=FALSE}
 pedons$genhz <- generalize.hz(pedons$hzname, n, p) 
@@ -341,36 +341,77 @@ bwplot(hzdept ~ genhz, data=horizons(s),
 
 Evaluation of GHL 3
 ========================================================
-```{r}
-hz.eval <- evalGenHZ(pedons, 'genhz', c('clay', 'mid', 'total_frags_pct'))
+
+```{r evaluate-genhz-assignment, echo=FALSE}
+# store the column names of our variables of interest
+vars <- c('clay', 'mid', 'total_frags_pct')
+# result is a list of several items
+hz.eval <- evalGenHZ(pedons, 'genhz', vars)
 # extract MDS coords
-pedons$mds.1 <- hz.eval$horizons$mds.1; pedons$mds.2 <- hz.eval$horizons$mds.2
-# convert pedons to a data.frame
-pedons.df <- as(pedons, 'data.frame')
+pedons$mds.1 <- hz.eval$horizons$mds.1
+pedons$mds.2 <- hz.eval$horizons$mds.2
+# extract silhouette widths and neighbor
+pedons$sil.width <- hz.eval$horizons$sil.width
+pedons$neighbor <- hz.eval$horizons$neighbor
 ```
 
+```{r mds-plot, echo=FALSE, fig.width=10, fig.height=10}
+# convert pedons to a data.frame
+pedons.df <- as(pedons, 'data.frame')
+# plot generalized horizon labels at MDS coordinates
+mdsplot <- xyplot(mds.2 ~ mds.1, groups=genhz, data=pedons.df, 
+                  xlab='', ylab='', aspect=1,
+                  scales=list(draw=FALSE), 
+                  auto.key=list(columns=length(levels(pedons.df$genhz))), 
+                  par.settings=list(
+                    superpose.symbol=list(pch=16, cex=3, alpha=0.5)
+                  )
+)
 
-Evaluation of GHL 3
-========================================================
-```{r}
-plot(mds.2 ~ mds.1, data=pedons.df, pch=19, col=pedons$genhz.col)
-legend("bottomleft", levels(pedons.df$genhz), pch=19, col=pedons$genhz.col)
+# annotate with original hzname and pedon ID
+mdsplot +
+  layer(panel.abline(h=0, v=0, col='grey', lty=3)) + 
+  layer(panel.text(pedons.df$mds.1, pedons.df$mds.2, pedons.df$hzname, cex=0.85, font=2, pos=3)) +
+  layer(panel.text(pedons.df$mds.1, pedons.df$mds.2, pedons.df$pedon_id, cex=0.55, font=1, pos=1))
 ```
 
 Importing GHL to NASIS
 ========================================================
+- generalized horizon labels (so far) are stored in R session
+- save permanently in NASIS:
+
+```{r save-to-nasis, eval=FALSE}
+# clear-out any existing files
+rules.file <- 'C:/data/horizon_agg.txt'
+write.table(data.frame(), file=rules.file, row.names=FALSE, quote=FALSE, na='', col.names=FALSE, sep='|')
+
+# extract horizon data
+h <- horizons(pedons)
+
+# strip-out 'not-used' GHL, and keep only required columns
+h <- h[which(h$genhz != 'not-used'), c('phiid', 'genhz')]
+# append to NASIS import file
+write.table(h, file=rules.file, row.names=FALSE, quote=FALSE, na='', col.names=FALSE, sep='|', append=TRUE)
+```
+
+- manual adjustments can be made in NASIS:
+ - removal of ourlier horizons
+ - special cases
+- data are stored in the "component layer ID" field of the pedon-horizon table
 
 
 
-
-Report Demo
+Demonstration of Two Report Styles
 ========================================================
-
 
 
 
 Summarizing Data with Quantiles (Percentiles)
 ========================================================
+
+- suggested basis for RIC: 
+  - 5th, 50th, and 95th percentiles are low-rv-high values
+  - no assumptions of distribution, simple interpretation
 
 ```{r quantiles-normal-dist, fig.width=11, fig.height=6, echo=FALSE}
 # simulate 500 values from the normal distribution: with mean = 10, sd= 2
@@ -400,11 +441,14 @@ points(mean(x) + c(2*sd(x), -2*sd(x)), y=c(0.45, 0.45), pch=0, col='darkgreen', 
 # add x-axis
 axis(side=1, at=pretty(x), cex.axis=1.5)
 ```
-blue: quantiles, green: mean +/- 2SD
 
 
 Summarizing Data with Quantiles (Percentiles)
 ========================================================
+
+- suggested basis for RIC: 
+  - 5th, 50th, and 95th percentiles are low-rv-high values
+  - no assumptions of distribution, simple interpretation
 
 ```{r quantiles-exp-dist, fig.width=11, fig.height=6, echo=FALSE}
 # simulate 500 values from the exponential distribution
@@ -434,7 +478,7 @@ points(mean(x) + c(2*sd(x), -2*sd(x)), y=c(0.45, 0.45), pch=0, col='darkgreen', 
 # add x-axis
 axis(side=1, at=pretty(x), cex.axis=1.5)
 ```
-blue: quantiles, green: mean +/- 2SD
+
 
 
 
