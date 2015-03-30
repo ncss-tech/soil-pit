@@ -351,7 +351,7 @@ Evaluation of GHL 1
 n <- length(levels(loafercreek$genhz))
 cols <- brewer.pal(n, name="Paired")
 hz.names <- levels(loafercreek$genhz)
-loafercreek$genhz.soil_color <- cols[match(loafercreek$genhz, hz.names)]
+loafercreek$genhz.col <- cols[match(loafercreek$genhz, hz.names)]
 plot(loafercreek[1:15], color='genhz.soil_color', label='pedon_id') # plot the first 15 profiles
 ```
 
@@ -367,29 +367,19 @@ bwplot(mid~genhz, data=h, ylim=c(155, -5), ylab="Depths (cm)", xlab="Generalized
 Evaluation of GHL 3
 ========================================================
 ```{r}
-# store the column names of our variables of interest
-vars <- c('clay', 'mid', 'total_frags_pct')
-# result is a list of several items
-hz.eval <- evalGenHZ(loafercreek, 'genhz', vars)
+hz.eval <- evalGenHZ(loafercreek, 'genhz', c('clay', 'mid', 'total_frags_pct'))
 # extract MDS coords
-loafercreek$mds.1 <- hz.eval$horizons$mds.1
-loafercreek$mds.2 <- hz.eval$horizons$mds.2
-# extract silhouette widths and neighbor
-loafercreek$sil.width <- hz.eval$horizons$sil.width
-loafercreek$neighbor <- hz.eval$horizons$neighbor
-
+loafercreek$mds.1 <- hz.eval$horizons$mds.1; loafercreek$mds.2 <- hz.eval$horizons$mds.2
 # convert pedons to a data.frame
-pedons.df <- as(pedons, 'data.frame')
-# plot generalized horizon labels at MDS coordinates
-mdsplot <- xyplot(mds.2 ~ mds.1, groups=genhz, data=pedons.df, 
-                  xlab='', ylab='', aspect=1,
-                  scales=list(draw=FALSE), 
-                  auto.key=list(columns=length(levels(pedons.df$genhz))), 
-                  par.settings=list(
-                    superpose.symbol=list(pch=16, cex=3, alpha=0.5)
-                  )
-)
+pedons.df <- as(loafercreek, 'data.frame')
+```
 
+
+Evaluation of GHL 3
+========================================================
+```{r}
+plot(mds.2 ~ mds.1, data=pedons.df, pch=19, col=loafercreek$genhz.col)
+legend("bottomleft", levels(pedons.df$genhz), pch=19, col=loafercreek$genhz.col)
 ```
 
 Importing GHL to NASIS
