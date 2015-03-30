@@ -63,14 +63,18 @@ What can R do?
 What can R do?
 ========================================================
 
+<br><br>
 ![alt text](static-figures/loafercreek-ml-hz.png)
-
+<br><br>
+<center>**estimate a most-likely horizonation, details to follow**</center>
 
 What can R do?
 ========================================================
 
+<br><br>
 ![alt text](static-figures/loafercreek-ric.png)
-
+<br><br>
+<center>**estimate a reasonable RIC**</center>
 
 Setup your local machine
 ========================================================
@@ -119,6 +123,8 @@ ODBC Setup
 
 Aggregation of Pedon Data: Common Problems
 ========================================================
+![alt text](static-figures/genhz-sketch.png)
+
 - description styles
  - the age-old splitters vs. lumpers
  - use of transitional horizons
@@ -132,15 +138,35 @@ Aggregation of Pedon Data: Common Problems
 
 Generalized Horizon Labels: Micro-correlation
 ========================================================
-- generalized horizon labels = GHL
-- determine the core concept 
-
 ![alt text](static-figures/genhz-sketch.png)
 
+- generalized horizon labels = GHL
+- determine the core concept 
 - which way do transition horizons go?
  - GHL process allows for flexibility
 - horizon redundancy - how many Bt horizons are necessary?
 - outlier horizons - what happens to them?
+
+
+Summary of GHL workflow
+========================================================
+
+<center>**Most of these steps are implemented in the reports presented last**</center>
+
+1. Select a set of GHL that best represents a group of pedons to be aggregated.
+
+2. Assign GHL to each horizon using whatever information is available for grouping horizons.
+
+3. Evaluate GHL assignments and manually refine as needed.
+
+4. Keep track of final GHL assignments in NASIS or text file.
+
+5. Estimate a most likely horizonation e.g., top and bottom depths for each generalized horizon label.
+
+6. Compute range in characteristics, aka low-rv-high values, for clay, sand, pH, etc. over GHL. (next document in this series)
+
+[&#8594;&nbsp;extended tutorial](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/gen-hz-assignment.html?root=aqp)
+
 
 
 Assumptions
@@ -333,8 +359,7 @@ blue: quantiles, green: mean +/- 2SD
 
 
 
-Summary of GHL workflow
-========================================================
+
 
 
 
