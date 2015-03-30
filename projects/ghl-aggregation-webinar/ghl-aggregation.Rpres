@@ -20,43 +20,36 @@ width: 1024
 height: 800
 css: custom.css
 
-
-
-<br><br><br><br><br><br><br><br><br><br>
-<span style="color: white; font-size:50%;">This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`, `soilDB` version `r utils::packageDescription("soilDB", field="Version")`, and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.</span>
+<br><br><br><br><br><br><br><br><br>
+<span style="color: white; font-size:75%;">This document is based on:</span>
+<ul style="color: white; font-size:75%;">
+<li>`aqp` version `r utils::packageDescription("aqp", field="Version")`</li>
+<li>`soilDB` version `r utils::packageDescription("soilDB", field="Version")`</li>
+<li>`sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`</li>
+</ul>
 
 What is R?
 ================
 - an analysis platform: calculator, statistics program, gis, etc...
 - an integrator, R+NASIS+GIS, via GDAL and ODBC
 
-![alt text](ghl-aggregation-figure/rstudio.png)
+![alt text](static-figures/rstudio.png)
 
 
 What can R do?
 ========================================================
 class: small-code
 
-- specialized soil data structures: common framework for soil data
-- visualization: soil profile sketches
-- aggregation: depth-slice and horizon summaries
-- classification: group profiles using similarity metrics
-- report writing: summarizing and documenting
-- digital soil mapping: modeling properties and classes
+- Base R
+  
+  - report writing: summarizing and documenting
+  - digital soil mapping: modeling properties and classes
 
+- Soil Survey Tasks and Access to Common Soil Databases
+ - visualization, aggregation, classification <span class="link-to-details">&#8594;&nbsp;[aqp package](http://aqp.r-forge.r-project.org/aqp-html-manual/index.html)</span>
+ - <span class="link-to-details">&#8594;&nbsp;[soilDB package](http://aqp.r-forge.r-project.org/soilDB-html-manual/index.html)</span>
+ - <span class="link-to-details">&#8594;&nbsp;[sharpshootR package](http://aqp.r-forge.r-project.org/shapshootR-html-manual/index.html)</span>
 
-I would exclude and focus on R, otherwise address in the beginning, probably better to focus on soilDB, aqp package: Algorithms for Quantitative Pedology
-========================================================
-<span class="oneliner">a "vocabulary" for soil data analysis</span>
-
-- special data structures: avoids annoying book-keeping code
-- visualization: soil profile sketches
-- aggregation: depth-slice summaries
-- classification: pair-wise dissimilarity of profiles
-
-![alt text](static-figures/genhz-sketch.png)
-
-<span class="link-to-details">&#8594;&nbsp;[aqp manual page](http://aqp.r-forge.r-project.org/aqp-html-manual/index.html)</span>
 
 
 AQP and soilDB discuss they make it possible to analyze soil data in their native format.
