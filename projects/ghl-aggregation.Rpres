@@ -28,8 +28,9 @@ css: custom.css
 What is R?
 ================
 - an analysis platform: calculator, statistics program, gis, etc...
-- an integrator, R+NASIS+GIS
-- figure showing how R can connect spatial, tabular, stats and visualization resources
+- an integrator, R+NASIS+GIS, via GDAL and ODBC
+
+![alt text](ghl-aggregation-figure/rstudio.png)
 
 
 What can R do?
@@ -155,20 +156,19 @@ Assumptions
 - **IMPORTANT POINT:** these reports and data summaries are a useful starting point for the aggregation process
 
 
-This is a great graphic, just not sure where it should go
-Summarizing Data with Quantiles (i.e. Percentiles)
+This is a great graphic, just not sure where it should go Summarizing Data with Quantiles (i.e. Percentiles)
 ========================================================
 
 ```{r quantiles, fig.width=10, fig.height=6, echo=FALSE}
 # simulate 500 values from the normal distribution: with mean = 10, sd= 2
 set.seed(1010101)
-x <- rnorm(n=500, mean=10, sd=2)
+x <- rexp(n=500)
 
 # compute the 5th, 25th, 50th, 75th, and 95th percentiles of x
-q <- quantile(x, probs=c(0.05, 0.25, 0.5, 0.75, 0.95))
+q <- c(quantile(x, probs=c(0.05, 0.25, 0.5, 0.75, 0.95)))
 
 # plot a smoothed frequency distribution
-plot(density(x), main='Quantile Demonstration', ylim=c(0, 0.3), ylab='', xlab='', axes=FALSE)
+plot(density(x), main='Quantile Demonstration', ylim=c(0, 0.8), ylab='', xlab='', axes=FALSE)
 
 # mark quantiles we computed above
 abline(v=q, lty=3, col='red')
