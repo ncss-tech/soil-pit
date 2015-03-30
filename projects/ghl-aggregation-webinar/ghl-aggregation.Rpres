@@ -282,12 +282,11 @@ Importing GHL to NASIS
 ========================================================
 
 
-GHL and Most-Likely Horizonation
-========================================================
 
 
-Computing RIC from GHL
+Report Demo
 ========================================================
+
 
 
 Summarizing Data with Quantiles (Percentiles)
@@ -356,12 +355,6 @@ points(mean(x) + c(2*sd(x), -2*sd(x)), y=c(0.45, 0.45), pch=0, col='darkgreen', 
 axis(side=1, at=pretty(x), cex.axis=1.5)
 ```
 blue: quantiles, green: mean +/- 2SD
-
-
-
-
-
-
 
 
 
