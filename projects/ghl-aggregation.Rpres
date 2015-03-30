@@ -36,70 +36,51 @@ What can R do?
 ========================================================
 class: small-code
 
-- special data structures: common framework for soil data
+- specialized soil data structures: common framework for soil data
 - visualization: soil profile sketches
 - aggregation: depth-slice and horizon summaries
 - classification: group profiles using similarity metrics
 - report writing: summarizing and documenting
 - digital soil mapping: modeling properties and classes
 
-```{r load-data, fig.width=12, fig.height=5, htmlcap='15 pedons correlated to the Loafercreek soil series.', echo=FALSE}
-# load sample data from the soilDB package
-data(loafercreek, package = 'soilDB')
-# keep only the first 15 pedons
-pedons <- loafercreek[1:15, ]
-# plot profile sketches
-par(mar=c(0,0,0,0))
-plot(pedons, name='hzname', print.id=FALSE, cex.names=0.8, axis.line.offset=-4)
+
+I would exclude and focus on R, otherwise address in the beginning, probably better to focus on soilDB, aqp package: Algorithms for Quantitative Pedology
+========================================================
+<span class="oneliner">a "vocabulary" for soil data analysis</span>
+
+- special data structures: avoids annoying book-keeping code
+- visualization: soil profile sketches
+- aggregation: depth-slice summaries
+- classification: pair-wise dissimilarity of profiles
+
+![alt text](static-figures/genhz-sketch.png)
+
+<span class="link-to-details">&#8594;&nbsp;[aqp manual page](http://aqp.r-forge.r-project.org/aqp-html-manual/index.html)</span>
+
+
+AQP and soilDB discuss they make it possible to analyze soil data in their native format.
+========================================================
+
+```{r load-data, fig.width=12, fig.height=5, htmlcap='15 pedons correlated to the Loafercreek soil series.'}
+
+library(aqp)
+library(soilDB)
+pedons <- fetchNASIS()[1:10] # load Loafercreek sample data from NASIS
+plot(pedons)
 ```
-
-Outline
-========================================================
-
-
-
-
-Example 1 [get everyone's attention]
-========================================================
-
 
 Example 2 [get everyone's attention]
 ========================================================
 
+```{r}
+# insert report snapshot or summary
+```
 
 Example 3 [get everyone's attention]
 ========================================================
 
-
-
-
-Summarizing Data with Quantiles
-========================================================
-
-
-```{r quantiles, fig.width=10, fig.height=6, echo=FALSE}
-# simulate 500 values from the normal distribution: with mean = 10, sd= 2
-set.seed(1010101)
-x <- rnorm(n=500, mean=10, sd=2)
-
-# compute the 5th, 25th, 50th, 75th, and 95th percentiles of x
-q <- quantile(x, probs=c(0.05, 0.25, 0.5, 0.75, 0.95))
-
-# plot a smoothed frequency distribution
-plot(density(x), main='Quantile Demonstration', ylim=c(0, 0.3), ylab='', xlab='', axes=FALSE)
-
-# mark quantiles we computed above
-abline(v=q, lty=3, col='red')
-text(x=q, y=0.1, labels=c('5th', '25th', '50th', '75th', '95th'))
-
-# overlay a box-whisker plot
-boxplot(x, at=0.25, add=TRUE, horizontal=TRUE, boxwex=0.1, border='DarkBlue', axes=FALSE)
-
-# overlay lines at the original values
-rug(x, side=3, col='DarkBlue')
-
-# add x-axis
-axis(side=1, at=pretty(x))
+```{r}
+# insert digital soil map
 ```
 
 
@@ -118,6 +99,8 @@ install.packages("RODBC", dep=TRUE) # stable version from CRAN + dependencies
 install.packages('soilDB', dep=TRUE)
 
 # install latest versions from R-Forge:
+
+# I'M NOT SURE I'D RECOMMEND INSTALLING FROM THE SOURCE for the majority of users, in my experience the library system is already confusing to most, thus I wouldn't complicate it further for beginners
 install.packages('soilDB', repos="http://R-Forge.R-project.org", type='source')
 ```
 ```{r make-repeatable, tidy=FALSE}
@@ -172,21 +155,34 @@ Assumptions
 - **IMPORTANT POINT:** these reports and data summaries are a useful starting point for the aggregation process
 
 
-
-aqp package: Algorithms for Quantitative Pedology
+This is a great graphic, just not sure where it should go
+Summarizing Data with Quantiles (i.e. Percentiles)
 ========================================================
-<span class="oneliner">a "vocabulary" for soil data analysis</span>
 
-- special data structures: avoids annoying book-keeping code
-- visualization: soil profile sketches
-- aggregation: depth-slice summaries
-- classification: pair-wise dissimilarity of profiles
+```{r quantiles, fig.width=10, fig.height=6, echo=FALSE}
+# simulate 500 values from the normal distribution: with mean = 10, sd= 2
+set.seed(1010101)
+x <- rnorm(n=500, mean=10, sd=2)
 
-![alt text](static-figures/genhz-sketch.png)
+# compute the 5th, 25th, 50th, 75th, and 95th percentiles of x
+q <- quantile(x, probs=c(0.05, 0.25, 0.5, 0.75, 0.95))
 
-<span class="link-to-details">&#8594;&nbsp;[aqp manual page](http://aqp.r-forge.r-project.org/aqp-html-manual/index.html)</span>
+# plot a smoothed frequency distribution
+plot(density(x), main='Quantile Demonstration', ylim=c(0, 0.3), ylab='', xlab='', axes=FALSE)
 
+# mark quantiles we computed above
+abline(v=q, lty=3, col='red')
+text(x=q, y=0.1, labels=c('5th', '25th', '50th', '75th', '95th'))
 
+# overlay a box-whisker plot
+boxplot(x, at=0.25, add=TRUE, horizontal=TRUE, boxwex=0.1, border='DarkBlue', axes=FALSE)
+
+# overlay lines at the original values
+rug(x, side=3, col='DarkBlue')
+
+# add x-axis
+axis(side=1, at=pretty(x))
+```
 
 
 Aggregation of Pedon Data: Common Problems
@@ -300,17 +296,21 @@ Questions / Interactive Examples
 
 
 
+
 Thank You
 ========================================================
-Questions, comments, ideas?
+**Questions, comments, ideas**
+<br><br>
 
-<br><br><br><br>
-AQP Contributors:
-- Jay Skovlin (USDA-NRCS)
-- Stephen Roecker (USDA-NRCS)
+**R resources for pedologists**
+- <span class="link-to-details">&#8594;&nbsp;[NCSS Job-Aids](http://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/edu/ncss/?cid=nrcs142p2_054322)</span>
+- <span class="link-to-details">&#8594;&nbsp;[aqp tutorials](http://aqp.r-forge.r-project.org/)</span>
+- <span class="link-to-details">&#8594;&nbsp;[Statistical data analysis for pedologists](http://www2.gru.wvu.edu/~tdavello/files/stats/table_of_contents.html)
+- <span class="link-to-details">&#8594;&nbsp;[Dylan Beaudette's blog](http://casoilresource.lawr.ucdavis.edu/blog/)
+- <span class="link-to-details">&#8594;&nbsp;[soil-pit Github repository](https://github.com/sroecker01/soil-pit)
+<br><br>
+
+**Additional AQP Contributors:**
 - Pierre Roudier (Landcare Research)
-
-<br>
-Join the fun at the [AQP r-forge site](http://r-forge.r-project.org/projects/aqp/)
 
 
