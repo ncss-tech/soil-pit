@@ -283,13 +283,30 @@ p <- c('^A$|Ad|Ap',
 
 Assignment of GHL
 ========================================================
+```{r}
+loafercreek$genhz <- generalize.hz(loafercreek$hzname, n, p) 
+addmargins(table(loafercreek$genhz, loafercreek$hzname))[, 1:12] # cross-tabulate original horizon designations and GHL
+```
 
 
 Evaluation of GHL 1
 ========================================================
+```{r}
+n <- length(levels(loafercreek$genhz))
+cols <- brewer.pal(n, name="Paired")
+hz.names <- levels(loafercreek$genhz)
+loafercreek$genhz.soil_color <- cols[match(loafercreek$genhz, hz.names)]
+plot(loafercreek[1:15], color='genhz.soil_color', label='pedon_id') # plot the first 15 profiles
+```
+
 
 Evaluation of GHL 2
 ========================================================
+```{r}
+h <- horizons(loafercreek)
+bwplot(mid~genhz, data=h, ylim=c(155, -5), ylab="Depths (cm)", xlab="Generalized horizons")
+```
+
 
 Evaluation of GHL 3
 ========================================================
