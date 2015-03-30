@@ -307,23 +307,10 @@ Horizonation: a first look.....
 
 - array collective horizonation by depth mid points
 
-```{r horizon_counts, fig.width=10, fig.height=6, echo=FALSE}
-# compute horizon mid-points
-loafercreek$mid <- with(horizons(loafercreek), (hzdept + hzdepb) / 2)
-
-# sort horizon designation by group-wise median values
-hz.designation.by.median.depths <- names(sort(tapply(loafercreek$mid, loafercreek$hzname, median)))
-
-# plot the distribution of horizon mid-points by designation
-bwplot(mid ~ factor(hzname, levels=hz.designation.by.median.depths), 
-       data=horizons(loafercreek), 
-       ylim=c(155, -5), ylab='Horizon Mid-Point Depth (cm)', 
-       scales=list(y=list(tick.number=10)), 
-       panel=function(...) {
-  panel.abline(h=seq(0, 140, by=10), v=1:length(hz.designation.by.median.depths), col=grey(0.8), lty=3)
-    panel.bwplot(...)
-})
-
+```{r horizon_counts, fig.width=10, fig.height=6}
+loafercreek$mid <- with(horizons(loafercreek), (hzdept + hzdepb) / 2) # compute horizon mid-points
+hz.mid.depths <- names(sort(tapply(loafercreek$mid, loafercreek$hzname, median))) # sort by mid-points
+bwplot(mid ~ factor(hzname, levels=hz.mid.depths), data=horizons(loafercreek), ylim = c(155, -5), ylab='Horizon Mid-Point Depth (cm)') # plot by horizon mid-points
 ```
 
 Determination of a GHL Template and Rules
