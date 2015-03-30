@@ -265,13 +265,13 @@
   border-style: dotted;
   border-color: gray;
   border-collapse: collapse;
-  font-size: 0.7em;
+  font-size: 0.65em;
 }
 
 .reveal table th {
   border-width: 1px;
-  padding-left: 10px;
-  padding-right: 25px;
+  padding-left: 5px;
+  padding-right: 5px;
   font-weight: bold;
   border-style: dotted;
   border-color: gray;
@@ -279,8 +279,8 @@
 
 .reveal table td {
   border-width: 1px;
-  padding-left: 10px;
-  padding-right: 25px;
+  padding-left: 5px;
+  padding-right: 5px;
   border-style: dotted;
   border-color: gray;
 }

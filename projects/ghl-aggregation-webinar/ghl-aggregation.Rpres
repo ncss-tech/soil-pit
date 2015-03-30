@@ -9,7 +9,6 @@ https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/gen-hz-assignme
 ```{r setup, echo=FALSE, results='hide'}
 opts_chunk$set(message=FALSE, warning=FALSE, dpi=120, fig.align='center', dev='CairoPNG', dev.args=list(pointsize=10), tidy=FALSE, tidy.opts=list(width.cutoff=100), cache=TRUE)
 library(knitr)
-library(soilDB)
 ```
 
 
@@ -81,44 +80,43 @@ Setup your local machine
 
 - Be sure to follow embedded links to full documentation.
 - Check out the [AQP project website](http://aqp.r-forge.r-project.org/).
-- You can reproduce much of this document with:
 
- - the first time you run R
+- The first time you open RSudio, **install** required packages:
 ```{r install-packages, tidy=FALSE, eval=FALSE}
 install.packages('aqp', dep=TRUE) 
 install.packages("RODBC", dep=TRUE)
 install.packages('soilDB', dep=TRUE)
 ```
 
- - every time you run R
-```{r make-repeatable, tidy=FALSE}
-# load libraries
+- Every subsequent time, **load** required packages:
+```{r make-repeatable}
 library(aqp)
 library(soilDB)
 library(lattice)
 library(plyr)
-library(Hmisc)
-library(RColorBrewer)
 
-# set options
+# misc. options used in this presentation
 options(width=100, stringsAsFactors=FALSE)
 ```
 
 
-ODBC Setup
+Connect to NASIS via ODBC
 ========================================================
-- establish an Open Database Connection (ODBC) to NASIS
 
-- connection allows R to pull data from a NASIS selected set via the soilDB package
-
+- connection allows R to pull data from a NASIS *selected set* via the soilDB package
 - connection sets up a small file that stores the NASIS login and password
+- this is a one-time operation <span class="link-to-details">&#8594;&nbsp;[ODBC setup instructions](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/setup_local_nasis.html?root=aqp)</span>
 
-- this is a one-time operation
-  - easy to follow instructions are found here:
-
-<span class="link-to-details">&#8594;&nbsp;[ODBC setup instructions](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/setup_local_nasis.html?root=aqp)</span>
-
-
+- getting data from NASIS is as simple as:
+```{r use-nasis-data, eval=FALSE}
+# get pedons from the selected set
+pedons <- fetchNASIS()
+# plot the first 15
+plot(pedons[1:15, ])
+# get component data from the selected set
+components <- get_component_data_from_NASIS_db()
+```
+- be sure to read the documentation <span class="link-to-details">&#8594;&nbsp;[`fetchNASIS()`](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp)</span>
 
 
 Aggregation of Pedon Data: Common Problems
@@ -180,6 +178,7 @@ Assumptions
 - **IMPORTANT POINT:** these reports and data summaries are a useful starting point for the aggregation process
 
 
+
 A Sample Dataset
 =======================================================
 
@@ -199,37 +198,77 @@ Horizonation: a first look.....
 
 ![alt text](static-figures/RIC.png)
 
+
+
 Horizonation: a first look.....
 ========================================================
 
 - sort by frequency
-```{r}
-sort(table(loafercreek$hzname), decreasing=TRUE)[1:13]
-sort(table(loafercreek$hzname), decreasing=TRUE)[14:26]
+```{r sort-hz-by-freq-print-html, echo=FALSE, results='asis'}
+d <- sort(table(pedons$hzname), decreasing=TRUE)
+d <- t(d)
+kable(as.data.frame.matrix(d))
 ```
+
 - sort alphabetically
-```{r}
-sort(table(loafercreek$hzname))[1:13]
-sort(table(loafercreek$hzname))[14:26]
+```{r sort-hz-by-alph-print-html, echo=FALSE, results='asis'}
+d <- table(pedons$hzname)
+d <- t(d)
+kable(as.data.frame.matrix(d))
 ```
+
+- plot ranges in horizon depths
+```{r horizonation-mid-point, echo=FALSE, fig.width=10, fig.height=4}
+# compute horizon mid-points
+pedons$mid <- with(horizons(pedons), (hzdept + hzdepb) / 2)
+
+# sort horizon designation by group-wise median values
+hz.designation.by.median.depths <- names(sort(tapply(pedons$mid, pedons$hzname, median)))
+
+# plot the distribution of horizon mid-points by designation
+bwplot(mid ~ factor(hzname, levels=hz.designation.by.median.depths), 
+       data=horizons(pedons), 
+       ylim=c(155, -5), ylab='Horizon Mid-Point Depth (cm)', 
+       scales=list(y=list(tick.number=10)), 
+       panel=function(...) {
+  panel.abline(h=seq(0, 140, by=10), v=1:length(hz.designation.by.median.depths), col=grey(0.8), lty=3)
+  panel.bwplot(...)
+})
+```
+
 
 Horizonation: a first look.....
 ========================================================
 
-- array collective horizonation by depth mid points
 
-```{r horizon_counts, fig.width=10, fig.height=6}
-loafercreek$mid <- with(horizons(loafercreek), (hzdept + hzdepb) / 2) # compute horizon mid-points
-hz.mid.depths <- names(sort(tapply(loafercreek$mid, loafercreek$hzname, median))) # sort by mid-points
-# plot by horizon mid-points
-bwplot(mid ~ factor(hzname, levels=hz.mid.depths), data=horizons(loafercreek), ylim = c(155, -5), ylab='Horizon Mid-Point Depth (cm)') 
+```{r univariate-eval-clay, echo=FALSE, fig.width=10, fig.height=4}
+bwplot(clay ~ factor(hzname, levels=hz.designation.by.median.depths), 
+       data=horizons(pedons), 
+       ylab='Clay Content (%)', 
+       scales=list(y=list(tick.number=10)), 
+       panel=function(...) {
+  panel.abline(h=seq(0, 100, by=5), v=1:length(hz.designation.by.median.depths), col=grey(0.8), lty=3)
+  panel.bwplot(...)
+})
+```
+
+```{r univariate-eval-rf, echo=FALSE, fig.width=10, fig.height=4}
+# box and wisker plot by total rock fragment volume
+bwplot(total_frags_pct ~ factor(hzname, levels=hz.designation.by.median.depths), 
+       data=horizons(pedons), 
+       ylab='Total Rock Fragment Volume (%)', 
+       scales=list(y=list(tick.number=10)), 
+       panel=function(...) {
+  panel.abline(h=seq(0, 100, by=10), v=1:length(hz.designation.by.median.depths), col=grey(0.8), lty=3)
+  panel.bwplot(...)
+})
 ```
 
 
 Determination of a GHL Template and Rules
 ========================================================
 - pattern matching via [regular expression](http://www.regexr.com/) (REGEX)
- - this is where most micro-correlation decisions are stored
+ - this is where most micro-correlation decisions are defined
 - special characters in REGEX rules: 
  - `|` = "or"
  - `^` = anchor to left-side
@@ -254,49 +293,68 @@ p <- c('^A$|Ad|Ap',
 
 Assignment of GHL
 ========================================================
-```{r assign-ghl}
-loafercreek$genhz <- generalize.hz(loafercreek$hzname, n, p) 
-addmargins(table(loafercreek$genhz, loafercreek$hzname))[, 1:13] # cross-tabulate original horizon designations and GHL
-addmargins(table(loafercreek$genhz, loafercreek$hzname))[, 14:29]
+
+
+```{r assign-ghl-print-table, results='asis', echo=FALSE}
+pedons$genhz <- generalize.hz(pedons$hzname, n, p) 
+# cross-tabulate original horizon designations and GHL
+kable(addmargins(table(pedons$genhz, pedons$hzname)))
 ```
+
 
 
 Evaluation of GHL 1
 ========================================================
-```{r eval-ghl-1, fig.width=12, fig.height=5}
-n <- length(levels(loafercreek$genhz))
-cols <- brewer.pal(n, name="Paired")
-hz.names <- levels(loafercreek$genhz)
-loafercreek$genhz.col <- cols[match(loafercreek$genhz, hz.names)]
-par(mar=c(0,0,0,0))
-plot(loafercreek[1:15], color='genhz.col', label='pedon_id', cex.names=0.8, axis.line.offset=-4) 
+
+
+```{r plot-ghl-1, echo=FALSE, fig.width=12, fig.height=5, htmlcap='Horizon colors are based on assigned GHL.'}
+# make a palette of colors, last color is for not-used class
+cols <- c(grey(0.33), 'orange', 'orangered', 'chocolate', 'green', 'blue', 'yellow')
+# assign a color to each generalized horizon label
+hz.names <- levels(pedons$genhz)
+pedons$genhz.soil_color <- cols[match(pedons$genhz, hz.names)]
+# plot generalized horizons via color and add a legend
+par(mar=c(4,0,0,0))
+plot(pedons, name='hzname', print.id=FALSE, cex.names=0.8, axis.line.offset=-4, color='genhz.soil_color')
+legend('bottomleft', legend=hz.names, pt.bg=c(cols), pch=22, bty='n', cex=2)
 ```
 
 
 Evaluation of GHL 2
 ========================================================
-```{r eval-ghl-2, fig.width=10, fig.height=6}
-h <- horizons(loafercreek)
-bwplot(mid~genhz, data=h, ylim=c(155, -5), ylab="Depths (cm)", xlab="Generalized horizons")
+```{r eval-ghl-2, echo=FALSE, fig.width=6, fig.height=5}
+# slice profile collection from 0-150 cm
+s <- slice(pedons, 0:150 ~ genhz)
+# convert horizon name back to factor, using original levels
+s$genhz <- factor(s$genhz, levels = hz.names)
+# plot depth-ranges of generalized horizon slices
+bwplot(hzdept ~ genhz, data=horizons(s), 
+       ylim=c(155, -5), ylab='Generalized Horizon Depth (cm)', 
+       scales=list(y=list(tick.number=10)), asp=1, 
+       panel=function(...) {
+          panel.abline(h=seq(0, 140, by=10), v=1:length(hz.names),col=grey(0.8), lty=3)
+            panel.bwplot(...)
+          }
+       )
 ```
 
 
 Evaluation of GHL 3
 ========================================================
 ```{r}
-hz.eval <- evalGenHZ(loafercreek, 'genhz', c('clay', 'mid', 'total_frags_pct'))
+hz.eval <- evalGenHZ(pedons, 'genhz', c('clay', 'mid', 'total_frags_pct'))
 # extract MDS coords
-loafercreek$mds.1 <- hz.eval$horizons$mds.1; loafercreek$mds.2 <- hz.eval$horizons$mds.2
+pedons$mds.1 <- hz.eval$horizons$mds.1; pedons$mds.2 <- hz.eval$horizons$mds.2
 # convert pedons to a data.frame
-pedons.df <- as(loafercreek, 'data.frame')
+pedons.df <- as(pedons, 'data.frame')
 ```
 
 
 Evaluation of GHL 3
 ========================================================
 ```{r}
-plot(mds.2 ~ mds.1, data=pedons.df, pch=19, col=loafercreek$genhz.col)
-legend("bottomleft", levels(pedons.df$genhz), pch=19, col=loafercreek$genhz.col)
+plot(mds.2 ~ mds.1, data=pedons.df, pch=19, col=pedons$genhz.col)
+legend("bottomleft", levels(pedons.df$genhz), pch=19, col=pedons$genhz.col)
 ```
 
 Importing GHL to NASIS
