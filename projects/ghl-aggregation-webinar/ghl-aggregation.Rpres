@@ -29,14 +29,14 @@ css: custom.css
 
 What is R?
 ================
-- an analysis platform: calculator, statistics program, gis, etc...
+- an analysis platform: calculator, statistics program, GIS, etc...
 - R syntax: vocabulary to explore, summarize, and model data
 ![alt text](static-figures/rstudio.png)
 
 
 What is R?
 ================
-- an integrator: anaylsis + GIS + database connectivity
+- an integrator: analysis + GIS + database connectivity
 - ODBC and GDAL link R to nearly all possible formats/interfaces
 ![alt text](static-figures/triangle.png)
 
@@ -81,7 +81,7 @@ Setup your local machine
 - Be sure to follow embedded links to full documentation.
 - Check out the [AQP project website](http://aqp.r-forge.r-project.org/).
 
-- The first time you open RSudio, **install** required packages:
+- The first time you open RStudio, **install** required packages:
 ```{r install-packages, tidy=FALSE, eval=FALSE}
 install.packages('aqp', dep=TRUE) 
 install.packages("RODBC", dep=TRUE)
@@ -127,7 +127,7 @@ Aggregation of Pedon Data: Common Problems
  - use of transitional horizons
   - I say tomato, you say tomato!  
   
-- legacy horizon nominclature
+- legacy horizon nomenclature
  - old school meets new school and they ain't speakin' the same language.....
 
 - soils described to varying depths - it's the pits!
@@ -294,6 +294,7 @@ Assignment of GHL
 ========================================================
 
 - cross-tabulation of original names (columns) vs. GHL (rows)
+- be sure to check the `not-used` row
 
 ```{r assign-ghl-print-table, results='asis', echo=FALSE}
 pedons$genhz <- generalize.hz(pedons$hzname, n, p) 
@@ -303,9 +304,11 @@ kable(addmargins(table(pedons$genhz, pedons$hzname)))
 
 
 
-Evaluation of GHL 1
+Evaluation of GHL
 ========================================================
 
+- plot profiles with horizons colored according to GHL
+- does it make sense?
 
 ```{r plot-ghl-1, echo=FALSE, fig.width=12, fig.height=5, htmlcap='Horizon colors are based on assigned GHL.'}
 # make a palette of colors, last color is for not-used class
@@ -320,8 +323,10 @@ legend('bottomleft', legend=hz.names, pt.bg=c(cols), pch=22, bty='n', cex=2)
 ```
 
 
-Evaluation of GHL 2
+Evaluation of GHL
 ========================================================
+- plot range in GHL depths, check for overlap
+
 ```{r eval-ghl-2, echo=FALSE, fig.width=6, fig.height=5}
 # slice profile collection from 0-150 cm
 s <- slice(pedons, 0:150 ~ genhz)
@@ -339,8 +344,9 @@ bwplot(hzdept ~ genhz, data=horizons(s),
 ```
 
 
-Evaluation of GHL 3
+Evaluation of GHL
 ========================================================
+- multivariate summary of depth, clay content, and RF volume
 
 ```{r evaluate-genhz-assignment, echo=FALSE}
 # store the column names of our variables of interest
@@ -378,27 +384,15 @@ mdsplot +
 Importing GHL to NASIS
 ========================================================
 - generalized horizon labels (so far) are stored in R session
-- save permanently in NASIS:
+- Use an R script to create a text file, called `horizon_agg.txt`, of horizon ID's and corresponding GHL assignments
+- run the NASIS calculation to update the comp layer id field with the GHL for each pedon horizon
+- Calculations/Validations --> Pedon Horizon 
+  - 'Update horizon group aggregations using a text file'
+  - Calculation will look for the horizon_agg.txt file in: C:/data/horizon_agg.txt
+  - Calculation will load the file and update the comp layer id field
+- manual adjustments in NASIS: outliers, special cases, etc.
 
-```{r save-to-nasis, eval=FALSE}
-# clear-out any existing files
-rules.file <- 'C:/data/horizon_agg.txt'
-write.table(data.frame(), file=rules.file, row.names=FALSE, quote=FALSE, na='', col.names=FALSE, sep='|')
-
-# extract horizon data
-h <- horizons(pedons)
-
-# strip-out 'not-used' GHL, and keep only required columns
-h <- h[which(h$genhz != 'not-used'), c('phiid', 'genhz')]
-# append to NASIS import file
-write.table(h, file=rules.file, row.names=FALSE, quote=FALSE, na='', col.names=FALSE, sep='|', append=TRUE)
-```
-
-- manual adjustments can be made in NASIS:
- - removal of ourlier horizons
- - special cases
-- data are stored in the "component layer ID" field of the pedon-horizon table
-
+[&#8594;&nbsp;full instructions here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/gen-hz-assignment.html?root=aqp)
 
 
 Demonstration of Two Report Styles
