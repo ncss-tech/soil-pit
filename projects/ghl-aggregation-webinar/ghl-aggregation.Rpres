@@ -107,20 +107,6 @@ ODBC Setup
 
 
 
-Assumptions
-========================================================
-- a collection of pedons for a component should represent an aggregated component
-- a GHL process of some kind is required to efficiently summarize and aggregate horizon data from these collections
-- low-rv-high values must be tied to some metric: 
- - 5th-50th-95th percentile is one option
-- linked pedons represent examples of the aggregate data, but aggregate data should not be limited to a very small set of linked pedons
-
-- **IMPORTANT POINT:** these reports and data summaries are a useful starting point for the aggregation process
-
-
-Jump to Final Report ??
-========================================================
-
 
 Aggregation of Pedon Data: Common Problems
 ========================================================
@@ -131,13 +117,13 @@ Aggregation of Pedon Data: Common Problems
   
 - legacy horizon nominclature
  - old school meets new school and they ain't speakin' the same language.....
- 
 
 - soils described to varying depths - it's the pits!
 
 
 Generalized Horizon Labels: Micro-correlation
 ========================================================
+- generalized horizon labels = GHL
 - determine the core concept 
 
 ![alt text](static-figures/genhz-sketch.png)
@@ -147,6 +133,16 @@ Generalized Horizon Labels: Micro-correlation
 - horizon redundancy - how many Bt horizons are necessary?
 - outlier horizons - what happens to them?
 
+
+Assumptions
+========================================================
+- a collection of pedons for a component should represent an aggregated component
+- a GHL process of some kind is required to efficiently summarize and aggregate horizon data from these collections
+- low-rv-high values must be tied to some metric: 
+ - 5th-50th-95th percentile is one option
+- linked pedons represent examples of the aggregate data, but aggregate data should not be limited to a very small set of linked pedons
+
+- **IMPORTANT POINT:** these reports and data summaries are a useful starting point for the aggregation process
 
 
 A Sample Dataset
