@@ -7,7 +7,7 @@ https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/gen-hz-assignme
 
 
 ```{r setup, echo=FALSE, results='hide'}
-opts_chunk$set(message=FALSE, warning=FALSE, dpi=120, fig.align='center', dev='CairoPNG', dev.args=list(pointsize=10), tidy=TRUE, tidy.opts=list(width.cutoff=100), cache=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, dpi=120, fig.align='center', dev='CairoPNG', dev.args=list(pointsize=10), tidy=FALSE, tidy.opts=list(width.cutoff=100), cache=TRUE)
 library(knitr)
 library(soilDB)
 ```
@@ -221,7 +221,8 @@ Horizonation: a first look.....
 ```{r horizon_counts, fig.width=10, fig.height=6}
 loafercreek$mid <- with(horizons(loafercreek), (hzdept + hzdepb) / 2) # compute horizon mid-points
 hz.mid.depths <- names(sort(tapply(loafercreek$mid, loafercreek$hzname, median))) # sort by mid-points
-bwplot(mid ~ factor(hzname, levels=hz.mid.depths), data=horizons(loafercreek), ylim = c(155, -5), ylab='Horizon Mid-Point Depth (cm)') # plot by horizon mid-points
+# plot by horizon mid-points
+bwplot(mid ~ factor(hzname, levels=hz.mid.depths), data=horizons(loafercreek), ylim = c(155, -5), ylab='Horizon Mid-Point Depth (cm)') 
 ```
 
 
@@ -234,7 +235,7 @@ Determination of a GHL Template and Rules
  - `^` = anchor to left-side
  - `$` = anchor to right-side
 
-```{r, tidy=FALSE}
+```{r ghl-regex-rules, tidy=FALSE}
 # save our GHL
 n <- c('A',
        'Bt1',
@@ -253,7 +254,7 @@ p <- c('^A$|Ad|Ap',
 
 Assignment of GHL
 ========================================================
-```{r}
+```{r assign-ghl}
 loafercreek$genhz <- generalize.hz(loafercreek$hzname, n, p) 
 addmargins(table(loafercreek$genhz, loafercreek$hzname))[, 1:13] # cross-tabulate original horizon designations and GHL
 addmargins(table(loafercreek$genhz, loafercreek$hzname))[, 14:29]
@@ -262,18 +263,19 @@ addmargins(table(loafercreek$genhz, loafercreek$hzname))[, 14:29]
 
 Evaluation of GHL 1
 ========================================================
-```{r}
+```{r eval-ghl-1, fig.width=12, fig.height=5}
 n <- length(levels(loafercreek$genhz))
 cols <- brewer.pal(n, name="Paired")
 hz.names <- levels(loafercreek$genhz)
 loafercreek$genhz.col <- cols[match(loafercreek$genhz, hz.names)]
-plot(loafercreek[1:15], color='genhz.soil_color', label='pedon_id') # plot the first 15 profiles
+par(mar=c(0,0,0,0))
+plot(loafercreek[1:15], color='genhz.col', label='pedon_id', cex.names=0.8, axis.line.offset=-4) 
 ```
 
 
 Evaluation of GHL 2
 ========================================================
-```{r}
+```{r eval-ghl-2, fig.width=10, fig.height=6}
 h <- horizons(loafercreek)
 bwplot(mid~genhz, data=h, ylim=c(155, -5), ylab="Depths (cm)", xlab="Generalized horizons")
 ```
