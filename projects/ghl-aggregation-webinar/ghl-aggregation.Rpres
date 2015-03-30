@@ -44,8 +44,6 @@ What is R?
 
 What can R do?
 ========================================================
-class: small-code
-
 - Base R (*functionality is extended through packages*)
   - basic summaries of quantitative or qualitative data
   - data exploration via graphics
@@ -61,6 +59,17 @@ class: small-code
   - access to commonly used soil databases <span class="link-to-details">&#8594;&nbsp;[soilDB package](http://aqp.r-forge.r-project.org/soilDB-html-manual/index.html)</span>
   - misc. soil survey specific functions <span class="link-to-details">&#8594;&nbsp;[sharpshootR package](http://aqp.r-forge.r-project.org/shapshootR-html-manual/index.html)</span>
  
+
+What can R do?
+========================================================
+
+![alt text](static-figures/loafercreek-ml-hz.png)
+
+
+What can R do?
+========================================================
+
+![alt text](static-figures/loafercreek-ric.png)
 
 
 Setup your local machine
@@ -188,19 +197,22 @@ bwplot(mid ~ factor(hzname, levels=hz.designation.by.median.depths),
 
 Determination of a GHL Template and Rules
 ========================================================
-- pattern matching strategies
- - where micro-correlation decisions are trapped
-- special characters in REGEX rule strings
+- pattern matching via [regular expression](http://www.regexr.com/) (REGEX)
+ - this is where most micro-correlation decisions are stored
+- special characters in REGEX rules: 
+ - `|` = "or"
+ - `^` = anchor to left-side
+ - `$` = anchor to right-side
 
 ```{r, tidy=FALSE}
-# save our GHL
+# GHL template, from OSD or other sources
 n <- c('A',
        'Bt1',
        'Bt2',
        'Bt3',
        'Cr',
        'R')
-# REGEX rules
+# REGEX rules, one for each GHL
 p <- c('^A$|Ad|Ap',
        'Bt1$',
        '^Bt2$',
