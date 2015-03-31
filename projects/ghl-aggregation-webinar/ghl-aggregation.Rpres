@@ -9,6 +9,7 @@ https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/gen-hz-assignme
 ```{r setup, echo=FALSE, results='hide'}
 opts_chunk$set(message=FALSE, warning=FALSE, dpi=120, fig.align='center', dev='CairoPNG', dev.args=list(pointsize=10), tidy=FALSE, tidy.opts=list(width.cutoff=100), cache=TRUE)
 library(knitr)
+options(stringsAsFactors=FALSE)
 ```
 
 
@@ -78,8 +79,9 @@ What can R do?
 Setup your local machine
 ========================================================
 
-- Be sure to follow embedded links to full documentation.
-- Check out the [AQP project website](http://aqp.r-forge.r-project.org/).
+- Be sure to follow embedded links to full documentation
+- Check out the [AQP project website](http://aqp.r-forge.r-project.org/)
+- Browse some of the [various documentation](http://cran.r-project.org/manuals.html) on R
 
 - The first time you open RStudio, **install** required packages:
 ```{r install-packages, tidy=FALSE, eval=FALSE}
@@ -93,9 +95,7 @@ install.packages('soilDB', dep=TRUE)
 library(aqp)
 library(soilDB)
 library(latticeExtra)
-
-# misc. options used in this presentation
-options(width=100, stringsAsFactors=FALSE)
+# ... other libraries you might be using
 ```
 
 
@@ -110,8 +110,10 @@ Connect to NASIS via ODBC
 ```{r use-nasis-data, eval=FALSE}
 # get pedons from the selected set
 pedons <- fetchNASIS()
+
 # plot the first 15
 plot(pedons[1:15, ])
+
 # get component data from the selected set
 components <- get_component_data_from_NASIS_db()
 ```
@@ -189,8 +191,10 @@ A Sample Dataset
 ```{r load-data, fig.width=12, fig.height=5, echo=FALSE}
 # load sample data from the soilDB package
 data(loafercreek, package = 'soilDB')
+
 # keep only the first 15 pedons
 pedons <- loafercreek[1:15, ]
+
 # plot profile sketches
 par(mar=c(0,0,0,0))
 plot(pedons, name='hzname', print.id=FALSE, cex.names=0.8, axis.line.offset=-4)
