@@ -181,7 +181,12 @@ Assumptions
 A Sample Dataset
 =======================================================
 
-```{r load-data, fig.width=12, fig.height=5, htmlcap='15 pedons correlated to the Loafercreek soil series.', echo=TRUE}
+- 15 pedons correlated to the [Loafercreek](https://soilseries.sc.egov.usda.gov/OSD_Docs/L/LOAFERCREEK.html) soil series
+- Fine-loamy, mixed, superactive, thermic Ultic Haploxeralfs
+- Common soil formed on metavolcanic rocks of the Sierra Nevada Foothills, MLRA 18
+- Included in the `soilDB` package for testing purposes
+
+```{r load-data, fig.width=12, fig.height=5, echo=FALSE}
 # load sample data from the soilDB package
 data(loafercreek, package = 'soilDB')
 # keep only the first 15 pedons
@@ -191,15 +196,17 @@ par(mar=c(0,0,0,0))
 plot(pedons, name='hzname', print.id=FALSE, cex.names=0.8, axis.line.offset=-4)
 ```
 
-Horizonation: a first look.....
+Consult the OSD
 ========================================================
-- Look up the OSD RIC if one exist
+- Look up the series RIC if available
 
 ![alt text](static-figures/RIC.png)
 
+- Horizons from the OSD may be a good starting point for GHL template
 
 
-Horizonation: a first look.....
+
+Tabulate Horizon Designations
 ========================================================
 
 - sort by frequency
@@ -236,7 +243,7 @@ bwplot(mid ~ factor(hzname, levels=hz.designation.by.median.depths),
 ```
 
 
-Horizonation: a first look.....
+Summarize Available Soil Properties
 ========================================================
 
 
@@ -321,6 +328,7 @@ Evaluation of GHL
 
 - plot profiles with horizons colored according to GHL
 - does it make sense?
+- what about horizons in the `not-used` group?
 
 ```{r plot-ghl-1, echo=FALSE, fig.width=12, fig.height=5, htmlcap='Horizon colors are based on assigned GHL.'}
 # make a palette of colors, last color is for not-used class
