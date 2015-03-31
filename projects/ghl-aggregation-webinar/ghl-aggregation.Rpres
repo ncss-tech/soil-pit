@@ -268,14 +268,23 @@ Determination of a GHL Template and Rules
 ========================================================
 - pattern matching via [regular expression](http://www.regexr.com/) (REGEX)
  - this is where most micro-correlation decisions are defined
+
+- GHL and rules for our sample dataset:
+  - **A**: `^A$|Ad|Ap`
+  - **Bt1**: `Bt1$`
+  - **Bt2**: `^Bt2$`
+  - **Bt3**: `^Bt3|^Bt4|CBt$|BCt$|2Bt|2CB$|^C$`
+  - **Cr**: `Cr`
+  - **R**: `R`
+
 - special characters in REGEX rules: 
  - `|` = "or"
  - `^` = anchor to left-side
  - `$` = anchor to right-side
-
-```{r ghl-regex-rules, tidy=FALSE}
-# save our GHL
-n <- c('A',
+ 
+```{r ghl-regex-rules, echo=FALSE}
+# GHL
+n <- c('A', 
        'Bt1',
        'Bt2',
        'Bt3',
