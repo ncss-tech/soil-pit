@@ -1,10 +1,8 @@
 Pedon report
 ============
 
-``` {.r}
-# Set soil series
-series <- "Lecyr"
-```
+    # Set soil series
+    series <- "Lecyr"
 
     ## converting Munsell to RGB ...
     ## replacing missing lower horizon depths with top depth + 1cm ... [2 horizons]
@@ -13,20 +11,21 @@ series <- "Lecyr"
 Map of all pedons in selected set
 ---------------------------------
 
-Pedons that do not have their Std\_Latitude and Std\_Longitude columns populated in the NASIS Site table are currently not ploted on the map.
+Pedons that do not have their Std\_Latitude and Std\_Longitude columns
+populated in the NASIS Site table are currently not ploted on the map.
 
-![](lecyr_pedon_report_files/figure-markdown_github/Map%20of%20pedons%20and%20locations-1.png)
+![](lecyr_pedon_report_files/figure-markdown_strict/Map%20of%20pedons%20and%20locations-1.png)
 
 Soil profile plots (depth, color by genhz, horizonation, and user pedon id)
 ---------------------------------------------------------------------------
 
-![](lecyr_pedon_report_files/figure-markdown_github/Soil%20plots-1.png)
+![](lecyr_pedon_report_files/figure-markdown_strict/Soil%20plots-1.png)
 
 Summary of Sites
 ================
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 12:01:23 2015 -->
+<!-- Tue Mar 31 12:06:16 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> 
 pedon\_id
@@ -226,10 +225,11 @@ Emily Meirik, Stephen Roecker
 Range in characteristics of geographic setting
 ----------------------------------------------
 
-Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
+Five number summary (min, 25th, median, 75th, max)(percentiles) and
+(n)(total number of observations)
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 12:01:23 2015 -->
+<!-- Tue Mar 31 12:06:16 2015 -->
 <table border=1>
 <caption align="top"> 
 Elevation and slope gradient
@@ -252,7 +252,7 @@ slope\_field
 </td> </tr>
    </table>
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 12:01:23 2015 -->
+<!-- Tue Mar 31 12:06:16 2015 -->
 <table border=1>
 <caption align="top"> 
 Slope aspect
@@ -271,7 +271,7 @@ aspect\_field
 </td> </tr>
    </table>
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 12:01:23 2015 -->
+<!-- Tue Mar 31 12:06:16 2015 -->
 <table border=1>
 <caption align="top"> 
 Parent material vs landform
@@ -348,7 +348,7 @@ Sum
 </td> </tr>
    </table>
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 12:01:23 2015 -->
+<!-- Tue Mar 31 12:06:16 2015 -->
 <table border=1>
 <caption align="top"> 
 Down slope (y-axis) vs across slope (x-axis)
@@ -431,7 +431,7 @@ Sum
 </td> </tr>
    </table>
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 12:01:23 2015 -->
+<!-- Tue Mar 31 12:06:16 2015 -->
 <table border=1>
 <caption align="top"> 
 Drainage class vs hillslope position
@@ -627,10 +627,11 @@ Sum
 Range in characteristics of surface rock fragments
 --------------------------------------------------
 
-Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
+Five number summary (min, 25th, median, 75th, max)(percentiles) and
+(n)(total number of observations)
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 12:01:24 2015 -->
+<!-- Tue Mar 31 12:06:16 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> 
 value
@@ -678,9 +679,10 @@ surface\_flagstones
 Box plots of surface rock fragments
 -----------------------------------
 
-Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)
+Graphical five number summary plus outliers (outliers, 5th, 25th,
+median, 75th, 95th, outliers)
 
-![](lecyr_pedon_report_files/figure-markdown_github/bwplot%20for%20rf-1.png)
+![](lecyr_pedon_report_files/figure-markdown_strict/bwplot%20for%20rf-1.png)
 
 Summary of Pedons
 =================
@@ -691,7 +693,7 @@ Horizon designations by generic horizon
 Contingency table (counts)
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 12:01:24 2015 -->
+<!-- Tue Mar 31 12:06:17 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> 
 A
@@ -1073,10 +1075,11 @@ Sum
 Range in characteristics for generic horizons
 ---------------------------------------------
 
-Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
+Five number summary (min, 25th, median, 75th, max)(percentiles) and
+(n)(total number of observations)
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 12:01:24 2015 -->
+<!-- Tue Mar 31 12:06:17 2015 -->
 <table border=1>
 <tr> <th> 
 genhz
@@ -1199,7 +1202,7 @@ Bkq
 </td> </tr>
    </table>
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 12:01:24 2015 -->
+<!-- Tue Mar 31 12:06:17 2015 -->
 <table border=1>
 <tr> <th> 
 genhz
@@ -1298,9 +1301,10 @@ Bkq
 Box plots of numeric variables by generic horizon
 -------------------------------------------------
 
-Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)
+Graphical five number summary plus outliers (outliers, 5th, 25th,
+median, 75th, 95th, outliers)
 
-![](lecyr_pedon_report_files/figure-markdown_github/unnamed-chunk-5-1.png)
+![](lecyr_pedon_report_files/figure-markdown_strict/unnamed-chunk-5-1.png)
 
 Texture by generic horizon
 --------------------------
@@ -1308,7 +1312,7 @@ Texture by generic horizon
 Contigency table (counts)
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 12:01:24 2015 -->
+<!-- Tue Mar 31 12:06:17 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> 
 cb
@@ -1469,7 +1473,7 @@ Tex Mod & Class by generic horizon
 Contigency table (counts)
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 12:01:24 2015 -->
+<!-- Tue Mar 31 12:06:17 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> 
 CB
@@ -1838,7 +1842,7 @@ Dry hue by generic horizon
 Contingency table (counts)
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 12:01:25 2015 -->
+<!-- Tue Mar 31 12:06:17 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> 
 10YR
@@ -1919,7 +1923,7 @@ Moist hue by generic horizon
 Contingency table (counts)
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 12:01:25 2015 -->
+<!-- Tue Mar 31 12:06:17 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> 
 10YR
@@ -2016,7 +2020,7 @@ Effervescence by generic horizon
 Contingency table (counts)
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 12:01:25 2015 -->
+<!-- Tue Mar 31 12:06:17 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> 
 NA
@@ -2142,10 +2146,11 @@ Sum
 Depths and thickness of generic horizons
 ----------------------------------------
 
-Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
+Five number summary (min, 25th, median, 75th, max)(percentiles) and
+(n)(total number of observations)
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 12:01:25 2015 -->
+<!-- Tue Mar 31 12:06:18 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> 
 genhz
@@ -2228,17 +2233,19 @@ Bkq
 Boxplot of generic horizon thicknesses
 --------------------------------------
 
-Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles)
+Graphical five number summary plus outliers (outliers, 5th, 25th,
+median, 75th, 95th, outliers)(percentiles)
 
-![](lecyr_pedon_report_files/figure-markdown_github/unnamed-chunk-12-1.png)
+![](lecyr_pedon_report_files/figure-markdown_strict/unnamed-chunk-12-1.png)
 
 Depths and thickness of diagnostic horizons and features
 --------------------------------------------------------
 
-Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
+Five number summary (min, 25th, median, 75th, max)(percentiles) and
+(n)(total number of observations)
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 12:01:25 2015 -->
+<!-- Tue Mar 31 12:06:18 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> 
 diag\_kind
@@ -2310,6 +2317,7 @@ petrocalcic horizon
 Boxplot of diagnostic horizons and features depth
 -------------------------------------------------
 
-Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles)
+Graphical five number summary plus outliers (outliers, 5th, 25th,
+median, 75th, 95th, outliers)(percentiles)
 
-![](lecyr_pedon_report_files/figure-markdown_github/unnamed-chunk-14-1.png)
+![](lecyr_pedon_report_files/figure-markdown_strict/unnamed-chunk-14-1.png)
