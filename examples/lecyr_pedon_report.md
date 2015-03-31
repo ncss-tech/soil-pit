@@ -1,8 +1,10 @@
 Pedon report
 ============
 
-    # Set soil series
-    series <- "Genesee"
+``` {.r}
+# Set soil series
+series <- "Lecyr"
+```
 
     ## converting Munsell to RGB ...
     ## replacing missing lower horizon depths with top depth + 1cm ... [2 horizons]
@@ -11,21 +13,20 @@ Pedon report
 Map of all pedons in selected set
 ---------------------------------
 
-Pedons that do not have their Std\_Latitude and Std\_Longitude columns
-populated in the NASIS Site table are currently not ploted on the map.
+Pedons that do not have their Std\_Latitude and Std\_Longitude columns populated in the NASIS Site table are currently not ploted on the map.
 
-![](C:\Users\stephen.roecker\Documents\soil-pit\trunk\soilReports\lecyr_pedon_report_files/figure-markdown_strict/Map%20of%20pedons%20and%20locations-1.png)
+![](C:\Users\stephen.roecker\Documents\soil-pit\trunk\examples\lecyr_pedon_report_files/figure-markdown_github/Map%20of%20pedons%20and%20locations-1.png)
 
 Soil profile plots (depth, color by genhz, horizonation, and user pedon id)
 ---------------------------------------------------------------------------
 
-![](C:\Users\stephen.roecker\Documents\soil-pit\trunk\soilReports\lecyr_pedon_report_files/figure-markdown_strict/Soil%20plots-1.png)
+![](C:\Users\stephen.roecker\Documents\soil-pit\trunk\examples\lecyr_pedon_report_files/figure-markdown_github/Soil%20plots-1.png)
 
 Summary of Sites
 ================
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 10:41:25 2015 -->
+<!-- Tue Mar 31 11:36:50 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> 
 pedon\_id
@@ -225,11 +226,10 @@ Emily Meirik, Stephen Roecker
 Range in characteristics of geographic setting
 ----------------------------------------------
 
-Five number summary (min, 25th, median, 75th, max)(percentiles) and
-(n)(total number of observations)
+Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 10:41:25 2015 -->
+<!-- Tue Mar 31 11:36:50 2015 -->
 <table border=1>
 <caption align="top"> 
 Elevation and slope gradient
@@ -252,7 +252,7 @@ slope\_field
 </td> </tr>
    </table>
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 10:41:25 2015 -->
+<!-- Tue Mar 31 11:36:50 2015 -->
 <table border=1>
 <caption align="top"> 
 Slope aspect
@@ -271,7 +271,7 @@ aspect\_field
 </td> </tr>
    </table>
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 10:41:25 2015 -->
+<!-- Tue Mar 31 11:36:50 2015 -->
 <table border=1>
 <caption align="top"> 
 Parent material vs landform
@@ -348,7 +348,7 @@ Sum
 </td> </tr>
    </table>
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 10:41:25 2015 -->
+<!-- Tue Mar 31 11:36:50 2015 -->
 <table border=1>
 <caption align="top"> 
 Down slope (y-axis) vs across slope (x-axis)
@@ -431,7 +431,7 @@ Sum
 </td> </tr>
    </table>
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 10:41:25 2015 -->
+<!-- Tue Mar 31 11:36:50 2015 -->
 <table border=1>
 <caption align="top"> 
 Drainage class vs hillslope position
@@ -627,11 +627,10 @@ Sum
 Range in characteristics of surface rock fragments
 --------------------------------------------------
 
-Five number summary (min, 25th, median, 75th, max)(percentiles) and
-(n)(total number of observations)
+Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 10:41:25 2015 -->
+<!-- Tue Mar 31 11:36:50 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> 
 value
@@ -679,10 +678,9 @@ surface\_flagstones
 Box plots of surface rock fragments
 -----------------------------------
 
-Graphical five number summary plus outliers (outliers, 5th, 25th,
-median, 75th, 95th, outliers)
+Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)
 
-![](C:\Users\stephen.roecker\Documents\soil-pit\trunk\soilReports\lecyr_pedon_report_files/figure-markdown_strict/bwplot%20for%20rf-1.png)
+![](C:\Users\stephen.roecker\Documents\soil-pit\trunk\examples\lecyr_pedon_report_files/figure-markdown_github/bwplot%20for%20rf-1.png)
 
 Summary of Pedons
 =================
@@ -693,7 +691,7 @@ Horizon designations by generic horizon
 Contingency table (counts)
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 10:41:25 2015 -->
+<!-- Tue Mar 31 11:36:50 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> 
 A
@@ -741,7 +739,7 @@ C
 Sum
 </th>  </tr>
   <tr> <td align="right"> 
-Ap
+C
 </td> <td align="right"> 
 0
 </td> <td align="right"> 
@@ -783,9 +781,9 @@ Ap
 </td> <td align="right"> 
 0
 </td> <td align="right"> 
-0
+2
 </td> <td align="right"> 
-0
+2
 </td> </tr>
   <tr> <td align="right"> 
 A
@@ -835,7 +833,27 @@ A
 13
 </td> </tr>
   <tr> <td align="right"> 
-Bw
+BAk
+</td> <td align="right"> 
+0
+</td> <td align="right"> 
+0
+</td> <td align="right"> 
+0
+</td> <td align="right"> 
+0
+</td> <td align="right"> 
+0
+</td> <td align="right"> 
+0
+</td> <td align="right"> 
+1
+</td> <td align="right"> 
+8
+</td> <td align="right"> 
+1
+</td> <td align="right"> 
+3
 </td> <td align="right"> 
 0
 </td> <td align="right"> 
@@ -859,30 +877,10 @@ Bw
 </td> <td align="right"> 
 0
 </td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
+13
 </td> </tr>
   <tr> <td align="right"> 
-C
+Bk
 </td> <td align="right"> 
 0
 </td> <td align="right"> 
@@ -892,7 +890,9 @@ C
 </td> <td align="right"> 
 0
 </td> <td align="right"> 
-0
+1
+</td> <td align="right"> 
+1
 </td> <td align="right"> 
 0
 </td> <td align="right"> 
@@ -900,23 +900,15 @@ C
 </td> <td align="right"> 
 0
 </td> <td align="right"> 
-0
+1
 </td> <td align="right"> 
-0
+1
 </td> <td align="right"> 
-0
+1
 </td> <td align="right"> 
-0
+1
 </td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
+2
 </td> <td align="right"> 
 0
 </td> <td align="right"> 
@@ -926,10 +918,63 @@ C
 </td> <td align="right"> 
 2
 </td> <td align="right"> 
+1
+</td> <td align="right"> 
+1
+</td> <td align="right"> 
+0
+</td> <td align="right"> 
+12
+</td> </tr>
+  <tr> <td align="right"> 
+Bkkq
+</td> <td align="right"> 
+0
+</td> <td align="right"> 
+0
+</td> <td align="right"> 
+0
+</td> <td align="right"> 
+0
+</td> <td align="right"> 
+0
+</td> <td align="right"> 
+0
+</td> <td align="right"> 
+0
+</td> <td align="right"> 
+0
+</td> <td align="right"> 
+0
+</td> <td align="right"> 
+1
+</td> <td align="right"> 
+0
+</td> <td align="right"> 
+0
+</td> <td align="right"> 
 2
+</td> <td align="right"> 
+4
+</td> <td align="right"> 
+1
+</td> <td align="right"> 
+1
+</td> <td align="right"> 
+4
+</td> <td align="right"> 
+1
+</td> <td align="right"> 
+0
+</td> <td align="right"> 
+0
+</td> <td align="right"> 
+0
+</td> <td align="right"> 
+14
 </td> </tr>
   <tr> <td align="right"> 
-Cg
+Bkq
 </td> <td align="right"> 
 0
 </td> <td align="right"> 
@@ -957,79 +1002,7 @@ Cg
 </td> <td align="right"> 
 0
 </td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> </tr>
-  <tr> <td align="right"> 
-Ab
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> </tr>
-  <tr> <td align="right"> 
-2Bt
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
+1
 </td> <td align="right"> 
 0
 </td> <td align="right"> 
@@ -1045,76 +1018,7 @@ Ab
 </td> <td align="right"> 
 0
 </td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> </tr>
-  <tr> <td align="right"> 
-NA
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
-</td> <td align="right"> 
-0
+1
 </td> </tr>
   <tr> <td align="right"> 
 Sum
@@ -1127,41 +1031,41 @@ Sum
 </td> <td align="right"> 
 1
 </td> <td align="right"> 
-0
+1
 </td> <td align="right"> 
-0
+1
 </td> <td align="right"> 
-0
+1
 </td> <td align="right"> 
-0
+8
 </td> <td align="right"> 
-0
+1
 </td> <td align="right"> 
-0
+5
 </td> <td align="right"> 
-0
+1
 </td> <td align="right"> 
-0
+1
 </td> <td align="right"> 
-0
+3
 </td> <td align="right"> 
-0
+7
 </td> <td align="right"> 
-0
+1
 </td> <td align="right"> 
-0
+1
 </td> <td align="right"> 
-0
+4
 </td> <td align="right"> 
-0
+3
 </td> <td align="right"> 
-0
+1
 </td> <td align="right"> 
-0
+1
 </td> <td align="right"> 
 2
 </td> <td align="right"> 
-15
+55
 </td> </tr>
    </table>
 
@@ -1169,11 +1073,10 @@ Sum
 Range in characteristics for generic horizons
 ---------------------------------------------
 
-Five number summary (min, 25th, median, 75th, max)(percentiles) and
-(n)(total number of observations)
+Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 10:41:25 2015 -->
+<!-- Tue Mar 31 11:36:50 2015 -->
 <table border=1>
 <tr> <th> 
 genhz
@@ -1193,6 +1096,23 @@ stones
 fragvoltot
 </th>  </tr>
   <tr> <td align="center"> 
+C
+</td> <td align="center"> 
+(NA, NA, NA, NA, NA)(0)
+</td> <td align="center"> 
+(NA, NA, NA, NA, NA)(0)
+</td> <td align="center"> 
+(6, 7, 8, 9, 10)(2)
+</td> <td align="center"> 
+(24, 35, 46, 56, 67)(2)
+</td> <td align="center"> 
+(2, 4, 6, 8, 10)(2)
+</td> <td align="center"> 
+(0, 0, 0, 1, 1)(2)
+</td> <td align="center"> 
+(40, 50, 60, 70, 80)(2)
+</td> </tr>
+  <tr> <td align="center"> 
 A
 </td> <td align="center"> 
 (6, 8, 8, 10, 20)(13)
@@ -1210,40 +1130,76 @@ A
 (5, 27, 37, 46, 73)(13)
 </td> </tr>
   <tr> <td align="center"> 
-C
+BAk
 </td> <td align="center"> 
-(NA, NA, NA, NA, NA)(0)
+(8, 10, 10, 12, 24)(13)
 </td> <td align="center"> 
-(NA, NA, NA, NA, NA)(0)
+(40, 50, 55, 65, 76)(13)
 </td> <td align="center"> 
-(6, 7, 8, 9, 10)(2)
+(3, 8, 10, 10, 15)(13)
 </td> <td align="center"> 
-(24, 35, 46, 56, 67)(2)
+(2, 10, 15, 25, 50)(13)
 </td> <td align="center"> 
-(2, 4, 6, 8, 10)(2)
+(0, 2, 2, 5, 8)(13)
 </td> <td align="center"> 
-(0, 0, 0, 1, 1)(2)
+(0, 0, 0, 0, 5)(13)
 </td> <td align="center"> 
-(40, 50, 60, 70, 80)(2)
+(12, 21, 30, 52, 63)(13)
 </td> </tr>
-  <tr> <td align="center">  </td> <td align="center"> 
-(2, 6, 8, 10, 24)(37)
+  <tr> <td align="center"> 
+Bk
 </td> <td align="center"> 
-(40, 60, 70, 77, 93)(37)
+(2, 4, 6, 7, 10)(11)
 </td> <td align="center"> 
-(0, 8, 10, 10, 17)(40)
+(60, 68, 80, 82, 93)(11)
 </td> <td align="center"> 
-(0, 10, 20, 28, 60)(40)
+(6, 10, 11, 15, 17)(12)
 </td> <td align="center"> 
-(0, 1, 2, 5, 30)(40)
+(4, 18, 30, 51, 60)(12)
 </td> <td align="center"> 
-(0, 0, 0, 0, 5)(40)
+(1, 4, 8, 10, 30)(12)
 </td> <td align="center"> 
-(0, 22, 34, 53, 90)(40)
+(0, 0, 0, 0, 2)(12)
+</td> <td align="center"> 
+(11, 36, 51, 76, 90)(12)
+</td> </tr>
+  <tr> <td align="center"> 
+Bkkq
+</td> <td align="center"> 
+(3, 6, 7, 8, 10)(12)
+</td> <td align="center"> 
+(60, 68, 70, 76, 85)(12)
+</td> <td align="center"> 
+(0, 5, 10, 10, 14)(14)
+</td> <td align="center"> 
+(0, 14, 20, 20, 55)(14)
+</td> <td align="center"> 
+(0, 0, 2, 4, 10)(14)
+</td> <td align="center"> 
+(0, 0, 0, 0, 2)(14)
+</td> <td align="center"> 
+(0, 24, 31, 37, 63)(14)
+</td> </tr>
+  <tr> <td align="center"> 
+Bkq
+</td> <td align="center"> 
+(3, 3, 3, 3, 3)(1)
+</td> <td align="center"> 
+(77, 77, 77, 77, 77)(1)
+</td> <td align="center"> 
+(9, 9, 9, 9, 9)(1)
+</td> <td align="center"> 
+(3, 3, 3, 3, 3)(1)
+</td> <td align="center"> 
+(1, 1, 1, 1, 1)(1)
+</td> <td align="center"> 
+(0, 0, 0, 0, 0)(1)
+</td> <td align="center"> 
+(13, 13, 13, 13, 13)(1)
 </td> </tr>
    </table>
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 10:41:25 2015 -->
+<!-- Tue Mar 31 11:36:50 2015 -->
 <table border=1>
 <tr> <th> 
 genhz
@@ -1259,6 +1215,19 @@ m\_value
 m\_chroma
 </th>  </tr>
   <tr> <td align="center"> 
+C
+</td> <td align="center"> 
+(NA, NA, NA, NA, NA)(0)
+</td> <td align="center"> 
+(NA, NA, NA, NA, NA)(0)
+</td> <td align="center"> 
+(NA, NA, NA, NA, NA)(0)
+</td> <td align="center"> 
+(NA, NA, NA, NA, NA)(0)
+</td> <td align="center"> 
+(NA, NA, NA, NA, NA)(0)
+</td> </tr>
+  <tr> <td align="center"> 
 A
 </td> <td align="center"> 
 (7.6, 8, 8.1, 8.2, 8.4)(11)
@@ -1272,28 +1241,56 @@ A
 (3, 4, 4, 4, 4)(12)
 </td> </tr>
   <tr> <td align="center"> 
-C
+BAk
 </td> <td align="center"> 
-(NA, NA, NA, NA, NA)(0)
+(8, 8.2, 8.3, 8.3, 8.4)(10)
 </td> <td align="center"> 
-(NA, NA, NA, NA, NA)(0)
+(5, 5, 5, 5, 6)(12)
 </td> <td align="center"> 
-(NA, NA, NA, NA, NA)(0)
+(4, 4, 4, 4, 5)(12)
 </td> <td align="center"> 
-(NA, NA, NA, NA, NA)(0)
+(3, 4, 4, 4, 5)(12)
 </td> <td align="center"> 
-(NA, NA, NA, NA, NA)(0)
+(4, 4, 4, 4, 5)(12)
 </td> </tr>
-  <tr> <td align="center">  </td> <td align="center"> 
-(8, 8.2, 8.3, 8.4, 8.7)(27)
+  <tr> <td align="center"> 
+Bk
 </td> <td align="center"> 
-(5, 5, 7, 7, 8)(36)
+(8.2, 8.3, 8.3, 8.6, 8.7)(6)
 </td> <td align="center"> 
-(2, 3, 3, 4, 5)(36)
+(5, 7, 7, 7, 8)(9)
 </td> <td align="center"> 
-(3, 4, 6, 7, 8)(35)
+(2, 2, 3, 3, 4)(9)
 </td> <td align="center"> 
-(3, 4, 4, 4, 5)(35)
+(3, 5, 6, 7, 8)(9)
+</td> <td align="center"> 
+(3, 3, 4, 4, 5)(9)
+</td> </tr>
+  <tr> <td align="center"> 
+Bkkq
+</td> <td align="center"> 
+(8.2, 8.2, 8.2, 8.5, 8.7)(10)
+</td> <td align="center"> 
+(5, 7, 7, 8, 8)(14)
+</td> <td align="center"> 
+(2, 2, 3, 3, 4)(14)
+</td> <td align="center"> 
+(4, 6, 6, 7, 7)(13)
+</td> <td align="center"> 
+(3, 3, 4, 4, 5)(13)
+</td> </tr>
+  <tr> <td align="center"> 
+Bkq
+</td> <td align="center"> 
+(8.4, 8.4, 8.4, 8.4, 8.4)(1)
+</td> <td align="center"> 
+(8, 8, 8, 8, 8)(1)
+</td> <td align="center"> 
+(3, 3, 3, 3, 3)(1)
+</td> <td align="center"> 
+(7, 7, 7, 7, 7)(1)
+</td> <td align="center"> 
+(5, 5, 5, 5, 5)(1)
 </td> </tr>
    </table>
 
@@ -1301,10 +1298,9 @@ C
 Box plots of numeric variables by generic horizon
 -------------------------------------------------
 
-Graphical five number summary plus outliers (outliers, 5th, 25th,
-median, 75th, 95th, outliers)
+Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)
 
-![](C:\Users\stephen.roecker\Documents\soil-pit\trunk\soilReports\lecyr_pedon_report_files/figure-markdown_strict/unnamed-chunk-5-1.png)
+![](C:\Users\stephen.roecker\Documents\soil-pit\trunk\examples\lecyr_pedon_report_files/figure-markdown_github/unnamed-chunk-5-1.png)
 
 Texture by generic horizon
 --------------------------
@@ -1312,7 +1308,7 @@ Texture by generic horizon
 Contigency table (counts)
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 10:41:26 2015 -->
+<!-- Tue Mar 31 11:36:51 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> 
 cb
@@ -1332,7 +1328,11 @@ sl
 Sum
 </th>  </tr>
   <tr> <td align="center"> 
-Ap
+C
+</td> <td align="center"> 
+0
+</td> <td align="center"> 
+2
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
@@ -1344,11 +1344,7 @@ Ap
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
+2
 </td> </tr>
   <tr> <td align="center"> 
 A
@@ -1370,7 +1366,13 @@ A
 13
 </td> </tr>
   <tr> <td align="center"> 
-Bw
+BAk
+</td> <td align="center"> 
+0
+</td> <td align="center"> 
+0
+</td> <td align="center"> 
+3
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
@@ -1378,26 +1380,31 @@ Bw
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
-0
+10
 </td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
+13
 </td> </tr>
   <tr> <td align="center"> 
-C
+Bk
+</td> <td align="center"> 
+1
+</td> <td align="center"> 
+0
+</td> <td align="center"> 
+0
+</td> <td align="center"> 
+4
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
 2
 </td> <td align="center"> 
-0
+5
 </td> <td align="center"> 
-0
+12
+</td> </tr>
+  <tr> <td align="center"> 
+Bkkq
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
@@ -1406,9 +1413,17 @@ C
 0
 </td> <td align="center"> 
 2
+</td> <td align="center"> 
+2
+</td> <td align="center"> 
+0
+</td> <td align="center"> 
+10
+</td> <td align="center"> 
+14
 </td> </tr>
   <tr> <td align="center"> 
-Cg
+Bkq
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
@@ -1416,7 +1431,7 @@ Cg
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
-0
+1
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
@@ -1424,83 +1439,26 @@ Cg
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
-0
-</td> </tr>
-  <tr> <td align="center"> 
-Ab
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> </tr>
-  <tr> <td align="center"> 
-2Bt
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> </tr>
-  <tr> <td align="center"> 
-NA
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
+1
 </td> </tr>
   <tr> <td align="center"> 
 Sum
 </td> <td align="center"> 
-0
+1
 </td> <td align="center"> 
 2
 </td> <td align="center"> 
-1
+4
 </td> <td align="center"> 
-1
+8
 </td> <td align="center"> 
-0
+2
 </td> <td align="center"> 
-0
+2
 </td> <td align="center"> 
-11
+36
 </td> <td align="center"> 
-15
+55
 </td> </tr>
    </table>
 
@@ -1511,7 +1469,7 @@ Tex Mod & Class by generic horizon
 Contigency table (counts)
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 10:41:26 2015 -->
+<!-- Tue Mar 31 11:36:51 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> 
 CB
@@ -1557,7 +1515,21 @@ SL
 Sum
 </th>  </tr>
   <tr> <td align="center"> 
-Ap
+C
+</td> <td align="center"> 
+0
+</td> <td align="center"> 
+0
+</td> <td align="center"> 
+0
+</td> <td align="center"> 
+0
+</td> <td align="center"> 
+0
+</td> <td align="center"> 
+0
+</td> <td align="center"> 
+2
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
@@ -1585,21 +1557,7 @@ Ap
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
+2
 </td> </tr>
   <tr> <td align="center"> 
 A
@@ -1647,7 +1605,7 @@ A
 13
 </td> </tr>
   <tr> <td align="center"> 
-Bw
+BAk
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
@@ -1665,42 +1623,19 @@ Bw
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
+1
+</td> <td align="center"> 
 0
+</td> <td align="center"> 
+4
+</td> <td align="center"> 
+1
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> </tr>
-  <tr> <td align="center"> 
-C
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
+4
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
@@ -1708,7 +1643,16 @@ C
 </td> <td align="center"> 
 2
 </td> <td align="center"> 
+1
+</td> <td align="center"> 
 0
+</td> <td align="center"> 
+13
+</td> </tr>
+  <tr> <td align="center"> 
+Bk
+</td> <td align="center"> 
+1
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
@@ -1726,18 +1670,54 @@ C
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
-0
+1
 </td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
+1
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
 2
+</td> <td align="center"> 
+1
+</td> <td align="center"> 
+1
+</td> <td align="center"> 
+1
+</td> <td align="center"> 
+1
+</td> <td align="center"> 
+2
+</td> <td align="center"> 
+0
+</td> <td align="center"> 
+1
+</td> <td align="center"> 
+12
 </td> </tr>
   <tr> <td align="center"> 
-Cg
+Bkkq
+</td> <td align="center"> 
+0
+</td> <td align="center"> 
+2
+</td> <td align="center"> 
+1
+</td> <td align="center"> 
+2
+</td> <td align="center"> 
+0
+</td> <td align="center"> 
+1
+</td> <td align="center"> 
+0
+</td> <td align="center"> 
+1
+</td> <td align="center"> 
+0
+</td> <td align="center"> 
+0
+</td> <td align="center"> 
+3
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
@@ -1745,44 +1725,32 @@ Cg
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
-0
+3
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
-0
+1
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
+14
 </td> </tr>
   <tr> <td align="center"> 
-Ab
+Bkq
+</td> <td align="center"> 
+0
+</td> <td align="center"> 
+0
+</td> <td align="center"> 
+0
+</td> <td align="center"> 
+0
+</td> <td align="center"> 
+1
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
@@ -1814,152 +1782,52 @@ Ab
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> </tr>
-  <tr> <td align="center"> 
-2Bt
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> </tr>
-  <tr> <td align="center"> 
-NA
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
+1
 </td> </tr>
   <tr> <td align="center"> 
 Sum
 </td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
+1
 </td> <td align="center"> 
 2
 </td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
 1
-</td> <td align="center"> 
-1
-</td> <td align="center"> 
-1
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-7
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-1
-</td> <td align="center"> 
-0
 </td> <td align="center"> 
 2
+</td> <td align="center"> 
+1
+</td> <td align="center"> 
+1
+</td> <td align="center"> 
+2
+</td> <td align="center"> 
+1
+</td> <td align="center"> 
+1
+</td> <td align="center"> 
+2
+</td> <td align="center"> 
+9
+</td> <td align="center"> 
+2
+</td> <td align="center"> 
+2
+</td> <td align="center"> 
+1
 </td> <td align="center"> 
 15
+</td> <td align="center"> 
+1
+</td> <td align="center"> 
+1
+</td> <td align="center"> 
+6
+</td> <td align="center"> 
+1
+</td> <td align="center"> 
+3
+</td> <td align="center"> 
+55
 </td> </tr>
    </table>
 
@@ -1970,7 +1838,7 @@ Dry hue by generic horizon
 Contingency table (counts)
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 10:41:26 2015 -->
+<!-- Tue Mar 31 11:36:51 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> 
 10YR
@@ -1980,13 +1848,13 @@ NA
 Sum
 </th>  </tr>
   <tr> <td align="center"> 
-Ap
+C
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
-0
+2
 </td> <td align="center"> 
-0
+2
 </td> </tr>
   <tr> <td align="center"> 
 A
@@ -1998,67 +1866,49 @@ A
 13
 </td> </tr>
   <tr> <td align="center"> 
-Bw
+BAk
 </td> <td align="center"> 
-0
+12
 </td> <td align="center"> 
-0
+1
 </td> <td align="center"> 
-0
+13
 </td> </tr>
   <tr> <td align="center"> 
-C
+Bk
 </td> <td align="center"> 
-0
+9
 </td> <td align="center"> 
-2
+3
 </td> <td align="center"> 
-2
+12
 </td> </tr>
   <tr> <td align="center"> 
-Cg
+Bkkq
+</td> <td align="center"> 
+14
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
+14
 </td> </tr>
   <tr> <td align="center"> 
-Ab
+Bkq
+</td> <td align="center"> 
+1
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> </tr>
-  <tr> <td align="center"> 
-2Bt
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> </tr>
-  <tr> <td align="center"> 
-NA
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
+1
 </td> </tr>
   <tr> <td align="center"> 
 Sum
 </td> <td align="center"> 
-12
+48
 </td> <td align="center"> 
-3
+7
 </td> <td align="center"> 
-15
+55
 </td> </tr>
    </table>
 
@@ -2069,7 +1919,7 @@ Moist hue by generic horizon
 Contingency table (counts)
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 10:41:26 2015 -->
+<!-- Tue Mar 31 11:36:51 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> 
 10YR
@@ -2081,15 +1931,15 @@ NA
 Sum
 </th>  </tr>
   <tr> <td align="center"> 
-Ap
+C
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
-0
+2
 </td> <td align="center"> 
-0
+2
 </td> </tr>
   <tr> <td align="center"> 
 A
@@ -2103,81 +1953,59 @@ A
 13
 </td> </tr>
   <tr> <td align="center"> 
-Bw
+BAk
 </td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> </tr>
-  <tr> <td align="center"> 
-C
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
+10
 </td> <td align="center"> 
 2
 </td> <td align="center"> 
-2
+1
+</td> <td align="center"> 
+13
 </td> </tr>
   <tr> <td align="center"> 
-Cg
+Bk
+</td> <td align="center"> 
+9
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
-0
+3
 </td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
+12
 </td> </tr>
   <tr> <td align="center"> 
-Ab
+Bkkq
+</td> <td align="center"> 
+13
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
-0
+1
 </td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
+14
 </td> </tr>
   <tr> <td align="center"> 
-2Bt
+Bkq
+</td> <td align="center"> 
+1
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> </tr>
-  <tr> <td align="center"> 
-NA
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
+1
 </td> </tr>
   <tr> <td align="center"> 
 Sum
 </td> <td align="center"> 
-11
-</td> <td align="center"> 
-1
+44
 </td> <td align="center"> 
 3
 </td> <td align="center"> 
-15
+8
+</td> <td align="center"> 
+55
 </td> </tr>
    </table>
 
@@ -2188,7 +2016,7 @@ Effervescence by generic horizon
 Contingency table (counts)
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 10:41:26 2015 -->
+<!-- Tue Mar 31 11:36:51 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> 
 NA
@@ -2204,7 +2032,9 @@ violent
 Sum
 </th>  </tr>
   <tr> <td align="center"> 
-Ap
+C
+</td> <td align="center"> 
+2
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
@@ -2214,9 +2044,7 @@ Ap
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
+2
 </td> </tr>
   <tr> <td align="center"> 
 A
@@ -2234,26 +2062,24 @@ A
 13
 </td> </tr>
   <tr> <td align="center"> 
-Bw
+BAk
+</td> <td align="center"> 
+0
+</td> <td align="center"> 
+1
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
-0
+12
 </td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
+13
 </td> </tr>
   <tr> <td align="center"> 
-C
+Bk
 </td> <td align="center"> 
-2
-</td> <td align="center"> 
-0
+1
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
@@ -2261,25 +2087,27 @@ C
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
-2
+11
+</td> <td align="center"> 
+12
 </td> </tr>
   <tr> <td align="center"> 
-Cg
+Bkkq
+</td> <td align="center"> 
+1
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
-0
+1
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
-0
+12
 </td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
+14
 </td> </tr>
   <tr> <td align="center"> 
-Ab
+Bkq
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
@@ -2289,54 +2117,24 @@ Ab
 </td> <td align="center"> 
 0
 </td> <td align="center"> 
-0
+1
 </td> <td align="center"> 
-0
-</td> </tr>
-  <tr> <td align="center"> 
-2Bt
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> </tr>
-  <tr> <td align="center"> 
-NA
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
-</td> <td align="center"> 
-0
+1
 </td> </tr>
   <tr> <td align="center"> 
 Sum
-</td> <td align="center"> 
-2
-</td> <td align="center"> 
-0
 </td> <td align="center"> 
 4
 </td> <td align="center"> 
 1
 </td> <td align="center"> 
-8
+5
 </td> <td align="center"> 
-15
+1
+</td> <td align="center"> 
+44
+</td> <td align="center"> 
+55
 </td> </tr>
    </table>
 
@@ -2344,11 +2142,10 @@ Sum
 Depths and thickness of generic horizons
 ----------------------------------------
 
-Five number summary (min, 25th, median, 75th, max)(percentiles) and
-(n)(total number of observations)
+Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 10:41:26 2015 -->
+<!-- Tue Mar 31 11:36:51 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> 
 genhz
@@ -2362,17 +2159,6 @@ thickness
   <tr> <td align="center"> 
 1
 </td> <td align="center"> 
-A
-</td> <td align="center"> 
-(0, 0, 0, 0, 7)(13)
-</td> <td align="center"> 
-(3, 4, 6, 7, 22)(13)
-</td> <td align="center"> 
-(3, 4, 5, 7, 19)(13)
-</td> </tr>
-  <tr> <td align="center"> 
-2
-</td> <td align="center"> 
 C
 </td> <td align="center"> 
 (0, 0, 0, 0, 0)(2)
@@ -2382,13 +2168,59 @@ C
 (3, 4, 5, 6, 7)(2)
 </td> </tr>
   <tr> <td align="center"> 
+2
+</td> <td align="center"> 
+A
+</td> <td align="center"> 
+(0, 0, 0, 0, 7)(13)
+</td> <td align="center"> 
+(3, 4, 6, 7, 22)(13)
+</td> <td align="center"> 
+(3, 4, 5, 7, 19)(13)
+</td> </tr>
+  <tr> <td align="center"> 
 3
-</td> <td align="center">  </td> <td align="center"> 
-(3, 11, 28, 52, 91)(40)
 </td> <td align="center"> 
-(14, 30, 53, 77, 150)(40)
+BAk
 </td> <td align="center"> 
-(1, 14, 19, 26, 60)(40)
+(3, 5, 6, 9, 15)(13)
+</td> <td align="center"> 
+(14, 22, 26, 31, 52)(13)
+</td> <td align="center"> 
+(7, 16, 18, 19, 43)(13)
+</td> </tr>
+  <tr> <td align="center"> 
+4
+</td> <td align="center"> 
+Bk
+</td> <td align="center"> 
+(21, 34, 50, 76, 90)(12)
+</td> <td align="center"> 
+(45, 55, 76, 82, 150)(12)
+</td> <td align="center"> 
+(1, 19, 23, 28, 60)(12)
+</td> </tr>
+  <tr> <td align="center"> 
+5
+</td> <td align="center"> 
+Bkkq
+</td> <td align="center"> 
+(23, 28, 34, 54, 77)(14)
+</td> <td align="center"> 
+(27, 51, 66, 76, 91)(14)
+</td> <td align="center"> 
+(1, 8, 18, 29, 49)(14)
+</td> </tr>
+  <tr> <td align="center"> 
+6
+</td> <td align="center"> 
+Bkq
+</td> <td align="center"> 
+(91, 91, 91, 91, 91)(1)
+</td> <td align="center"> 
+(105, 105, 105, 105, 105)(1)
+</td> <td align="center"> 
+(14, 14, 14, 14, 14)(1)
 </td> </tr>
    </table>
 
@@ -2396,19 +2228,17 @@ C
 Boxplot of generic horizon thicknesses
 --------------------------------------
 
-Graphical five number summary plus outliers (outliers, 5th, 25th,
-median, 75th, 95th, outliers)(percentiles)
+Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles)
 
-![](C:\Users\stephen.roecker\Documents\soil-pit\trunk\soilReports\lecyr_pedon_report_files/figure-markdown_strict/unnamed-chunk-12-1.png)
+![](C:\Users\stephen.roecker\Documents\soil-pit\trunk\examples\lecyr_pedon_report_files/figure-markdown_github/unnamed-chunk-12-1.png)
 
 Depths and thickness of diagnostic horizons and features
 --------------------------------------------------------
 
-Five number summary (min, 25th, median, 75th, max)(percentiles) and
-(n)(total number of observations)
+Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Tue Mar 31 10:41:26 2015 -->
+<!-- Tue Mar 31 11:36:52 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> 
 diag\_kind
@@ -2480,7 +2310,6 @@ petrocalcic horizon
 Boxplot of diagnostic horizons and features depth
 -------------------------------------------------
 
-Graphical five number summary plus outliers (outliers, 5th, 25th,
-median, 75th, 95th, outliers)(percentiles)
+Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles)
 
-![](C:\Users\stephen.roecker\Documents\soil-pit\trunk\soilReports\lecyr_pedon_report_files/figure-markdown_strict/unnamed-chunk-14-1.png)
+![](C:\Users\stephen.roecker\Documents\soil-pit\trunk\examples\lecyr_pedon_report_files/figure-markdown_github/unnamed-chunk-14-1.png)
