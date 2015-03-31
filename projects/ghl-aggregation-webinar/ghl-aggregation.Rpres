@@ -350,9 +350,9 @@ Evaluation of GHL
 
 ```{r evaluate-genhz-assignment, echo=FALSE}
 # store the column names of our variables of interest
-vars <- c('clay', 'mid', 'total_frags_pct')
+vars <- c('clay', 'phfield', 'd_r', 'total_frags_pct')
 # result is a list of several items
-hz.eval <- evalGenHZ(pedons, 'genhz', vars)
+hz.eval <- evalGenHZ(pedons, 'genhz', vars, metric="gower")
 # extract MDS coords
 pedons$mds.1 <- hz.eval$horizons$mds.1
 pedons$mds.2 <- hz.eval$horizons$mds.2
