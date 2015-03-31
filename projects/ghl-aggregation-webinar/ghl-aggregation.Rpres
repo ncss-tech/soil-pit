@@ -179,12 +179,87 @@ Assumptions
 
 
 
+
+Summarizing Data with Quantiles (Percentiles)
+========================================================
+
+- suggested basis for RIC: 
+  - 5th, 50th, and 95th percentiles are low-rv-high values
+  - no assumptions of distribution, simple interpretation
+
+```{r quantiles-normal-dist, fig.width=11, fig.height=6, echo=FALSE}
+# simulate 500 values from the normal distribution: with mean = 10, sd= 2
+set.seed(1010101)
+x <- rnorm(n=500, mean = 10, sd=2)
+
+# compute the 5th, 25th, 50th, 75th, and 95th percentiles of x
+q <- c(quantile(x, probs=c(0.05, 0.25, 0.5, 0.75, 0.95)))
+
+# plot a smoothed frequency distribution
+plot(density(x), main=list('Normal Distibution', cex=2), ylim=c(0, 0.8), ylab='', xlab='', axes=FALSE)
+
+# mark quantiles we computed above
+abline(v=q, lty=3, col='red')
+text(x=q, y=0.1, labels=c('5th', '25th', '50th', '75th', '95th'), cex=1.5)
+
+# overlay a box-whisker plot
+boxplot(x, at=0.35, add=TRUE, horizontal=TRUE, boxwex=0.1, border='DarkBlue', axes=FALSE)
+
+# overlay lines at the original values
+rug(x, side=3, col='DarkBlue')
+
+# overlay mean +/- 2SD
+points(mean(x), y=0.45, pch=0, col='darkgreen', cex=2, lwd=2)
+points(mean(x) + c(2*sd(x), -2*sd(x)), y=c(0.45, 0.45), pch=0, col='darkgreen', cex=2, lwd=2)
+
+# add x-axis
+axis(side=1, at=pretty(x), cex.axis=1.5)
+```
+
+
+Summarizing Data with Quantiles (Percentiles)
+========================================================
+
+- suggested basis for RIC: 
+  - 5th, 50th, and 95th percentiles are low-rv-high values
+  - no assumptions of distribution, simple interpretation
+
+```{r quantiles-exp-dist, fig.width=11, fig.height=6, echo=FALSE}
+# simulate 500 values from the exponential distribution
+set.seed(1010101)
+x <- rexp(n=500)
+
+# compute the 5th, 25th, 50th, 75th, and 95th percentiles of x
+q <- c(quantile(x, probs=c(0.05, 0.25, 0.5, 0.75, 0.95)))
+
+# plot a smoothed frequency distribution
+plot(density(x), main=list('Long-Tailed Distibution', cex=2), xlim=c(-1, 8), ylim=c(0, 0.8), ylab='', xlab='', axes=FALSE)
+
+# mark quantiles we computed above
+abline(v=q, lty=3, col='red')
+text(x=q, y=c(0.1, 0.15, 0.1, 0.15, 0.1), labels=c('5th', '25th', '50th', '75th', '95th'), cex=1.5)
+
+# overlay a box-whisker plot
+boxplot(x, at=0.35, add=TRUE, horizontal=TRUE, boxwex=0.1, border='DarkBlue', axes=FALSE)
+
+# overlay lines at the original values
+rug(x, side=3, col='DarkBlue')
+
+# overlay mean +/- 2SD
+points(mean(x), y=0.45, pch=0, col='darkgreen', cex=2, lwd=2)
+points(mean(x) + c(2*sd(x), -2*sd(x)), y=c(0.45, 0.45), pch=0, col='darkgreen', cex=2, lwd=2)
+
+# add x-axis
+axis(side=1, at=pretty(x), cex.axis=1.5)
+```
+
+
 A Sample Dataset
 =======================================================
 
 - 15 pedons correlated to the [Loafercreek](https://soilseries.sc.egov.usda.gov/OSD_Docs/L/LOAFERCREEK.html) soil series
 - Fine-loamy, mixed, superactive, thermic Ultic Haploxeralfs
-- Common soil formed on metavolcanic rocks of the Sierra Nevada Foothills, MLRA 18
+- Common soil formed on meta-volcanic rocks of the Sierra Nevada Foothills, MLRA 18
 - Included in the `soilDB` package for testing purposes
 
 ```{r load-data, fig.width=12, fig.height=5, echo=FALSE}
@@ -199,7 +274,7 @@ par(mar=c(0,0,0,0))
 plot(pedons, name='hzname', print.id=FALSE, cex.names=0.8, axis.line.offset=-4)
 ```
 
-Consult the OSD
+Consult the OSD for Ideas
 ========================================================
 - Look up the series RIC if available
 
@@ -418,83 +493,10 @@ Importing GHL to NASIS
 [&#8594;&nbsp;full instructions here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/gen-hz-assignment.html?root=aqp)
 
 
+
+
 Demonstration of Two Report Styles
 ========================================================
-
-
-
-Summarizing Data with Quantiles (Percentiles)
-========================================================
-
-- suggested basis for RIC: 
-  - 5th, 50th, and 95th percentiles are low-rv-high values
-  - no assumptions of distribution, simple interpretation
-
-```{r quantiles-normal-dist, fig.width=11, fig.height=6, echo=FALSE}
-# simulate 500 values from the normal distribution: with mean = 10, sd= 2
-set.seed(1010101)
-x <- rnorm(n=500, mean = 10, sd=2)
-
-# compute the 5th, 25th, 50th, 75th, and 95th percentiles of x
-q <- c(quantile(x, probs=c(0.05, 0.25, 0.5, 0.75, 0.95)))
-
-# plot a smoothed frequency distribution
-plot(density(x), main=list('Normal Distibution', cex=2), ylim=c(0, 0.8), ylab='', xlab='', axes=FALSE)
-
-# mark quantiles we computed above
-abline(v=q, lty=3, col='red')
-text(x=q, y=0.1, labels=c('5th', '25th', '50th', '75th', '95th'), cex=1.5)
-
-# overlay a box-whisker plot
-boxplot(x, at=0.35, add=TRUE, horizontal=TRUE, boxwex=0.1, border='DarkBlue', axes=FALSE)
-
-# overlay lines at the original values
-rug(x, side=3, col='DarkBlue')
-
-# overlay mean +/- 2SD
-points(mean(x), y=0.45, pch=0, col='darkgreen', cex=2, lwd=2)
-points(mean(x) + c(2*sd(x), -2*sd(x)), y=c(0.45, 0.45), pch=0, col='darkgreen', cex=2, lwd=2)
-
-# add x-axis
-axis(side=1, at=pretty(x), cex.axis=1.5)
-```
-
-
-Summarizing Data with Quantiles (Percentiles)
-========================================================
-
-- suggested basis for RIC: 
-  - 5th, 50th, and 95th percentiles are low-rv-high values
-  - no assumptions of distribution, simple interpretation
-
-```{r quantiles-exp-dist, fig.width=11, fig.height=6, echo=FALSE}
-# simulate 500 values from the exponential distribution
-set.seed(1010101)
-x <- rexp(n=500)
-
-# compute the 5th, 25th, 50th, 75th, and 95th percentiles of x
-q <- c(quantile(x, probs=c(0.05, 0.25, 0.5, 0.75, 0.95)))
-
-# plot a smoothed frequency distribution
-plot(density(x), main=list('Long-Tailed Distibution', cex=2), ylim=c(0, 0.8), ylab='', xlab='', axes=FALSE)
-
-# mark quantiles we computed above
-abline(v=q, lty=3, col='red')
-text(x=q, y=c(0.1, 0.15, 0.1, 0.15, 0.1), labels=c('5th', '25th', '50th', '75th', '95th'), cex=1.5)
-
-# overlay a box-whisker plot
-boxplot(x, at=0.35, add=TRUE, horizontal=TRUE, boxwex=0.1, border='DarkBlue', axes=FALSE)
-
-# overlay lines at the original values
-rug(x, side=3, col='DarkBlue')
-
-# overlay mean +/- 2SD
-points(mean(x), y=0.45, pch=0, col='darkgreen', cex=2, lwd=2)
-points(mean(x) + c(2*sd(x), -2*sd(x)), y=c(0.45, 0.45), pch=0, col='darkgreen', cex=2, lwd=2)
-
-# add x-axis
-axis(side=1, at=pretty(x), cex.axis=1.5)
-```
 
 
 
