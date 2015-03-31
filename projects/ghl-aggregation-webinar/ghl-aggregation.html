@@ -1271,8 +1271,9 @@ hljs.initHighlightingOnLoad();
 <h3>Setup your local machine</h3>
 <div class="slideContent" >
 <ul>
-<li>Be sure to follow embedded links to full documentation.</li>
-<li><p>Check out the <a href="http://aqp.r-forge.r-project.org/">AQP project website</a>.</p></li>
+<li>Be sure to follow embedded links to full documentation</li>
+<li>Check out the <a href="http://aqp.r-forge.r-project.org/">AQP project website</a></li>
+<li><p>Browse some of the <a href="http://cran.r-project.org/manuals.html">various documentation</a> on R</p></li>
 <li><p>The first time you open RStudio, <strong>install</strong> required packages:</p></li>
 </ul>
 
@@ -1288,9 +1289,7 @@ install.packages(&#39;soilDB&#39;, dep=TRUE)
 <pre><code class="r">library(aqp)
 library(soilDB)
 library(latticeExtra)
-
-# misc. options used in this presentation
-options(width=100, stringsAsFactors=FALSE)
+# ... other libraries you might be using
 </code></pre>
 
 </div>
@@ -1308,8 +1307,10 @@ options(width=100, stringsAsFactors=FALSE)
 
 <pre><code class="r"># get pedons from the selected set
 pedons &lt;- fetchNASIS()
+
 # plot the first 15
 plot(pedons[1:15, ])
+
 # get component data from the selected set
 components &lt;- get_component_data_from_NASIS_db()
 </code></pre>
@@ -1331,8 +1332,7 @@ components &lt;- get_component_data_from_NASIS_db()
 
 <ul>
 <li>the age-old splitters vs. lumpers</li>
-<li>use of transitional horizons</li>
-<li>I say tomato, you say tomato!<br/></li>
+<li>use of transitional horizons - I say tomato, you say tomato!</li>
 </ul></li>
 <li><p>legacy horizon nomenclature</p>
 
@@ -1396,7 +1396,7 @@ components &lt;- get_component_data_from_NASIS_db()
 <li>5th-50th-95th percentile is one option</li>
 </ul></li>
 <li><p>linked pedons represent examples of the aggregate data, but aggregate data should not be limited to a very small set of linked pedons</p></li>
-<li><p><strong>IMPORTANT POINT:</strong> these reports and data summaries are a useful starting point for the aggregation process</p></li>
+<li><p><strong>IMPORTANT</strong> these reports and data summaries are a useful <em>starting point</em> for the aggregation process</p></li>
 </ul>
 
 </div>
@@ -1843,7 +1843,7 @@ components &lt;- get_component_data_from_NASIS_db()
 
 <ul>
 <li>&#39;Update horizon group aggregations using a text file&#39;</li>
-<li>Calculation will look for the horizon_agg.txt file in: C:/data/horizon_agg.txt</li>
+<li>Calculation will look for the <code>horizon_agg.txt file</code> in: <code>C:/data/horizon_agg.txt</code></li>
 <li>Calculation will load the file and update the comp layer id field</li>
 </ul></li>
 <li>manual adjustments in NASIS: outliers, special cases, etc.</li>

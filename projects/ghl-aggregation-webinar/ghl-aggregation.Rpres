@@ -126,8 +126,7 @@ Aggregation of Pedon Data: Common Problems
 
 - description styles
  - the age-old splitters vs. lumpers
- - use of transitional horizons
-  - I say tomato, you say tomato!  
+ - use of transitional horizons - I say tomato, you say tomato!
   
 - legacy horizon nomenclature
  - old school meets new school and they ain't speakin' the same language.....
@@ -412,7 +411,7 @@ Importing GHL to NASIS
 - run the NASIS calculation to update the comp layer id field with the GHL for each pedon horizon
 - Calculations/Validations --> Pedon Horizon 
   - 'Update horizon group aggregations using a text file'
-  - Calculation will look for the horizon_agg.txt file in: C:/data/horizon_agg.txt
+  - Calculation will look for the `horizon_agg.txt file` in: `C:/data/horizon_agg.txt`
   - Calculation will load the file and update the comp layer id field
 - manual adjustments in NASIS: outliers, special cases, etc.
 
