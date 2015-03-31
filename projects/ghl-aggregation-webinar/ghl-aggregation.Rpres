@@ -281,7 +281,10 @@ Determination of a GHL Template and Rules
  - `|` = "or"
  - `^` = anchor to left-side
  - `$` = anchor to right-side
- 
+
+
+
+
 ```{r ghl-regex-rules, echo=FALSE}
 # GHL
 n <- c('A', 
