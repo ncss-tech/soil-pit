@@ -4,9 +4,9 @@
 This report summarizes the geographic setting of a list of MUKEY within a file geodatabase. It is intented to be used to compare and contrast map units, and suggest possible Low, RV, and High values for components. 
 
 ```{r load-data, echo=FALSE, results='hide', message=FALSE}
-project <- c('SDJR - MLRA 114A - Cincinnati silt loam, 6 to 12 percent slopes, eroded') # List of project
+project <- c('SDJR - MLRA 111A - Genesee silt loam, till substratum, 0 to 2 percent slopes, rarely flooded') # List of project
 dir <- "M:/geodata/project_data/"
-geodatabase <- "RTSD_Region_11_IND_FY15.gdb"
+geodatabase <- "RTSD_Region_11_IND_FY15_copy.gdb"
 office <- "11IND"
 
 # Defaults
@@ -16,7 +16,7 @@ p <- c(0,0.25,0.5,0.75,1)
 
 pd <- paste0(dir, office, "/")
 rd <- paste0(dir, "11REGION/")
-shp <- paste0(project)
+shp <- paste0(abbreviate(project, 30))
 cache <- paste0(pd, "cache/", shp, ".shp")
 ```
 
@@ -198,6 +198,7 @@ print(xtable(pol.5n, digits=0, , align=rep("c", 1+ncol(pol.5n)), caption="Summar
 ## Polygon Boxplots
 Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles). 
 Circularity is an estimate of shape complexity (Hole and Campbell, 1975), computed as a ratio of mupolygon length / mupolygon circumference. The shape complexity of a perfect circle would equal 1.
+
 ```{r bwplot of polygon metrics, echo=FALSE}
 bwplot(SSA_MUSYM ~ value|variable, data=pol.lo1, scales=list(x="free"))
 ```
