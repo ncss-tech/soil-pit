@@ -19,8 +19,8 @@ css: custom.css
 <br><br><br><br><br><br><br><br><br>
 <span style="color: white; font-size:75%;">This document is based on:</span>
 <ul style="color: white; font-size:75%;">
-<li>`aqp` version 1.8-3</li>
-<li>`soilDB` version 1.5-3</li>
+<li>`aqp` version 1.8</li>
+<li>`soilDB` version 1.5-2</li>
 <li>`sharpshootR` version 0.7-2</li>
 </ul>
 
@@ -178,38 +178,17 @@ Assumptions
 
 
 
-
-Summarizing Data with Quantiles (Percentiles)
-========================================================
-
-- suggested basis for RIC: 
-  - 5th, 50th, and 95th percentiles are low-rv-high values
-  - no assumptions of distribution, simple interpretation
-
-<img src="ghl-aggregation-figure/quantiles-normal-dist-1.png" title="plot of chunk quantiles-normal-dist" alt="plot of chunk quantiles-normal-dist" style="display: block; margin: auto;" />
-
-
-Summarizing Data with Quantiles (Percentiles)
-========================================================
-
-- suggested basis for RIC: 
-  - 5th, 50th, and 95th percentiles are low-rv-high values
-  - no assumptions of distribution, simple interpretation
-
-<img src="ghl-aggregation-figure/quantiles-exp-dist-1.png" title="plot of chunk quantiles-exp-dist" alt="plot of chunk quantiles-exp-dist" style="display: block; margin: auto;" />
-
-
 A Sample Dataset
 =======================================================
 
 - 15 pedons correlated to the [Loafercreek](https://soilseries.sc.egov.usda.gov/OSD_Docs/L/LOAFERCREEK.html) soil series
 - Fine-loamy, mixed, superactive, thermic Ultic Haploxeralfs
-- Common soil formed on meta-volcanic rocks of the Sierra Nevada Foothills, MLRA 18
+- Common soil formed on metavolcanic rocks of the Sierra Nevada Foothills, MLRA 18
 - Included in the `soilDB` package for testing purposes
 
 <img src="ghl-aggregation-figure/load-data-1.png" title="plot of chunk load-data" alt="plot of chunk load-data" style="display: block; margin: auto;" />
 
-Consult the OSD for Ideas
+Consult the OSD
 ========================================================
 - Look up the series RIC if available
 
@@ -329,20 +308,31 @@ Importing GHL to NASIS
 [&#8594;&nbsp;full instructions here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/gen-hz-assignment.html?root=aqp)
 
 
-
-
-Demonstration of Several Report Styles
+Demonstration of Two Report Styles
 ========================================================
 
-- Stephen's Examples: 
-  - [Lecyr Pedon Report](https://github.com/sroecker01/soil-pit/blob/master/examples/lecyr_pedon_report.md)
-  - [Genesee Lab Data Report](https://github.com/sroecker01/soil-pit/blob/master/examples/genesee_lab_report.md)
-  - [Cincinanti Map Unit Report](https://github.com/sroecker01/soil-pit/blob/master/examples/cincinnati_mapunit_report.md)
 
-- Dylan's Examples:
-  - [Loafercreek Pedon Report](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/example-reports/loafercreek.html?root=aqp)
-  - [Dunstone Pedon Report](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/example-reports/dunstone.html?root=aqp)
-  - [Amador Pedon Report](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/example-reports/amador.html?root=aqp)
+
+Summarizing Data with Quantiles (Percentiles)
+========================================================
+
+- suggested basis for RIC: 
+  - 5th, 50th, and 95th percentiles are low-rv-high values
+  - no assumptions of distribution, simple interpretation
+
+<img src="ghl-aggregation-figure/quantiles-normal-dist-1.png" title="plot of chunk quantiles-normal-dist" alt="plot of chunk quantiles-normal-dist" style="display: block; margin: auto;" />
+
+
+Summarizing Data with Quantiles (Percentiles)
+========================================================
+
+- suggested basis for RIC: 
+  - 5th, 50th, and 95th percentiles are low-rv-high values
+  - no assumptions of distribution, simple interpretation
+
+<img src="ghl-aggregation-figure/quantiles-exp-dist-1.png" title="plot of chunk quantiles-exp-dist" alt="plot of chunk quantiles-exp-dist" style="display: block; margin: auto;" />
+
+
 
 
 Thank You
