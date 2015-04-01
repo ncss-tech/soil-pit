@@ -495,10 +495,18 @@ Importing GHL to NASIS
 
 
 
-Demonstration of Two Report Styles
+Demonstration of Several Report Styles
 ========================================================
 
+- Stephen's Examples: 
+  - [Lecyr Pedon Report](https://github.com/sroecker01/soil-pit/blob/master/examples/lecyr_pedon_report.md)
+  - [Genesee Lab Data Report](https://github.com/sroecker01/soil-pit/blob/master/examples/genesee_lab_report.md)
+  - [Cincinanti Map Unit Report](https://github.com/sroecker01/soil-pit/blob/master/examples/cincinnati_mapunit_report.md)
 
+- Dylan's Examples:
+  - [Loafercreek Pedon Report](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/example-reports/loafercreek.html?root=aqp)
+  - [Dunstone Pedon Report](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/example-reports/dunstone.html?root=aqp)
+  - [Amador Pedon Report](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/example-reports/amador.html?root=aqp)
 
 
 Thank You
