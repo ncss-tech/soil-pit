@@ -35,7 +35,7 @@ What is R?
 ==========
 
 -   an integrator: analysis + GIS + database connectivity
--   ODBC and GDAL link R to nearly all possible formats/interfaces ![alt text](/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/static-figures/triangle.png)
+-   ODBC and GDAL link R to nearly all possible formats/interfaces ![alt text](static-figures/triangle.png)
 
 What can R do?
 ==============
@@ -58,7 +58,7 @@ What can R do?
 What can R do?
 ==============
 
-<br><br> ![alt text](/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/static-figures/loafercreek-ml-hz.png) <br><br>
+<br><br> ![alt text](static-figures/loafercreek-ml-hz.png) <br><br>
 <center>
 **estimate a most-likely horizonation, details to follow**
 </center>
@@ -66,7 +66,7 @@ What can R do?
 What can R do?
 ==============
 
-<br><br> ![alt text](/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/static-figures/loafercreek-ric.png) <br><br>
+<br><br> ![alt text](static-figures/loafercreek-ric.png) <br><br>
 <center>
 **estimate reasonable RIC, details to follow**
 </center>
@@ -120,7 +120,7 @@ components <- get_component_data_from_NASIS_db()
 Aggregation of Pedon Data: Common Problems
 ==========================================
 
-![alt text](/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/static-figures/genhz-sketch.png)
+![alt text](static-figures/genhz-sketch.png)
 
 -   description styles
 -   the age-old splitters vs. lumpers
@@ -134,7 +134,7 @@ Aggregation of Pedon Data: Common Problems
 Generalized Horizon Labels: Micro-correlation
 =============================================
 
-![alt text](/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/static-figures/genhz-sketch.png)
+![alt text](static-figures/genhz-sketch.png)
 
 -   generalized horizon labels = GHL
 -   determine the core concept
@@ -182,7 +182,7 @@ Summarizing Data with Quantiles (Percentiles)
 -   5th, 50th, and 95th percentiles are low-rv-high values
 -   no assumptions of distribution, simple interpretation
 
-<img src="/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/ghl-aggregation-figure/quantiles-normal-dist-1.png" title="plot of chunk quantiles-normal-dist" alt="plot of chunk quantiles-normal-dist" style="display: block; margin: auto;" />
+<img src="ghl-aggregation-figure/quantiles-normal-dist-1.png" title="plot of chunk quantiles-normal-dist" alt="plot of chunk quantiles-normal-dist" style="display: block; margin: auto;" />
 
 Summarizing Data with Quantiles (Percentiles)
 =============================================
@@ -191,7 +191,7 @@ Summarizing Data with Quantiles (Percentiles)
 -   5th, 50th, and 95th percentiles are low-rv-high values
 -   no assumptions of distribution, simple interpretation
 
-<img src="/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/ghl-aggregation-figure/quantiles-exp-dist-1.png" title="plot of chunk quantiles-exp-dist" alt="plot of chunk quantiles-exp-dist" style="display: block; margin: auto;" />
+<img src="ghl-aggregation-figure/quantiles-exp-dist-1.png" title="plot of chunk quantiles-exp-dist" alt="plot of chunk quantiles-exp-dist" style="display: block; margin: auto;" />
 
 A Sample Dataset
 ================
@@ -201,14 +201,14 @@ A Sample Dataset
 -   Common soil formed on meta-volcanic rocks of the Sierra Nevada Foothills, MLRA 18
 -   Included in the `soilDB` package for testing purposes
 
-<img src="/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/ghl-aggregation-figure/load-data-1.png" title="plot of chunk load-data" alt="plot of chunk load-data" style="display: block; margin: auto;" />
+<img src="ghl-aggregation-figure/load-data-1.png" title="plot of chunk load-data" alt="plot of chunk load-data" style="display: block; margin: auto;" />
 
 Consult the OSD for Ideas
 =========================
 
 -   Look up the series RIC if available
 
-![alt text](/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/static-figures/RIC.png)
+![alt text](static-figures/RIC.png)
 
 -   Horizons from the OSD may be a good starting point for GHL template
 
@@ -227,14 +227,14 @@ Tabulate Horizon Designations
 |---:|---:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|
 |1|1|1|1|1|15|3|3|15|15|10|2|2|2|8|5|9|9|
 
--   plot ranges in horizon depths <img src="/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/ghl-aggregation-figure/horizonation-mid-point-1.png" title="plot of chunk horizonation-mid-point" alt="plot of chunk horizonation-mid-point" style="display: block; margin: auto;" />
+-   plot ranges in horizon depths <img src="ghl-aggregation-figure/horizonation-mid-point-1.png" title="plot of chunk horizonation-mid-point" alt="plot of chunk horizonation-mid-point" style="display: block; margin: auto;" />
 
 Summarize Available Soil Properties
 ===================================
 
-<img src="/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/ghl-aggregation-figure/univariate-eval-clay-1.png" title="plot of chunk univariate-eval-clay" alt="plot of chunk univariate-eval-clay" style="display: block; margin: auto;" />
+<img src="ghl-aggregation-figure/univariate-eval-clay-1.png" title="plot of chunk univariate-eval-clay" alt="plot of chunk univariate-eval-clay" style="display: block; margin: auto;" />
 
-<img src="/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/ghl-aggregation-figure/univariate-eval-rf-1.png" title="plot of chunk univariate-eval-rf" alt="plot of chunk univariate-eval-rf" style="display: block; margin: auto;" />
+<img src="ghl-aggregation-figure/univariate-eval-rf-1.png" title="plot of chunk univariate-eval-rf" alt="plot of chunk univariate-eval-rf" style="display: block; margin: auto;" />
 
 Determination of a GHL Template and Rules
 =========================================
@@ -279,21 +279,21 @@ Evaluation of GHL
 -   does it make sense?
 -   what about horizons in the `not-used` group?
 
-<img src="/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/ghl-aggregation-figure/plot-ghl-1-1.png" title="plot of chunk plot-ghl-1" alt="plot of chunk plot-ghl-1" style="display: block; margin: auto;" />
+<img src="ghl-aggregation-figure/plot-ghl-1-1.png" title="plot of chunk plot-ghl-1" alt="plot of chunk plot-ghl-1" style="display: block; margin: auto;" />
 
 Evaluation of GHL
 =================
 
 -   plot range in GHL depths, check for overlap
 
-<img src="/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/ghl-aggregation-figure/eval-ghl-2-1.png" title="plot of chunk eval-ghl-2" alt="plot of chunk eval-ghl-2" style="display: block; margin: auto;" />
+<img src="ghl-aggregation-figure/eval-ghl-2-1.png" title="plot of chunk eval-ghl-2" alt="plot of chunk eval-ghl-2" style="display: block; margin: auto;" />
 
 Evaluation of GHL
 =================
 
 -   multivariate summary of depth, clay content, and RF volume
 
-<img src="/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/ghl-aggregation-figure/mds-plot-1.png" title="plot of chunk mds-plot" alt="plot of chunk mds-plot" style="display: block; margin: auto;" />
+<img src="ghl-aggregation-figure/mds-plot-1.png" title="plot of chunk mds-plot" alt="plot of chunk mds-plot" style="display: block; margin: auto;" />
 
 Importing GHL to NASIS
 ======================
