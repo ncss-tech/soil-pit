@@ -6,23 +6,22 @@ https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/gen-hz-assignme
 -->
 
 
-`{r setup, echo=FALSE, results='hide'} opts_chunk$set(message=FALSE, warning=FALSE, dpi=120, fig.align='center', dev='CairoPNG', dev.args=list(pointsize=10), tidy=FALSE, tidy.opts=list(width.cutoff=100), cache=TRUE) library(knitr) options(stringsAsFactors=FALSE)`
+
+
 
 Soil Data Aggregation using R
 =============================
 
-transition: none width: 1024 height: 800 css: custom.css
-
-<br><br><br><br><br><br><br><br><br> <span style="color: white; font-size:75%;">This document is based on:</span>
+<span style="color: white; font-size:75%;">This document is based on:</span>
 <ul style="color: white; font-size:75%;">
 <li>
-`aqp` version `r utils::packageDescription("aqp", field="Version")`
+`aqp` version 1.8
 </li>
 <li>
-`soilDB` version `r utils::packageDescription("soilDB", field="Version")`
+`soilDB` version 1.5-2
 </li>
 <li>
-`sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`
+`sharpshootR` version 0.7-2
 </li>
 </ul>
 
@@ -30,13 +29,13 @@ What is R?
 ==========
 
 -   an analysis platform: calculator, statistics program, GIS, etc...
--   R syntax: vocabulary to explore, summarize, and model data ![alt text](static-figures/rstudio.png)
+-   R syntax: vocabulary to explore, summarize, and model data ![alt text](/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/static-figures/rstudio.png)
 
 What is R?
 ==========
 
 -   an integrator: analysis + GIS + database connectivity
--   ODBC and GDAL link R to nearly all possible formats/interfaces ![alt text](static-figures/triangle.png)
+-   ODBC and GDAL link R to nearly all possible formats/interfaces ![alt text](/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/static-figures/triangle.png)
 
 What can R do?
 ==============
@@ -59,7 +58,7 @@ What can R do?
 What can R do?
 ==============
 
-<br><br> ![alt text](static-figures/loafercreek-ml-hz.png) <br><br>
+<br><br> ![alt text](/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/static-figures/loafercreek-ml-hz.png) <br><br>
 <center>
 **estimate a most-likely horizonation, details to follow**
 </center>
@@ -67,7 +66,7 @@ What can R do?
 What can R do?
 ==============
 
-<br><br> ![alt text](static-figures/loafercreek-ric.png) <br><br>
+<br><br> ![alt text](/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/static-figures/loafercreek-ric.png) <br><br>
 <center>
 **estimate reasonable RIC, details to follow**
 </center>
@@ -79,9 +78,22 @@ Setup your local machine
 -   Check out the [AQP project website](http://aqp.r-forge.r-project.org/)
 -   Browse some of the [various documentation](http://cran.r-project.org/manuals.html) on R
 
--   The first time you open RStudio, **install** required packages: `{r install-packages, tidy=FALSE, eval=FALSE} install.packages('aqp', dep=TRUE)  install.packages("RODBC", dep=TRUE) install.packages('soilDB', dep=TRUE)`
+-   The first time you open RStudio, **install** required packages:
 
--   Every subsequent time, **load** required packages: `{r make-repeatable} library(aqp) library(soilDB) library(latticeExtra) # ... other libraries you might be using`
+``` {.r}
+install.packages('aqp', dep=TRUE) 
+install.packages("RODBC", dep=TRUE)
+install.packages('soilDB', dep=TRUE)
+```
+
+-   Every subsequent time, **load** required packages:
+
+``` {.r}
+library(aqp)
+library(soilDB)
+library(latticeExtra)
+# ... other libraries you might be using
+```
 
 Connect to NASIS via ODBC
 =========================
@@ -90,22 +102,25 @@ Connect to NASIS via ODBC
 -   connection sets up a small file that stores the NASIS login and password
 -   this is a one-time operation <span class="link-to-details">→ [ODBC setup instructions](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/setup_local_nasis.html?root=aqp)</span>
 
--   getting data from NASIS is as simple as: \`\`\`{r use-nasis-data, eval=FALSE} \# get pedons from the selected set pedons \<- fetchNASIS()
+-   getting data from NASIS is as simple as:
 
-plot the first 15
-=================
+``` {.r}
+# get pedons from the selected set
+pedons <- fetchNASIS()
 
+# plot the first 15
 plot(pedons[1:15, ])
 
-get component data from the selected set
-========================================
+# get component data from the selected set
+components <- get_component_data_from_NASIS_db()
+```
 
-components \<- get\_component\_data\_from\_NASIS\_db() \`\``- be sure to read the documentation <span class="link-to-details">&#8594;&nbsp;[`fetchNASIS()\`](<https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp>)</span>
+-   be sure to read the documentation <span class="link-to-details">→ [`fetchNASIS()`](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp)</span>
 
 Aggregation of Pedon Data: Common Problems
 ==========================================
 
-![alt text](static-figures/genhz-sketch.png)
+![alt text](/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/static-figures/genhz-sketch.png)
 
 -   description styles
 -   the age-old splitters vs. lumpers
@@ -119,7 +134,7 @@ Aggregation of Pedon Data: Common Problems
 Generalized Horizon Labels: Micro-correlation
 =============================================
 
-![alt text](static-figures/genhz-sketch.png)
+![alt text](/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/static-figures/genhz-sketch.png)
 
 -   generalized horizon labels = GHL
 -   determine the core concept
@@ -167,42 +182,7 @@ Summarizing Data with Quantiles (Percentiles)
 -   5th, 50th, and 95th percentiles are low-rv-high values
 -   no assumptions of distribution, simple interpretation
 
-\`\`\`{r quantiles-normal-dist, fig.width=11, fig.height=6, echo=FALSE} \# simulate 500 values from the normal distribution: with mean = 10, sd= 2 set.seed(1010101) x \<- rnorm(n=500, mean = 10, sd=2)
-
-compute the 5th, 25th, 50th, 75th, and 95th percentiles of x
-============================================================
-
-q \<- c(quantile(x, probs=c(0.05, 0.25, 0.5, 0.75, 0.95)))
-
-plot a smoothed frequency distribution
-======================================
-
-plot(density(x), main=list('Normal Distibution', cex=2), ylim=c(0, 0.8), ylab='', xlab='', axes=FALSE)
-
-mark quantiles we computed above
-================================
-
-abline(v=q, lty=3, col='red') text(x=q, y=0.1, labels=c('5th', '25th', '50th', '75th', '95th'), cex=1.5)
-
-overlay a box-whisker plot
-==========================
-
-boxplot(x, at=0.35, add=TRUE, horizontal=TRUE, boxwex=0.1, border='DarkBlue', axes=FALSE)
-
-overlay lines at the original values
-====================================
-
-rug(x, side=3, col='DarkBlue')
-
-overlay mean +/- 2SD
-====================
-
-points(mean(x), y=0.45, pch=0, col='darkgreen', cex=2, lwd=2) points(mean(x) + c(2*sd(x), -2*sd(x)), y=c(0.45, 0.45), pch=0, col='darkgreen', cex=2, lwd=2)
-
-add x-axis
-==========
-
-axis(side=1, at=pretty(x), cex.axis=1.5) \`\`\`
+<img src="/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/ghl-aggregation-figure/quantiles-normal-dist-1.png" title="plot of chunk quantiles-normal-dist" alt="plot of chunk quantiles-normal-dist" style="display: block; margin: auto;" />
 
 Summarizing Data with Quantiles (Percentiles)
 =============================================
@@ -211,42 +191,7 @@ Summarizing Data with Quantiles (Percentiles)
 -   5th, 50th, and 95th percentiles are low-rv-high values
 -   no assumptions of distribution, simple interpretation
 
-\`\`\`{r quantiles-exp-dist, fig.width=11, fig.height=6, echo=FALSE} \# simulate 500 values from the exponential distribution set.seed(1010101) x \<- rexp(n=500)
-
-compute the 5th, 25th, 50th, 75th, and 95th percentiles of x
-============================================================
-
-q \<- c(quantile(x, probs=c(0.05, 0.25, 0.5, 0.75, 0.95)))
-
-plot a smoothed frequency distribution
-======================================
-
-plot(density(x), main=list('Long-Tailed Distibution', cex=2), xlim=c(-1, 8), ylim=c(0, 0.8), ylab='', xlab='', axes=FALSE)
-
-mark quantiles we computed above
-================================
-
-abline(v=q, lty=3, col='red') text(x=q, y=c(0.1, 0.15, 0.1, 0.15, 0.1), labels=c('5th', '25th', '50th', '75th', '95th'), cex=1.5)
-
-overlay a box-whisker plot
-==========================
-
-boxplot(x, at=0.35, add=TRUE, horizontal=TRUE, boxwex=0.1, border='DarkBlue', axes=FALSE)
-
-overlay lines at the original values
-====================================
-
-rug(x, side=3, col='DarkBlue')
-
-overlay mean +/- 2SD
-====================
-
-points(mean(x), y=0.45, pch=0, col='darkgreen', cex=2, lwd=2) points(mean(x) + c(2*sd(x), -2*sd(x)), y=c(0.45, 0.45), pch=0, col='darkgreen', cex=2, lwd=2)
-
-add x-axis
-==========
-
-axis(side=1, at=pretty(x), cex.axis=1.5) \`\`\`
+<img src="/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/ghl-aggregation-figure/quantiles-exp-dist-1.png" title="plot of chunk quantiles-exp-dist" alt="plot of chunk quantiles-exp-dist" style="display: block; margin: auto;" />
 
 A Sample Dataset
 ================
@@ -256,52 +201,40 @@ A Sample Dataset
 -   Common soil formed on meta-volcanic rocks of the Sierra Nevada Foothills, MLRA 18
 -   Included in the `soilDB` package for testing purposes
 
-\`\`\`{r load-data, fig.width=12, fig.height=5, echo=FALSE} \# load sample data from the soilDB package data(loafercreek, package = 'soilDB')
-
-keep only the first 15 pedons
-=============================
-
-pedons \<- loafercreek[1:15, ]
-
-plot profile sketches
-=====================
-
-par(mar=c(0,0,0,0)) plot(pedons, name='hzname', print.id=FALSE, cex.names=0.8, axis.line.offset=-4) \`\`\`
+<img src="/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/ghl-aggregation-figure/load-data-1.png" title="plot of chunk load-data" alt="plot of chunk load-data" style="display: block; margin: auto;" />
 
 Consult the OSD for Ideas
 =========================
 
 -   Look up the series RIC if available
 
-![alt text](static-figures/RIC.png)
+![alt text](/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/static-figures/RIC.png)
 
 -   Horizons from the OSD may be a good starting point for GHL template
 
 Tabulate Horizon Designations
 =============================
 
--   sort by frequency `{r sort-hz-by-freq-print-html, echo=FALSE, results='asis'} d <- sort(table(pedons$hzname), decreasing=TRUE) d <- t(d) kable(as.data.frame.matrix(d))`
+-   sort by frequency
 
--   sort alphabetically `{r sort-hz-by-alph-print-html, echo=FALSE, results='asis'} d <- table(pedons$hzname) d <- t(d) kable(as.data.frame.matrix(d))`
+|A|Bt1|Bt2|Bt3|Oi|R|Cr|Crt|BA|BCt|Bt4|Bw|CBt|2BCt|2Bt3|2CB|2Cr|2R|
+|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|---:|---:|--:|--:|--:|
+|15|15|15|10|9|9|8|5|3|3|2|2|2|1|1|1|1|1|
 
--   plot ranges in horizon depths \`\`\`{r horizonation-mid-point, echo=FALSE, fig.width=10, fig.height=4} \# compute horizon mid-points pedons\$mid \<- with(horizons(pedons), (hzdept + hzdepb) / 2)
+-   sort alphabetically
 
-sort horizon designation by group-wise median values
-====================================================
+|2BCt|2Bt3|2CB|2Cr|2R|A|BA|BCt|Bt1|Bt2|Bt3|Bt4|Bw|CBt|Cr|Crt|Oi|R|
+|---:|---:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|
+|1|1|1|1|1|15|3|3|15|15|10|2|2|2|8|5|9|9|
 
-hz.designation.by.median.depths \<- names(sort(tapply(pedons\(mid, pedons\)hzname, median)))
-
-plot the distribution of horizon mid-points by designation
-==========================================================
-
-bwplot(mid \~ factor(hzname, levels=hz.designation.by.median.depths), data=horizons(pedons), ylim=c(155, -5), ylab='Horizon Mid-Point Depth (cm)', scales=list(y=list(tick.number=10)), panel=function(...) { panel.abline(h=seq(0, 140, by=10), v=1:length(hz.designation.by.median.depths), col=grey(0.8), lty=3) panel.bwplot(...) }) \`\`\`
+-   plot ranges in horizon depths <img src="/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/ghl-aggregation-figure/horizonation-mid-point-1.png" title="plot of chunk horizonation-mid-point" alt="plot of chunk horizonation-mid-point" style="display: block; margin: auto;" />
 
 Summarize Available Soil Properties
 ===================================
 
-`{r univariate-eval-clay, echo=FALSE, fig.width=10, fig.height=4} bwplot(clay ~ factor(hzname, levels=hz.designation.by.median.depths),         data=horizons(pedons),         ylab='Clay Content (%)',         scales=list(y=list(tick.number=10)),         panel=function(...) {   panel.abline(h=seq(0, 100, by=5), v=1:length(hz.designation.by.median.depths), col=grey(0.8), lty=3)   panel.bwplot(...) })`
+<img src="/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/ghl-aggregation-figure/univariate-eval-clay-1.png" title="plot of chunk univariate-eval-clay" alt="plot of chunk univariate-eval-clay" style="display: block; margin: auto;" />
 
-`{r univariate-eval-rf, echo=FALSE, fig.width=10, fig.height=4} # box and wisker plot by total rock fragment volume bwplot(total_frags_pct ~ factor(hzname, levels=hz.designation.by.median.depths),         data=horizons(pedons),         ylab='Total Rock Fragment Volume (%)',         scales=list(y=list(tick.number=10)),         panel=function(...) {   panel.abline(h=seq(0, 100, by=10), v=1:length(hz.designation.by.median.depths), col=grey(0.8), lty=3)   panel.bwplot(...) })`
+<img src="/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/ghl-aggregation-figure/univariate-eval-rf-1.png" title="plot of chunk univariate-eval-rf" alt="plot of chunk univariate-eval-rf" style="display: block; margin: auto;" />
 
 Determination of a GHL Template and Rules
 =========================================
@@ -322,15 +255,22 @@ Determination of a GHL Template and Rules
 -   `^` = anchor to left-side
 -   `$` = anchor to right-side
 
-`{r ghl-regex-rules, echo=FALSE} # GHL n <- c('A',         'Bt1',        'Bt2',        'Bt3',        'Cr',        'R') # REGEX rules p <- c('^A$|Ad|Ap',        'Bt1$',        '^Bt2$',        '^Bt3|^Bt4|CBt$|BCt$|2Bt|2CB$|^C$',        'Cr',        'R')`
-
 Assignment of GHL
 =================
 
 -   cross-tabulation of original names (columns) vs. GHL (rows)
 -   be sure to check the `not-used` row
 
-`{r assign-ghl-print-table, results='asis', echo=FALSE} pedons$genhz <- generalize.hz(pedons$hzname, n, p)  # cross-tabulate original horizon designations and GHL kable(addmargins(table(pedons$genhz, pedons$hzname)))`
+||2BCt|2Bt3|2CB|2Cr|2R|A|BA|BCt|Bt1|Bt2|Bt3|Bt4|Bw|CBt|Cr|Crt|Oi|R|Sum|
+|:--|---:|---:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|
+|A|0|0|0|0|0|15|0|0|0|0|0|0|0|0|0|0|0|0|15|
+|Bt1|0|0|0|0|0|0|0|0|15|0|0|0|0|0|0|0|0|0|15|
+|Bt2|0|0|0|0|0|0|0|0|0|15|0|0|0|0|0|0|0|0|15|
+|Bt3|1|1|1|0|0|0|0|3|0|0|10|2|0|2|0|0|0|0|20|
+|Cr|0|0|0|1|0|0|0|0|0|0|0|0|0|0|8|5|0|0|14|
+|R|0|0|0|0|1|0|0|0|0|0|0|0|0|0|0|0|0|9|10|
+|not-used|0|0|0|0|0|0|3|0|0|0|0|0|2|0|0|0|9|0|14|
+|Sum|1|1|1|1|1|15|3|3|15|15|10|2|2|2|8|5|9|9|103|
 
 Evaluation of GHL
 =================
@@ -339,28 +279,21 @@ Evaluation of GHL
 -   does it make sense?
 -   what about horizons in the `not-used` group?
 
-`{r plot-ghl-1, echo=FALSE, fig.width=12, fig.height=5, htmlcap='Horizon colors are based on assigned GHL.'} # make a palette of colors, last color is for not-used class cols <- c(grey(0.33), 'orange', 'orangered', 'chocolate', 'green', 'blue', 'yellow') # assign a color to each generalized horizon label hz.names <- levels(pedons$genhz) pedons$genhz.soil_color <- cols[match(pedons$genhz, hz.names)] # plot generalized horizons via color and add a legend par(mar=c(4,0,0,0)) plot(pedons, name='hzname', print.id=FALSE, cex.names=0.8, axis.line.offset=-4, color='genhz.soil_color') legend('bottomleft', legend=hz.names, pt.bg=c(cols), pch=22, bty='n', cex=2)`
+<img src="/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/ghl-aggregation-figure/plot-ghl-1-1.png" title="plot of chunk plot-ghl-1" alt="plot of chunk plot-ghl-1" style="display: block; margin: auto;" />
 
 Evaluation of GHL
 =================
 
 -   plot range in GHL depths, check for overlap
 
-`{r eval-ghl-2, echo=FALSE, fig.width=6, fig.height=5} # slice profile collection from 0-150 cm s <- slice(pedons, 0:150 ~ genhz) # convert horizon name back to factor, using original levels s$genhz <- factor(s$genhz, levels = hz.names) # plot depth-ranges of generalized horizon slices bwplot(hzdept ~ genhz, data=horizons(s),         ylim=c(155, -5), ylab='Generalized Horizon Depth (cm)',         scales=list(y=list(tick.number=10)), asp=1,         panel=function(...) {           panel.abline(h=seq(0, 140, by=10), v=1:length(hz.names),col=grey(0.8), lty=3)             panel.bwplot(...)           }        )`
+<img src="/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/ghl-aggregation-figure/eval-ghl-2-1.png" title="plot of chunk eval-ghl-2" alt="plot of chunk eval-ghl-2" style="display: block; margin: auto;" />
 
 Evaluation of GHL
 =================
 
 -   multivariate summary of depth, clay content, and RF volume
 
-`{r evaluate-genhz-assignment, echo=FALSE} # store the column names of our variables of interest vars <- c('clay', 'phfield', 'd_r', 'total_frags_pct') # result is a list of several items hz.eval <- evalGenHZ(pedons, 'genhz', vars, metric="gower") # extract MDS coords pedons$mds.1 <- hz.eval$horizons$mds.1 pedons$mds.2 <- hz.eval$horizons$mds.2 # extract silhouette widths and neighbor pedons$sil.width <- hz.eval$horizons$sil.width pedons$neighbor <- hz.eval$horizons$neighbor`
-
-\`\`\`{r mds-plot, echo=FALSE, fig.width=10, fig.height=10} \# convert pedons to a data.frame pedons.df \<- as(pedons, 'data.frame') \# plot generalized horizon labels at MDS coordinates mdsplot \<- xyplot(mds.2 \~ mds.1, groups=genhz, data=pedons.df, xlab='', ylab='', aspect=1, scales=list(draw=FALSE), auto.key=list(columns=length(levels(pedons.df\$genhz))), par.settings=list( superpose.symbol=list(pch=16, cex=3, alpha=0.5) ) )
-
-annotate with original hzname and pedon ID
-==========================================
-
-mdsplot + layer(panel.abline(h=0, v=0, col='grey', lty=3)) + layer(panel.text(pedons.df\(mds.1, pedons.df\)mds.2, pedons.df\(hzname, cex=0.85, font=2, pos=3)) +   layer(panel.text(pedons.df\)mds.1, pedons.df\(mds.2, pedons.df\)pedon\_id, cex=0.55, font=1, pos=1)) \`\`\`
+<img src="/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/ghl-aggregation-figure/mds-plot-1.png" title="plot of chunk mds-plot" alt="plot of chunk mds-plot" style="display: block; margin: auto;" />
 
 Importing GHL to NASIS
 ======================
