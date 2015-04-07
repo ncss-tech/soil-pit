@@ -29,7 +29,7 @@ What is R?
 ==========
 
 -   an analysis platform: calculator, statistics program, GIS, etc...
--   R syntax: vocabulary to explore, summarize, and model data ![alt text](/Users/stephen.roecker/Documents/soil-pit/trunk/projects/ghl-aggregation-webinar/static-figures/rstudio.png)
+-   R syntax: vocabulary to explore, summarize, and model data ![alt text](static-figures/rstudio.png)
 
 What is R?
 ==========
