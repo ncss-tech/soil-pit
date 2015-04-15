@@ -1,7 +1,7 @@
 # Pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Genesee"
+series <- "Cincinnati"
 ```
 
 
@@ -40,41 +40,17 @@ h <- horizons(pedons)
 s <- site(pedons)
 d <- diagnostic_hz(pedons)
 
-# Temporary fix for missing colors
-# d_rgb <- horizons(pedons)[, c("d_r", "d_g", "d_b")]
-# d_munsell <- rgb2munsell(d_rgb)
-# m_rgb <- h[, c("m_r", "m_g", "m_b")]
-# m_munsell <- rgb2munsell(m_rgb)
-# h$d_hue <- as.character(d_munsell$hue)
-# h$d_value <- as.integer(d_munsell$value)
-# h$d_chroma <- as.integer(d_munsell$chroma)
-# h$m_hue <- as.character(m_munsell$hue)
-# h$m_value <- as.integer(m_munsell$value)
-# h$m_chroma <- as.integer(d_munsell$chroma)
-
-names(h)[15:16] <- c("fragvoltotc", "fragvoltot")
-
-var <- c("fine_gravel", "gravel", "cobbles", "stones", "boulders", "paragravel", "paracobbles", "channers", "flagstones")
-h[var] <- lapply(h[var], as.integer)
-
-h$effervescence <- as.character(h$effervescence)
-
 na_replace <- function(x){
-  if(class(x) == "character") {x <- replace(x, is.na(x), "NA")} 
+  if(class(x) == "character") {x <- replace(x, is.na(x), "missing")} 
   else (x <-  x)
 }
 
-h <- lapply(h, na_replace); h <- data.frame(h)
-s <- lapply(h, na_replace); s <- data.frame(s)
-
-if(dim(d)[1] == 0)
-{d <- data.frame(peiid=h$peiid)
-d[ c("diag_kind", "featdept", "featdepb")] <- list(diag_kind=as.character("NA"), featdept=as.integer(NA), featdepb=as.integer(NA))}
-
+h$effervescence <- as.character(h$effervescence)
+h <- data.frame(lapply(h, na_replace), stringsAsFactors = FALSE)
+s <- data.frame(lapply(s, na_replace), stringsAsFactors = FALSE)
 
 l <- length(unique(h$peiid))
 
-# Function
 # Function
 sum5n <- function(x) {
   variable <- unique(x$variable)
@@ -151,14 +127,14 @@ if(!all(is.na(s[, c("pmorigin", "pmkind", "landform.string")]))) {
 
 
 if(!all(is.na(s[, c("shapedown", "shapeacross")]))) {
-  s$shapedown <- factor(s$shapedown, levels=c("Convex", "Linear", "Concave", "NA"))
-  s$shapeacross <- factor(s$shapeacross, levels=c("Convex", "Linear", "Concave", "NA"))
+  s$shapedown <- factor(s$shapedown, levels=c("Convex", "Linear", "Concave", "missing"))
+  s$shapeacross <- factor(s$shapeacross, levels=c("Convex", "Linear", "Concave", "missing"))
   print(xtable(addmargins(table(s$shapedown, s$shapeacross)), digits=0, align=rep("c", 6), caption="Down slope (y-axis) vs across slope (x-axis)"), type="html", caption.placement="top")
 } else("no slope shape values have been populated")
 
 if(!all(is.na(s[, c("hillslope_pos", "drainagecl")]))) {
-  s$hillslope_pos <- factor(s$hillslope_pos, levels=c("Summit", "Shoulder", "Backslope", "Footslope", "Toeslope", "NA"))
-  s$drainagecl <- factor(s$drainagecl, levels= c("Excessivelly drained", "Well drained", "Somewhat excessively well drained", "Moderately well drained", "Somewhat poorly drained", "Poorly drained", "Very poorly drained", "Subaqueous drainage", "NA"))
+  s$hillslope_pos <- factor(s$hillslope_pos, levels=c("Summit", "Shoulder", "Backslope", "Footslope", "Toeslope", "missing"))
+  s$drainagecl <- factor(s$drainagecl, levels= c("Excessivelly drained", "Well drained", "Somewhat excessively well drained", "Moderately well drained", "Somewhat poorly drained", "Poorly drained", "Very poorly drained", "Subaqueous drainage", "missing"))
   print(xtable(addmargins(table(s$drainagecl, s$hillslope_pos)), digits=0, align=rep("c", 8), caption="Drainage class vs hillslope position"), type="html", caption.placement="top")
 } else("no hillslope position or drainage class values have been populated")
 ```
@@ -204,6 +180,9 @@ Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total nu
 
 ```{r, echo=FALSE, results='asis'}
 # Summarize numeric variables by generic horizon
+names(h)[15:16] <- c("fragvoltotc", "fragvoltot")
+var <- c("fine_gravel", "gravel", "cobbles", "stones", "boulders", "paragravel", "paracobbles", "channers", "flagstones")
+h[, var] <- lapply(h[var], as.integer)
 h$gravel <- h$gravel-h$fine_gravel
 
 h.lo1 <- melt(h, id.vars="genhz", measure.vars=c('clay', 'sand', 'fine_gravel', 'gravel', 'cobbles', 'stones', 'fragvoltot'))
@@ -267,7 +246,12 @@ print(xtable(addmargins(table(h$genhz, h$m_hue)), digits=0, align=rep("c", 2+len
 Contingency table (counts) 
 
 ```{r, echo=FALSE, results='asis'}
-print(xtable(addmargins(table(h$genhz, h$effervescence)), digits=0, align=rep("c", 2+length(unique(h$effervescence)))), type="html")
+h$effervescence[h$effervescence == "very slight"] <- "very.slight"
+eff <- c(violent = "violent", strong = "strong", slight = "slight", very.slight = "very slight", none = "none", missing = "missing")
+h$effervescence <- eff[h$effervescence]
+h$effervescence <- factor(h$effervescence, levels = eff)
+
+print(xtable(addmargins(table(h$genhz, h$effervescence)), digits=0, align=rep("c", 2+length(levels(h$effervescence)))), type="html")
 ```
 
 
@@ -296,6 +280,10 @@ bwplot(factor(genhz, levels=levels(h$genhz)[length(levels(h$genhz)):1]) ~ value|
 Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
 
 ```{r, echo=FALSE, results='asis'}
+if(dim(d)[1] == 0)
+{d <- data.frame(peiid=h$peiid)
+d[ c("diag_kind", "featdept", "featdepb")] <- list(diag_kind=as.character("missing"), featdept=as.integer(NA), featdepb=as.integer(NA))}
+
 diag.thk <- ddply(d, .(peiid, diag_kind), summarize, thickness=sum(featdepb-featdept))
 diag.lo <- melt(d, id.vars="diag_kind", measure.vars=c('featdept', 'featdepb'))
 diag.lo2 <- melt(diag.thk, id.vars="diag_kind", measure.vars='thickness')
