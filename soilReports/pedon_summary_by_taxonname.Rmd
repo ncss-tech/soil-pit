@@ -27,14 +27,14 @@ source(paste0("./genhz_rules/", series, "_rules.R"))
 p <- c(0, 0.25, 0.5, 0.75, 1)
 
 # load NASIS data
-pedons <- fetchNASIS(nullFragsAreZero=TRUE)
+pedons <- fetchNASIS(nullFragsAreZero = TRUE)
 
 h <- horizons(pedons)
 nai <- is.na(h$genhz)
 h[nai, "genhz"] <- as.character(sapply(h[nai, "hzname"], function(x) generalize.hz(x, ghr[[series]]$n, ghr[[series]]$p)))
 horizons(pedons) <- h
 pedons$genhz[is.na(pedons$genhz)] <- "NA"
-pedons$genhz <- factor(pedons$genhz, levels=ghr[[series]]$n)                                                                                                       
+pedons$genhz <- factor(pedons$genhz, levels = ghr[[series]]$n)                                                                                                       
 
 h <- horizons(pedons)
 s <- site(pedons)
@@ -52,26 +52,20 @@ d <- diagnostic_hz(pedons)
 # h$m_value <- as.integer(m_munsell$value)
 # h$m_chroma <- as.integer(d_munsell$chroma)
 
-names(h)[15] <- "fragvoltotc"
-names(h)[16] <- "fragvoltot"
+names(h)[15:16] <- c("fragvoltotc", "fragvoltot")
 
-h[, c("fine_gravel", "gravel", "cobbles", "stones", "boulders", "paragravel", "paracobbles", "channers", "flagstones")] <- lapply(h[, c("fine_gravel", "gravel", "cobbles", "stones", "boulders", "paragravel", "paracobbles", "channers", "flagstones")], as.integer)
+var <- c("fine_gravel", "gravel", "cobbles", "stones", "boulders", "paragravel", "paracobbles", "channers", "flagstones")
+h[var] <- lapply(h[var], as.integer)
 
 h$effervescence <- as.character(h$effervescence)
 
-naReplace <- function(x){
-  l <- list()
-  for(i in seq(ncol(x))){
-    if(class(x[,i])=="character") {l[[i]] <- replace(x[,i], is.na(x[,i]), "NA")} 
-    else(l[[i]] <-  x[,i])
-  }
-  l <- data.frame(l, stringsAsFactors=FALSE)
-  names(l) <- names(x)
-  return(l)
+na_replace <- function(x){
+  if(class(x) == "character") {x <- replace(x, is.na(x), "NA")} 
+  else (x <-  x)
 }
 
-h <- naReplace(h)
-s <- naReplace(s)
+h <- lapply(h, na_replace); h <- data.frame(h)
+s <- lapply(h, na_replace); s <- data.frame(s)
 
 if(dim(d)[1] == 0)
 {d <- data.frame(peiid=h$peiid)
