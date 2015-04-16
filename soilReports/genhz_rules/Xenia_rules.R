@@ -6,7 +6,7 @@ ghr <- list(
         "2Bt", 
         "2BCt", 
         "2Cd", 
-        "NA"),
+        "missing"),
     
     p=c("Ap",
         "E",
@@ -15,6 +15,6 @@ ghr <- list(
         "^B$",
         "C",
         "Cd",
-        "NA")
+        "missing")
   )
 )

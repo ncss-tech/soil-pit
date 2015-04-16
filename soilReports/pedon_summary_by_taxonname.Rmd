@@ -1,7 +1,7 @@
 # Pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Genesee"
+series <- "Cincinnati"
 ```
 
 
@@ -24,7 +24,7 @@ library(RColorBrewer)
 # source custom R functions
 source(paste0("./genhz_rules/", series, "_rules.R"))
 
-p <- c(0, 0.5, 1)
+p <- c(0, 0.25, 0.5, 0.75, 1)
 
 # load NASIS data
 pedons <- fetchNASIS(nullFragsAreZero = TRUE)

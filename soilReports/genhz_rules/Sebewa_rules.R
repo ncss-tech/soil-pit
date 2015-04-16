@@ -5,13 +5,13 @@ ghr <- list(
         "Bg", 
         "Btg", 
         "2Cg",  
-        "NA"),
+        "missing"),
     
     p=c("Ap|AP",
         "^A$",
         "Bg",        
         "^Btg|BCtg",
         "^C|2C|BCg",
-        "NA")
+        "missing")
   )
 )

@@ -8,7 +8,7 @@ ghr <- list(
          "Btg", 
          "BCt", 
          "Cd", 
-         "NA"),
+         "missing"),
     
     p=c("Ap|AP|A p",
         "A1|A2",
@@ -18,6 +18,6 @@ ghr <- list(
         "Btg|Bg|BCg|Cg",
         "^BC$|BCt",
         "Cd|BCd",
-        "NA")
+        "missing")
   )
 )
