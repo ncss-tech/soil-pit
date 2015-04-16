@@ -1,7 +1,7 @@
 # Pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Cincinnati"
+series <- "Genesee"
 ```
 
 
@@ -24,7 +24,7 @@ library(RColorBrewer)
 # source custom R functions
 source(paste0("./genhz_rules/", series, "_rules.R"))
 
-p <- c(0, 0.25, 0.5, 0.75, 1)
+p <- c(0, 0.5, 1)
 
 # load NASIS data
 pedons <- fetchNASIS(nullFragsAreZero = TRUE)
@@ -40,12 +40,13 @@ h <- horizons(pedons)
 s <- site(pedons)
 d <- diagnostic_hz(pedons)
 
+h$effervescence <- as.character(h$effervescence)
+
 na_replace <- function(x){
   if(class(x) == "character") {x <- replace(x, is.na(x), "missing")} 
   else (x <-  x)
 }
 
-h$effervescence <- as.character(h$effervescence)
 h <- data.frame(lapply(h, na_replace), stringsAsFactors = FALSE)
 s <- data.frame(lapply(s, na_replace), stringsAsFactors = FALSE)
 
@@ -60,9 +61,9 @@ sum5n <- function(x) {
   precision <- if(variable %in% precision.vars) precision.table[match(variable, precision.vars)] else 0
   n <- length(v)
   ci <- quantile(v, na.rm=TRUE, probs=p) 
-  d <- data.frame(min=ci[1], low=ci[2], rv=ci[3], high=ci[4], max=ci[5], n=n, stringsAsFactors=FALSE) # combine into DF
-  d$range <- with(d, paste0("(", paste0(round(c(min, low, rv, high, max), precision), collapse=", "), ")", "(", n, ")")) # add 'range' column for pretty-printing
-  return(d[7])
+  d <- data.frame(rbind(ci), n = n, stringsAsFactors=FALSE) # combine into DF
+  d$range <- with(d, paste0("(", paste0(round(d[-ncol(d)], precision), collapse=", "), ")", "(", n, ")")) # add 'range' column for pretty-printing
+  return(d["range"])
 }
 ```
 
@@ -104,10 +105,10 @@ print(xtable(subset(s, select=c("pedon_id", "taxonname", "tax_subgroup", "part_s
 Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
 
 ```{r, echo=FALSE, results='asis'}
-morf <- subset(s, select=c("elev_field", "slope_field"))
-morf.lo <- melt(morf, measure.vars=c("elev_field", "slope_field"))
+morf <- subset(s, select = c("elev_field", "slope_field"))
+morf.lo <- melt(morf, measure.vars= c("elev_field", "slope_field"))
 morf.5n <- ddply(morf.lo, .(variable), .fun=sum5n)
-morf.wi <- cast(morf.5n, ~variable, value='range')
+morf.wi <- cast(morf.5n, ~variable, value = 'range')
 print(xtable(morf.wi, caption="Elevation and slope gradient"), type="html", caption.placement="top")
 
 
@@ -129,12 +130,14 @@ if(!all(is.na(s[, c("pmorigin", "pmkind", "landform.string")]))) {
 if(!all(is.na(s[, c("shapedown", "shapeacross")]))) {
   s$shapedown <- factor(s$shapedown, levels=c("Convex", "Linear", "Concave", "missing"))
   s$shapeacross <- factor(s$shapeacross, levels=c("Convex", "Linear", "Concave", "missing"))
+  
   print(xtable(addmargins(table(s$shapedown, s$shapeacross)), digits=0, align=rep("c", 6), caption="Down slope (y-axis) vs across slope (x-axis)"), type="html", caption.placement="top")
 } else("no slope shape values have been populated")
 
 if(!all(is.na(s[, c("hillslope_pos", "drainagecl")]))) {
   s$hillslope_pos <- factor(s$hillslope_pos, levels=c("Summit", "Shoulder", "Backslope", "Footslope", "Toeslope", "missing"))
   s$drainagecl <- factor(s$drainagecl, levels= c("Excessivelly drained", "Well drained", "Somewhat excessively well drained", "Moderately well drained", "Somewhat poorly drained", "Poorly drained", "Very poorly drained", "Subaqueous drainage", "missing"))
+  
   print(xtable(addmargins(table(s$drainagecl, s$hillslope_pos)), digits=0, align=rep("c", 8), caption="Drainage class vs hillslope position"), type="html", caption.placement="top")
 } else("no hillslope position or drainage class values have been populated")
 ```
@@ -171,7 +174,7 @@ if(sum(srf$total_srf) != 0) {
 Contingency table (counts) 
 
 ```{r, echo=FALSE, results='asis'}
-print(xtable(addmargins(table(h$genhz, h$hzname)), digits=0), type="html") 
+print(xtable(addmargins(table(h$genhz, h$hzname)), digits = 0), type="html") 
 ```
 
 
@@ -185,14 +188,14 @@ var <- c("fine_gravel", "gravel", "cobbles", "stones", "boulders", "paragravel",
 h[, var] <- lapply(h[var], as.integer)
 h$gravel <- h$gravel-h$fine_gravel
 
-h.lo1 <- melt(h, id.vars="genhz", measure.vars=c('clay', 'sand', 'fine_gravel', 'gravel', 'cobbles', 'stones', 'fragvoltot'))
-h.lo2 <- melt(h, id.vars="genhz", measure.vars=c('phfield', 'd_value', 'd_chroma', 'm_value', 'm_chroma'))
+h.lo1 <- melt(h, id.vars="genhz", measure.vars = c('clay', 'sand', 'fine_gravel', 'gravel', 'cobbles', 'stones', 'fragvoltot'))
+h.lo2 <- melt(h, id.vars="genhz", measure.vars = c('phfield', 'd_value', 'd_chroma', 'm_value', 'm_chroma'))
 
-h.5n1 <- ddply(h.lo1, .(variable, genhz), .fun=sum5n)
-h.5n2 <- ddply(h.lo2, .(variable, genhz), .fun=sum5n)
+h.5n1 <- ddply(h.lo1, .(variable, genhz), .fun = sum5n)
+h.5n2 <- ddply(h.lo2, .(variable, genhz), .fun = sum5n)
 
-h.wi1 <- cast(h.5n1, genhz ~ variable, value='range')
-h.wi2 <- cast(h.5n2, genhz ~ variable, value='range')
+h.wi1 <- cast(h.5n1, genhz ~ variable, value = 'range')
+h.wi2 <- cast(h.5n2, genhz ~ variable, value = 'range')
 
 print(xtable(h.wi1, align=rep("c", 1+ncol(h.wi1))), type="html", include.rownames=FALSE)
 print(xtable(h.wi2, align=rep("c", 1+ncol(h.wi2))), type="html", include.rownames=FALSE)
@@ -206,7 +209,7 @@ nh <- ifelse(n < 4, 4, 4+(n-4)*.15*3)
 Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)
 
 ```{r, echo=FALSE, fig.height=nh}
-bwplot(factor(genhz, levels=levels(h$genhz)[length(levels(h$genhz)):1]) ~ value|variable, data=rbind(h.lo1, h.lo2), scales=list(x="free"))          
+bwplot(factor(genhz, levels = levels(h$genhz)[length(levels(h$genhz)):1]) ~ value|variable, data = rbind(h.lo1, h.lo2), scales = list(x="free"))          
 ```
 
 
@@ -214,7 +217,7 @@ bwplot(factor(genhz, levels=levels(h$genhz)[length(levels(h$genhz)):1]) ~ value|
 Contigency table (counts) 
 
 ```{r, echo=FALSE, results='asis'}
-print(xtable(addmargins(table(h$genhz, h$texture_class)), digits=0, align=rep("c", 2+length(unique(h$texture_class)))), type="html")
+print(xtable(addmargins(table(h$genhz, h$texture_class)), digits=0, align = rep("c", 2+length(unique(h$texture_class)))), type = "html")
 ```
 
 
@@ -222,7 +225,7 @@ print(xtable(addmargins(table(h$genhz, h$texture_class)), digits=0, align=rep("c
 Contigency table (counts) 
 
 ```{r, echo=FALSE, results='asis'}
-print(xtable(addmargins(table(h$genhz, h$texture)), digits=0, align=rep("c", 2+length(unique(h$texture)))), type="html")
+print(xtable(addmargins(table(h$genhz, h$texture)), digits=0, align=rep("c", 2+length(unique(h$texture)))), type = "html")
 ```
 
 
@@ -238,7 +241,7 @@ print(xtable(addmargins(table(h$genhz, h$d_hue)), digits=0, align=rep("c", 2+len
 Contingency table (counts) 
 
 ```{r, echo=FALSE, results='asis'}
-print(xtable(addmargins(table(h$genhz, h$m_hue)), digits=0, align=rep("c", 2+length(unique(h$m_hue)))), type="html")
+print(xtable(addmargins(table(h$genhz, h$m_hue)), digits=0, align = rep("c", 2+length(unique(h$m_hue)))), type = "html")
 ```
 
 
@@ -260,11 +263,11 @@ Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total nu
 
 ```{r, echo=FALSE, results='asis'}
 genhz.thk <- ddply(h, .(phiid, genhz), summarize, thickness=sum(hzdepb-hzdept))
-genhz.lo <- melt(h, id.vars="genhz", measure.vars=c('hzdept', 'hzdepb'))
-genhz.lo2 <- melt(genhz.thk, id.vars="genhz", measure.vars='thickness')
+genhz.lo <- melt(h, id.vars="genhz", measure.vars = c('hzdept', 'hzdepb'))
+genhz.lo2 <- melt(genhz.thk, id.vars = "genhz", measure.vars = 'thickness')
 genhz.lo <- rbind(genhz.lo, genhz.lo2)
-genhz.5n <- ddply(genhz.lo, .(variable, genhz), .fun=sum5n)
-print(xtable(cast(genhz.5n, genhz ~ variable, value='range'), digits=0, align=rep("c", 2+ncol(genhz.5n))), type="html")
+genhz.5n <- ddply(genhz.lo, .(variable, genhz), .fun = sum5n)
+print(xtable(cast(genhz.5n, genhz ~ variable, value = 'range'), digits = 0, align = rep("c", 2 + ncol(genhz.5n))), type = "html")
 ```
 
 
@@ -272,7 +275,7 @@ print(xtable(cast(genhz.5n, genhz ~ variable, value='range'), digits=0, align=re
 Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles)
 
 ```{r, echo=FALSE}
-bwplot(factor(genhz, levels=levels(h$genhz)[length(levels(h$genhz)):1]) ~ value|variable, data=genhz.lo, scales=list(x="free"), xlab="cm", horizontal=T)          
+bwplot(factor(genhz, levels=levels(h$genhz)[length(levels(h$genhz)):1]) ~ value|variable, data = genhz.lo, scales = list(x = "free"), xlab = "cm", horizontal = T)          
 ```
 
 
@@ -281,26 +284,25 @@ Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total nu
 
 ```{r, echo=FALSE, results='asis'}
 if(dim(d)[1] == 0)
-{d <- data.frame(peiid=h$peiid)
-d[ c("diag_kind", "featdept", "featdepb")] <- list(diag_kind=as.character("missing"), featdept=as.integer(NA), featdepb=as.integer(NA))}
+{d <- data.frame(peiid = h$peiid)
+d[ c("diag_kind", "featdept", "featdepb")] <- list(diag_kind = as.character("missing"), featdept=as.integer(NA), featdepb = as.integer(NA))}
 
-diag.thk <- ddply(d, .(peiid, diag_kind), summarize, thickness=sum(featdepb-featdept))
-diag.lo <- melt(d, id.vars="diag_kind", measure.vars=c('featdept', 'featdepb'))
-diag.lo2 <- melt(diag.thk, id.vars="diag_kind", measure.vars='thickness')
+diag.thk <- ddply(d, .(peiid, diag_kind), summarize, thickness = sum(featdepb - featdept))
+diag.lo <- melt(d, id.vars = "diag_kind", measure.vars = c('featdept', 'featdepb'))
+diag.lo2 <- melt(diag.thk, id.vars = "diag_kind", measure.vars = 'thickness')
 
-names(s)[47] <- "featdept"
-names(s)[48] <- "featdepb"
-pscs.thk <- ddply(s, .(peiid), summarize, thickness=sum(featdepb-featdept))
-pscs.thk <- data.frame(peiid=pscs.thk$peiid, variable="thickness", value=pscs.thk$thickness)
-pscs.lo <- melt(s, id.vars="peiid", measure.vars=c('featdept', 'featdepb'))
+names(s)[47:48] <- c("featdept", "featdepb")
+pscs.thk <- ddply(s, .(peiid), summarize, thickness = sum(featdepb - featdept))
+pscs.thk <- data.frame(peiid = pscs.thk$peiid, variable = "thickness", value = pscs.thk$thickness)
+pscs.lo <- melt(s, id.vars = "peiid", measure.vars = c('featdept', 'featdepb'))
 pscs.lo <- rbind(pscs.lo, pscs.thk)
-pscs.lo <- data.frame(diag_kind="particle size control section", variable=pscs.lo$variable, value=pscs.lo$value)
+pscs.lo <- data.frame(diag_kind = "particle size control section", variable = pscs.lo$variable, value = pscs.lo$value)
 
 diag.lo <- rbind(diag.lo, diag.lo2, pscs.lo)
-diag.5n <- ddply(diag.lo, .(variable, diag_kind), .fun=sum5n)
-diag.wi <- cast(diag.5n, diag_kind ~ variable, value='range')
+diag.5n <- ddply(diag.lo, .(variable, diag_kind), .fun = sum5n)
+diag.wi <- cast(diag.5n, diag_kind ~ variable, value = 'range')
 
-print(xtable(diag.wi, digits=0, align=rep("c", 1+ncol(diag.wi))), type="html")
+print(xtable(diag.wi, digits = 0, align=rep("c", 1+ncol(diag.wi))), type = "html")
 ```
 
 
@@ -308,5 +310,5 @@ print(xtable(diag.wi, digits=0, align=rep("c", 1+ncol(diag.wi))), type="html")
 Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles)
 
 ```{r, echo=FALSE}
-bwplot(diag_kind ~ value|variable, data=diag.lo, scales=list(x="free"), xlab="cm")          
+bwplot(diag_kind ~ value|variable, data = diag.lo, scales = list(x = "free"), xlab = "cm")          
 ```
