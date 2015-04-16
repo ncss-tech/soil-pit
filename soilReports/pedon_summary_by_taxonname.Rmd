@@ -77,7 +77,7 @@ if(dim(s)[1] != 0) {
   coordinates(s.sub) <- ~x_std+y_std
   plot(s.sub, pch=16)
   map("county", lwd=0.5, add=T)
-  map("state",lwd=2,add=T)
+  map("state",lwd=2, add=T)
   map.axes()
 } else("no coordinates")
 ```
@@ -90,7 +90,7 @@ cols <- brewer.pal(n=length(levels(pedons$genhz)), name="Paired")
 hz.names <- levels(pedons$genhz)
 pedons$genhz.soil_color <- cols[match(pedons$genhz, hz.names)]
 # plot generalized horizons via color and add a legend
-plot(pedons, name='hzname', color='genhz.soil_color', label='pedon_id')
+plot(pedons, name = 'hzname', color = 'genhz.soil_color', label = 'pedon_id')
 ```
 
 
@@ -98,15 +98,16 @@ plot(pedons, name='hzname', color='genhz.soil_color', label='pedon_id')
 
 ```{r format site data, results='asis', echo=FALSE}
 # Site information
-print(xtable(subset(s, select=c("pedon_id", "taxonname", "tax_subgroup", "part_size_class", "pedon_type", "describer"))), type="html")
+print(xtable(subset(s, select = c("pedon_id", "taxonname", "tax_subgroup", "part_size_class", "pedon_type", "describer"))), type = "html")
 ```
 
 ## Range in characteristics of geographic setting
 Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
 
 ```{r, echo=FALSE, results='asis'}
-morf <- subset(s, select = c("elev_field", "slope_field"))
-morf.lo <- melt(morf, measure.vars= c("elev_field", "slope_field"))
+vars <- c("elev_field", "slope_field")
+morf <- subset(s, select = vars)
+morf.lo <- melt(morf, measure.vars = vars)
 morf.5n <- ddply(morf.lo, .(variable), .fun=sum5n)
 morf.wi <- cast(morf.5n, ~variable, value = 'range')
 print(xtable(morf.wi, caption="Elevation and slope gradient"), type="html", caption.placement="top")
@@ -285,7 +286,7 @@ Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total nu
 ```{r, echo=FALSE, results='asis'}
 if(dim(d)[1] == 0)
 {d <- data.frame(peiid = h$peiid)
-d[ c("diag_kind", "featdept", "featdepb")] <- list(diag_kind = as.character("missing"), featdept=as.integer(NA), featdepb = as.integer(NA))}
+d[c("diag_kind", "featdept", "featdepb")] <- list(diag_kind = as.character("missing"), featdept=as.integer(NA), featdepb = as.integer(NA))}
 
 diag.thk <- ddply(d, .(peiid, diag_kind), summarize, thickness = sum(featdepb - featdept))
 diag.lo <- melt(d, id.vars = "diag_kind", measure.vars = c('featdept', 'featdepb'))
@@ -302,7 +303,7 @@ diag.lo <- rbind(diag.lo, diag.lo2, pscs.lo)
 diag.5n <- ddply(diag.lo, .(variable, diag_kind), .fun = sum5n)
 diag.wi <- cast(diag.5n, diag_kind ~ variable, value = 'range')
 
-print(xtable(diag.wi, digits = 0, align=rep("c", 1+ncol(diag.wi))), type = "html")
+print(xtable(diag.wi, digits = 0, align=rep("c", 1 + ncol(diag.wi))), type = "html")
 ```
 
 
