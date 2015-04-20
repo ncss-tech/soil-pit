@@ -1,7 +1,7 @@
 # Pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Cincinnati"
+series <- "Genesee"
 ```
 
 
@@ -41,6 +41,7 @@ s <- site(pedons)
 d <- diagnostic_hz(pedons)
 
 h$effervescence <- as.character(h$effervescence)
+s$hillslope_pos <- as.character(s$hillslope_pos)
 
 na_replace <- function(x){
   if(class(x) == "character") {x <- replace(x, is.na(x), "missing")} 
@@ -184,7 +185,8 @@ Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total nu
 
 ```{r, echo=FALSE, results='asis'}
 # Summarize numeric variables by generic horizon
-names(h)[15:16] <- c("fragvoltotc", "fragvoltot")
+idx <- names(h) == "total_frags_pct_cal" | names(h) == "total_frags_pct"
+names(h)[idx] <- c("fragvoltotc", "fragvoltot")
 var <- c("fine_gravel", "gravel", "cobbles", "stones", "boulders", "paragravel", "paracobbles", "channers", "flagstones")
 h[, var] <- lapply(h[var], as.integer)
 h$gravel <- h$gravel-h$fine_gravel
