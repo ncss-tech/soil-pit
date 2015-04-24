@@ -1,7 +1,7 @@
 # Lab pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Cincinnati"
+series <- "Lewisburg"
 ```
 
 ```{r load packages, include=FALSE}
@@ -154,7 +154,7 @@ bwplot(factor(genhz, levels=levels(lh$genhz)[length(levels(lh$genhz)):1]) ~ valu
 Contigency table (counts) 
 
 ```{r, echo=FALSE, results='asis'}
-print(xtable(addmargins(table(lh$genhz, lh$lab_texcl)), digits=0, align=rep("c", 1+length(unique(lh$lab_texcl)))), type="html")
+print(xtable(addmargins(table(lh$genhz, lh$lab_texcl)), digits=0, align=rep("c", 2+length(unique(lh$lab_texcl)))), type="html")
 ```
 
 
