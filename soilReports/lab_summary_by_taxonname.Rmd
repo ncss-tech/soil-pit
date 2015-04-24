@@ -43,17 +43,12 @@ lh$genhz <- generalize.hz(lh$hzname, ghr[[series]]$n, ghr[[series]]$p)
 h$hzname[is.na(h$hzname)] <- "NA"
 h$genhz <- generalize.hz(h$hzname, ghr[[series]]$n, ghr[[series]]$p)
 
-naReplace <- function(x){
-  l <- list()
-  for(i in seq(names(x))){
-    if(class(x[,i])=="character") {l[[i]] <- replace(x[,i], is.na(x[,i]), "NA")} else(l[[i]] <-  x[,i])
-  }
-  l <- data.frame(l, stringsAsFactors=FALSE)
-  names(l) <- names(x)
-  return(l)
+na_replace <- function(x){
+  if(class(x) == "character" | class(x) == "logical") {x <- replace(x, is.na(x), "missing")} 
+  else (x <-  x)
 }
 
-h <- naReplace(h)
+h <- data.frame(lapply(h, na_replace), stringsAsFactors = FALSE)
 
 # Function
 sum5n <- function(x) {

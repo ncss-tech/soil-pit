@@ -40,11 +40,8 @@ h <- horizons(pedons)
 s <- site(pedons)
 d <- diagnostic_hz(pedons)
 
-h$effervescence <- as.character(h$effervescence)
-s$hillslope_pos <- as.character(s$hillslope_pos)
-
 na_replace <- function(x){
-  if(class(x) == "character") {x <- replace(x, is.na(x), "missing")} 
+  if(class(x) == "character" | class(x) == "logical") {x <- replace(x, is.na(x), "missing")} 
   else (x <-  x)
 }
 
