@@ -12,6 +12,7 @@ library(soilDB)
 library(reshape)
 library(plyr)
 library(lattice)
+library(knitr)
 library(maps)
 library(xtable)
 library(RODBC)
@@ -92,11 +93,11 @@ plot(pedons, name = 'hzname', color = 'genhz.soil_color', label = 'pedon_id')
 ```
 
 
-# Summary of Sites
+## Summary of Sites
 
 ```{r format site data, results='asis', echo=FALSE}
 # Site information
-print(xtable(subset(s, select = c("pedon_id", "taxonname", "tax_subgroup", "part_size_class", "pedon_type", "describer"))), type = "html")
+kable(subset(s, select = c("pedon_id", "taxonname", "tax_subgroup", "part_size_class", "pedon_type", "describer")))
 ```
 
 ## Range in characteristics of geographic setting
@@ -108,8 +109,6 @@ morf <- subset(s, select = vars)
 morf.lo <- melt(morf, measure.vars = vars)
 morf.5n <- ddply(morf.lo, .(variable), .fun=sum5n)
 morf.wi <- cast(morf.5n, ~variable, value = 'range')
-print(xtable(morf.wi, caption="Elevation and slope gradient"), type="html", caption.placement="top")
-
 
 if(!all(is.na(s$aspect_field))) {
   aspect <- subset(s, select=c("aspect_field"))
@@ -117,33 +116,33 @@ if(!all(is.na(s$aspect_field))) {
   aspect.lo$value <- circular(aspect.lo$value, template="geographic", units="degrees", modulo="2pi")
   aspect.5n <- ddply(aspect.lo, .(variable), .fun=sum5n)
   aspect.wi <- cast(aspect.5n, ~variable, value='range')
-  print(xtable(aspect.wi, caption="Slope aspect"), type="html", caption.placement="top")
-} else("no aspect values have been populated")         
+  kable(cbind(morf.wi, aspect.wi["aspect_field"]), caption="Elevation, slope gradient and aspect")
+} else(kable(morf.wi, caption="Elevation and slope gradient", align = "l")
+)         
 
 
 if(!all(is.na(s[, c("pmorigin", "pmkind", "landform.string")]))) {
   pm.lf <- addmargins(table(factor(paste0(s$pmorigin, " ", s$pmkind)), factor(s$landform.string)))
-  print(xtable(pm.lf, digits=0, align=rep("c", 1+ncol(pm.lf)), caption="Parent material vs landform"), type="html", caption.placement="top")} else("no values have been populated for parent material or landform")
+  kable(pm.lf, caption="Parent material vs landform")}
 
 
 if(!all(is.na(s[, c("shapedown", "shapeacross")]))) {
   s$shapedown <- factor(s$shapedown, levels=c("Convex", "Linear", "Concave", "missing"))
   s$shapeacross <- factor(s$shapeacross, levels=c("Convex", "Linear", "Concave", "missing"))
-  
-  print(xtable(addmargins(table(s$shapedown, s$shapeacross)), digits=0, align=rep("c", 6), caption="Down slope (y-axis) vs across slope (x-axis)"), type="html", caption.placement="top")
-} else("no slope shape values have been populated")
+  kable(addmargins(table(s$shapedown, s$shapeacross)), caption = "Down slope (y-axis) vs across slope (x-axis)")
+} 
 
 if(!all(is.na(s[, c("hillslope_pos", "drainagecl")]))) {
   s$hillslope_pos <- factor(s$hillslope_pos, levels=c("Summit", "Shoulder", "Backslope", "Footslope", "Toeslope", "missing"))
   s$drainagecl <- factor(s$drainagecl, levels= c("Excessivelly drained", "Well drained", "Somewhat excessively well drained", "Moderately well drained", "Somewhat poorly drained", "Poorly drained", "Very poorly drained", "Subaqueous drainage", "missing"))
   
-  print(xtable(addmargins(table(s$drainagecl, s$hillslope_pos)), digits=0, align=rep("c", 8), caption="Drainage class vs hillslope position"), type="html", caption.placement="top")
-} else("no hillslope position or drainage class values have been populated")
+  kable(addmargins(table(s$drainagecl, s$hillslope_pos)), digits = 0, caption = "Drainage class vs hillslope position")
+}
 ```
 
 
 ## Range in characteristics of surface rock fragments
-Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
+Five number summary (min, 25th, median, 75th, max)(percentiles) and total number of observations (n)
 
 ```{r, echo=FALSE, results='asis'}
 # Summarize surface rock fragments
@@ -154,17 +153,12 @@ srf.lo <- melt(srf, measure.vars=c("total_srf", "surface_fgravel", "surface_grav
 srf.5n <- ddply(srf.lo, .(variable), .fun=sum5n)
 srf.wi <- cast(srf.5n, ~variable, value='range')
 
-print(xtable(srf.wi), type="html")
-```
+kable(srf.wi, align = "c")
+ 
 
-
-## Box plots of surface rock fragments
-Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)
-
-```{r bwplot for rf, echo=FALSE}
 if(sum(srf$total_srf) != 0) {
-  bwplot(variable~value, data=srf.lo, scales=list(x="free"), xlab="percent") 
-  } else("no surface rock fragments have been populated")         
+  bwplot(variable~value, data=srf.lo, scales=list(x="free"), xlab="percent", main = "Boxplot of surface rock fragments") 
+  }         
 ```
 
 
@@ -173,12 +167,12 @@ if(sum(srf$total_srf) != 0) {
 Contingency table (counts) 
 
 ```{r, echo=FALSE, results='asis'}
-print(xtable(addmargins(table(h$genhz, h$hzname)), digits = 0), type="html") 
+kable(addmargins(table(h$genhz, h$hzname)), digits = 0) 
 ```
 
 
 ## Range in characteristics for generic horizons 
-Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
+Five number summary (min, 25th, median, 75th, max)(percentiles) and total number of observations (n)
 
 ```{r, echo=FALSE, results='asis'}
 # Summarize numeric variables by generic horizon
@@ -197,19 +191,13 @@ h.5n2 <- ddply(h.lo2, .(variable, genhz), .fun = sum5n)
 h.wi1 <- cast(h.5n1, genhz ~ variable, value = 'range')
 h.wi2 <- cast(h.5n2, genhz ~ variable, value = 'range')
 
-print(xtable(h.wi1, align=rep("c", 1+ncol(h.wi1))), type="html", include.rownames=FALSE)
-print(xtable(h.wi2, align=rep("c", 1+ncol(h.wi2))), type="html", include.rownames=FALSE)
+kable(h.wi1, align = "c")
+kable(h.wi2, align = "c")
 
 n <- length(unique(h$genhz))
 nh <- ifelse(n < 4, 4, 4+(n-4)*.15*3)
-```
 
-
-## Box plots of numeric variables by generic horizon
-Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)
-
-```{r, echo=FALSE, fig.height=nh}
-bwplot(factor(genhz, levels = levels(h$genhz)[length(levels(h$genhz)):1]) ~ value|variable, data = rbind(h.lo1, h.lo2), scales = list(x="free"))          
+bwplot(factor(genhz, levels = levels(h$genhz)[length(levels(h$genhz)):1]) ~ value|variable, data = rbind(h.lo1, h.lo2), scales = list(x="free"), main = "Box plots of numeric variables by generic horizon")          
 ```
 
 
@@ -217,7 +205,7 @@ bwplot(factor(genhz, levels = levels(h$genhz)[length(levels(h$genhz)):1]) ~ valu
 Contigency table (counts) 
 
 ```{r, echo=FALSE, results='asis'}
-print(xtable(addmargins(table(h$genhz, h$texture_class)), digits=0, align = rep("c", 2+length(unique(h$texture_class)))), type = "html")
+kable(addmargins(table(h$genhz, h$texture_class)), digits = 0)
 ```
 
 
@@ -225,7 +213,7 @@ print(xtable(addmargins(table(h$genhz, h$texture_class)), digits=0, align = rep(
 Contigency table (counts) 
 
 ```{r, echo=FALSE, results='asis'}
-print(xtable(addmargins(table(h$genhz, h$texture)), digits=0, align=rep("c", 2+length(unique(h$texture)))), type = "html")
+kable(addmargins(table(h$genhz, h$texture)), digits = 0)
 ```
 
 
@@ -233,7 +221,7 @@ print(xtable(addmargins(table(h$genhz, h$texture)), digits=0, align=rep("c", 2+l
 Contingency table (counts) 
 
 ```{r, echo=FALSE, results='asis'}
-print(xtable(addmargins(table(h$genhz, h$d_hue)), digits=0, align=rep("c", 2+length(unique(h$d_hue)))), type="html")
+kable(addmargins(table(h$genhz, h$d_hue)), digits = 0)
 ```
 
 
@@ -241,7 +229,7 @@ print(xtable(addmargins(table(h$genhz, h$d_hue)), digits=0, align=rep("c", 2+len
 Contingency table (counts) 
 
 ```{r, echo=FALSE, results='asis'}
-print(xtable(addmargins(table(h$genhz, h$m_hue)), digits=0, align = rep("c", 2+length(unique(h$m_hue)))), type = "html")
+kable(addmargins(table(h$genhz, h$m_hue)), digits = 0)
 ```
 
 
@@ -254,12 +242,12 @@ eff <- c(violent = "violent", strong = "strong", slight = "slight", very.slight 
 h$effervescence <- eff[h$effervescence]
 h$effervescence <- factor(h$effervescence, levels = eff)
 
-print(xtable(addmargins(table(h$genhz, h$effervescence)), digits=0, align=rep("c", 2+length(levels(h$effervescence)))), type="html")
+kable(addmargins(table(h$genhz, h$effervescence)), digits = 0)
 ```
 
 
 ## Depths and thickness of generic horizons
-Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
+Five number summary (min, 25th, median, 75th, max)(percentiles) and total number of observations (n)
 
 ```{r, echo=FALSE, results='asis'}
 genhz.thk <- ddply(h, .(phiid, genhz), summarize, thickness=sum(hzdepb-hzdept))
@@ -267,20 +255,14 @@ genhz.lo <- melt(h, id.vars="genhz", measure.vars = c('hzdept', 'hzdepb'))
 genhz.lo2 <- melt(genhz.thk, id.vars = "genhz", measure.vars = 'thickness')
 genhz.lo <- rbind(genhz.lo, genhz.lo2)
 genhz.5n <- ddply(genhz.lo, .(variable, genhz), .fun = sum5n)
-print(xtable(cast(genhz.5n, genhz ~ variable, value = 'range'), digits = 0, align = rep("c", 2 + ncol(genhz.5n))), type = "html")
-```
+kable(cast(genhz.5n, genhz ~ variable, value = 'range'), align = "c")
 
-
-## Boxplot of generic horizon thicknesses
-Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles)
-
-```{r, echo=FALSE}
-bwplot(factor(genhz, levels=levels(h$genhz)[length(levels(h$genhz)):1]) ~ value|variable, data = genhz.lo, scales = list(x = "free"), xlab = "cm", horizontal = T)          
+bwplot(factor(genhz, levels=levels(h$genhz)[length(levels(h$genhz)):1]) ~ value|variable, data = genhz.lo, scales = list(x = "free"), xlab = "cm", horizontal = TRUE, main = "Boxplot of generic horizon thicknesses")          
 ```
 
 
 ## Depths and thickness of diagnostic horizons and features
-Five number summary (min, 25th, median, 75th, max)(percentiles) and (n)(total number of observations)
+Five number summary (min, 25th, median, 75th, max)(percentiles) and total number of observations (n)
 
 ```{r, echo=FALSE, results='asis'}
 if(dim(d)[1] == 0)
@@ -302,14 +284,9 @@ diag.lo <- rbind(diag.lo, diag.lo2, pscs.lo)
 diag.5n <- ddply(diag.lo, .(variable, diag_kind), .fun = sum5n)
 diag.wi <- cast(diag.5n, diag_kind ~ variable, value = 'range')
 
-print(xtable(diag.wi, digits = 0, align=rep("c", 1 + ncol(diag.wi))), type = "html")
-```
+kable(diag.wi, align = "c")
 
 
-## Boxplot of diagnostic horizons and features depth
-Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles)
-
-```{r, echo=FALSE}
 if (all(!is.na(diag.lo$value))) {
-  bwplot(diag_kind ~ value|variable, data = diag.lo, scales = list(x = "free"), xlab = "cm")} else("no diagnostic horizons have been populated")          
+  bwplot(diag_kind ~ value|variable, data = diag.lo, scales = list(x = "free"), xlab = "cm", main = "Boxplot of diagnostic horizons and features depth")}
 ```
