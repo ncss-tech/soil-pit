@@ -34,15 +34,17 @@ h <- horizons(pedons)
 nai <- is.na(h$genhz)
 h[nai, "genhz"] <- as.character(sapply(h[nai, "hzname"], function(x) generalize.hz(x, ghr[[series]]$n, ghr[[series]]$p)))
 horizons(pedons) <- h
-pedons$genhz[is.na(pedons$genhz)] <- "NA"
-pedons$genhz <- factor(pedons$genhz, levels = ghr[[series]]$n)                                                                                                       
+pedons$genhz[is.na(pedons$genhz)] <- "missing"
+pedons$hzdepm <- (pedons$hzdept + pedons$hzdepb)/2
+genhz_med <- sort(tapply(pedons$hzdepm, pedons$genhz, median))
+pedons$genhz <- factor(pedons$genhz, levels = names(genhz_med))                                                                                                       
 
 h <- horizons(pedons)
 s <- site(pedons)
 d <- diagnostic_hz(pedons)
 
 na_replace <- function(x){
-  if(class(x) == "character" | class(x) == "logical") {x <- replace(x, is.na(x), "missing")} 
+  if(class(x) == "character" | class(x) == "logical") {x <- replace(x, is.na(x) | x == "NA", "missing")} 
   else (x <-  x)
 }
 
@@ -273,7 +275,8 @@ diag.thk <- ddply(d, .(peiid, diag_kind), summarize, thickness = sum(featdepb - 
 diag.lo <- melt(d, id.vars = "diag_kind", measure.vars = c('featdept', 'featdepb'))
 diag.lo2 <- melt(diag.thk, id.vars = "diag_kind", measure.vars = 'thickness')
 
-names(s)[47:48] <- c("featdept", "featdepb")
+idx <- names(s) == "psctopdepth" | names(s) == "pscbotdepth"
+names(s)[idx] <- c("featdept", "featdepb")
 pscs.thk <- ddply(s, .(peiid), summarize, thickness = sum(featdepb - featdept))
 pscs.thk <- data.frame(peiid = pscs.thk$peiid, variable = "thickness", value = pscs.thk$thickness)
 pscs.lo <- melt(s, id.vars = "peiid", measure.vars = c('featdept', 'featdepb'))
