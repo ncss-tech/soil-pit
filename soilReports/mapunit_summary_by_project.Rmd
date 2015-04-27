@@ -29,6 +29,7 @@ library(raster)
 library(rgdal)
 library(reshape)
 library(plyr)
+library(knitr)
 library(lattice)
 library(xtable)
 library(maps)
@@ -167,7 +168,7 @@ ffp         | frost free period                   | days                        
 lulc        | land use and land cover             | landcover class (e.g. Woody Wetlands)      | 2011 National Land Cover Dataset (NLCD)
 
 
-## Map of soil map units
+## Map of soil polygons
 Don't be concerned if the soil map units don't line up with the counties. The county layer being used is an internal R layer that is highly generalized.
 ```{r plot soil map units, echo=FALSE}
 temp <- spTransform(mupolygon, CRS("+init=epsg:4326"))
@@ -179,6 +180,7 @@ map.axes()
 
 ## Soil polygon metrics
 Five number summary (min, 25th, median, 75th, max)(percentiles) and contingency table (counts)(n) 
+Circularity is an estimate of shape complexity (Hole and Campbell, 1975), computed as a ratio of mupolygon length / mupolygon circumference. The shape complexity of a perfect circle would equal 1.
 
 ```{r soil polygon metrics, echo=FALSE, results='asis'}
 pol <- data.frame(mupolygon)
@@ -192,25 +194,20 @@ pol.lo2 <- melt(pol, id.vars="SSA_MUSYM", measure.vars=c("Acres"))
 pol.5n1 <- ddply(pol.lo2, .(SSA_MUSYM, variable), .fun=sum5n)
 pol.5n2 <- ddply(pol, .(SSA_MUSYM), summarize, nArces=round(sum(Acres), 0), nPolygons=length(MUSYM))
 pol.5n <- merge(pol.5n1, pol.5n2, by=c("SSA_MUSYM"))
-print(xtable(pol.5n, digits=0, , align=rep("c", 1+ncol(pol.5n)), caption="Summary of MUSYM by AREASYMBOL"), type="html", caption.placement="top")
-```
 
-## Polygon Boxplots
-Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles). 
-Circularity is an estimate of shape complexity (Hole and Campbell, 1975), computed as a ratio of mupolygon length / mupolygon circumference. The shape complexity of a perfect circle would equal 1.
+kable(pol.5n, digits = 0, align = "c", caption = "Summary of MUSYM by AREASYMBOL")
 
-```{r bwplot of polygon metrics, echo=FALSE}
-bwplot(SSA_MUSYM ~ value|variable, data=pol.lo1, scales=list(x="free"))
+bwplot(SSA_MUSYM ~ value | variable, data = pol.lo1, scales = list(x="free"), main = "Boxplots of polygon metrics")
 ```
 
 ## Contingency tables (percent) 
 
 ```{r percentage by musym, echo=FALSE, results='asis'}
 ## Create descriptive and graphical summary of map unit
-print(xtable(prop.table(xtabs(~SSA_MUSYM+slopeBreaks,data=data), margin=1)*100, align=rep("c", 1+length(levels(data$slopeBreaks))), digits=0, caption="Slope breaks"), type="html", caption.placement="top")
-print(xtable(prop.table(xtabs(~SSA_MUSYM+aspectBreaks,data=data), margin=1)*100, align=rep("c", 1+length(levels(data$aspectBreaks))), digits=0, caption="Aspect breaks"), type="html", caption.placement="top")
-print(xtable(prop.table(xtabs(~SSA_MUSYM+valleyBreaks,data=data), margin=1)*100, align=rep("c", 1+length(levels(data$valleyBreaks))), digits=0, caption="Upland vs. lowland"), type="html", caption.placement="top")
-print(xtable(addmargins(prop.table(xtabs(~SSA_MUSYM+lulcBreaks,data=data), margin=1)*100), digits=0, align=rep("c", 2+length(levels(data$lulcBreaks))), caption="Landuse and Landcover"), type="html", caption.placement="top")
+kable(prop.table(xtabs(~ SSA_MUSYM + slopeBreaks, data = data), margin = 1) * 100, align = "c", digits=0, caption="Slope breaks")
+kable(prop.table(xtabs(~ SSA_MUSYM + aspectBreaks, data = data), margin = 1) * 100, align = "c", digits = 0, caption = "Aspect breaks")
+kable(prop.table(xtabs(~ SSA_MUSYM + valleyBreaks, data = data), margin = 1) * 100, align = "c", digits = 0, caption = "Upland vs. lowland")
+kable(addmargins(prop.table(xtabs(~ SSA_MUSYM + lulcBreaks, data = data), margin = 1) * 100), digits = 0, align = "c", caption = "Landuse and Landcover")
 ```
 
 ## Quantile breaks
@@ -221,21 +218,15 @@ data.lo <- melt(data, id.vars="SSA_MUSYM", measure.vars=c("elev", "slope", "vall
 data.5n <- ddply(data.lo, .(variable, SSA_MUSYM), .fun=sum5n)
 data.c <- cast(data.5n, SSA_MUSYM ~ variable, value='range')
 data.n <- ddply(data, .(SSA_MUSYM), .drop=T, summarize, n=length(SSA_MUSYM))
-print(xtable(merge(data.c, data.n, by="SSA_MUSYM"), align=rep("c", 2+ncol(data.c))), type="html")
 
 aspect.lo <- melt(data, id.vars="SSA_MUSYM", measure.vars=c("aspect"))
 aspect.lo$value <- circular(aspect.lo$value, template="geographic", units="degrees", modulo="2pi")
 aspect.5n <- ddply(aspect.lo, .(variable, SSA_MUSYM), .fun=sum5n)
 aspect.c <- cast(aspect.5n, SSA_MUSYM ~ variable, value='range')
-print(xtable(merge(aspect.c, data.n, by="SSA_MUSYM"), align=rep("c", 2+ncol(aspect.c))), type="html")
-```
 
-## Boxplots of map unit properties
-Graphical five number summary plus outliers (outliers, 5th, 25th, median, 75th, 95th, outliers)(percentiles) 
+kable(cbind(data.c, aspect.c["aspect"], data.n["n"]), align = "c")
 
-```{r bwplot of map unit properties, echo=FALSE, fig.height=nh}
-### *(min, 5th, 25th, median, 75th, 95th, max)*
 temp <- factor(unique(data$SSA_MUSYM))
 
-bwplot(factor(SSA_MUSYM, levels=levels(temp)[length(levels(temp)):1]) ~ value|variable, data=data.lo, scales=list(x="free"))          
+bwplot(factor(SSA_MUSYM, levels=levels(temp)[length(levels(temp)):1]) ~ value|variable, data=data.lo, scales=list(x="free"), main = "Boxplots of map unit properties")          
 ```
