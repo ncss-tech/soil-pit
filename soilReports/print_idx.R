@@ -1,7 +1,8 @@
 test <- 1:100
 n <- length(test)
-x <- n/4
+interval <- 4
+x <- n/interval
 
 for (i in 0:(x-1)){
-  print(test[c(1, i*4+(2:5))])
+  print(test[c(1, i*interval+(2:5))])
 }
