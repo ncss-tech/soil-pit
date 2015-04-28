@@ -5,7 +5,7 @@ output:
 # Pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Lewisburg"
+series <- "Genesee"
 ```
 
 
@@ -70,7 +70,7 @@ sum5n <- function(x) {
 ```
 
 
-## Summary of Sites
+## Brief summary of pedon data
 
 ```{r Map of pedons and locations, echo=FALSE, results='asis'}
 if (dim(s)[1] != 0) {
