@@ -1,11 +1,9 @@
 ghr <- list(
-  "Nabb"=list(
-    n=c("Ap", 
+  n = c("Ap", 
         "Bt", 
         "Btx"),
-    
-    p=c("Ap",
+  
+  p = c("Ap",
         "^Bt$", 
         "Btx")
   )
-)

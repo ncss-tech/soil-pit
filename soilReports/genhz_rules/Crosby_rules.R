@@ -1,16 +1,15 @@
 ghr <- list(
-  "Crosby"=list(
-    n=c("Ap", 
-         "A", 
-         "BE", 
-         "Bt", 
-         "2Bt", 
-         "Btg", 
-         "BCt", 
-         "Cd", 
-         "missing"),
-    
-    p=c("Ap|AP|A p",
+  n = c("Ap",
+        "A", 
+        "BE", 
+        "Bt", 
+        "2Bt", 
+        "Btg", 
+        "BCt", 
+        "Cd", 
+        "missing"),
+  
+  p = c("Ap|AP|A p",
         "A1|A2",
         "BE|^E|1E",
         "^Bt1|^Bt2|^Bt3|^B t",
@@ -20,4 +19,3 @@ ghr <- list(
         "Cd|BCd",
         "missing")
   )
-)

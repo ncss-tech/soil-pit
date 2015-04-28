@@ -1,6 +1,5 @@
 ghr <- list(
-  "Miamian"=list(
-    n=c("Ap", 
+  n = c("Ap", 
         "A", 
         "E", 
         "Bt", 
@@ -8,8 +7,8 @@ ghr <- list(
         "C", 
         "Cd", 
         "missing"),
-    
-    p=c("Ap|AP|1A|A1|A2|A p", 
+  
+  p = c("Ap|AP|1A|A1|A2|A p", 
         "^A$", 
         "E", 
         "BE", 
@@ -20,4 +19,3 @@ ghr <- list(
         "Cd",
         "missing")
   )
-)

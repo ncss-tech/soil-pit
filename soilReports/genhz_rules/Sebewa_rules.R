@@ -1,17 +1,15 @@
 ghr <- list(
-  "Sebewa"=list(
-    n=c("Ap", 
+  n = c("Ap", 
         "A", 
         "Bg", 
         "Btg", 
         "2Cg",  
         "missing"),
-    
-    p=c("Ap|AP",
+  
+  p = c("Ap|AP",
         "^A$",
         "Bg",        
         "^Btg|BCtg",
         "^C|2C|BCg",
         "missing")
   )
-)

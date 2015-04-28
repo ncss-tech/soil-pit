@@ -1,7 +1,7 @@
 # Pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Lewisburg"
+series <- "Genesee"
 ```
 
 
@@ -14,7 +14,6 @@ library(plyr)
 library(lattice)
 library(knitr)
 library(maps)
-library(xtable)
 library(RODBC)
 library(circular)
 library(RColorBrewer)
@@ -31,8 +30,8 @@ p <- c(0, 0.25, 0.5, 0.75, 1)
 pedons <- fetchNASIS(nullFragsAreZero = TRUE)
 
 h <- horizons(pedons)
-nai <- is.na(h$genhz)
-h[nai, "genhz"] <- as.character(sapply(h[nai, "hzname"], function(x) generalize.hz(x, ghr[[series]]$n, ghr[[series]]$p)))
+na_idx <- is.na(h$genhz)
+h[na_idx, "genhz"] <- as.character(sapply(h[na_idx, "hzname"], function(x) generalize.hz(x, ghr$n, ghr$p)))
 horizons(pedons) <- h
 pedons$genhz[is.na(pedons$genhz)] <- "missing"
 pedons$hzdepm <- (pedons$hzdept + pedons$hzdepb)/2
@@ -86,7 +85,7 @@ if(dim(s)[1] != 0) {
 
 ## Soil profile plots (depth, color by genhz, horizonation, and user pedon id)
 ```{r Soil plots, echo=FALSE}
-cols <- brewer.pal(n=length(levels(pedons$genhz)), name="Paired")
+cols <- brewer.pal(n = length(levels(pedons$genhz)), name = "Paired")
 # assign a color to each generalized horizon label
 hz.names <- levels(pedons$genhz)
 pedons$genhz.soil_color <- cols[match(pedons$genhz, hz.names)]
@@ -184,22 +183,20 @@ var <- c("fine_gravel", "gravel", "cobbles", "stones", "boulders", "paragravel",
 h[, var] <- lapply(h[var], as.integer)
 h$gravel <- h$gravel-h$fine_gravel
 
-h.lo1 <- melt(h, id.vars="genhz", measure.vars = c('clay', 'sand', 'fine_gravel', 'gravel', 'cobbles', 'stones', 'fragvoltot'))
-h.lo2 <- melt(h, id.vars="genhz", measure.vars = c('phfield', 'd_value', 'd_chroma', 'm_value', 'm_chroma'))
+h.lo <- melt(h, id.vars="genhz", measure.vars = c('clay', 'sand', 'fine_gravel', 'gravel', 'cobbles', 'stones', 'fragvoltot', 'phfield', 'd_value', 'd_chroma', 'm_value', 'm_chroma'))
 
-h.5n1 <- ddply(h.lo1, .(variable, genhz), .fun = sum5n)
-h.5n2 <- ddply(h.lo2, .(variable, genhz), .fun = sum5n)
+h.5n <- ddply(h.lo, .(variable, genhz), .fun = sum5n)
 
-h.wi1 <- cast(h.5n1, genhz ~ variable, value = 'range')
-h.wi2 <- cast(h.5n2, genhz ~ variable, value = 'range')
+h.wi <- cast(h.5n, genhz ~ variable, value = 'range')
 
-kable(h.wi1, align = "c")
-kable(h.wi2, align = "c")
+kable(h.wi[1:5], align = "c")
+kable(h.wi[c(1, 6:9)], align = "c")
+kable(h.wi[c(1, 10:13)], align = "c")
 
 n <- length(unique(h$genhz))
 nh <- ifelse(n < 4, 4, 4+(n-4)*.15*3)
 
-bwplot(factor(genhz, levels = levels(h$genhz)[length(levels(h$genhz)):1]) ~ value|variable, data = rbind(h.lo1, h.lo2), scales = list(x="free"), main = "Box plots of numeric variables by generic horizon")          
+bwplot(factor(genhz, levels = levels(h$genhz)[length(levels(h$genhz)):1]) ~ value|variable, data = h.lo, scales = list(x="free"), main = "Box plots of numeric variables by generic horizon")          
 ```
 
 
