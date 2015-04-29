@@ -223,7 +223,8 @@ aspect.lo$value <- circular(aspect.lo$value, template="geographic", units="degre
 aspect.5n <- ddply(aspect.lo, .(variable, SSA_MUSYM), .fun=sum5n)
 aspect.c <- cast(aspect.5n, SSA_MUSYM ~ variable, value='range')
 
-kable(cbind(data.c, aspect.c["aspect"], data.n["n"]), align = "c")
+kable(cbind(data.c[c(1:6)], data.n["n"]), align = "c")
+kable(cbind(data.c[c(1, 7:9)], aspect.c["aspect"], data.n["n"]), align = "c")
 
 temp <- factor(unique(data$SSA_MUSYM))
 
