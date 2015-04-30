@@ -25,7 +25,7 @@ This report summarizes the geographic setting of a list of MUKEY within a file g
 Map of soil polygons
 --------------------
 
-Don't be concerned if the soil map units don't line up with the counties. The county layer being used is an internal R layer that is highly generalized. ![](figure\cincinnati_mapunit_summary_files/figure-markdown_github/plot%20soil%20map%20units-1.png)
+Don't be concerned if the soil map units don't line up with the counties. The county layer being used is an internal R layer that is highly generalized. ![](figure/cincinnati_mapunit_summary_files/figure-markdown_github/plot%20soil%20map%20units-1.png)
 
 Soil polygon metrics
 --------------------
