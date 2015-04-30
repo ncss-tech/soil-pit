@@ -6,7 +6,7 @@ output:
 
 ```r
 # Set soil series
-series <- "Cincinnati"
+series <- "Miami"
 ```
 
 
@@ -15,8 +15,12 @@ series <- "Cincinnati"
 
 
 ```
+## NOTICE: duplicate horizons in query results, matching pedons:
+## 1954IL111001
 ## converting Munsell to RGB ...
-## mixing moist colors ... [8 of 285 horizons]
+## mixing dry colors ... [3 of 41 horizons]
+## mixing moist colors ... [74 of 878 horizons]
+## replacing missing lower horizon depths with top depth + 1cm ... [1 horizons]
 ```
 
 ```
@@ -30,35 +34,23 @@ series <- "Cincinnati"
 
 
 
-|pedon_id       |taxonname  |tax_subgroup         |part_size_class |pedon_type               |describer                            |
-|:--------------|:----------|:--------------------|:---------------|:------------------------|:------------------------------------|
-|S1992IN079003  |Cincinnati |oxyaquic fragiudalfs |fine-loamy      |missing                  |Bill Hosteter, Shane McBurnett       |
-|S1982IN013001  |Cincinnati |typic fragiudalfs    |fine-silty      |missing                  |missing                              |
-|89IN119014     |Cincinnati |typic fragiudalfs    |fine-silty      |missing                  |Paul McCarter, Jr. and Jerry Shively |
-|87IN119003     |Cincinnati |typic fragiudalfs    |fine-silty      |missing                  |P. McCarter, Jr.                     |
-|1977IN021036   |Cincinnati |typic fragiudults    |fine-silty      |missing                  |Mccarter and Neely                   |
-|1977IN021037   |Cincinnati |typic fragiudalfs    |fine-silty      |missing                  |Mccarter and Neely                   |
-|1976IN031023   |Cincinnati |typic fragiudalfs    |fine-silty      |missing                  |Shively                              |
-|1976IN077006   |Cincinnati |typic fragiudalfs    |fine-silty      |missing                  |Nickell and Koleszar                 |
-|1978IN031013   |Cincinnati |typic fragiudalfs    |fine-silty      |missing                  |Shively                              |
-|1977IN021005   |Cincinnati |typic fragiudalfs    |fine-silty      |missing                  |Mccarter                             |
-|1978IN137004   |Cincinnati |typic fragiudalfs    |fine-silty      |missing                  |Harkenrider and Shadis               |
-|1979IN055010   |Cincinnati |typic fragiudalfs    |fine-silty      |missing                  |Mc carter and Langer                 |
-|1979IN055012   |Cincinnati |typic fragiudalfs    |fine-silty      |missing                  |Langer and Lefforge                  |
-|1981IN047002   |Cincinnati |typic fragiudalfs    |fine-silty      |missing                  |Shively                              |
-|1981IN155004   |Cincinnati |typic fragiudalfs    |fine-silty      |missing                  |Nickell and Stephenson               |
-|1981IN175008   |Cincinnati |typic fragiudalfs    |fine-silty      |missing                  |Robards and Wade                     |
-|1980IN055011   |Cincinnati |typic fragiudults    |fine-silty      |missing                  |Mccarter and Lefforge                |
-|80KY-223-027   |Cincinnati |typic fragiudalfs    |fine-silty      |missing                  |John H. Newton                       |
-|80KY-223-025   |Cincinnati |typic fragiudults    |fine-silty      |taxadjunct to the series |John H. Newton                       |
-|1949-OH015-S03 |Cincinnati |oxyaquic fragiudalfs |fine-silty      |missing                  |farnham                              |
-|1956-OH165-S11 |Cincinnati |oxyaquic fragiudalfs |fine-silty      |missing                  |roseler                              |
-|1956-OH027-061 |Cincinnati |oxyaquic fragiudalfs |fine-silty      |missing                  |reeder, williams                     |
-|1967-OH071-063 |Cincinnati |oxyaquic fragiudalfs |fine-silty      |missing                  |donaldson, petro, kerr, williams     |
-|1966-OH025-008 |Cincinnati |oxyaquic fragiudalfs |fine-silty      |missing                  |lerch, hale                          |
-|1979-OH071-069 |Cincinnati |oxyaquic fragiudalfs |fine-silty      |missing                  |SHIPATALO/SMECK/NORTON               |
-|1980-OH127-013 |Cincinnati |oxyaquic fragiudalfs |fine-silty      |missing                  |RUBEL/JENNY/LEMASTER                 |
-|90IN143015     |Cincinnati |oxyaquic fragiudalfs |fine-silty      |TUD pedon                |Byron Nagel, Allan Nickell           |
+|pedon_id      |taxonname  |tax_subgroup         |part_size_class |pedon_type |describer                            |
+|:-------------|:----------|:--------------------|:---------------|:----------|:------------------------------------|
+|S1992IN079003 |Cincinnati |oxyaquic fragiudalfs |fine-loamy      |missing    |Bill Hosteter, Shane McBurnett       |
+|S1982IN013001 |Cincinnati |typic fragiudalfs    |fine-silty      |missing    |missing                              |
+|89IN119014    |Cincinnati |typic fragiudalfs    |fine-silty      |missing    |Paul McCarter, Jr. and Jerry Shively |
+|87IN119003    |Cincinnati |typic fragiudalfs    |fine-silty      |missing    |P. McCarter, Jr.                     |
+|1977IN021036  |Cincinnati |typic fragiudults    |fine-silty      |missing    |Mccarter and Neely                   |
+|1977IN021037  |Cincinnati |typic fragiudalfs    |fine-silty      |missing    |Mccarter and Neely                   |
+|1976IN031023  |Cincinnati |typic fragiudalfs    |fine-silty      |missing    |Shively                              |
+|1976IN077006  |Cincinnati |typic fragiudalfs    |fine-silty      |missing    |Nickell and Koleszar                 |
+|1978IN031013  |Cincinnati |typic fragiudalfs    |fine-silty      |missing    |Shively                              |
+|1977IN021005  |Cincinnati |typic fragiudalfs    |fine-silty      |missing    |Mccarter                             |
+|1978IN137004  |Cincinnati |typic fragiudalfs    |fine-silty      |missing    |Harkenrider and Shadis               |
+|1979IN055010  |Cincinnati |typic fragiudalfs    |fine-silty      |missing    |Mc carter and Langer                 |
+|1979IN055012  |Cincinnati |typic fragiudalfs    |fine-silty      |missing    |Langer and Lefforge                  |
+|1981IN047002  |Cincinnati |typic fragiudalfs    |fine-silty      |missing    |Shively                              |
+|1981IN155004  |Cincinnati |typic fragiudalfs    |fine-silty      |missing    |Nickell and Stephenson               |
 
 
 ![plot of chunk unnamed-chunk-1](figure/unnamed-chunk-1-1.png) 
