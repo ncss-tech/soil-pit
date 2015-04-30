@@ -5,7 +5,7 @@ output:
 # Pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Genesee"
+series <- "Miami"
 ```
 
 
@@ -237,9 +237,12 @@ if (!all(is.na(s$aspect_field))) {
 )         
 
 
-if (!all(is.na(s[c("pmorigin", "pmkind", "landform.string")]))) {
-  pm.lf <- addmargins(table(factor(paste0(s$pmorigin, " ", s$pmkind)), factor(s$landform.string)))
-  kable(pm.lf, caption="Parent material vs landform (counts)")}
+if (!all(is.na(s[c("pmorigin", "pmkind", "landform.string")]))){
+  pm_comb <- factor(paste0(s$pmorigin, " ", s$pmkind))
+  pm_land <- factor(s$landform.string)
+  pm.lf <- addmargins(table(pm_comb, pm_land))
+  kable(pm.lf, caption="Parent material vs landform (counts)")
+  }
 
 
 if (!all(is.na(s[c("shapedown", "shapeacross")]))) {

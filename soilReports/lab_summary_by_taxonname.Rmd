@@ -1,7 +1,7 @@
 # Lab pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Genesee"
+series <- "Miami"
 ```
 
 ```{r load packages, include=FALSE}
@@ -144,17 +144,16 @@ lh.lo <- melt(lh.num, id.vars="genhz", measure.vars=names(lh.num)[c(1:(ncol(lh.n
 lh.5n <- ddply(lh.lo, .(variable, genhz), .fun=sum5n)
 lh.c <- cast(lh.5n, genhz~variable, value='range')
 
-n <- ncol(lh.c)
-test <- 1:n
+n <- ncol(lh.c)-1
 interval <- 4
-x <- ceiling(n/interval)
-b <- n - (x - floor(n/interval))
 
-for (i in 0:(x-1)){
-  if (i < (x-1)){
-    print(kable(lh.c[c(1, i*interval+(2:5))], align = "c"))
-    } else {print(kable(lh.c[c(1, b:n)], align = "c"))}
-}
+times <- ceiling(n/interval)
+x <- rep(1:(times+1), each = interval, length.out = n)
+
+
+for (i in seq(times)){
+  print(kable(lh.c[c(TRUE, x == i)], align = "c"))
+  }
 
 nh <- ncol(lh.num)/2.5
 ```
