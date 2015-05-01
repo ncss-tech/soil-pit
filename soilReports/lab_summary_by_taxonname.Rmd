@@ -1,7 +1,7 @@
 # Lab pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Miami"
+series <- "Crosby"
 ```
 
 ```{r load packages, include=FALSE}
@@ -14,6 +14,7 @@ library(knitr)
 library(lattice)
 library(maps)
 library(RODBC)
+library(ggplot2)
 ```
 
 ```{r fetch and format, load-data, echo=FALSE, warning=FALSE}
@@ -146,10 +147,8 @@ lh.c <- cast(lh.5n, genhz~variable, value='range')
 
 n <- ncol(lh.c)-1
 interval <- 4
-
 times <- ceiling(n/interval)
 x <- rep(1:(times+1), each = interval, length.out = n)
-
 
 for (i in seq(times)){
   print(kable(lh.c[c(TRUE, x == i)], align = "c"))
@@ -159,7 +158,11 @@ nh <- ncol(lh.num)/2.5
 ```
 
 ```{r, echo=FALSE, fig.height=nh}
-bwplot(factor(genhz, levels=levels(lh$genhz)[length(levels(lh$genhz)):1]) ~ value|variable, data = rbind(lh.lo), scales=list(x="free"), main = "Box plots of numeric variables by generic horizon")          
+
+levels(lh.lo$genhz) <- levels(lh.lo$genhz)[length(levels(lh.lo$genhz)):1]
+
+bwplot(genhz ~ value|variable, data = lh.lo, scales=list(x="free"), main = "Box plots of numeric variables by generic horizon")     
+
 ```
 
 ```{r, echo=FALSE, results='asis'}
