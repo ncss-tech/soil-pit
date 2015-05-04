@@ -1,7 +1,7 @@
 # Lab pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Crosby"
+series <- "Lewisburg"
 ```
 
 ```{r load packages, include=FALSE}
@@ -159,9 +159,9 @@ nh <- ncol(lh.num)/2.5
 
 ```{r, echo=FALSE, fig.height=nh}
 
-levels(lh.lo$genhz) <- levels(lh.lo$genhz)[length(levels(lh.lo$genhz)):1]
+lh.lo$genhz <- factor(lh.lo$genhz, levels = levels(lh.lo$genhz)[length(levels(lh.lo$genhz)):1])
 
-bwplot(genhz ~ value|variable, data = lh.lo, scales=list(x="free"), main = "Box plots of numeric variables by generic horizon")     
+bwplot(genhz ~ value|variable, data = lh.lo, scales=list(x="free"), main = "Box plots of numeric variables by generic horizon")  
 
 ```
 
