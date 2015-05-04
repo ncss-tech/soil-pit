@@ -88,7 +88,7 @@ title("Soil profile plots")
 ## Range in characteristics for NCSS pedon lab data
 ### Summary of soil profiles
 Five number summary (min, 25th, median, 75th, max)(percentiles)
-```{r, echo=FALSE, results='asis'}
+```{r, echo=FALSE, results='asis', warning=FALSE}
 # Summarize site data
 lp.sub <- subset(lp, select=c("noncarbclaywtavg", "claytotwtavg", "le0to100", "wf0175wtavgpsc", "volfractgt2wtavg", "cec7clayratiowtavg"))
 lp.lo <- melt(lp.sub, measure.vars=c("noncarbclaywtavg", "claytotwtavg", "le0to100", "wf0175wtavgpsc", "volfractgt2wtavg", "cec7clayratiowtavg"))
@@ -97,7 +97,8 @@ lp.5n <- ddply(lp.lo, .(variable), .fun = sum5n)
 kable(cast(lp.5n, ~variable, value='range'), caption = "Summary of aggregate profile attributes")
 
 if (any(!is.na(lp.lo$value))) {
-  bwplot(variable ~ value, data=lp.lo, scales = list(x="free"), xlab = "percent", main = "Boxplots of aggregate profile attributes")
+  # bwplot(variable ~ value, data=lp.lo, scales = list(x="free"), xlab = "percent", main = "Boxplots of aggregate profile attributes")
+  qplot(variable, value, data = lp.lo, geom = "boxplot", ylab = "percent", main = "Boxplots of aggregate profile attributes")
   }         
 
 lp.lo1 <- melt(lp, id.vars="labpeiid", measure.vars = c("psctopdepth", "pscbotdepth"))
@@ -109,14 +110,16 @@ lp.5n <- ddply(lp.lo, .(variable), .fun = sum5n)
 
 kable(lp.5n, digits = 0, align = "c", caption = "Depths and thickness of particle size control section (min, 25th, median, 75th, max)(n)")
 
-bwplot(factor(variable, levels=levels(lp.lo$variable)[length(levels(lp.lo$variable)):1]) ~ value|variable, data=lp.lo, scales=list(x="free"), xlab="cm", horizontal=T, main = "Boxplots of particle size control section depths and thickness")          
+# bwplot(factor(variable, levels=levels(lp.lo$variable)[length(levels(lp.lo$variable)):1]) ~ value|variable, data=lp.lo, scales=list(x="free"), xlab="cm", horizontal=T, main = "Boxplots of particle size control section depths and thickness")
+
+qplot(variable, value, data = lp.lo, geom = "boxplot", ylab = "cm", main = "Boxplots of particle size control section depths and thickness") + facet_wrap(~variable, scales = "free", ncol = 4)
 
 ```
 
 
 ### Summary of soil horizons
 
-```{r, echo=FALSE, results='asis'}
+```{r, echo=FALSE, results='asis', warning=FALSE}
 kable(addmargins(table(lh$genhz, lh$hzname)), digits = 0, caption = "Horizon designations vs generic horizon designations (counts)")
 
 
@@ -130,7 +133,10 @@ lh.c <- cast(lh.5n, genhz ~ variable, value = "range")
 
 kable(lh.c, digits = 0, align = "c", caption = "Depths and thickness of generic horizons (min, 25th, median, 75th, max)(n)")
 
-bwplot(factor(genhz, levels=levels(lh$genhz)[length(levels(lh$genhz)):1]) ~ value|variable, data=lh.lo, scales=list(x="free"), xlab="cm", horizontal=T, main = "Boxplots of horizon depths and thickness")          
+# bwplot(factor(genhz, levels=levels(lh$genhz)[length(levels(lh$genhz)):1]) ~ value|variable, data=lh.lo, scales=list(x="free"), xlab="cm", horizontal=T, main = "Boxplots of horizon depths and thickness")          
+
+qplot(genhz, value, data = lh.lo, geom = "boxplot", ylab = "cm", main = "Boxplots of horizon depths and thickness") + facet_wrap(~variable, scales = "free", ncol = 4)
+
 ```        
 
 
@@ -157,11 +163,11 @@ for (i in seq(times)){
 nh <- ncol(lh.num)/2.5
 ```
 
-```{r, echo=FALSE, fig.height=nh}
+```{r, echo=FALSE, fig.height=nh, warning=FALSE, fig.width=8}
 
-lh.lo$genhz <- factor(lh.lo$genhz, levels = levels(lh.lo$genhz)[length(levels(lh.lo$genhz)):1])
+# bwplot(factor(lh.lo$genhz, levels = levels(lh.lo$genhz)[length(levels(lh.lo$genhz)):1]) ~ value|variable, data = lh.lo, scales=list(x="free"), main = "Box plots of numeric variables by generic horizon")  
 
-bwplot(genhz ~ value|variable, data = lh.lo, scales=list(x="free"), main = "Box plots of numeric variables by generic horizon")  
+qplot(genhz, value, data = lh.lo, geom = "boxplot", main = "Boxplots of numeric variables by generic horizon") + facet_wrap(~variable, scales = "free", ncol = 4)
 
 ```
 
