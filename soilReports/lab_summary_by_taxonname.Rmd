@@ -88,7 +88,7 @@ title("Soil profile plots")
 ## Range in characteristics for NCSS pedon lab data
 ### Summary of soil profiles
 Five number summary (min, 25th, median, 75th, max)(percentiles)
-```{r, echo=FALSE, results='asis', warning=FALSE}
+```{r, echo=FALSE, results='asis', warning=FALSE, fig.width=8}
 # Summarize site data
 lp.sub <- subset(lp, select=c("noncarbclaywtavg", "claytotwtavg", "le0to100", "wf0175wtavgpsc", "volfractgt2wtavg", "cec7clayratiowtavg"))
 lp.lo <- melt(lp.sub, measure.vars=c("noncarbclaywtavg", "claytotwtavg", "le0to100", "wf0175wtavgpsc", "volfractgt2wtavg", "cec7clayratiowtavg"))
@@ -110,16 +110,18 @@ lp.5n <- ddply(lp.lo, .(variable), .fun = sum5n)
 
 kable(lp.5n, digits = 0, align = "c", caption = "Depths and thickness of particle size control section (min, 25th, median, 75th, max)(n)")
 
-# bwplot(factor(variable, levels=levels(lp.lo$variable)[length(levels(lp.lo$variable)):1]) ~ value|variable, data=lp.lo, scales=list(x="free"), xlab="cm", horizontal=T, main = "Boxplots of particle size control section depths and thickness")
-
+if (length(na.exclude(lp.thk$thickness)) > 2){
 qplot(variable, value, data = lp.lo, geom = "boxplot", ylab = "cm", main = "Boxplots of particle size control section depths and thickness") + facet_wrap(~variable, scales = "free", ncol = 4)
+}
 
+# bwplot(factor(variable, levels=levels(lp.lo$variable)[length(levels(lp.lo$variable)):1]) ~ value|variable, data=lp.lo, scales=list(x="free"), xlab="cm", horizontal=T, main = "Boxplots of particle size control section depths and thickness")
+  
 ```
 
 
 ### Summary of soil horizons
 
-```{r, echo=FALSE, results='asis', warning=FALSE}
+```{r, echo=FALSE, results='asis', warning=FALSE, fig.width=8}
 kable(addmargins(table(lh$genhz, lh$hzname)), digits = 0, caption = "Horizon designations vs generic horizon designations (counts)")
 
 
@@ -135,7 +137,7 @@ kable(lh.c, digits = 0, align = "c", caption = "Depths and thickness of generic 
 
 # bwplot(factor(genhz, levels=levels(lh$genhz)[length(levels(lh$genhz)):1]) ~ value|variable, data=lh.lo, scales=list(x="free"), xlab="cm", horizontal=T, main = "Boxplots of horizon depths and thickness")          
 
-qplot(genhz, value, data = lh.lo, geom = "boxplot", ylab = "cm", main = "Boxplots of horizon depths and thickness") + facet_wrap(~variable, scales = "free", ncol = 4)
+qplot(genhz, value, data = lh.lo, geom = "boxplot", ylab = "cm", main = "Boxplots of horizon depths and thickness") + facet_wrap(~variable, scales = "free")
 
 ```        
 
