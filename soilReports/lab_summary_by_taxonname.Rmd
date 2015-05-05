@@ -8,7 +8,7 @@ series <- "Lewisburg"
 # load libraries
 library(aqp)
 library(soilDB)
-library(reshape)
+library(reshape2)
 library(plyr)
 library(knitr)
 library(lattice)
@@ -94,9 +94,9 @@ lp.sub <- subset(lp, select=c("noncarbclaywtavg", "claytotwtavg", "le0to100", "w
 lp.lo <- melt(lp.sub, measure.vars=c("noncarbclaywtavg", "claytotwtavg", "le0to100", "wf0175wtavgpsc", "volfractgt2wtavg", "cec7clayratiowtavg"))
 lp.5n <- ddply(lp.lo, .(variable), .fun = sum5n)
 
-kable(cast(lp.5n, ~variable, value='range'), caption = "Summary of aggregate profile attributes")
+kable(lp.5n, caption = "Summary of aggregate profile attributes")
 
-if (any(!is.na(lp.lo$value))) {
+if (length(na.exclude(lp.lo)) > 6) {
   # bwplot(variable ~ value, data=lp.lo, scales = list(x="free"), xlab = "percent", main = "Boxplots of aggregate profile attributes")
   qplot(variable, value, data = lp.lo, geom = "boxplot", ylab = "percent", main = "Boxplots of aggregate profile attributes")
   }         
@@ -110,7 +110,7 @@ lp.5n <- ddply(lp.lo, .(variable), .fun = sum5n)
 
 kable(lp.5n, digits = 0, align = "c", caption = "Depths and thickness of particle size control section (min, 25th, median, 75th, max)(n)")
 
-if (length(na.exclude(lp.thk$thickness)) > 2){
+if (length(na.exclude(lp.thk$thickness)) > 1){
 qplot(variable, value, data = lp.lo, geom = "boxplot", ylab = "cm", main = "Boxplots of particle size control section depths and thickness") + facet_wrap(~variable, scales = "free", ncol = 4)
 }
 
@@ -131,7 +131,7 @@ genhz.lo <- melt(genhz.thk, id.vars="genhz", measure.vars="thickness")
 lh.lo <- melt(lh, id.vars = "genhz", measure.vars = c("hzdept", "hzdepb"))
 lh.lo <- rbind(lh.lo, genhz.lo)
 lh.5n <- ddply(lh.lo, .(variable, genhz), .fun = sum5n)
-lh.c <- cast(lh.5n, genhz ~ variable, value = "range")
+lh.c <- dcast(lh.5n, genhz ~ variable, value.var = "range")
 
 kable(lh.c, digits = 0, align = "c", caption = "Depths and thickness of generic horizons (min, 25th, median, 75th, max)(n)")
 
@@ -151,7 +151,7 @@ lh.num <- lh[c(12:(ncol(lh)-4), ncol(lh)-1, ncol(lh))]
 lh.num <- Filter(f = function(x) !all(is.na(x)), x = lh.num)
 lh.lo <- melt(lh.num, id.vars="genhz", measure.vars=names(lh.num)[c(1:(ncol(lh.num)-1))])
 lh.5n <- ddply(lh.lo, .(variable, genhz), .fun=sum5n)
-lh.c <- cast(lh.5n, genhz~variable, value='range')
+lh.c <- dcast(lh.5n, genhz~variable, value.var = "range")
 
 n <- ncol(lh.c)-1
 interval <- 4
