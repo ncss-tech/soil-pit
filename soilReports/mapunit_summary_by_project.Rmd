@@ -18,6 +18,7 @@ pd <- paste0(dir, office, "/")
 rd <- paste0(dir, "11REGION/")
 shp <- paste0(abbreviate(project, 30))
 cache <- paste0(pd, "cache/", shp, ".shp")
+source("report_functions.R")
 ```
 
 
@@ -122,15 +123,6 @@ mapunit.summary<-function(project, samplePercent){
   return(data.l)
 }
 
-sum5n <- function(x) {
-  variable <- unique(x$variable)
-  v <- na.omit(x$value) # extract column, from long-formatted input data
-  precision <- if(variable == 'Circularity') 1 else 0
-  ci <- quantile(v, na.rm=TRUE, probs=p) 
-  d <- data.frame(min=ci[1], low=ci[2], rv=ci[3], high=ci[4], max=ci[5], stringsAsFactors=FALSE) # combine into DF
-  d$range <- with(d, paste0("(", paste0(round(c(min, low, rv, high, max), precision), collapse=', '), ")")) # add 'range' column for pretty-printing
-  return(d[6])
-}
 
 data.l <- mapunit.summary(project, samplePercent)
 data <- data.l$data

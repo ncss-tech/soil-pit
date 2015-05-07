@@ -5,7 +5,7 @@ output:
 # Pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Lewisburg"
+series <- "Crosby"
 ```
 
 
