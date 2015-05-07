@@ -1,7 +1,7 @@
 # Lab pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Lewisburg"
+series <- "Crosby"
 ```
 
 ```{r load packages, include=FALSE}
@@ -32,7 +32,7 @@ h <- horizons(f)
 s <- site(f)
 
 names(lh) <- unlist(strsplit(names(lh), "measured"))
-lh$cec7Clay <- lh$cec7 / lh$claytot
+lh$cec7clay <- lh$cec7 / (lh$claytot - lh$claycarb)
 
 for (i in seq(nrow(lh))){
   if (is.na(lh$hzname[i])) {lh$hzname[i] <-lh$hznameoriginal[i]}
@@ -54,8 +54,8 @@ h <- data.frame(lapply(h, na_replace), stringsAsFactors = FALSE)
 # Function
 sum5n <- function(x) {
   variable <- unique(x$variable)
-  precision.vars <- c('phfield', 'ph1to1h2o', 'ph01mcacl2', 'phoxidized', 'ph2osoluble', 'ecec', 'cec7', 'cecsumcations', 'sumbases', 'extracid', 'dbthirdbar', 'dbovendry', 'wthirdbarclod', 'wfifteenbar', 'wretentiondiffws', 'wfifteenbartoclay', 'cec7Clay')
-  precision.table <- c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 2)
+  precision.vars <- c('phfield', 'ph1to1h2o', 'ph01mcacl2', 'phoxidized', 'ph2osoluble', 'ecec', 'cec7', 'cecsumcations', 'sumbases', 'extracid', 'dbthirdbar', 'dbovendry', 'wthirdbarclod', 'wfifteenbar', 'wretentiondiffws', 'wfifteenbartoclay', 'cec7clay', "cec7clayratiowtavg")
+  precision.table <- c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2)
   precision <- if(variable %in% precision.vars) precision.table[match(variable, precision.vars)] else 0
   n <- length(na.omit(x$value))
   ci <- data.frame(rbind(quantile(x$value, na.rm = TRUE, probs = p)))
@@ -96,7 +96,7 @@ lp.5n <- ddply(lp.lo, .(variable), .fun = sum5n)
 
 kable(lp.5n, caption = "Summary of aggregate profile attributes")
 
-if (length(na.exclude(lp.lo)) > 6) {
+if (nrow(na.exclude(lp.lo)) > 6) {
   # bwplot(variable ~ value, data=lp.lo, scales = list(x="free"), xlab = "percent", main = "Boxplots of aggregate profile attributes")
   qplot(variable, value, data = lp.lo, geom = "boxplot", ylab = "percent", main = "Boxplots of aggregate profile attributes")
   }         
