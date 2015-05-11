@@ -11,52 +11,47 @@ geodatabase <- "RTSD_Region_11_IND_FY15.gdb"
 office <- "11IND"
 
 # Defaults
-samplePercent <- 100
+samplePercent <- 25
 p <- c(0, 0.25, 0.5, 0.75, 1)
 
 pd <- paste0(dir, office, "/")
 rd <- paste0(dir, "11REGION/")
-cache <- paste0(pd, "cache/", shp, ".shp")
+dsn <- paste0(pd, "cache/", shp, ".shp")
+cache <- paste0(dsn, "_", samplePercent, ".Rdata")
 ```
 
 
 ```{r LoadPackages, include=F}
+library(knitr)
 library(circular)
-library(gdalUtils)
+library(maps)
 library(sp)
 library(raster)
 library(rgdal)
-library(maps)
 library(plyr)
-library(reshape2)
 library(ggplot2)
-library(knitr)
-library(lattice)
-
+library(reshape2)
 
 source("report_functions.R")
 ```
 ```{r map unit summary function, echo=FALSE}
 ## local functions
-if (!file.exists(paste0(cache, "_", samplePercent, ".Rdata"))){
+if (!file.exists(cache)){
   sapolygon <- readOGR(dsn = paste0(pd, geodatabase), layer = "SAPOLYGON", encoding = "OpenFileGDB")
-  mupolygon <- readOGR(dsn = cache, layer = shp, encoding="ESRI Shapefile")
+  mupolygon <- readOGR(dsn = dsn, layer = shp, encoding = "ESRI Shapefile")
   mupolygon@data$Acres <- mupolygon@data$SHAPE_Area * 0.000247105
   mupolygon@data$Circularity <- mupolygon@data$SHAPE_Leng / (2 * sqrt(mupolygon@data$SHAPE_Area / pi) * pi)
   n <- sum(data.frame(mupolygon)$SHAPE_Area) / 900 * samplePercent / 100
   
   # Sample soil map unit
   mupolygon.s <- spsample(mupolygon, n = n, "stratified")
-  
   geodata <- raster_extract(mupolygon.s)
-  
   mapunit.df <- cbind(mupolygon.s, over(mupolygon.s, mupolygon))
-  
   data <- cbind(mapunit.df[c("AREASYMBOL", "MUSYM")], geodata)
 
   data.l <- list(data = data, mupolygon = mupolygon, sapolygon = sapolygon)
-  save(data.l, file=paste0(cache, "_", samplePercent, ".Rdata"))
-} else load(file = paste0(cache, "_", samplePercent, ".Rdata")) #load cache file
+  save(data.l, file = cache)
+} else load(file = cache) #load cache file
 
 
 data <- data.l$data
@@ -73,7 +68,7 @@ data <- rbind(data2, data)
 ```
 
 
-### Project Name
+### Shapefile Name
 ```{r project name, echo=FALSE}
 shp
 ```

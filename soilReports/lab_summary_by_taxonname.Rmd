@@ -33,6 +33,7 @@ s <- site(f)
 
 names(lh) <- unlist(strsplit(names(lh), "measured"))
 lh$cec7clay <- lh$cec7 / (lh$claytot - lh$claycarb)
+lp$cec7clayratiowtavg <- lp$cec7clayratiowtavg * 100
 
 for (i in seq(nrow(lh))){
   if (is.na(lh$hzname[i])) {lh$hzname[i] <-lh$hznameoriginal[i]}
@@ -55,7 +56,7 @@ h <- data.frame(lapply(h, na_replace), stringsAsFactors = FALSE)
 sum5n <- function(x) {
   variable <- unique(x$variable)
   precision.vars <- c('phfield', 'ph1to1h2o', 'ph01mcacl2', 'phoxidized', 'ph2osoluble', 'ecec', 'cec7', 'cecsumcations', 'sumbases', 'extracid', 'dbthirdbar', 'dbovendry', 'wthirdbarclod', 'wfifteenbar', 'wretentiondiffws', 'wfifteenbartoclay', 'cec7clay', "cec7clayratiowtavg")
-  precision.table <- c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2)
+  precision.table <- c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 0)
   precision <- if(variable %in% precision.vars) precision.table[match(variable, precision.vars)] else 0
   n <- length(na.omit(x$value))
   ci <- data.frame(rbind(quantile(x$value, na.rm = TRUE, probs = p)))
@@ -137,7 +138,7 @@ kable(lh.c, digits = 0, align = "c", caption = "Depths and thickness of generic 
 
 # bwplot(factor(genhz, levels=levels(lh$genhz)[length(levels(lh$genhz)):1]) ~ value|variable, data=lh.lo, scales=list(x="free"), xlab="cm", horizontal=T, main = "Boxplots of horizon depths and thickness")          
 
-qplot(genhz, value, data = lh.lo, geom = "boxplot", ylab = "cm", main = "Boxplots of horizon depths and thickness") + facet_wrap(~variable, scales = "free")
+qplot(genhz, value, data = lh.lo, geom = "boxplot", ylab = "cm", main = "Boxplots of horizon depths and thickness") + facet_wrap(~variable, scales = "free") + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
 
 ```        
 
@@ -169,7 +170,7 @@ nh <- ncol(lh.num)/2.5
 
 # bwplot(factor(lh.lo$genhz, levels = levels(lh.lo$genhz)[length(levels(lh.lo$genhz)):1]) ~ value|variable, data = lh.lo, scales=list(x="free"), main = "Box plots of numeric variables by generic horizon")  
 
-qplot(genhz, value, data = lh.lo, geom = "boxplot", main = "Boxplots of numeric variables by generic horizon") + facet_wrap(~variable, scales = "free", ncol = 4)
+qplot(genhz, value, data = lh.lo, geom = "boxplot", main = "Boxplots of numeric variables by generic horizon") + facet_wrap(~variable, scales = "free", ncol = 4) + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
 
 ```
 
