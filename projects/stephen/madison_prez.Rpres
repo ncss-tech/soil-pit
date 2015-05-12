@@ -1,45 +1,63 @@
 NASIS and R: a marriage
 ========================================================
-author: Stephen Roecker, Dylan Beaudette, Jay Skovlin, Skye Willis
-date: 
+author: Stephen Roecker, Dylan Beaudette, Jay Skovlin, Skye Wills
+date: 6/1/2015
+
 
 Data
 ========================================================
 
-All soil research projects generate data, but where does it go?
+**All soil research projects generate data, but where does it go?**
 
-1. Text files
-  - most likely Excel files (sad but true)
-2. Database
+* Text files
+    * most likely Excel files (sad but true)
+* Database
     * Access
-    * Enterprise Server (MS SQL Server, PostgreSQL)
+    * Enterprise Servers (MS SQL Server, PostgreSQL)
+
+```{r, echo=FALSE}
+testing <- data.frame(site_id = 1:4, horizon = LETTERS[c(1, 2, 2, 3)], clay_pct = c(5, 8, 10, 2))
+kable(testing)
+```
+
 
 NRCS soil databases
 ========================================================
 
-1. Text files
+* Text files (more like text boxes)
     * Official Series Descriptions (OSD)
-    * Ecological Sites Descriptions (ESD)
-2. Databases
-    * NCSS Soil Characterization Database (Access)
+    * Ecological Site Descriptions (ESD)
+* Databases
+    * Soil Characterization Database (Access)
     * National Soil Information System (NASIS) (SQL Server)
-        * SSURGO (NASIS snapshot)
-            * Soil Data Access (SDA)
+        * SSURGO and Soil Data Access (SDA) (snapshots) 
         * STASTGO2
-      
+
+
+Tools for interacting with NASIS
+========================================================
+* Analysis
+    1. Excel (again !!!, sometimes this is me)
+    2. Pedon PC Plus / Analysis PC
+    3. NASIS and Access
+    4. R
+* Public consumption of SSURGO
+    1. SoilWeb
+    2. Web Soil Survey
+    3. Soil Data Viewer
+    4. SSURGO file geodatabases
+    5. R
+
+_* sorted by user sophistication_
+    
+    
+
 
 NASIS is where it's at
 ========================================================
 Point data vs. Aggregate data
 
-Tools for interacting with NASIS
+
+Question ?
 ========================================================
-1. Analysis
-    * Pedon PC Plus / Analysis PC
-    * NASIS
-    * R
-2. Public consumption of SSURGO
-    * Web Soil Survey
-    * Soil Data Viewer
-    * SSURGO file geodatabases
-    * SoilWeb
+**How many Professors heard teach a course in Data Analysis?**
