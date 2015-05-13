@@ -1,24 +1,14 @@
-NASIS and R: a marriage
+Digital summaries of legacy pedon descriptions
 ========================================================
 author: Stephen Roecker, Dylan Beaudette, Jay Skovlin, Skye Wills
 date: 6/1/2015
 
 
-Data
+Legacy data
 ========================================================
 
 **All soil research projects generate data, but where does it go?**
 
-* Text files
-    * most likely Excel files (sad but true)
-* Database
-    * Access
-    * Enterprise Servers (MS SQL Server, PostgreSQL)
-
-```{r, echo=FALSE}
-testing <- data.frame(site_id = 1:4, horizon = LETTERS[c(1, 2, 2, 3)], clay_pct = c(5, 8, 10, 2))
-kable(testing)
-```
 
 
 NRCS soil databases
