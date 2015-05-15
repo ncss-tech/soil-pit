@@ -1,0 +1,102 @@
+Manifest-Version: 1.0
+Created-By: 1.0 (Android)
+
+Name: res/drawable-xhdpi/ic_launcher.png
+SHA1-Digest: QJ48ljb6HlVscP+VykNth3AtFzE=
+
+Name: res/layout/fragment_section_video2.xml
+SHA1-Digest: nIHmCBSBVOMBNug2ZBdBZ1gQBdk=
+
+Name: res/drawable-hdpi/ic_launcher.png
+SHA1-Digest: qlu+kUHuvtHN4PmW/GDFl+P0+OA=
+
+Name: res/layout/fragment_section_dummy.xml
+SHA1-Digest: 2E41q2K0KwR0OSPLdlfHzAXCSIo=
+
+Name: res/drawable-xxhdpi/residue.jpg
+SHA1-Digest: ta9ggpdC+u2D9bU39HRnu1jlDDE=
+
+Name: res/layout/fragment_collection_quiz4.xml
+SHA1-Digest: ap/mfhWojdIqPmIuCK8oQISUClU=
+
+Name: resources.arsc
+SHA1-Digest: cVpkUBGV8BAEklY3cHChF1KDK3Y=
+
+Name: AndroidManifest.xml
+SHA1-Digest: w8eL9lXiKOUzDfxcpbI7PI7v6a4=
+
+Name: res/layout/activity_collection_demo.xml
+SHA1-Digest: VVex0cKXzxunNqV2ndJm7u9/Uv4=
+
+Name: res/layout/fragment_section_document.xml
+SHA1-Digest: R7sunFU9hqpzP8NP18611+PTHYU=
+
+Name: res/drawable-xxhdpi/roots.jpg
+SHA1-Digest: yY+lmdmT8WcSg1VQhjsRTzwTl7g=
+
+Name: res/drawable-xxhdpi/crusting.jpg
+SHA1-Digest: pw/O4WsLgJaFDKiRJSey227WJ7g=
+
+Name: res/layout/fragment_collection_object.xml
+SHA1-Digest: BHSVXq+0DmS+YQinLN4RTEIO4rU=
+
+Name: res/drawable-xxhdpi/salt.jpg
+SHA1-Digest: 0YzsLV8rdy8ra2Q2q6zRLiwfO3c=
+
+Name: res/drawable-xxhdpi/erosion.jpg
+SHA1-Digest: mcPoKp7LaaxK7q9+V5STpcc1sQk=
+
+Name: res/layout/fragment_collection_review.xml
+SHA1-Digest: U4OgXOjRcZEiI8QxO3aW8UJsUtE=
+
+Name: res/drawable-xxhdpi/organic.jpg
+SHA1-Digest: I323WvS+J2I5klPM5hTyFI+06jU=
+
+Name: res/layout/fragment_collection_quiz3.xml
+SHA1-Digest: Ko33ZBRIDWvYBFWGWzwO82Y+ijw=
+
+Name: res/layout/fragment_section_launchpad.xml
+SHA1-Digest: OOMjw9uaBWU/YWzr9fxKN4qS73o=
+
+Name: res/drawable-xxhdpi/img010.jpg
+SHA1-Digest: y8GKk47XydENtI5TE3XZHw2ArxI=
+
+Name: classes.dex
+SHA1-Digest: DnvZjYTeaW0xRYCz0YboVao5YhU=
+
+Name: res/drawable-xxhdpi/compaction.jpg
+SHA1-Digest: 0gMHYfcJRAOPYrcUx8ETo3fW7i0=
+
+Name: res/layout/fragment_collection_quiz5.xml
+SHA1-Digest: jUOLbWJLIypGY+KrVKqbvGJN8bQ=
+
+Name: res/drawable-xxhdpi/ic_launcher.png
+SHA1-Digest: BuN46+BYehnUB5Vg8BeUAhlMngk=
+
+Name: res/menu/main.xml
+SHA1-Digest: r9aK99IZojJoOKTuHkdz2iiBFi4=
+
+Name: res/layout/fragment_collection_quiz1.xml
+SHA1-Digest: U0TNS1FRh2+63SAUSaZyT31taeQ=
+
+Name: res/drawable-mdpi/ic_launcher.png
+SHA1-Digest: 7YHftnxYtu5r3/hV8YcNXV3D4nc=
+
+Name: res/drawable-xxhdpi/crop_vigor.jpg
+SHA1-Digest: 8zJqDnp43+Ji0jtAl/UonNNQ56w=
+
+Name: res/drawable-xxhdpi/drainage.jpg
+SHA1-Digest: /UuNiNjX72Xdhks5GO4ZWTG7p+Y=
+
+Name: res/drawable-xxhdpi/earthworm.jpg
+SHA1-Digest: mXikihkSJ6wVr+LP+uo2o39KLik=
+
+Name: res/layout/activity_main.xml
+SHA1-Digest: dvAvzEA4gUERzAn73jzmmI2YDO4=
+
+Name: res/layout/fragment_section_video.xml
+SHA1-Digest: sEiRs8s+Bp5Ow2auD1rLfhI0DJw=
+
+Name: res/layout/fragment_collection_quiz2.xml
+SHA1-Digest: U6tAnfMFs1TeY2MD+7XsZfYn2Tk=
+
