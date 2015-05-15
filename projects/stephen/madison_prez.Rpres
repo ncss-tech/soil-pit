@@ -1,14 +1,51 @@
+```{r setup, echo=FALSE, results='hide'}
+opts_chunk$set(message=FALSE, warning=FALSE, dpi=120, fig.align='center', dev='CairoPNG', dev.args=list(pointsize=10), tidy=FALSE, tidy.opts=list(width.cutoff=100), cache=TRUE)
+library(knitr)
+options(stringsAsFactors=FALSE)
+```
+
 Digital summaries of legacy pedon descriptions
 ========================================================
 author: Stephen Roecker, Dylan Beaudette, Jay Skovlin, Skye Wills
 date: 6/1/2015
 
 
-Legacy data
+Legacy pedon data within the US
 ========================================================
 
-**All soil research projects generate data, but where does it go?**
+```{r, echo=FALSE, height=3}
+library(ggplot2)
+library(knitr)
 
+pedons <- c(577, 6152, 9517, 19058, 42587, 112182, 231609, 184913)
+year <- c("<1950s", "1950s", "1960s", "1970s", "1980s", "1990s", "2000s", "2010s")
+
+cat("total =", sum(pedons), ", ", "total lab pedons = ~64k")
+
+ggplot(data.frame(pedons, year), aes(x=year, y=pedons)) + geom_bar(stat="identity")
+
+# [5/14/2015 9:03 AM] Ferguson, Henry - NRCS, Lincoln, NE: 
+# That is a tough one
+# [5/14/2015 9:03 AM] Ferguson, Henry - NRCS, Lincoln, NE: 
+# Take 600,000 and subtract about 20 percent for duplicates
+# [5/14/2015 9:03 AM] Ferguson, Henry - NRCS, Lincoln, NE: 
+# You might subtract another 5 or 10 percent for pace holders of data.
+
+# [5/14/2015 9:04 AM] Ferguson, Henry - NRCS, Lincoln, NE: 
+#And there are lots of notes, so the total number of full pedon descriptions is probably between 300 and 350,000
+# [5/14/2015 9:04 AM] Ferguson, Henry - NRCS, Lincoln, NE: 
+# There are about 64,000 pedons with laboratory data (no duplicates counted)
+
+# [5/14/2015 10:04 AM] Ferguson, Henry - NRCS, Lincoln, NE: 
+# It is not so much that there were more pedons described as the fact that they were easier to input
+# [5/14/2015 10:04 AM] Ferguson, Henry - NRCS, Lincoln, NE: 
+# Pedon PC was developed in about 2005 and we got personal computers in about 1995
+# [5/14/2015 10:05 AM] Ferguson, Henry - NRCS, Lincoln, NE: 
+# So folks started to put the pedons in databases in the 1990's and then we imported them in the 2000's
+# [5/14/2015 10:05 AM] Ferguson, Henry - NRCS, Lincoln, NE: 
+# There also was a midset change from putting just select pedons into the database to collecting all point data in the database
+
+```
 
 
 NRCS soil databases
