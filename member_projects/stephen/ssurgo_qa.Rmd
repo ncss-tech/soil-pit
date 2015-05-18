@@ -1,0 +1,116 @@
+# Report of changes requiring SSURGO recertification
+
+```{r, echo=FALSE, eval=FALSE}
+# These figures don't compare with Alena's spreadsheets. Her spreadsheets have additional counties that aren't captured in the Project Record.
+
+setwd("I:/")
+
+library(plyr)
+
+# Summarize the NASIS web report "Identify surveys with projects ready to upload" for State Soil Scientists
+
+ssurgo.v <- c("ia.csv", "il.csv", "ks.csv", "in.csv", "mi.csv", "mn.csv", "mo.csv", "ne.csv", "oh.csv", "ok.csv", "sd.csv", "wi.csv")
+
+combine.df <- function(ssurgo.v){
+  l <- list()
+  l.s <- list()
+  l.l <- list()  
+  for(i in seq(ssurgo.v)){
+   l[[i]] <- read.csv(ssurgo.v[i])
+   l.s[[i]] <- subset(l[[i]], State.Responsible == "Indiana")
+   l.l[[i]] <- length(unique(l.s[[i]]$Area.Symbol))   
+  }
+  df <- ldply(l.s)
+  v <- unlist(l.l)
+  return(list(df=df, v=v))
+}
+
+nasis <- combine.df(ssurgo.v)
+nasis.df <- nasis$df
+
+length(unique(nasis.df$Project.Name)) # number of sdjr projects
+length(unique(nasis.df$Area.Symbol)) # number of ssa
+
+# Summarize DU report vs. Project_Record
+# Using the select by location function in ArcGIS I get a total of 99 counties need spatial recert, from the RTSD-SAPOLYGON, while 136 for the Region SSURGO
+# du.pr.m dataframe shows overlap between the DU report and Project Record Feature Class.
+# The DU report say 83 counties need to be updated, but the Project Record ID says 73.
+# When comparing the Project Record and SAPOLYGON for the Region I get 65 counties need spatial cert and an additional 8 need update outside our region
+```
+
+```{r, summarize geodatabase tabular changes, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, results='asis'}
+# This assumes no changes have been made to the ORIG columns, could run a check against an unedited copy. Need to add addition scripts to see if the number of MUSYM edited = the total number of MUSYM.
+library(plyr)
+library(xtable)
+
+# DU report
+du <- read.csv("C:/Users/stephen.roecker/Documents/du.csv", stringsAsFactors = FALSE) # du report
+du.r11 <- subset(du, State.Responsible == "Indiana" & Office == "11-ATL") # subset for Region 11
+
+office.n <- ddply(du.r11, .(Office), summarize, n=length(Project.Name)); # number of projects per office
+print(xtable(office.n, caption="Number of SDJR project per MLRA Office"), type="html", caption.placement="top")
+
+du.check <- ddply(du.r11, .(Office, p.name=abbreviate(Project.Name, 35), natmusym=nationalmusym), summarize, du.musym=paste(unique(musym), collapse=", ")) # project by natmusym and musym
+print(xtable(du.check, caption="Summary of proposed SDJR changes to SSURGO"), type="html", caption.placement="top")
+
+# national keys
+natkey <- read.csv("C:/Users/stephen.roecker/Documents/legkeys.csv", stringsAsFactor=FALSE)
+
+# geodatabase
+mupolygon <- read.csv("C:/Users/stephen.roecker/Documents/mupolygon.csv", stringsAsFactors=FALSE)
+id <- mupolygon$Editor_Field != ""
+edit <- mupolygon[id, ]
+id <- edit$MUSYM != edit$ORIG_MUSYM
+tab <- edit[id, ]
+tab <- merge(tab, natkey, by.x="ORIG_MUKEY", by.y="mukey")
+
+geo.check <- ddply(tab, .(ssa=AREASYMBOL, natmusym, ORIG_MUSYM), summarize, new.musym=paste(sort(unique(MUSYM)), collapse=", "), n.polygons=length(ORIG_MUSYM), acres = round(sum(Shape_Area*0.000247), 0))
+print(xtable(geo.check, caption="Summary of changes to the RTSD geodatabase by Soil Survey Area"), type="html", caption.placement="top")
+```
+
+```{r, checks}
+# Checks
+check1 <- merge(geo.check, du.check, by="natmusym", all.x=TRUE) # match geo.check to du.check
+check1 <- check1[order(check1$ssa, check1$p.name), c("Office", "ssa", "p.name", "natmusym", "ORIG_MUSYM", "new.musym", "du.musym", "n.polygons", "acres")] # order by p.name and resort columns
+row.names(check1) <- 1:nrow(check1) 
+# fix either by adding the fiscal year (i.e. 2015) to the sequence column in the Project Mapunit table, or by undoing unapproved changes to the RTSD geodatabase.
+print(check1) # Matches between the RTSD geodatabase to the digitizing unit report
+# Missing SDJR project names indicate either that the fiscal year hasn't been populated in the Project Mapunit table, or that the changes to the RTSD weren't approabed.
+
+id <- match(geo.check$natmusym, du.check$natmusym, incomparables=TRUE)
+geo.mis <- unique(geo.check$natmusym[is.na(id)]) # natmusym missing from geodatabase
+geo.mis # natmusym present in the RTSD geodatabase, but missing from the digitizing unit report
+length(geo.mis) # number of missing natmuysm
+
+id <- match(du.check$natmusym, geo.check$natmusym, incomparables=TRUE)
+du.mis <- unique(du.check$natmusym[is.na(id)]) # natmusym missing from du report
+du.mis # natmusym present in the digitizing unit report, but missing from the RTSD geodatabase
+# fix either by removing the fiscal year (i.e. 2015) from the sequence column in the Project Mapunit table, or by making the proposed SDJR changes to the RTSD geodatabase.
+length(du.mis) # number of missing natmusym
+```
+
+```{r, echo=FALSE, eval=FALSE}
+# Project Record
+pr <- read.csv("Region_11_Project_Record_09092014.txt")
+pr.c <- subset(pr, RECERT_NEEDED == "Yes")
+length(unique(pr.c$PROJECT_NAME)); # number of projects
+length(unique(pr.c$AREASYMBOL)); # number of ssa
+pr.c.n <- ddply(pr.c, .(PROJECT_NAME, RECERT_NEEDED), summarize, length(PROJECT_NAME)); # number of polygons per project
+pr.c.n2 <- ddply(pr.c, .(AREASYMBOL, RECERT_NEEDED), summarize, length(PROJECT_NAME)); # number of polygons per area
+names(pr.c.n2) <- c("AREASYMBOL", "RECERT_NEEDED", "nMUSYM")
+
+
+# Compare DU Report vs Project Record by SDJR projects
+du.pr.m <- merge(pr.c.n, du.r11.n, by.x="PROJECT_NAME", by.y="Project.Name",  all=T)
+names(du.pr.m) <- c("Project.Name", "Recert.Needed", "npolyons", "nMUSYM")
+write.csv(du.pr.m, "Region11_DUcert.csv")
+
+# compare RTSD-SAPOLYGON vs
+sa <- read.csv("SAPOLYGON.txt")
+sa.n <- ddply(sa, .(AREASYMBOL), summarize, length(AREASYMBOL)); # number of polygons per ssa
+names(sa.n) <- c("AREASYMBOL", "nSSA")
+sa.pr.m <- merge(sa.n, pr.c.n2, by="AREASYMBOL") # number of musym per ssa that need recert
+length(unique(sa.pr.m$AREASYMBOL)) # number of ssa within Region 11 needing recert 
+sa.pr.m2 <- merge(subset(sa.pr.m, select=c("AREASYMBOL", "nMUSYM")), pr.c.n2, by="AREASYMBOL", all=T) # number of musym per ssa that need recert, 65 ssa in Region 11 need recert and 8 in other regions
+write.csv(sa.pr.m2, "Region11_SAcert.csv")
+```
