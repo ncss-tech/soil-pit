@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item type="id" name="pager">false</item>
+    <item type="id" name="pager_title_strip">false</item>
+    <item type="id" name="textView4">false</item>
+    <item type="id" name="textView1">false</item>
+    <item type="id" name="editText1">false</item>
+    <item type="id" name="textView2">false</item>
+    <item type="id" name="editText2">false</item>
+    <item type="id" name="textView3">false</item>
+    <item type="id" name="editText3">false</item>
+    <item type="id" name="imageView1">false</item>
+    <item type="id" name="radioGroup1">false</item>
+    <item type="id" name="radio0">false</item>
+    <item type="id" name="radio1">false</item>
+    <item type="id" name="radio2">false</item>
+    <item type="id" name="listView1">false</item>
+    <item type="id" name="LinearLayout">false</item>
+    <item type="id" name="GridLayout">false</item>
+    <item type="id" name="scrollView1">false</item>
+    <item type="id" name="frame">false</item>
+    <item type="id" name="demo_collection_button">false</item>
+    <item type="id" name="demo_external_activity">false</item>
+    <item type="id" name="FrameLayout1">false</item>
+    <item type="id" name="videolist">false</item>
+    <item type="id" name="intent_list">false</item>
+    <item type="id" name="youtube_version_text">false</item>
+    <item type="id" name="about">false</item>
+</resources>
