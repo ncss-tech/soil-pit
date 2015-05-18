@@ -21,7 +21,7 @@ css: custom.css
 <ul style="color: white; font-size:75%;">
 <li>`aqp` version 1.8</li>
 <li>`soilDB` version 1.5-2</li>
-<li>`sharpshootR` version 0.7-2</li>
+<li>`sharpshootR` version NA</li>
 </ul>
 
 What is R?
@@ -186,179 +186,35 @@ Summarizing Data with Quantiles (Percentiles)
   - 5th, 50th, and 95th percentiles are low-rv-high values
   - no assumptions of distribution, simple interpretation
 
-<img src="ghl-aggregation-figure/quantiles-normal-dist-1.png" title="plot of chunk quantiles-normal-dist" alt="plot of chunk quantiles-normal-dist" style="display: block; margin: auto;" />
 
 
-Summarizing Data with Quantiles (Percentiles)
-========================================================
 
-- suggested basis for RIC: 
-  - 5th, 50th, and 95th percentiles are low-rv-high values
-  - no assumptions of distribution, simple interpretation
 
-<img src="ghl-aggregation-figure/quantiles-exp-dist-1.png" title="plot of chunk quantiles-exp-dist" alt="plot of chunk quantiles-exp-dist" style="display: block; margin: auto;" />
 
 
-A Sample Dataset
-=======================================================
 
-- 15 pedons correlated to the [Loafercreek](https://soilseries.sc.egov.usda.gov/OSD_Docs/L/LOAFERCREEK.html) soil series
-- Fine-loamy, mixed, superactive, thermic Ultic Haploxeralfs
-- Common soil formed on meta-volcanic rocks of the Sierra Nevada Foothills, MLRA 18
-- Included in the `soilDB` package for testing purposes
 
-<img src="ghl-aggregation-figure/load-data-1.png" title="plot of chunk load-data" alt="plot of chunk load-data" style="display: block; margin: auto;" />
 
-Consult the OSD for Ideas
-========================================================
-- Look up the series RIC if available
 
-![alt text](static-figures/RIC.png)
 
-- Horizons from the OSD may be a good starting point for GHL template
 
 
 
-Tabulate Horizon Designations
-========================================================
 
-- sort by frequency
 
-|  A| Bt1| Bt2| Bt3| Oi|  R| Cr| Crt| BA| BCt| Bt4| Bw| CBt| 2BCt| 2Bt3| 2CB| 2Cr| 2R|
-|--:|---:|---:|---:|--:|--:|--:|---:|--:|---:|---:|--:|---:|----:|----:|---:|---:|--:|
-| 15|  15|  15|  10|  9|  9|  8|   5|  3|   3|   2|  2|   2|    1|    1|   1|   1|  1|
 
-- sort alphabetically
 
-| 2BCt| 2Bt3| 2CB| 2Cr| 2R|  A| BA| BCt| Bt1| Bt2| Bt3| Bt4| Bw| CBt| Cr| Crt| Oi|  R|
-|----:|----:|---:|---:|--:|--:|--:|---:|---:|---:|---:|---:|--:|---:|--:|---:|--:|--:|
-|    1|    1|   1|   1|  1| 15|  3|   3|  15|  15|  10|   2|  2|   2|  8|   5|  9|  9|
 
-- plot ranges in horizon depths
-<img src="ghl-aggregation-figure/horizonation-mid-point-1.png" title="plot of chunk horizonation-mid-point" alt="plot of chunk horizonation-mid-point" style="display: block; margin: auto;" />
 
 
-Summarize Available Soil Properties
-========================================================
 
 
-<img src="ghl-aggregation-figure/univariate-eval-clay-1.png" title="plot of chunk univariate-eval-clay" alt="plot of chunk univariate-eval-clay" style="display: block; margin: auto;" />
 
-<img src="ghl-aggregation-figure/univariate-eval-rf-1.png" title="plot of chunk univariate-eval-rf" alt="plot of chunk univariate-eval-rf" style="display: block; margin: auto;" />
 
 
-Determination of a GHL Template and Rules
-========================================================
-- pattern matching via [regular expression](http://www.regexr.com/) (REGEX)
- - this is where most micro-correlation decisions are defined
 
-- GHL and rules for our sample dataset:
-  - **A**: `^A$|Ad|Ap`
-  - **Bt1**: `Bt1$`
-  - **Bt2**: `^Bt2$`
-  - **Bt3**: `^Bt3|^Bt4|CBt$|BCt$|2Bt|2CB$|^C$`
-  - **Cr**: `Cr`
-  - **R**: `R`
 
-- special characters in REGEX rules: 
- - `|` = "or"
- - `^` = anchor to left-side
- - `$` = anchor to right-side
 
-
-
-
-
-
-Assignment of GHL
-========================================================
-
-- cross-tabulation of original names (columns) vs. GHL (rows)
-- be sure to check the `not-used` row
-
-
-|         | 2BCt| 2Bt3| 2CB| 2Cr| 2R|  A| BA| BCt| Bt1| Bt2| Bt3| Bt4| Bw| CBt| Cr| Crt| Oi|  R| Sum|
-|:--------|----:|----:|---:|---:|--:|--:|--:|---:|---:|---:|---:|---:|--:|---:|--:|---:|--:|--:|---:|
-|A        |    0|    0|   0|   0|  0| 15|  0|   0|   0|   0|   0|   0|  0|   0|  0|   0|  0|  0|  15|
-|Bt1      |    0|    0|   0|   0|  0|  0|  0|   0|  15|   0|   0|   0|  0|   0|  0|   0|  0|  0|  15|
-|Bt2      |    0|    0|   0|   0|  0|  0|  0|   0|   0|  15|   0|   0|  0|   0|  0|   0|  0|  0|  15|
-|Bt3      |    1|    1|   1|   0|  0|  0|  0|   3|   0|   0|  10|   2|  0|   2|  0|   0|  0|  0|  20|
-|Cr       |    0|    0|   0|   1|  0|  0|  0|   0|   0|   0|   0|   0|  0|   0|  8|   5|  0|  0|  14|
-|R        |    0|    0|   0|   0|  1|  0|  0|   0|   0|   0|   0|   0|  0|   0|  0|   0|  0|  9|  10|
-|not-used |    0|    0|   0|   0|  0|  0|  3|   0|   0|   0|   0|   0|  2|   0|  0|   0|  9|  0|  14|
-|Sum      |    1|    1|   1|   1|  1| 15|  3|   3|  15|  15|  10|   2|  2|   2|  8|   5|  9|  9| 103|
-
-
-
-Evaluation of GHL
-========================================================
-
-- plot profiles with horizons colored according to GHL
-- does it make sense?
-- what about horizons in the `not-used` group?
-
-<img src="ghl-aggregation-figure/plot-ghl-1-1.png" title="plot of chunk plot-ghl-1" alt="plot of chunk plot-ghl-1" style="display: block; margin: auto;" />
-
-
-Evaluation of GHL
-========================================================
-- plot range in GHL depths, check for overlap
-
-<img src="ghl-aggregation-figure/eval-ghl-2-1.png" title="plot of chunk eval-ghl-2" alt="plot of chunk eval-ghl-2" style="display: block; margin: auto;" />
-
-
-Evaluation of GHL
-========================================================
-- multivariate summary of depth, clay content, and RF volume
-
-
-
-<img src="ghl-aggregation-figure/mds-plot-1.png" title="plot of chunk mds-plot" alt="plot of chunk mds-plot" style="display: block; margin: auto;" />
-
-Importing GHL to NASIS
-========================================================
-- generalized horizon labels (so far) are stored in R session
-- Use an R script to create a text file, called `horizon_agg.txt`, of horizon ID's and corresponding GHL assignments
-- run the NASIS calculation to update the comp layer id field with the GHL for each pedon horizon
-- Calculations/Validations --> Pedon Horizon 
-  - 'Update horizon group aggregations using a text file'
-  - Calculation will look for the `horizon_agg.txt file` in: `C:/data/horizon_agg.txt`
-  - Calculation will load the file and update the comp layer id field
-- manual adjustments in NASIS: outliers, special cases, etc.
-
-[&#8594;&nbsp;full instructions here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/gen-hz-assignment.html?root=aqp)
-
-
-
-
-Demonstration of Several Report Styles
-========================================================
-
-- Stephen's Examples: 
-  - [Lecyr Pedon Report](https://github.com/sroecker01/soil-pit/blob/master/examples/lecyr_pedon_report.md)
-  - [Genesee Lab Data Report](https://github.com/sroecker01/soil-pit/blob/master/examples/genesee_lab_report.md)
-  - [Cincinanti Map Unit Report](https://github.com/sroecker01/soil-pit/blob/master/examples/cincinnati_mapunit_report.md)
-
-- Dylan's Examples:
-  - [Loafercreek Pedon Report](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/example-reports/loafercreek.html?root=aqp)
-  - [Dunstone Pedon Report](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/example-reports/dunstone.html?root=aqp)
-  - [Amador Pedon Report](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/example-reports/amador.html?root=aqp)
-
-
-Thank You
-========================================================
-**Questions, comments, ideas**
-<br><br>
-
-**R resources for pedologists**
-- <span class="link-to-details">&#8594;&nbsp;[NCSS Job-Aids](http://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/edu/ncss/?cid=nrcs142p2_054322)</span>
-- <span class="link-to-details">&#8594;&nbsp;[aqp tutorials](http://aqp.r-forge.r-project.org/)</span>
-- <span class="link-to-details">&#8594;&nbsp;[Statistical data analysis for pedologists](http://www2.gru.wvu.edu/~tdavello/files/stats/table_of_contents.html)
-- <span class="link-to-details">&#8594;&nbsp;[Dylan Beaudette's blog](http://casoilresource.lawr.ucdavis.edu/blog/)
-- <span class="link-to-details">&#8594;&nbsp;[soil-pit Github repository](https://github.com/sroecker01/soil-pit)
-<br><br>
-
-**Additional AQP Contributors:**
-- Pierre Roudier (Landcare Research)
-
-
+```
+Error in loadNamespace(name) : there is no package called 'Cairo'
+```
