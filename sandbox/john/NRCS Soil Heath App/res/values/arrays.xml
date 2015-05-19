@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="document_list">
+        <item>Guidelines for Soil Quality Assessment in Conservation Planning</item>
+        <item>Rangeland Soil Quality Information Sheets</item>
+        <item>Pastureland Information Sheets</item>
+        <item>Managing Soil Organic Matter: The Key to Air and Water Quality</item>
+        <item>Soil Quality Test Kit</item>
+        <item>Soil Quality Card</item>
+        <item>Soil Quality Information Sheets</item>
+        <item>Soil Quality Thunderbook</item>
+        <item>Soil Quality Physical Indicators: Selecting Dynamic Soil Properties to Assess Soil Function</item>
+        <item>Soil Quality - Agronomy Technical Notes</item>
+        <item>Soil Quality - Urban Technical Notes</item>
+        <item>Soil Biology Technical Notes</item>
+        <item>Education and Outreach Publications</item>
+    </string-array>
+    <string-array name="video_list">
+        <item>The Secrets of Soil</item>
+        <item>Aggregate Stability</item>
+        <item>Soil Health Update</item>
+    </string-array>
+    <string-array name="weblink">
+        <item>http://www.google.com</item>
+        <item>http://www.usda.gov</item>
+        <item>http://www.youtube.com</item>
+    </string-array>
+    <string-array name="review">
+        <item></item>
+    </string-array>
+    <string-array name="myStringArray">
+        <item>Documents</item>
+        <item>Videos</item>
+        <item>Quiz</item>
+    </string-array>
+</resources>

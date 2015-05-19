@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:scrollbarAlwaysDrawVerticalTrack="false" android:orientation="horizontal" android:id="@id/GridLayout" android:scrollbars="vertical" android:layout_width="960.0dip" android:layout_height="1280.0dip" android:layout_margin="2.0dip" android:columnCount="1"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <ImageView android:layout_gravity="center" android:id="@id/imageView1" android:layout_width="fill_parent" android:layout_height="wrap_content" android:src="@drawable/img010" android:scaleType="centerCrop" android:adjustViewBounds="true" android:contentDescription="@string/startpic" />
+    <ScrollView android:layout_gravity="center|top" android:id="@id/scrollView1" android:layout_width="fill_parent" android:layout_height="fill_parent">
+        <GridLayout android:layout_gravity="center_horizontal" android:id="@id/frame" android:layout_width="wrap_content" android:layout_height="wrap_content" android:columnCount="1">
+            <TextView android:textSize="30.0sp" android:textColor="@android:color/primary_text_dark" android:layout_gravity="center" android:id="@id/textView1" android:layout_marginTop="20.0dip" android:layout_column="0" android:text="@string/soilquestion" android:shadowColor="@android:color/black" android:shadowDx="2.0" android:shadowDy="2.0" android:shadowRadius="2.0" android:layout_row="0" />
+            <TextView android:textSize="20.0sp" android:textColor="@android:color/white" android:layout_gravity="center" android:id="@id/textView2" android:layout_width="250.0dip" android:layout_height="150.0dip" android:layout_marginTop="50.0dip" android:layout_column="0" android:text="@string/fewquestions" android:shadowColor="@android:color/black" android:shadowDx="1.0" android:shadowDy="1.0" android:shadowRadius="1.0" android:layout_row="1" />
+            <Button android:textColor="@android:color/primary_text_light" android:layout_gravity="center" android:id="@id/demo_collection_button" android:background="@android:drawable/btn_default" android:layout_width="150.0dip" android:layout_column="0" android:text="@string/start_quiz" android:layout_row="4" />
+            <Button android:textColor="@android:color/primary_text_light" android:layout_gravity="center" android:id="@id/demo_external_activity" android:background="@android:drawable/btn_default" android:layout_width="150.0dip" android:layout_column="0" android:text="@string/load_quiz" android:layout_row="5" style="android:buttonstyle" />
+        </GridLayout>
+    </ScrollView>
+</FrameLayout>

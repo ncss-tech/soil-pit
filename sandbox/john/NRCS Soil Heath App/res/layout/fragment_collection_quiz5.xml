@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <TextView android:textSize="25.0sp" android:id="@id/textView1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/question_text4" />
+    <ImageView android:id="@id/imageView1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@drawable/crusting" android:scaleType="center" android:adjustViewBounds="true" android:maxHeight="200.0dip" android:contentDescription="@string/document_text" />
+    <RadioGroup android:id="@id/radioGroup1" android:layout_width="wrap_content" android:layout_height="wrap_content">
+        <RadioButton android:id="@id/radio0" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" android:text="@string/compaction_l" />
+        <RadioButton android:id="@id/radio1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/compaction_m" />
+        <RadioButton android:id="@id/radio2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/compaction_h" />
+    </RadioGroup>
+</TableLayout>
