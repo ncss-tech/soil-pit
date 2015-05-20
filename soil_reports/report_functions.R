@@ -1,10 +1,12 @@
 
+precision.f <- function(x){
+  if (!all(is.na(x))) {y = str_length(str_split(format(max(x, na.rm = T), scientific=F), "\\.")[[1]][2])} else y = 0
+  if (is.na(y)) y = 0 else y = y
+}
 
 sum5n <- function(x, n = NULL) {
   variable <- unique(x$variable)
-  precision.vars <- c('phfield', 'ph1to1h2o', 'ph01mcacl2', 'phoxidized', 'ph2osoluble', 'ecec', 'cec7', 'cecsumcations', 'sumbases', 'extracid', 'dbthirdbar', 'dbovendry', 'wthirdbarclod', 'wfifteenbar', 'wretentiondiffws', 'wfifteenbartoclay', 'cec7Clay')
-  precision.table <- c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 2)
-  precision <- if(variable %in% precision.vars) precision.table[match(variable, precision.vars)] else 0
+  precision <- precision.f(x$value)
   n <- length(na.omit(x$value))
   ci <- data.frame(rbind(quantile(x$value, na.rm = TRUE, probs = p)))
   ci$range <- with(ci, paste0("(", paste0(round(ci, precision), collapse=", "), ")", "(", n, ")")) # add 'range' column for pretty-printing
