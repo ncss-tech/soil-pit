@@ -1,0 +1,91 @@
+
+
+sum5n <- function(x, n = NULL) {
+  variable <- unique(x$variable)
+  precision.vars <- c('phfield', 'ph1to1h2o', 'ph01mcacl2', 'phoxidized', 'ph2osoluble', 'ecec', 'cec7', 'cecsumcations', 'sumbases', 'extracid', 'dbthirdbar', 'dbovendry', 'wthirdbarclod', 'wfifteenbar', 'wretentiondiffws', 'wfifteenbartoclay', 'cec7Clay')
+  precision.table <- c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 2)
+  precision <- if(variable %in% precision.vars) precision.table[match(variable, precision.vars)] else 0
+  n <- length(na.omit(x$value))
+  ci <- data.frame(rbind(quantile(x$value, na.rm = TRUE, probs = p)))
+  ci$range <- with(ci, paste0("(", paste0(round(ci, precision), collapse=", "), ")", "(", n, ")")) # add 'range' column for pretty-printing
+  return(ci["range"])
+}
+
+sum5n2 <- function(x) {
+  variable <- unique(x$variable)
+  v <- na.omit(x$value) # extract column, from long-formatted input data
+  precision <- if(variable == 'Circularity') 1 else 0
+  ci <- data.frame(rbind(quantile(x$value, na.rm = TRUE, probs = p)))
+  ci$range <- with(ci, paste0("(", paste0(round(ci, precision), collapse=", "), ")")) # add 'range' column for pretty-printing
+  return(ci["range"])
+}
+
+ogr_extract <- function(pd, geodatabase, cache, project){
+  ogr2ogr(
+    src_datasource_name = paste0(pd, geodatabase),
+    dst_datasource_name = cache,
+    layer = "Project_Record",
+    where = paste0("PROJECT_NAME IN (", noquote(paste("'", project, "'", collapse=",", sep="")),")"),
+    s_srs = CRS("+init=epsg:5070"),
+    t_srs = CRS("+init=epsg:5070"),
+    overwrite = T,
+    simplify = 2,
+    verbose = TRUE)
+}
+  
+raster_extract <- function(x){
+  # Load grids
+  g10.st <- stack(
+    paste0(pd, "ned10m_", office, "_slope5.tif"), 
+    paste0(pd, "ned10m_", office, "_aspect5.tif")
+    )
+  g30.st <- stack(
+    paste0(pd, "ned30m_", office, ".tif"),
+    paste0(pd, "ned30m_", office, "_wetness.tif"),
+    paste0(pd, "ned30m_", office, "_mvalleys.tif"),
+    paste0(pd, "ned30m_", office, "_z2stream.tif"),
+    paste0(pd, "nlcd30m_", office, "_lulc2011.tif")
+    )
+  g800.st <- stack(
+    paste0(rd, "prism800m_11R_ppt_1981_2010_annual_mm.tif"),
+    paste0(rd, "prism800m_11R_tmean_1981_2010_annual_C.tif")
+    )
+  g1000.st <- stack(
+    paste0(rd, "rmrs1000m_11R_ffp_1961_1990_annual_days.tif")
+    )
+  
+  names(g10.st) <- c("slope", "aspect")
+  names(g30.st) <- c("elev", "wetness", "valley", "relief", "lulc")
+  names(g800.st) <- c("ppt", "temp")
+  names(g1000.st) <- c("ffp")
+  
+  # Extract geodata
+  g10.e <- extract(g10.st, x)
+  g30.e <- extract(g30.st, x)
+  g800.e <- extract(g800.st, x)
+  g1000.e <- extract(g1000.st, x)
+  geodata <- data.frame(g10.e, g30.e, g800.e, g1000.e)
+  
+  # Prep data
+  geodata$aspect <- circular(geodata$aspect, template="geographic", units="degrees", modulo="2pi")
+  
+  slope<-c(0, 2, 6, 12, 18, 30, 50, 75, 350)
+  aspect<-c(0, 23, 68, 113, 158, 203, 248, 293, 338, 360) 
+  valley<-c(0, 0.5, 30)
+  lulc <- 1:256-1
+  
+  geodata$slope_classes <- cut(geodata$slope, breaks = slope, right=FALSE)
+  geodata$aspect_classes <- cut(geodata$aspect, breaks = aspect, right=FALSE)
+  geodata$valley_classes <- cut(geodata$valley, breaks = valley, right=FALSE)
+  geodata$lulc_classes <- cut(geodata$lulc, breaks = lulc, right=FALSE)
+  
+  levels(geodata$slope_classes) <- c("0-2","2-6","6-12","12-18","18-30","30-50","50-75","75-350")
+  levels(geodata$aspect_classes) <- c("N","NE","E","SE","S","SW","W","NW","N")
+  levels(geodata$valley_classes) <- c("upland","lowland")
+  levels(geodata$lulc_classes) <- c('Unclassified','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','Open Water','Perennial Snow/Ice','NA','NA','NA','NA','NA','NA','NA','NA','Developed, Open Space','Developed, Low Intensity','Developed, Medium Intensity','Developed, High Intensity','NA','NA','NA','NA','NA','NA','Barren Land','NA','NA','NA','NA','NA','NA','NA','NA','NA','Deciduous Forest','Evergreen Forest','Mixed Forest','NA','NA','NA','NA','NA','NA','NA','NA','Shrub/Scrub','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','Herbaceuous','NA','NA','NA','NA','NA','NA','NA','NA','NA','Hay/Pasture','Cultivated Crops','NA','NA','NA','NA','NA','NA','NA','Woody Wetlands','NA','NA','NA','NA','Emergent Herbaceuous Wetlands','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA')
+
+  return(geodata = geodata)
+}
+
+
+
