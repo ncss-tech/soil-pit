@@ -1,7 +1,10 @@
 # Lab pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Crosby"
+series <- "Iva"
+
+# Set 
+p <- c(0, 0.25, 0.5, 0.75, 1)
 ```
 
 ```{r load packages, include=FALSE}
@@ -10,18 +13,19 @@ library(aqp)
 library(soilDB)
 library(reshape2)
 library(plyr)
+library(stringr)
 library(knitr)
 library(lattice)
 library(maps)
 library(RODBC)
 library(ggplot2)
+
+source("report_functions.R")
 ```
 
 ```{r fetch and format, load-data, echo=FALSE, warning=FALSE}
 # source custom R functions
 source(paste0("./genhz_rules/", series, "_rules.R"))
-
-p <- c(0, 0.10, 0.5, 0.90, 1)
 
 # load NASIS data
 l <- fetchNASISLabData()
@@ -52,17 +56,6 @@ na_replace <- function(x){
 
 h <- data.frame(lapply(h, na_replace), stringsAsFactors = FALSE)
 
-# Function
-sum5n <- function(x) {
-  variable <- unique(x$variable)
-  precision.vars <- c('phfield', 'ph1to1h2o', 'ph01mcacl2', 'phoxidized', 'ph2osoluble', 'ecec', 'cec7', 'cecsumcations', 'sumbases', 'extracid', 'dbthirdbar', 'dbovendry', 'wthirdbarclod', 'wfifteenbar', 'wretentiondiffws', 'wfifteenbartoclay', 'cec7clay', "cec7clayratiowtavg")
-  precision.table <- c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 0)
-  precision <- if(variable %in% precision.vars) precision.table[match(variable, precision.vars)] else 0
-  n <- length(na.omit(x$value))
-  ci <- data.frame(rbind(quantile(x$value, na.rm = TRUE, probs = p)))
-  ci$range <- with(ci, paste0("(", paste0(round(ci, precision), collapse=", "), ")", "(", n, ")")) # add 'range' column for pretty-printing
-  return(ci["range"])
-}
 ```
 
 
@@ -146,7 +139,7 @@ qplot(genhz, value, data = lh.lo, geom = "boxplot", ylab = "cm", main = "Boxplot
 ## Range in characteristics for generic horizons 
 Five number summary (min, 25th, median, 75th, max)(percentiles) and total number of observations (n)
 
-```{r, echo=FALSE, results='asis'}
+```{r, echo=FALSE, results='asis', warning=FALSE}
 
 lh.num <- lh[c(12:(ncol(lh)-4), ncol(lh)-1, ncol(lh))]
 lh.num <- Filter(f = function(x) !all(is.na(x)), x = lh.num)

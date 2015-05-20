@@ -4,7 +4,7 @@
 This report summarizes the geographic setting of a list of MUKEY within a file geodatabase. It is intented to be used to compare and contrast map units, and suggest possible Low, RV, and High values for components. 
 
 ```{r load-data, echo=FALSE, results='hide', message=FALSE}
-shp <- "SDJR-MLRA111A-Crsby-Lslm,0t2ps"
+shp <- "201511IND058_Ivsltlm,0t2prcntslps_QA"
 
 dir <- "M:/geodata/project_data/"
 geodatabase <- "RTSD_Region_11_IND_FY15.gdb"
@@ -39,9 +39,9 @@ source("report_functions.R")
 if (!file.exists(cache)){
   sapolygon <- readOGR(dsn = paste0(pd, geodatabase), layer = "SAPOLYGON", encoding = "OpenFileGDB")
   mupolygon <- readOGR(dsn = dsn, layer = shp, encoding = "ESRI Shapefile")
-  mupolygon@data$Acres <- mupolygon@data$SHAPE_Area * 0.000247105
-  mupolygon@data$Circularity <- mupolygon@data$SHAPE_Leng / (2 * sqrt(mupolygon@data$SHAPE_Area / pi) * pi)
-  n <- sum(data.frame(mupolygon)$SHAPE_Area) / 900 * samplePercent / 100
+  mupolygon@data$Acres <- mupolygon@data$Shape_Area * 0.000247105
+  mupolygon@data$Circularity <- mupolygon@data$Shape_Leng / (2 * sqrt(mupolygon@data$Shape_Area / pi) * pi)
+  n <- sum(data.frame(mupolygon)$Shape_Area) / 900 * samplePercent / 100
   
   # Sample soil map unit
   mupolygon.s <- spsample(mupolygon, n = n, "stratified")
