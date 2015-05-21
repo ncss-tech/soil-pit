@@ -1,45 +1,66 @@
-NASIS and R: a marriage
+
+Digital summaries of legacy pedon descriptions
 ========================================================
-author: Stephen Roecker, Dylan Beaudette, Jay Skovlin, Skye Willis
-date: 
+author: Stephen Roecker, Dylan Beaudette, Jay Skovlin, Skye Wills
+date: 6/1/2015
 
-Data
+
+Legacy pedon data within the US
 ========================================================
 
-All soil research projects generate data, but where does it go?
 
-1. Text files
-  - most likely Excel files (sad but true)
-2. Database
-    * Access
-    * Enterprise Server (MS SQL Server, PostgreSQL)
+```
+total = 606595 ,  total lab pedons = ~64k
+```
+
+![plot of chunk unnamed-chunk-1](madison_prez-figure/unnamed-chunk-1-1.png) 
+
+
+
 
 NRCS soil databases
 ========================================================
 
-1. Text files
+* Text files (more like text boxes)
     * Official Series Descriptions (OSD)
-    * Ecological Sites Descriptions (ESD)
-2. Databases
-    * NCSS Soil Characterization Database (Access)
+    * Ecological Site Descriptions (ESD)
+* Databases
+    * Soil Characterization Database (Access)
     * National Soil Information System (NASIS) (SQL Server)
-        * SSURGO (NASIS snapshot)
-            * Soil Data Access (SDA)
+        * SSURGO and Soil Data Access (SDA) (snapshots) 
         * STASTGO2
-      
+        
 
-NASIS is where it's at
+Figure of NASIS table structure
 ========================================================
-Point data vs. Aggregate data
+* Illustrate child tables
+* Discuss MS SQL Server
+* Point data vs. aggregate data
+* "The original digital soil morphometrics"
+
 
 Tools for interacting with NASIS
 ========================================================
-1. Analysis
-    * Pedon PC Plus / Analysis PC
-    * NASIS
-    * R
-2. Public consumption of SSURGO
-    * Web Soil Survey
-    * Soil Data Viewer
-    * SSURGO file geodatabases
-    * SoilWeb
+* Analysis
+    1. Excel
+    2. Pedon PC Plus / Analysis PC
+    3. NASIS and Access
+    4. R
+* Public consumption of SSURGO
+    1. SoilWeb
+    2. Web Soil Survey
+    3. Soil Data Viewer
+    4. SSURGO file geodatabases
+    5. R
+
+_* sorted by user sophistication_
+    
+    
+NASIS and R: what a team
+========================================================
+* soilDB R package
+    1. querying, formatting and cleaning functions
+
+Question ?
+========================================================
+**How many Professors heard teach a course in Data Analysis?**
