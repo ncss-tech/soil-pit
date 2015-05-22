@@ -1,9 +1,9 @@
 # Lab pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Iva"
+series <- "Ava"
 
-# Set 
+# Set percentiles
 p <- c(0, 0.25, 0.5, 0.75, 1)
 ```
 
@@ -11,32 +11,29 @@ p <- c(0, 0.25, 0.5, 0.75, 1)
 # load libraries
 library(aqp)
 library(soilDB)
-library(reshape2)
 library(plyr)
+library(ggplot2)
+library(reshape2)
 library(stringr)
 library(knitr)
-library(lattice)
 library(maps)
-library(RODBC)
-library(ggplot2)
 
 source("report_functions.R")
+source(paste0("./genhz_rules/", series, "_rules.R"))
 ```
 
 ```{r fetch and format, load-data, echo=FALSE, warning=FALSE}
-# source custom R functions
-source(paste0("./genhz_rules/", series, "_rules.R"))
-
 # load NASIS data
 l <- fetchNASISLabData()
+f <- fetchNASIS()
+
 lh <- horizons(l)
 lp <- site(l)
-f <- fetchNASIS()
 h <- horizons(f)
 s <- site(f)
 
 names(lh) <- unlist(strsplit(names(lh), "measured"))
-lh$cec7clay <- lh$cec7 / (lh$claytot - lh$claycarb)
+lh$cec7clay <- round(lh$cec7 / (lh$claytot - lh$claycarb), 2)
 lp$cec7clayratiowtavg <- lp$cec7clayratiowtavg * 100
 
 for (i in seq(nrow(lh))){
@@ -45,14 +42,20 @@ for (i in seq(nrow(lh))){
 
 lh$hzname[is.na(lh$hzname)] <- "missing"
 lh$genhz <- generalize.hz(lh$hzname, ghr$n, ghr$p)
+horizons(l) <- lh
+lh$hzdepm <- (lh$hzdept + lh$hzdepb)/2
+genhz_med <- sort(tapply(lh$hzdepm, lh$genhz, median))
+l$genhz <- factor(lh$genhz, levels = names(genhz_med), ordered = TRUE)                                                                                                       
 
 h$hzname[is.na(h$hzname)] <- "missing"
 h$genhz <- generalize.hz(h$hzname, ghr$n, ghr$p)
+horizons(f) <- h
+h$hzdepm <- (h$hzdept + h$hzdepb)/2
+genhz_med <- sort(tapply(h$hzdepm, h$genhz, median))
+f$genhz <- factor(h$genhz, levels = names(genhz_med), ordered = TRUE)                                                                                                       
 
-na_replace <- function(x){
-  if(class(x) == "character" | class(x) == "logical") {x <- replace(x, is.na(x) | x == "NA", "missing")} 
-  else (x <-  x)
-}
+lh <- horizons(l)
+h <- horizons(f)
 
 h <- data.frame(lapply(h, na_replace), stringsAsFactors = FALSE)
 
@@ -156,10 +159,10 @@ for (i in seq(times)){
   print(kable(lh.c[c(TRUE, x == i)], align = "c"))
   }
 
-nh <- ncol(lh.num)/2.5
+nh <- ncol(lh.num) / 4 * 2
 ```
 
-```{r, echo=FALSE, fig.height=nh, warning=FALSE, fig.width=8}
+```{r, echo=FALSE, warning=FALSE, fig.height=nh, fig.width=8}
 
 # bwplot(factor(lh.lo$genhz, levels = levels(lh.lo$genhz)[length(levels(lh.lo$genhz)):1]) ~ value|variable, data = lh.lo, scales=list(x="free"), main = "Box plots of numeric variables by generic horizon")  
 

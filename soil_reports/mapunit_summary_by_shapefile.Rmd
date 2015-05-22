@@ -4,7 +4,7 @@
 This report summarizes the geographic setting of a list of MUKEY within a file geodatabase. It is intented to be used to compare and contrast map units, and suggest possible Low, RV, and High values for components. 
 
 ```{r load-data, echo=FALSE, results='hide', message=FALSE}
-shp <- "201511IND058_Ivsltlm,0t2prcntslps_QA"
+shp <- "201511IND045_Avsltlm,2t6prcslps,e_QA"
 
 dir <- "M:/geodata/project_data/"
 geodatabase <- "RTSD_Region_11_IND_FY15.gdb"
@@ -39,9 +39,9 @@ source("report_functions.R")
 if (!file.exists(cache)){
   sapolygon <- readOGR(dsn = paste0(pd, geodatabase), layer = "SAPOLYGON", encoding = "OpenFileGDB")
   mupolygon <- readOGR(dsn = dsn, layer = shp, encoding = "ESRI Shapefile")
-  mupolygon@data$Acres <- mupolygon@data$Shape_Area * 0.000247105
-  mupolygon@data$Circularity <- mupolygon@data$Shape_Leng / (2 * sqrt(mupolygon@data$Shape_Area / pi) * pi)
-  n <- sum(data.frame(mupolygon)$Shape_Area) / 900 * samplePercent / 100
+  mupolygon@data$Acres <- mupolygon@data$SHAPE_Area * 0.000247105
+  mupolygon@data$Circularity <- mupolygon@data$SHAPE_Leng / (2 * sqrt(mupolygon@data$SHAPE_Area / pi) * pi)
+  n <- sum(data.frame(mupolygon)$SHAPE_Area) / 900 * samplePercent / 100
   
   # Sample soil map unit
   mupolygon.s <- spsample(mupolygon, n = n, "stratified")
@@ -58,9 +58,6 @@ data <- data.l$data
 mupolygon <- data.l$mupolygon
 sapolygon <- data.l$sapolygon
 
-n <- length(levels(data$AREASYMBOL))
-nh <- ifelse(n < 4, 4, n*.3*4)
-
 data$SSA_MUSYM <- as.character(paste(data$AREASYMBOL, data$MUSYM))
 data2 <- data
 data2$SSA_MUSYM <- "*mlra_mapnit"
@@ -68,7 +65,7 @@ data <- rbind(data2, data)
 ```
 
 
-### Shapefile Name
+### SHAPEfile Name
 ```{r project name, echo=FALSE}
 shp
 ```
@@ -101,7 +98,7 @@ map.axes()
 
 ## Soil polygon metrics
 Five number summary (min, 25th, median, 75th, max)(percentiles) and contingency table (counts)(n) 
-Circularity is an estimate of shape complexity (Hole and Campbell, 1975), computed as a ratio of mupolygon length / mupolygon circumference. The shape complexity of a perfect circle would equal 1.
+Circularity is an estimate of SHAPE complexity (Hole and Campbell, 1975), computed as a ratio of mupolygon length / mupolygon circumference. The SHAPE complexity of a perfect circle would equal 1.
 
 ```{r soil polygon metrics, echo=FALSE, results='asis'}
 pol <- data.frame(mupolygon)
@@ -138,7 +135,7 @@ kable(addmargins(prop.table(xtabs(~ SSA_MUSYM + lulc_classes, data = data), marg
 ## Quantile breaks
 Five number summary (min, 25th, median, 75th, max)(percentiles) and number of random samples (n)
 
-```{r quantiles by musym, echo=FALSE, results="asis", fig.height=nh}
+```{r quantiles by musym, echo=FALSE, results="asis", warning=FALSE, fig.height=10}
 data.lo <- melt(data, id.vars="SSA_MUSYM", measure.vars = c("elev", "slope", "valley", "wetness", "relief", "ppt", "temp", "ffp"))
 data.5n <- ddply(data.lo, .(variable, SSA_MUSYM), .fun = sum5n2)
 data.c <- dcast(data.5n, SSA_MUSYM ~ variable, value.var = 'range')

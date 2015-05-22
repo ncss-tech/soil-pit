@@ -1,8 +1,14 @@
+na_replace <- function(x){
+  if(class(x) == "character" | class(x) == "logical") {x <- replace(x, is.na(x) | x == "NA", "missing")} 
+  else (x <-  x)
+}
+
 
 precision.f <- function(x){
   if (!all(is.na(x))) {y = str_length(str_split(format(max(x, na.rm = T), scientific=F), "\\.")[[1]][2])} else y = 0
   if (is.na(y)) y = 0 else y = y
 }
+
 
 sum5n <- function(x, n = NULL) {
   variable <- unique(x$variable)
