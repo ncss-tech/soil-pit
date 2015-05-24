@@ -1,0 +1,4 @@
+* The site rankings represents the probability of a site belonging to a cluster. So sites with higher probabilities should be more central to the cluster centriods. In selecting sites we tried to pick sites that had the highest ranking, but were also somewhat geographically clustered in order to reduce the driving distance between them.																
+* This sampling design was modeled after the following. 																
+Zhu, A.X., L. Yang, B. Li, C. Qin, E. English, J.E. Burt, and C. Zhou, 2007. Purpose sampling for digital soil mapping for areas with limited data. P.233-245. In. A.E. Hartemink et al. (eds.). Digital soil mapping with limited data. Elsevier, Amsterdam.																
+de Gruijter, J.J., A.B. McBratney, and J. Taylor, 2010. Sampling for high-resolution soil mapping. P.3-15. In. R.A. Viscarra Rossel et al. (eds.). Proximal soil sensing, Springer, New York.																
