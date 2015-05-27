@@ -105,24 +105,33 @@ Objective?
 ### Problems
     1. Data is underutilized
     2. Inefficient tools
-    3. R is hard
+    3. Circular definitions
+    4. Vaguely defined uncertainty metrics
+    5. Data isn't digitized
+    6. Tools are difficulat (especially R?)
 
 ### Solution
     1. standardized R reports
 
 ```{r, echo=FALSE}
-cat("")
+# Since the classification or horizonation of a soil series is fluid, it's difficult to generalize.
 ```
 
 What do we need?
 =======================================================
 
-```{r need comments, echo=FALSE}
+```{r need comments, echo=FALSE, results='asis'}
 # The data elements used in the NRCS databases are well defined, thus we simply need some why of summarizing it quickly.
 
+clay = data.frame(L = rep("?", 3), RV = rep("?", 3), H = rep("?", 3))
+row.names(clay) <- c("A", "B" ,"C")
+kable(clay, align = "c")
+  
+source("C:/workspace/soil-pit/trunk/sandbox/stephen/madison_prez_make.R")
+
+kable(lh.c[c("genhz", "claytot")], align = "c")
 
 ```
-
 
 Aggregation of Pedon Data: Common Problems
 ========================================================
