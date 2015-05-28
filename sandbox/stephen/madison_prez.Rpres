@@ -20,7 +20,7 @@ cat("# pedons = ", formatC(sum(pedons), big.mark = ",", format = "fg"), "\n", "#
 ggplot(data.frame(pedons, year), aes(x=year, y=pedons)) + geom_bar(stat="identity")
 
 # There has been lots of talk about the number or Soil Series, Components, Map units, etc... but little focus on the point data resource.
-
+# Lots of talk about collecting new data, but little appreciation for existing data.
 ```
 
 ```{r Henry comments, echo=FALSE}
@@ -105,7 +105,7 @@ Objective?
 ### Problems
     1. Data is underutilized
     2. Inefficient tools
-    3. Circular definitions
+    3. Fluid series concepts
     4. Vaguely defined uncertainty metrics
     5. Data isn't digitized
     6. Tools are difficulat (especially R?)
@@ -126,10 +126,30 @@ What do we need?
 clay = data.frame(L = rep("?", 3), RV = rep("?", 3), H = rep("?", 3))
 row.names(clay) <- c("A", "B" ,"C")
 kable(clay, align = "c")
-  
-source("C:/workspace/soil-pit/trunk/sandbox/stephen/madison_prez_make.R")
 
-kable(lh.c[c("genhz", "claytot")], align = "c")
+source("report_functions.R")
+
+data(loafercreek, package = 'soilDB')
+pedons <- loafercreek
+# GHL
+n <- c('A', 
+       'Bt1',
+       'Bt2',
+       'Bt3',
+       'Cr',
+       'R')
+# REGEX rules
+p <- c('^A$|Ad|Ap',
+       'Bt1$',
+       '^Bt2$',
+       '^Bt3|^Bt4|CBt$|BCt$|2Bt|2CB$|^C$',
+       'Cr',
+       'R')
+
+pedons$genhz <- generalize.hz(pedons$hzname, n, p) 
+clay.lo <- melt(horizons(pedons), id.vars = "genhz", measure.vars= "clay")
+
+kable(ddply(clay.lo, .(genhz), sum5n), align = "c")
 
 ```
 
@@ -234,9 +254,6 @@ Tabulate Horizon Designations
 
 - sort by frequency
 ```{r sort-hz-by-freq-print-html, echo=FALSE, results='asis'}
-data(loafercreek, package = 'soilDB')
-pedons <- loafercreek[1:15, ]
-
 d <- sort(table(pedons$hzname), decreasing=TRUE)
 d <- t(d)
 kable(as.data.frame.matrix(d))
