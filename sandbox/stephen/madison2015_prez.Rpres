@@ -5,6 +5,35 @@ author: Stephen Roecker, Dylan Beaudette, Jay Skovlin, Skye Wills
 date: 6/1/2015
 
 
+NRCS soil databases
+========================================================
+
+1. National Soil Information System (NASIS) (SQL Server)
+   * SSURGO and Soil Data Access
+   * STASTGO2
+2. Soil Characterization Database (Access)
+3. Ecological Site Descriptions (Text)
+4. Official Series Descriptions (Text)
+
+_* sorted by database sophistication_
+
+
+NASIS
+========================================================
+![alt text](figures/nasis.png)
+
+```{r nasis comments, echo=FALSE}
+# Illustrate child tables
+# Discuss MS SQL Server
+# Point data vs. aggregate data
+# "The original digital soil morphometrics"
+```
+
+* Analysis is limited to a subset of SQL functions
+* 99% of existing reports are for aggregate data
+* No inherent graphing capability
+
+
 Legacy pedon data within the US
 ========================================================
 
@@ -51,35 +80,6 @@ ggplot(data.frame(pedons, year), aes(x=year, y=pedons)) + geom_bar(stat="identit
 # [5/14/2015 10:05 AM] Ferguson, Henry - NRCS, Lincoln, NE: 
 # There also was a midset change from putting just select pedons into the database to collecting all point data in the database
 ```
-
-
-NRCS soil databases
-========================================================
-
-1. National Soil Information System (NASIS) (SQL Server)
-   * SSURGO and Soil Data Access
-   * STASTGO2
-2. Soil Characterization Database (Access)
-3. Ecological Site Descriptions (Text)
-4. Official Series Descriptions (Text)
-
-_* sorted by database sophistication_
-
-
-NASIS
-========================================================
-![alt text](figures/nasis.png)
-
-```{r nasis comments, echo=FALSE}
-# Illustrate child tables
-# Discuss MS SQL Server
-# Point data vs. aggregate data
-# "The original digital soil morphometrics"
-```
-
-* Analysis is limited to a subset of SQL functions
-* 99% of existing reports are for aggregate data
-* No inherent graphing capability
 
 
 What do we need
@@ -161,6 +161,11 @@ Why hasn't this been done already
 # horizon redundancy - how many Bt horizons are necessary?
 # outlier horizons - what happens to them?
 ```
+
+R and it's Report making capabilities
+========================================================
+- soilDB
+- knitr
 
 
 Summary of Report workflow
