@@ -212,6 +212,7 @@ Closing thoughts
 - "we shouldn't let the perfect be the enemy of the good"
 - reproducible research is good
 - Soil Departments should teach Statistics!!!
+- Soil scientists are great at collecting data, but we have to just as good at analyzing it.
 
 
 
