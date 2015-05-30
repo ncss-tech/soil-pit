@@ -1,3 +1,13 @@
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
+library(aqp)
+library(soilDB)
+library(plyr)
+library(ggplot2)
+library(reshape2)
+library(stringr)
+library(knitr)
+```
+
 ---
 title: "Digital summaries of legacy pedon descriptions"
 author: Stephen Roecker, Dylan Beaudette, Jay Skovlin, Skye Wills
@@ -6,13 +16,34 @@ output: word_document
 
 # Abstract
 
-Soil scientists have been collecting field and lab pedon descriptions for over a hundred years. Within the United States a large portion of this data is captured in the National Soil Information System (NASIS). While NASIS serves as a superb data repository, its analytical capabilities are limited, and thus we believe it's data is underutilized. Therefore we advocate the use of R, which can easily import data from NASIS and has custom functions designed for quantitative pedology, digital soil mapping, and soil physics. In conjunction with the Western Regional Cooperative Soil Survey Technology Committee we have developed html reports that provide standardized summaries and graphics of data commonly used for soil survey activities, such as Soil Data Join and Recorrelation, development of Official Series Descriptions and Soil Components, development of soil map units, and competing dissimilar soils. With little prior knowledge even R novices can quickly generate their own results. Examples can be viewed at, https://github.com/ncss-tech/soil-pit/tree/master/examples, where development is on-going.
+Soil scientists have been collecting field and lab pedon descriptions for over a hundred years. Within the United States a small portion of this data has been captured in the National Soil Information System (NASIS). While NASIS serves as a superb data repository, its analytical capabilities are limited, and thus we believe it's data is underutilized. Therefore we advocate the use of R, which can easily import data from NASIS and has custom functions designed for quantitative pedology, digital soil mapping, and soil physics. In conjunction with the Western Regional Cooperative Soil Survey Technology Committee we have developed html reports that provide standardized summaries and graphics of data commonly used for soil survey activities, such as Soil Data Join and Recorrelation, development of Official Series Descriptions and Soil Components, development of soil map units, and competing dissimilar soils. With little prior knowledge even R novices can quickly generate their own results. Examples can be viewed at, https://github.com/ncss-tech/soil-pit/tree/master/examples, where development is on-going.
 
 # Introduction
 
-In support of developing soil surveys over the last 100 years the National Cooperative Soil Survey (NCSS) has  amassed a substantial amount of legacy pedon data. This data consists of field estimates, observations, and laboratory measurements. Unlike the soil maps and their associated tabular datasets, pedon data represents unaggregated data (i.e. raw). This makes it invaluable resource for future updates to existing soil surveys. However because pedon data 
+In support of developing soil surveys over the last 100 years the National Cooperative Soil Survey (NCSS) has  amassed a substantial amount of legacy pedon data. This data consists of field estimates, observations, and laboratory measurements. Unlike the soil map layers and their associated tabular datasets (component data), pedon data represent unaggregated data (i.e. raw). This makes it an invaluable resource for future updates to existing soil surveys. Currently such updates to the component data have been taking place on a national scale as part of the Soil Data Join and Recorrelation (SDJR) initiative since 2012 (NI_403_305, 2013). In the future additional updates are planned for the spatial data. 
+
+Since 1994, which saw the introduction of the National Soil Information System (NASIS), 606,595 field pedons and approximately 64,000 lab pedons have been digitized. While significant this only represents a small portion of total field pedons every described. In addition it is speculated that the real number is approximately 30 percent less due to duplicates and placeholders (Ferguson, 2015). The discrepency in this number is largely because pedon data is considered supporting data, and thus is not subjected to as rigourous standards as component data which is distributed to the public in combination with soil map layers.
+
+```{r, echo=FALSE, warning=FALSE}
+
+pedons <- c(577, 6152, 9517, 19058, 42587, 112182, 231609, 184913)
+year <- c("<1950s", "1950s", "1960s", "1970s", "1980s", "1990s", "2000s", "2010s")
+
+ggplot(data.frame(pedons, year), aes(x=year, y=pedons)) + geom_bar(stat="identity")
+
+# There has been lots of talk about the number or Soil Series, Components, Map units, etc... but little focus on the point data resource.
+# Lots of talk about collecting new data, but little appreciation for existing data.
+```
+
+Soil is a complex three-dimenional entity. Therefore NASIS similarly has a complex hierarchial data structure to capture this complexity, with the soil horizon being the most basic element. After horizons, additional tables are linked together in the following order: compoments or pedons, map units, legends. Each table, including the horizon table, may include several sub or child tables to capture heterogeneous conditions, which the dominant condition specified as the representative value (RV). For numeric component data it is possible to specify a range with a Low (L) and High (H) values. This makes it possible to characterize the distribution or uncertainty of a particular soil variable, such as clay content. 
+
+Historically emphasis has been placed on the component data which is linked to soil map units, and therefore publicly distributed.
 
 
-Since the advent of computer databases, a small portion of this data has been digitized and stored in several databases. Typically the most interest has been focused on the
+
+Historically soil surveys were developed by soil scientists with expert knowledge on the 
+
+
+
 
 Overtime the amount of legacy data has grown exponentially. 

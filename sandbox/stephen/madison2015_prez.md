@@ -5,20 +5,6 @@ author: Stephen Roecker, Dylan Beaudette, Jay Skovlin, Skye Wills
 date: 6/1/2015
 
 
-Legacy pedon data within the US
-========================================================
-
-
-```
-# pedons = 606,595
-# lab pedons = ~64,000
-```
-
-![plot of chunk unnamed-chunk-1](madison_prez-figure/unnamed-chunk-1-1.png) 
-
-
-
-
 NRCS soil databases
 ========================================================
 
@@ -32,18 +18,33 @@ NRCS soil databases
 _* sorted by database sophistication_
 
 
-NASIS
+Legacy pedon data within the US
+========================================================
+
+
+```
+# pedons = 606,595
+# lab pedons = ~64,000
+```
+
+![plot of chunk unnamed-chunk-1](madison2015_prez-figure/unnamed-chunk-1-1.png) 
+
+
+
+
+NASIS data structure
 ========================================================
 ![alt text](figures/nasis.png)
 
 
 
-* Analysis is limited to a subset of SQL functions
-* 99% of existing reports are for aggregate data
-* No inherent graphing capability
+- Released in 1994, custom Microsft SQL Server
+- Tables for: field pedons, lab pedons, component data, map units, legends, and projects
+- Functions for: queries, tables, reports, interpretations, calculations/validations, and exports
 
 
-What do we need
+
+NASIS data structure
 =======================================================
 
 ### Horizon data
@@ -61,7 +62,7 @@ What do we need
 |A  |     ?     |    ?     |    ?     |
 |B  |     ?     |    ?     |    ?     |
 |C  |     ?     |    ?     |    ?     |
-### Site data
+### Site (Covariate) data
 - slope
 - landform
 - precipitation
@@ -117,7 +118,7 @@ Why hasn't this been done already
 
 
 
-Summary of Report workflow
+Methods
 ========================================================
 1. Develop typical horizonation
 
@@ -131,6 +132,11 @@ Summary of Report workflow
 
 [&#8594;&nbsp;extended tutorial](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/gen-hz-assignment.html?root=aqp)
 
+
+Methods
+========================================================
+- soilDB
+- knitr
 
 
 Assumptions
@@ -197,7 +203,7 @@ Evaluate typical horizonation
 Evaluate typical horizonation
 ========================================================
 
-![plot of chunk plot-ghl-1](madison_prez-figure/plot-ghl-1-1.png) 
+![plot of chunk plot-ghl-1](madison2015_prez-figure/plot-ghl-1-1.png) 
 
 Demonstrate Reports
 ========================================================
