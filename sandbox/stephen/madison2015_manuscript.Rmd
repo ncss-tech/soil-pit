@@ -10,19 +10,22 @@ library(knitr)
 
 ---
 title: "Digital summaries of legacy pedon descriptions"
-author: Stephen Roecker, Dylan Beaudette, Jay Skovlin, Skye Wills
-output: word_document
+author: "Stephen Roecker, Dylan Beaudette, Jay Skovlin, Skye Wills"
+output:
+  word_document:
+    fig_caption: yes
+fig_caption: yes
 ---
 
 # Abstract
 
-Soil scientists have been collecting field and lab pedon descriptions for over a hundred years. Within the United States a small portion of this data has been captured in the National Soil Information System (NASIS). While NASIS serves as a superb data repository, its analytical capabilities are limited, and thus we believe it's data is underutilized. Therefore we advocate the use of R, which can easily import data from NASIS and has custom functions designed for quantitative pedology, digital soil mapping, and soil physics. In conjunction with the Western Regional Cooperative Soil Survey Technology Committee we have developed html reports that provide standardized summaries and graphics of data commonly used for soil survey activities, such as Soil Data Join and Recorrelation, development of Official Series Descriptions and Soil Components, development of soil map units, and competing dissimilar soils. With little prior knowledge even R novices can quickly generate their own results. Examples can be viewed at, https://github.com/ncss-tech/soil-pit/tree/master/examples, where development is on-going.
+Soil scientists have been collecting field and lab pedon descriptions for over a hundred years. Within the United States a small portion of this data has been captured in the National Soil Information System (NASIS). While NASIS serves as a superb data repository, its analytical capabilities are limited, and thus we believe it's data is underutilized. Therefore we advocate the use of R, which can easily import data from NASIS and has custom functions designed for quantitative pedology, digital soil mapping, and soil physics. In conjunction with the Western Regional Cooperative Soil Survey Technology Committee we have developed html reports that provide standardized summaries and graphics of data commonly used for soil survey activities, such as the Soil Data Join and Recorrelation initiative, development of Official Series Descriptions and soil components, development of soil map units, and competing dissimilar soils. With little prior knowledge even R novices can quickly generate their own results. Examples can be viewed at, https://github.com/ncss-tech/soil-pit/tree/master/examples, where development is on-going.
 
 # Introduction
 
-In support of developing soil surveys over the last 100 years the National Cooperative Soil Survey (NCSS) has  amassed a substantial amount of legacy pedon data. This data consists of field estimates, observations, and laboratory measurements. Unlike the soil map layers and their associated tabular datasets (component data), pedon data represent unaggregated data (i.e. raw). This makes it an invaluable resource for future updates to existing soil surveys. Currently such updates to the component data have been taking place on a national scale as part of the Soil Data Join and Recorrelation (SDJR) initiative since 2012 (NI_403_305, 2013). In the future additional updates are planned for the spatial data. 
+In support of developing soil surveys over the last 100 years the National Cooperative Soil Survey (NCSS) has  amassed a substantial amount of legacy pedon data. This data consists of field estimates, observations, and laboratory measurements. Unlike the soil map layers and their associated attribute data (component data), pedon data represent unaggregated data (i.e. raw). This makes it an invaluable resource for future updates to existing soil surveys. Currently such updates to the component data have been taking place on a national scale as part of the Soil Data Join and Recorrelation (SDJR) initiative since 2012 (NI_403_305, 2013). In the future additional updates are planned for the spatial data. 
 
-Since 1994, which saw the introduction of the National Soil Information System (NASIS), 606,595 field pedons and approximately 64,000 lab pedons have been digitized. While significant this only represents a small portion of total field pedons every described. In addition it is speculated that the real number is approximately 30 percent less due to duplicates and placeholders (Ferguson, 2015). The discrepency in this number is largely because pedon data is considered supporting data, and thus is not subjected to as rigourous standards as component data which is distributed to the public in combination with soil map layers.
+Since 1994, which saw the introduction of the National Soil Information System (NASIS), 606,595 field pedons and approximately 64,000 lab pedons have been digitized. While significant this represents only a small portion of total field pedons every described. In addition it is speculated that the real number is approximately 30 percent less due to duplicates and placeholders (Ferguson, 2015). The discrepancy in this number is largely because pedon data is considered supporting data, and thus is not subjected to rigorous standards such as the component data which is distributed to the public in combination with soil map layers.
 
 ```{r, echo=FALSE, warning=FALSE}
 
@@ -35,15 +38,64 @@ ggplot(data.frame(pedons, year), aes(x=year, y=pedons)) + geom_bar(stat="identit
 # Lots of talk about collecting new data, but little appreciation for existing data.
 ```
 
-Soil is a complex three-dimenional entity. Therefore NASIS similarly has a complex hierarchial data structure to capture this complexity, with the soil horizon being the most basic element. After horizons, additional tables are linked together in the following order: compoments or pedons, map units, legends. Each table, including the horizon table, may include several sub or child tables to capture heterogeneous conditions, which the dominant condition specified as the representative value (RV). For numeric component data it is possible to specify a range with a Low (L) and High (H) values. This makes it possible to characterize the distribution or uncertainty of a particular soil variable, such as clay content. 
+In order to store soil data NASIS has a complex hierarchical data structure, with soil horizons being the most basic element. After horizons, additional tables are linked together in the following order: components or pedons, map units, legends. Each table, including the horizon table, may include several sub or child tables to capture heterogeneous soil conditions, with the dominant condition specified as the representative value (RV). For numeric component data it is possible to specify a range with a Low (L) and High (H) values. This makes it possible to characterize the distribution or uncertainty of a particular soil variable, such as clay content. Using this system it is then possible to aggregate the data and generate spatial predictions by linking to the soil polygon layer.
 
-Historically emphasis has been placed on the component data which is linked to soil map units, and therefore publicly distributed.
+![alt text](figures/nasis.png)
+
+A fundamental (and labor intensive) step in the mapping process is how to aggregate the individual pedons into components. Historically this has been done with pencil and paper. A practice that still continues today for a variety of reasons, including:
+
+    1. familiarity with existing protocol
+    2. perceived or real limitations
+    3. inconsistency among-st the existing data
+    4. need to digitize data
+    5. lack of training in new methods
+
+Using NASIS it is possible to manipulate the data. However the overwhelming majority of existing functions within NASIS have been designed to analyze and evaluate component data. It possible to export data from NASIS to other software, but none of the alternatives provide the same concise summary of data as do the standardized reports for component data in NASIS. New reports could be added to NASIS, but it only utilizes the Structured Query Language (SQL) which has a limited range of functions for performing statistical analysis. Therefore we advocate exporting pedon data to R (R Core Development Team, 2015) and leverge its base functions, it's newest report writing capability (Xie, 2014), and it's user contributed functions designed for digital soil morphometrics, such as aqp (Beaudette et al., 2012), soilDB (Beaudette and Skovlin, 2015), and soiltexture (Moeys, 2015).
+
+## Tools for interacting with soil data
+### Tabular analysis
+    1. Pencil and paper
+    2. Excel
+    3. PedonPC and AnalysisPC (Access front ends) 
+    4. NASIS
+    5. R
+
+### Spatial analysis
+    1. SoilWeb
+    2. Web Soil Survey
+    3. Soil Data Viewer
+    4. SSURGO file geodatabases
+    5. R
+_* sorted by sophistication_
+
+# Methods - R
 
 
 
-Historically soil surveys were developed by soil scientists with expert knowledge on the 
+## Summary or report workflow
+    1. Develop typical horizonation
+    2. Assign new generic horization
+    3. Evaluate new horization
+    4. Generate report
 
 
+# References
+R Development Core Team, 2015.R:A Language and Environment for 
+  Statistical Computing. R Foundation for Statistical Computing. Vienna,     
+  Austria. ISBN3-900051-07-0.
 
+Beaudette, D.E., Roudier P., and A.T. O'Geen. Algorithms for
+  Quantitative Pedology: A Toolkit for Soil Scientists. 2012
 
-Overtime the amount of legacy data has grown exponentially. 
+D.E. Beaudette and J.M. Skovlin (2015). soilDB: Soil Database
+  Interface. R package version 1.5-2.
+  http://CRAN.R-project.org/package=soilDB
+
+Julien Moeys (2015). soiltexture: Functions for Soil Texture Plot,
+  Classification and Transformation. R package version 1.3.3.
+  http://CRAN.R-project.org/package=soiltexture
+
+Yihui Xie (2014) knitr: A Comprehensive Tool for Reproducible
+  Research in R. In Victoria Stodden, Friedrich Leisch and Roger D.
+  Peng, editors, Implementing Reproducible Computational Research.
+  Chapman and Hall/CRC. ISBN 978-1466561595

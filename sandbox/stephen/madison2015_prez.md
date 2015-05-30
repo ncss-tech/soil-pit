@@ -73,7 +73,7 @@ Tools for interacting with soil data
 ========================================================
 ### Tabular analysis
 
-    1. Pen and paper
+    1. Pencil and paper
     2. Excel
     3. PedonPC and AnalysisPC (Access front ends) 
     4. NASIS
@@ -91,7 +91,7 @@ _* sorted by user sophistication_
 
 
 
-Objective?
+Objective
 ========================================================
 ### Problems
     1. Data is underutilized
@@ -133,7 +133,7 @@ Methods
 [&#8594;&nbsp;extended tutorial](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/gen-hz-assignment.html?root=aqp)
 
 
-Methods
+Methods - R
 ========================================================
 - soilDB
 - knitr
@@ -223,18 +223,16 @@ Closing thoughts
 
 
 
-Thank You
+Thank you, any questions...?
 ========================================================
-**Questions, comments, ideas**
-<br><br>
-
-**R resources for pedologists**
+**Links to Reports and supporting material**
 - <span class="link-to-details">&#8594;&nbsp;[NCSS Job-Aids](http://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/edu/ncss/?cid=nrcs142p2_054322)</span>
 - <span class="link-to-details">&#8594;&nbsp;[aqp tutorials](http://aqp.r-forge.r-project.org/)</span>
-- <span class="link-to-details">&#8594;&nbsp;[Statistical data analysis for pedologists](http://www2.gru.wvu.edu/~tdavello/files/stats/table_of_contents.html)
-- <span class="link-to-details">&#8594;&nbsp;[Dylan Beaudette's blog](http://casoilresource.lawr.ucdavis.edu/blog/)
 - <span class="link-to-details">&#8594;&nbsp;[soil-pit Github repository](https://github.com/sroecker01/soil-pit)
 <br><br>
 
 **Additional AQP Contributors:**
 - Pierre Roudier (Landcare Research)
+
+**Acknowledgements**
+- Alena Stephens, John Hammerly, Jennifer Outcalt, Henry Ferguson, Paul Finnell, and others...
