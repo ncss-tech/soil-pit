@@ -107,7 +107,7 @@ Tools for interacting with soil data
 
     1. Pencil and paper
     2. Excel
-    3. PedonPC and AnalysisPC (Access front ends) 
+    3. PedonPC and AnalysisPC (Microsoft Access template) 
     4. NASIS
     5. R
 
@@ -170,15 +170,10 @@ Why hasn't this been done already
 
 Methods
 ========================================================
-1. Develop typical horizonation
+0. Setup ODBC connection and install additional packages
+1. Develop and assign a generic horizonation
+2. Generate report and evaluate
 
-2. Assign new generic horization
-
-3. Evaluate new horization
-
-4. Generate report
-
-5. Import new generic horizonation into NASIS
 
 [&#8594;&nbsp;extended tutorial](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/gen-hz-assignment.html?root=aqp)
 
