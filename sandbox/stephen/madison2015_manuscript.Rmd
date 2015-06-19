@@ -45,12 +45,12 @@ In order to store soil data NASIS has a complex hierarchical data structure, wit
 A fundamental (and labor intensive) step in the mapping process involves aggregating horizon descriptions from field and lab pedons into component horizons. Historically this has been done with pencil and paper. A practice that still continues today for a variety of reasons, including:
 
     1. familiarity with existing protocol
-    2. perceived or real software limitations
+    2. perceived or real software limitations (i.e. inefficiencies)
     3. inconsistency among-st the existing data
     4. need to digitize data
     5. lack of training in new software
 
-Using NASIS it is possible to manipulate data. However the overwhelming majority of existing functions within NASIS have been designed to analyze and evaluate component data. It possible to export data from NASIS to other software, but none of the alternatives provide the same concise summary of data as do the standardized reports for component data in NASIS. New reports could be added to NASIS, but it only utilizes the Structured Query Language (SQL) which has a limited range of functions for performing statistical analysis. Therefore we advocate exporting pedon data to R (R Core Development Team, 2015) and leverge its base functions, it's new report writing capability (Xie, 2014), and it's user contributed functions designed for digital soil morphometrics, such as aqp (Beaudette et al., 2012), soilDB (Beaudette and Skovlin, 2015), and soiltexture (Moeys, 2015).
+Using NASIS it is possible to manipulate data. However the overwhelming majority of existing functions within NASIS have been designed to analyze and evaluate component data. It possible to export data from NASIS to other software, but none of the alternatives provide the same concise summary of data as do the standardized reports for component data in NASIS. New reports could be added to NASIS, but it only utilizes the Structured Query Language (SQL) which has a limited range of functions for performing statistical analysis. Therefore we advocate exporting pedon data to R (R Core Development Team, 2015) to leverage its base functions, it's new report writing capability (Xie, 2014), and it's user contributed functions designed for digital soil morphometrics, such as aqp (Beaudette et al., 2012), soilDB (Beaudette and Skovlin, 2015), and soiltexture (Moeys, 2015).
 
 ## Tools for interacting with soil data
 ### Tabular analysis
@@ -70,9 +70,9 @@ _* sorted by sophistication_
 
 # Methods - R
 
-To generate reports in R we use RStudio which is an Integrated Development Environment (IDE) for R. It provides a minimalist Graphical User Interface (GUI) and arranges various features among-st four windows. Prior to importing data from NASIS it is necessary to install several R packages and their dependencies (Roecker, 2015), and setup an ODBC connection to NASIS (Beaudette, 2015). These steps are fully documented online, and readers are pointed to them for full details. R is a highly extendable environment, and installing additional packages is common place (albeit confusing for new users) . 
+To generate reports in R we use RStudio which is an Integrated Development Environment (IDE) for R. It provides a minimalist Graphical User Interface (GUI) and arranges various features among-st four windows. Prior to importing data from NASIS it is necessary to install several R packages and their dependencies (Roecker, 2015), and setup an ODBC connection to NASIS (Beaudette, 2015). These steps are fully documented online, and readers are pointed to them for full details. R is a highly extendable environment, and installing additional packages is common place (albeit confusing for new users). 
 
-Prior to aggregating the horizons it is necessary to develop a lookup table to specify which horizons are similar enough to be aggregated. This is accomplished by using the existing horizon designation (HD) for each horizon, and matching it to a generic (i.e. simplified) horizonation sequence for each soil series or component. We make the assumption that the existing HD accurately reflect their morphology, and that morphology accurately reflects the horizon's soil properties. A good starting point is to look at the Official Series Description (OSD) for the soil in question. A OSD should provide a sample of likely HD within the Range of Characteristics (RIC) section. For example, Bw and Btk horizons might be aggregated if the development of the Btk horizon is incipient and doesn't meet the definition of an argillic or calcic diagnostic horizon. Another possible approach is to simply examine the frequency with which each HD occurs. HD that occur frequently are likely to be the most representative. Lastly it maybe useful to graphically examine univariate or multivariate summaries of each horizon (Beaudette and Skovlin, 2015). 
+Prior to aggregating the horizons it is necessary to develop a look-up table to specify which horizons are similar enough to be aggregated. This is accomplished by using the existing horizon designation (HD) for each horizon, and matching it to a generic (i.e. simplified) horizonation sequence for each soil series or component. We make the assumption that the existing HD accurately reflect their morphology, and that morphology accurately reflects the horizon's soil properties. A good starting point is to look at the Official Series Description (OSD) for the soil in question. A OSD should provide a sample of likely HD within the Range of Characteristics (RIC) section. For example, Bw and Btk horizons might be aggregated if the development of the Btk horizon is incipient and doesn't meet the definition of an argillic or calcic diagnostic horizon. Another possible approach is to simply examine the frequency with which each HD occurs. HD that occur frequently are likely to be the most representative. Lastly it maybe useful to graphically examine uni-variate or multivariate summaries of each horizon (Beaudette and Skovlin, 2015). 
 
 ![alt text](figures/genhz-sketch.png)
 
@@ -84,9 +84,9 @@ counts <- rbind(sort(table(pedons$hzname), decreasing=TRUE))
 kable(as.data.frame.matrix(counts)[1:12])
 ```
 
-Once a lookup table has been developed, pattern matching is used to develop a new generic HD for each horizon. This uses functions designed to parse the text from each HD, and match it to our new generic HD. It search for any combination of characters before or after the given pattern. Special metacharacters serve as anchors or anti-wildcards for the beginning (i.e. caret "^"), and end (i.e. dollar sign "\$") of the given pattern. For example, the HD "Bt" will match any permutation of Bt, such 2Bt or Bt1. To exclude 2Bt horizons, we would use "^Bt". Conversely to exclude Bt1 horizons, would would use "Bt\$". This information is stored in a text file, and referenced by the report. If the user is satified with the resulting HD, they can upload it to the comp layer id in NASIS for future use.
+Once a look-up table has been developed, pattern matching is used to develop a new generic HD for each horizon. This uses functions designed to parse the text from each HD, and match it to our new generic HD. It search for any combination of characters before or after the given pattern. Special meta-characters serve as anchors or anti-wildcards for the beginning (i.e. caret "^"), and end (i.e. dollar sign "\$") of the given pattern. For example, the HD "Bt" will match any permutation of Bt, such 2Bt or Bt1. To exclude 2Bt horizons, we would use "^Bt". Conversely to exclude Bt1 horizons, would would use "Bt\$". This information can be stored in a text file, and referenced by the report. If the user is satisfied with the resulting HD, they can upload it to the comp layer id in NASIS for future use.
 
-- GHL and rules for the aqp loafercreek sample dataset:
+- GHL and rules for the aqp loafercreek sample data-set:
   - **A**: `^A$|Ad|Ap`
   - **Bt1**: `Bt1$`
   - **Bt2**: `^Bt2$`
@@ -94,15 +94,13 @@ Once a lookup table has been developed, pattern matching is used to develop a ne
   - **Cr**: `Cr`
   - **R**: `R`
   
-  In order read NASIS data into R, a user must first load their seleted set with the Site, Pedon, and NCSS Pedon Lab Data tables. A selected set is a view or virtual table that is created via a query, and serves as a working subset of a user's local NASIS database. NASIS has numerous queries to accomplish this. Once loaded the soilDB is designed to automatically load the Site and Pedon tables using the following command.
-  
-# pedons <- fetchNASIS()
-
-This 
+  In order to read NASIS data into R, a user must first load their selected set with the Site, and Pedon or NCSS Pedon Lab Data tables. A selected set is a view or virtual table that is created via a query, and serves as a working subset of a user's local NASIS database. NASIS has numerous queries to accomplish this. Once loaded the user simply has to enter the name of the text file (e.g. "Miami") containing the GHL rules into the report and press the Knit button in RStudio. Afterwards an html report is generated. The necessary analysis steps are programmed into the report and formatted using R Markdown (Rmd).
 
 # Results
 
-Presentation of results
+The resulting field and lab pedon reports contains much of the information typically used to summarize data for developing Official Series Descriptions (OSD) and soil components, and competing dissimilar soils. Embedded in the reports are a mixture of tables and graphics. Numerical values are summarized using percentiles (i.e. quantiles), while categorical values are summarized by frequency tables (i.e. contingency tables). The percentiles used in the report can be adjusted by the user, but default is set to the five number summary (0%, 25%, 50% or median, 75%, 100%). Additionally, the percentiles are appended with the number of observations (e.g. (1, 2, 3, 4, 5)(5)), to inform the user of the sample size. The standard graphics used are box plots which are similar to the five number summary (outliers, ~5%, ~25%, 50% or median, ~75%, ~95%, outliers).
+
+Evaluating the report quickly shows where there is possible errors or insufficient data.
 
 
 # Discussion
@@ -132,7 +130,7 @@ Beaudette, D.E., Roudier P., and A.T. O'Geen. Algorithms for
 
 D.E. Beaudette and J.M. Skovlin (2015)a. soilDB: Soil Database
   Interface. R package version 1.5-2.
-  http://CRAN.R-project.org/package=soilDB
+  HTTP://CRAN.R-project.org/package=soilDB
   
 D.E. Beaudette and J.M. Skovlin (2015)b. Assigning Generalized Horizon Labels https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/gen-hz-assignment.html?root=aqp
 
@@ -140,7 +138,7 @@ Beaudette, D.E., 2015. Setup an ODBC Connection to the Local NASIS Database. htt
 
 Julien Moeys (2015). soiltexture: Functions for Soil Texture Plot,
   Classification and Transformation. R package version 1.3.3.
-  http://CRAN.R-project.org/package=soiltexture
+  HTTP://CRAN.R-project.org/package=soiltexture
 
 Yihui Xie (2014) knitr: A Comprehensive Tool for Reproducible
   Research in R. In Victoria Stodden, Friedrich Leisch and Roger D.
