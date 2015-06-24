@@ -175,13 +175,9 @@ Methods
 2. Generate report and evaluate
 
 
-[&#8594;&nbsp;extended tutorial](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/gen-hz-assignment.html?root=aqp)
-
-
-Methods - R
-========================================================
-- soilDB
-- knitr
+[&#8594;&nbsp;extended tutorial for horizon generalization](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/gen-hz-assignment.html?root=aqp)
+<br>
+[&#8594;&nbsp;extended tutorial for R reports (Region 11 SharePoint)](https://ems-team.usda.gov/sites/NRCS_SSRA/mo-11/Soils%20%20GIS/Forms/AllItems.aspx?RootFolder=%2Fsites%2FNRCS%5FSSRA%2Fmo%2D11%2FSoils%20%20GIS%2Fguides%2FR&FolderCTID=0x0120007929E36D8FF15644B2C3F1488664C3CD&View=%7BFE55388F%2DFD5F%2D4A7B%2D98BD%2DA1F618066492%7D)
 
 
 Assumptions
@@ -287,6 +283,7 @@ Demonstrate Reports
 ========================================================
 - open existing reports
 
+[&#8594;&nbsp;examples of R reports](https://github.com/ncss-tech/soil-pit/tree/master/examples)
 
 
 Closing thoughts
@@ -295,7 +292,6 @@ Closing thoughts
 - data on soil series should be viewed in aggregate
 - "we shouldn't let the perfect be the enemy of the good"
 - reproducible research is good
-- Soil Departments should teach Statistics!!!
 - Soil scientists are great at collecting data, but we have to just as good at analyzing it.
 
 ```{r closing comments, echo=FALSE}
