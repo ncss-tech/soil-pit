@@ -1,4 +1,4 @@
-# Lab pedon report
+;# Lab pedon report
 ```{r enter soil series name}
 # Set soil series
 series <- "Ava"

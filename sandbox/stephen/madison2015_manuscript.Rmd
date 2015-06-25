@@ -123,6 +123,8 @@ What did you learn? "Alfred"
 
 # Conclusion
 
+Rarely can soil scientists observe full pedons or polypedons, due to the limitations of human observations. Therefore we can only approximate their internal variability by examining several soil profiles and comparing their descriptions.
+
 Soil profile descriptions within the NASIS database represent a immense body of observations. From an organizational perspective the data can often be difficult to use and summarize. Using the relational structure of the NASIS database combined with the extensible data handling and statistical analysis capabilities of R, it is possible to generate powerful graphical and tabular summaries for collections of pedon data.  The scripting environment in R allows many data handling, statistical, and summarization processes to be bundled into one report.  The assignment of GHL in correlating similar horizon designations for summary is a fundamental step in this process, which both requires soil scientists expert knowledge and helps expand their knowledge. Graphical displays of soil data continue to expand in capability within R making it a useful platform for generating reports summarizing pedon data.
 
 # Acknowledgements
