@@ -12,6 +12,7 @@ library(knitr)
 title: "Digital summaries of legacy pedon descriptions"
 author: "Stephen Roecker, Jay Skovlin, Dylan Beaudette, Skye Wills"
 output:
+  html_document: default
   word_document:
     fig_caption: yes
 fig_caption: yes
@@ -38,11 +39,11 @@ ggplot(data.frame(pedons, year), aes(x=year, y=pedons)) + geom_bar(stat="identit
 # Lots of talk about collecting new data, but little appreciation for existing data.
 ```
 
-In order to store soil data compactly and effeciently, NASIS has a complex hierarchical data structure (http://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/survey/tools/?cid=nrcs142p2_053547).  One portion stores point data - obvservations about sites and pedons, with soil horizons being the most basic element. The other portion stores aggregate data - information about soil map units and their unique soil components (e.g. soil series, phases). Each soil component is made up of generalized soil horizons. Nested within each horizon record are additional child tables that are linked to the horizon record. Each of these child tables, may include several related child tables to capture heterogeneous soil conditions within each soil horizon. The dominant condition is specified as the representative value (RV). For numeric component data, it is possible to specify a range with a Low (L) and High (H) values. This makes it possible to characterize the distribution or uncertainty of a particular soil variable, such as clay content. Using this system, it is possible to capture complex soil horizonation, aggregate the data, and then generate spatial predictions by linking to the soil polygon layer.
+In order to store soil data compactly and effeciently, NASIS has a complex hierarchical data structure (http://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/survey/tools/?cid=nrcs142p2_053547).  One portion stores point data - observations of site and pedon data, with soil horizons being the most basic element. The other portion stores aggregate data - information about soil map units and their unique soil components (e.g. soil series, phases). Each soil component is made up of generalized soil horizons. Nested within each horizon record are additional child tables that are linked to the horizon record. Each of these child tables, may include several related child tables to capture heterogeneous soil conditions within each soil horizon. The dominant condition is specified as the representative value (RV). For numeric component data, it is possible to specify a range with a Low (L) and High (H) values. This makes it possible to characterize the distribution or uncertainty of a particular soil variable, such as clay content. Using this system, it is possible to capture complex soil horizonation, aggregate the data, and then generate spatial predictions by linking to the soil polygon layer.
 
 ![alt text](figures/nasis.png)
 
-A fundamental and complicated step in the mapping process involves aggregating numerous horizon descriptions from field and lab pedons into component horizon data (Soil Survey Division Staff, 1993). While there are standards that guide the process of describing individual sites and pedons such the National Soil Survey Handbook (USDA, 2015) and the Field Book for Describing and Sampling Soils (Schoeneberger et al., 2012); there are no definitive guidelines for aggregating point/pedon observations and data into component database elements. Historically, the process of determining the ranges (L, RV, H) for various soil attributes has been done with pencil and paper or rudimentary spreadsheets and conditioned using expert knowledge. A practice that still continues today for a variety of reasons, including:
+A fundamental and complicated step in the mapping process involves aggregating numerous horizon descriptions from field and lab pedons into component horizon data (Soil Survey Division Staff, 1993). While there are standards that guide the process of describing individual sites and pedons in the National Soil Survey Handbook (USDA, 2015) and the Field Book for Describing and Sampling Soils (Schoeneberger et al., 2012); there are no definitive guidelines for the process of aggregating point/pedon observations and data into component database elements. Historically, the process of determining the ranges (L, RV, H) for various soil attributes has been done with pencil and paper or rudimentary spreadsheets and conditioned using expert knowledge. A practice that still continues today for a variety of reasons, including:
 
     1. familiarity with existing protocol
     2. perceived or real software limitations
@@ -104,9 +105,11 @@ In order to fetch NASIS data for use in R, a user must first load a selected set
 
 # Results
 
-The resulting field and lab pedon reports contains much of the information typically used to summarize data for developing Official Series Descriptions (OSD) and aggregated mapunit soil components, and competing dissimilar soils. Embedded in the reports are a mixture of tables and graphics. Numerical values are summarized using percentiles (i.e. quantiles), while categorical values are summarized by frequency tables (i.e. contingency tables). The percentiles used in the report can be adjusted by the user, but the default is set to the five number summary (0%, 25%, 50% or median, 75%, 100%). Additionally, the percentiles are appended with the number of observations (e.g. (1, 2, 3, 4, 5)(5)), to inform the user of the sample size. The standard graphics used by box plots which are similar to the five number summary (outliers, ~5%, ~25%, 50% or median, ~75%, ~95%, outliers).
+The resulting field and lab pedon reports contain much of the information typically used to summarize data for developing Official Series Descriptions (OSD) and aggregated mapunit soil components, and competing dissimilar soils. Embedded in the reports are a mixture of tables and graphics. Numerical values are summarized using percentiles (i.e. quantiles), while categorical values are summarized by frequency tables (i.e. contingency tables). The percentiles used in the report can be adjusted by the user, but the default is set to the five number summary (0%, 25%, 50% or median, 75%, 100%). Additionally, the percentiles are appended with the number of observations (e.g. (1, 2, 3, 4, 5)(5)), to inform the user of the sample size. The standard graphics used by box plots which are similar to the five number summary (outliers, ~5%, ~25%, 50% or median, ~75%, ~95%, outliers).
 
-Evaluating the graphics and tables within the report quickly shows where there are possible errors, narrow or wide ranges in values or data gaps due to insufficient data.
+# Insert an example boxplot graphical summary from a report
+
+Evaluating the graphics and tables within the report quickly shows where there are possible errors, narrow or wide ranges in values or where data gaps exist due to insufficient data.
 
 
 # Discussion
@@ -123,7 +126,7 @@ What did you learn? "Alfred"
 
 # Conclusion
 
-Rarely can soil scientists observe full pedons or polypedons, due to the limitations of human observations. Therefore we can only approximate their internal variability by examining several soil profiles and comparing their descriptions.
+Rarely can soil scientists observe full pedons or polypedons, due to the limitations of human observations. Therefore we can only approximate the range of their internal variability by examining several soil profiles and comparing multiple descriptions.
 
 Soil profile descriptions within the NASIS database represent a immense body of observations. From an organizational perspective the data can often be difficult to use and summarize. Using the relational structure of the NASIS database combined with the extensible data handling and statistical analysis capabilities of R, it is possible to generate powerful graphical and tabular summaries for collections of pedon data.  The scripting environment in R allows many data handling, statistical, and summarization processes to be bundled into one report.  The assignment of GHL in correlating similar horizon designations for summary is a fundamental step in this process, which both requires soil scientists expert knowledge and helps expand their knowledge. Graphical displays of soil data continue to expand in capability within R making it a useful platform for generating reports summarizing pedon data.
 
