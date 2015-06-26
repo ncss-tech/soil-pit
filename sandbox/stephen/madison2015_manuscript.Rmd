@@ -118,7 +118,7 @@ The resulting field and lab pedon reports contain much of the same information t
 load("miami_field.RData")
 load("miami_lab.RData")
 
-cols <- brewer.pal(n = length(levels(miami_field$genhz)), name = "Paired") 
+cols <- brewer.pal(n = length(levels(miami_field$genhz)), name = "Dark2") 
 hz.names <- levels(miami_field$genhz)
 miami_field$genhz.soil_color <- cols[match(miami_field$genhz, hz.names)] # assign a color to each generalized horizon label
 plot(miami_field[1:10], name = 'hzname', color = 'genhz.soil_color', label = 'pedon_id') # plot generalized horizons via color and add a legend
