@@ -112,11 +112,29 @@ Embedded in the reports are a mixture of tables and graphics. Numerical variable
 
 # Results and Discussion
 
-The full field and lab reports are not shown here due to space limitations. Instead readers are to directed to https://github.com/ncss-tech/soil-pit/tree/master/examples, where development is on-going. What follows are excerpts and discussion of the reports content.
+The full field and lab reports are not shown here due to space limitations. Instead readers are directed to https://github.com/ncss-tech/soil-pit/tree/master/examples, where development is on-going. What follows are excerpts and discussion of the reports content.
 
-Much of the information contained in the reports is typically used to summarize data for developing OSD and aggregated map unit soil components, and competing dissimilar soils. Evaluating the graphics and tables within the reports quickly show where there are possible errors, narrow or wide ranges in values or where data gaps exist due to insufficient data. One of the first outputs of the report that should be examined thoroughly is a contingency table of the GHL versus the original horizon designations. This shows the results of the pattern matching and should be examined to confirm whether the GHL assignments are as desired. For example GHL that are labeled as "not used", did not match any of the given patterns, which the user may or may not wish to label. Other information is also included at the beginning of the report, listing the pedons id number, particle size, subgroup, soil series name, and describer. In addition a map is provided for those pedons that are populated with latitude and longitude in decimal degrees.
+Much of the information contained in the reports is typically used to summarize data for developing OSD and aggregated map unit soil components, and competing dissimilar soils. Evaluating the graphics and tables within the reports quickly show where there are possible errors, narrow or wide ranges in values or where data gaps exist due to insufficient data. One of the first outputs of the report that should be examined thoroughly is a contingency table of the GHL versus the original horizon designations. This shows the results of the pattern matching and should be examined to confirm whether the GHL assignments are as desired. For example GHL that are labeled as "not used", did not match any of the given patterns, which the user may or may not wish to label. Other information is also included at the beginning of the report, including the pedons id number, particle size, subgroup, soil series name, and describer. In addition a map is provided for those pedons that are populated with latitude and longitude in decimal degrees.
 
 As an example the following tables and figures show a excerpts of all the data labeled as the Miami soil series with NASIS.
+
+The lab data is NASIS is primarily composed of numeric data, therefore it is easily summarized by percentiles and boxplots.
+
+Pedon report content
+    * Map
+    * Site data: pedon id, soil series name, subgroup, particle size, pedon type, describer
+    * Surface rock fragments
+    * Depths and thickness of diagnostic horizons
+    * GHL vs original horizon designations
+    * Depth and thickness of GHL
+    * Numeric variables: clay, rock fragments, pH, etc...
+    * GHL vs texture and texture class modifer
+    * GHL vs Hue
+    * Elevation, slope gradient and aspect
+    * Parent material vs landform
+    * Down slope vs across slope shape
+    * Drainage class vs hillslope position
+    
 
 
 ```{r, echo=FALSE, warning=FALSE, comment=""}
