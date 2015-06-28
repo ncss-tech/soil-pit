@@ -112,29 +112,41 @@ Embedded in the reports are a mixture of tables and graphics. Numerical variable
 
 # Results and Discussion
 
-The full field and lab reports are not shown here due to space limitations. Instead readers are directed to https://github.com/ncss-tech/soil-pit/tree/master/examples, where development is on-going. What follows are excerpts and discussion of the reports content.
+The full field and lab reports are not shown here due to space limitations. Instead readers are directed to https://github.com/ncss-tech/soil-pit/tree/master/examples, where development is on-going. The list below summarizes their content.
+What follows are excerpts and discussion of the reports content.
 
-Much of the information contained in the reports is typically used to summarize data for developing OSD and aggregated map unit soil components, and competing dissimilar soils. Evaluating the graphics and tables within the reports quickly show where there are possible errors, narrow or wide ranges in values or where data gaps exist due to insufficient data. One of the first outputs of the report that should be examined thoroughly is a contingency table of the GHL versus the original horizon designations. This shows the results of the pattern matching and should be examined to confirm whether the GHL assignments are as desired. For example GHL that are labeled as "not used", did not match any of the given patterns, which the user may or may not wish to label. Other information is also included at the beginning of the report, including the pedons id number, particle size, subgroup, soil series name, and describer. In addition a map is provided for those pedons that are populated with latitude and longitude in decimal degrees.
+- Field pedon report content:
+    - Map of georeferenced pedons
+    - Table of identifying information: pedon id, soil series, etc...
+    - Soil profile plots
+    - Surface rock fragments
+    - Depths and thickness of diagnostic horizons
+    - GHL vs original horizon designations
+    - Depth and thickness of GHL
+    - Numeric variables: clay content, rock fragments, pH, etc...
+    - GHL vs texture and texture class modifer
+    - GHL vs Hue
+    - Elevation, slope gradient and aspect
+    - Parent material vs landform
+    - Down slope vs across slope shape
+    - Drainage class vs hillslope position
 
-As an example the following tables and figures show a excerpts of all the data labeled as the Miami soil series with NASIS.
-
-The lab data is NASIS is primarily composed of numeric data, therefore it is easily summarized by percentiles and boxplots.
-
-Pedon report content
-    * Map
-    * Site data: pedon id, soil series name, subgroup, particle size, pedon type, describer
-    * Surface rock fragments
-    * Depths and thickness of diagnostic horizons
-    * GHL vs original horizon designations
-    * Depth and thickness of GHL
-    * Numeric variables: clay, rock fragments, pH, etc...
-    * GHL vs texture and texture class modifer
-    * GHL vs Hue
-    * Elevation, slope gradient and aspect
-    * Parent material vs landform
-    * Down slope vs across slope shape
-    * Drainage class vs hillslope position
+- Lab pedon report content:
+    - Map of georeference pedons
+    - Table of identifying information: pedon id, soil series, etc...
+    - Soil profile plots
+    - Weighted averages for the particle size control section
+    - Depths and thickness for the particle size control section
+    - GHL vs original horizon designations
+    - Depth and thickness of GHL
+    - Numeric variables: particle size fractions, pH, base saturation, carbon content, etc...
+    - GHL vs texture
     
+Much of the information contained in the reports is typically used to summarize data for developing OSD and aggregated map unit soil components, and competing dissimilar soils. Evaluating the graphics and tables within the reports quickly show where there are possible errors, narrow or wide ranges in values or where data gaps exist due to insufficient data. One of the first outputs of the report that should be examined thoroughly is a contingency table of the GHL versus the original horizon designations. This shows the results of the pattern matching and should be examined to confirm whether the GHL assignments are as desired. For example GHL that are labeled as "not used", did not match any of the given patterns, which the user may or may not wish to label.
+
+As an example the following tables and figures show a excerpts of all the field and lab data labeled as the Miami soil series with NASIS.
+
+The lab data in NASIS is primarily composed of numeric data, therefore it is easily summarized by percentiles and boxplots.
 
 
 ```{r, echo=FALSE, warning=FALSE, comment=""}
@@ -146,14 +158,14 @@ hz.names <- levels(miami_field$genhz)
 miami_field$genhz.soil_color <- cols[match(miami_field$genhz, hz.names)] # assign a color to each generalized horizon label
 plot(miami_field[1:10], name = 'hzname', color = 'genhz.soil_color', label = 'pedon_id') # plot generalized horizons via color and add a legend
 legend('bottomleft', legend=hz.names, pt.bg=c(cols), pch=22)
-title("Sample plot of field pedons")
+title("Sample of soil profile plot of field pedons")
 
 cols <- brewer.pal(n = length(levels(miami_lab$genhz)), name = "Set1") 
 hz.names <- levels(miami_lab$genhz)
 miami_lab$genhz.soil_color <- cols[match(miami_lab$genhz, hz.names)] # assign a color to each generalized horizon label
 plot(miami_lab[1:10], name = 'hzname', color = 'genhz.soil_color', label = 'labpeiid') # plot generalized horizons via color and add a legend
 legend('bottomleft', legend=hz.names, pt.bg=c(cols), pch=22)
-title("Sample plot of lab pedons")
+title("Sample of soil profile plot of lab pedons")
 
 p <- c(0, 0.25, 0.5, 0.75, 1)
 
@@ -184,6 +196,16 @@ kable(addmargins(table(lh$genhz, lh$lab_texcl)), digits = 0, caption = "Texture 
 ```
 
 
+# Conclusion
+
+Rarely can soil scientists observe full pedons or polypedons in the field due to the limitations of human observation. Therefore we can only approximate the range of their internal variability by examining several soil profiles and comparing multiple descriptions. The purpose of this paper to a field and lab report to rapidly analyze such data.
+
+
+Soil profile descriptions within the NASIS database represent a immense body of observations. From an organizational perspective the data can often be difficult to use and summarize. Using the relational structure of the NASIS database combined with the extensible data handling and statistical analysis capabilities of R, it is possible to generate powerful graphical and tabular summaries for collections of pedon data.  The scripting environment in R allows many data handling, statistical, and summarization processes to be bundled into one report.  The assignment of GHL in correlating similar horizon designations for summary is a fundamental step in this process, which both requires soil scientists expert knowledge and helps expand their knowledge. Graphical displays of soil data continue to expand in capability within R making it a useful platform for generating reports summarizing pedon data.
+
+
+* Find some where to cite Fred Young. Young and others have described a similar process for evaluating the soils within a given map units, but we think 
+
 Mixture of the graphics and 
 
 What did you learn? "Alfred"
@@ -194,18 +216,6 @@ What did you learn? "Alfred"
 - reproducible research is good
 - Soil Departments should teach Statistics!!! Soil students are rarely taught how to analyze soil in its three dimensional nature.
 - Soil scientists are great at collecting data, but we have to just as good at analyzing it.
-
-
-
-# Conclusion
-
-Rarely can soil scientists observe full pedons or polypedons, due to the limitations of human observations. Therefore we can only approximate the range of their internal variability by examining several soil profiles and comparing multiple descriptions.
-
-Soil profile descriptions within the NASIS database represent a immense body of observations. From an organizational perspective the data can often be difficult to use and summarize. Using the relational structure of the NASIS database combined with the extensible data handling and statistical analysis capabilities of R, it is possible to generate powerful graphical and tabular summaries for collections of pedon data.  The scripting environment in R allows many data handling, statistical, and summarization processes to be bundled into one report.  The assignment of GHL in correlating similar horizon designations for summary is a fundamental step in this process, which both requires soil scientists expert knowledge and helps expand their knowledge. Graphical displays of soil data continue to expand in capability within R making it a useful platform for generating reports summarizing pedon data.
-
-The purpose is to provide tools to rapidly analyse data.
-
-* Find some where to cite Fred Young. Young and others have described a similar process for evaluating the soils within a given map units, but we think 
 
 # Acknowledgements
 Alena Stephens, John Hammerly, Jennifer Outcalt, Henry Ferguson, Paul Finnell, and others...
