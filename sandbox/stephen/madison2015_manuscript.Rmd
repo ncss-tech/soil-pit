@@ -143,11 +143,13 @@ The full field and lab reports are not shown here due to space limitations. Inst
     
 Much of the information contained in the reports is typically used to summarize data for developing OSD and aggregated map unit soil components, and competing dissimilar soils (Is anyone going to know what phrase 'competing dissimilar soils' means????). Evaluating the graphics and tables within the reports quickly show where there are possible errors, narrow or wide ranges in values or where data gaps exist due to insufficient data. One of the first outputs of the report that should be examined thoroughly is a contingency table of the GHL versus the original horizon designations. This shows the results of the pattern matching and should be examined to confirm whether the GHL assignments aggregate the soil horizons appropriately. For example GHL that are labeled as "not used", did not match any of the given patterns and were not included in the data summaries. The user may in some cases wish to further include or exclude these soil horizons from the summaries and can accomplish this by refining the GHL rules used in the pattern matching.
 
-The following tables and figures show summaries of clay content, pH, and texture for all the field and lab data labeled as the Miami soil series within NASIS. The example shows that the field data is missing estimates for clay content. Given the vintage of the dataset, this is not surprising, as it was not always common to record field estimates for clay content. The lab data, however, has numerous measurements of clay content. By examining the boxplots we can see a clear clay increase in the Bt and then a decrease in clay within the 2Bt and 2Cd horizons. The boxplots for pH however show a wide interquartile range for the solum and a slight decrease in the median pH with depth. The subsoil (i.e. 2BCt and 2Cd) however shows a much narrower interquartile range and higher median pH. Examing the contingency tables of soil texture we can see a greater frequency of silty textures in the A and E horizons. The Bt horizon shows a higher frequency of clay loam textures. If silty textures are indicative of the loess cap associated with the Miami series, it suggests that numerous Bt horizons would more closely fit the characteristics of 2Bt horizons. Whatever the interpretation, the report's summaries provide useful information and allow soil scientists to ask questions of their data; particularly when viewed in aggregate. 
+As an example the following tables and figures show excerpts from all the field and lab data labeled as the Miami soil series within NASIS. To start, one example shows that the field data is missing estimates for clay content. Given the vintage of the dataset, this is not surprising, as it was not always common to record field estimates for clay content. The lab data thankfully has numerous measurements of clay content. By examining the boxplots we can see a clear clay increase in the Bt and 2Bt horizons, and a decrease in the 2Cd horizon. The boxplots for pH however show a wide interquartile range for the solum and a slight decrease in the median pH with depth. The subsoil (i.e. 2BCt and 2Cd) however shows a much narrow interquartile range and higher median pH. Examing the contingency tables of GHL vs. texture we can see a greater frequency of silty textures in the A and E horizons. The Bt horizon though shows a higher frequency of clay loam textures. If silty textures are indicative of the loess cap associated with the Miami series, it suggests that numerous Bt horizons should be relabeled as 2Bt horizons. Whatever the interpretation, the report's summaries provide ample information and allow soil scientists to ask questions of their data; particularly when viewed in aggregate. 
 
 ```{r, echo=FALSE, warning=FALSE, comment=""}
 load("miami_field.RData")
 load("miami_lab.RData")
+
+kable(addmargins(table(miami_field$genhz, miami_field$hzname)), digits = 0, caption = "Horizon designations vs generic horizon designations (counts)")
 
 cols <- brewer.pal(n = length(levels(miami_field$genhz)), name = "Set1") 
 hz.names <- levels(miami_field$genhz)
@@ -156,7 +158,6 @@ plot(miami_field[1:10], name = 'hzname', color = 'genhz.soil_color', label = 'pe
 legend('bottomleft', legend=hz.names, pt.bg=c(cols), pch=22)
 title("Sample of soil profile plots of field pedons")
 
-cols <- brewer.pal(n = length(levels(miami_lab$genhz)), name = "Set1") 
 hz.names <- levels(miami_lab$genhz)
 miami_lab$genhz.soil_color <- cols[match(miami_lab$genhz, hz.names)] # assign a color to each generalized horizon label
 plot(miami_lab[1:10], name = 'hzname', color = 'genhz.soil_color', label = 'labpeiid') # plot generalized horizons via color and add a legend
@@ -190,6 +191,8 @@ kable(addmargins(table(h$genhz, h$texture_class)), digits = 0, caption = "Textur
 kable(addmargins(table(lh$genhz, lh$lab_texcl)), digits = 0, caption = "Texture of Miami lab pedons by generic horizon (counts)")
 
 ```
+
+The tables and figures shown above, and the online examples demonstrate an attempt to streamline the aggregation of point data. Prior to the advent of NASIS their were many early attempts at estimate the RIC for soil properties (Young etal., 1991; Jansen and Arnold, 1976). These earlier attempts looked at estimates for portions of the soil profile, such as surface texture or subsoil clay content (not necessary GHL), and preferred parameteric estimates (i.e. mean and confidence intervals). They also clearly demonstated the disconnect between the limits for taxonomic units and map unit components. This secondary issue is now addressed by Soil Survey Technical Note 4 (USDA, 2003), which allows map unit components to L and H values to range beyond that of a soil series taxonomic boundaries.
 
 
 # Conclusion
