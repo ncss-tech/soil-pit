@@ -22,11 +22,11 @@ fig_caption: yes
 
 # Abstract
 
-Soil scientists have been collecting field and lab pedon descriptions for over a hundred years. Within the United States a small portion of this data has been captured in the National Soil Information System (NASIS). While NASIS serves as a superb data repository, its analytical capabilities are limited, and thus we believe its data is underutilized. Therefore we advocate the use of R, which can easily import data from NASIS and has custom functions designed for digital soil morphometrics. In conjunction with the Western Regional Cooperative Soil Survey Technology Committee we have developed R Markdown reports that provide standardized summaries and graphics of data commonly used for soil survey activities, such as the Soil Data Join and Recorrelation Initiative, development of Official Series Descriptions and soil map unit components, and competing dissimilar soils. With little prior knowledge even R novices can quickly generate their own results. Examples can be viewed at, https://github.com/ncss-tech/soil-pit/tree/master/examples, where development is on-going.
+Soil scientists have been collecting field and lab pedon descriptions for over a hundred years. Within the United States a small portion of this data has been captured in the National Soil Information System (NASIS). While NASIS serves as a superb (functional ?) data repository, its analytical capabilities are limited, and thus the data data are often underutilized. Therefore we advocate the use of R, which can easily import data from NASIS and has custom functions designed for digital soil morphometrics. In conjunction with the Western Regional Cooperative Soil Survey Technology Committee we have developed R Markdown reports that provide standardized summaries and graphics of data commonly used for soil survey activities, such as the Soil Data Join and Recorrelation initiative, development of Official Series Descriptions and soil map unit components, and competing dissimilar soils. With little prior knowledge even R novices can quickly generate their own results. Examples can be viewed at, https://github.com/ncss-tech/soil-pit/tree/master/examples, where development is on-going.
 
 # Introduction
 
-The National Cooperative Soil Survey (NCSS) has amassed a substantial amount of legacy pedon data in support of developing soil surveys over the last 100 years. This data consists of field estimates, observations, and laboratory measurements. Unlike the soil map unit polygon layers and their associated attribute data (component data), pedon data represent unaggregated (point) data from individual observations of soils on the landscape. The wealth of observations in pedon data make it invaluable as a resource for future updates to existing soil surveys. Updates to the aggregated component data have been taking place on a national scale as part of the Soil Data Join and Recorrelation (SDJR) Initiative since 2012 (403-305-NI, 2013). In the future, additional updates are planned for the spatial data. Since the introduction of the National Soil Information System (NASIS) in 1994 (Fortner and Price, 2012), approximately 400,000 field pedons and approximately 63,000 lab pedons have been digitized (Ferguson, 2015). While significant, this represents only a small portion of total field pedons ever described.
+The National Cooperative Soil Survey (NCSS) has amassed a substantial amount of legacy pedon data in support of developing soil surveys over the last 100 years. This data consists of field estimates, observations, and laboratory measurements. Unlike the soil map unit polygon layers and their associated attribute data (component data), pedon data represent point data from individual observations of soils on the landscape. The wealth of observations in pedon data make it invaluable as a resource for future updates to existing soil surveys. Updates to the aggregated component data have been taking place on a national scale as part of the Soil Data Join and Recorrelation (SDJR) initiative since 2012 (403-305-NI, 2013). In the future, additional updates are planned for the spatial data. Since the introduction of the National Soil Information System (NASIS) in 1994 (Fortner and Price, 2012), approximately 400,000 field pedons and approximately 63,000 lab pedons have been digitized (Ferguson, 2015). While significant, this represents only a small portion of total field pedons ever described.
 
 ```{r, echo=FALSE, warning=FALSE}
 
@@ -49,11 +49,11 @@ A fundamental step in the mapping process involves aggregating numerous horizon 
     2. inconsistency among the existing data
     3. large additional workload involved in digitizing data
     4. perceived or real software limitations
-    5. lack of training in new software
+    5. lack of training in new software and basic statistical methods
 
-The second number on the list, is close a second. It stems from several factors, including the sampling bias, the completeness of each observation, the method the measurement, and fluid soil series concepts. How soil scientist weight the first 3 factors in their decision making process is where the science meets the art. The last factor is a victim of the first 3, because as a soil scientist collects more data their concept of the soil series may change and thus necessiate changing the OSD. This undermines the utility of the soil series labels given to pedons in NASIS, because changing the OSD may necessitate changing labels to existing pedons. Therefore a soil scientist needs to ensure that their dataset is representative of the soil series or component they're trying to summarize. All these issues make it difficult to automate the aggregation process.
+The second item in the list, is close a second. It stems from several factors, including the sampling bias, the completeness of each observation, the method the measurement, and fluid soil series concepts. How soil scientist weight the first 3 factors in their decision making process is where the science meets the art. The last factor is a victim of the first 3, because as a soil scientist collects more data their concept of the soil series may change and thus necessiate changing the OSD. This undermines the utility of the soil series labels given to pedons in NASIS, because changing the OSD may necessitate changing labels to existing pedons. Therefore a soil scientist needs to ensure that their dataset is representative of the soil series or component they're trying to summarize. All these issues make it difficult to automate the aggregation process.
 
-Prior to the advent of NASIS their were many early attempts at estimate the RIC for soil properties (Young etal., 1991; Jansen and Arnold, 1976). These earlier attempts looked at estimates for portions of the soil profile, such as surface texture or subsoil clay content, and utilized parameteric estimates (i.e. mean and confidence intervals). They also clearly demonstated the disconnect between the limits set by taxonomic units and those observed within map unit components. This secondary issue is now addressed by Soil Survey Technical Note 4 (USDA, 2003), which allows the range (i.e. low and high) of map unit components to extend beyond those specificed by the OSD. 
+Prior to the advent of NASIS there were many early attempts at estimated a RIC for soil properties (Young etal., 1991; Jansen and Arnold, 1976). These earlier attempts looked at estimates for portions of the soil profile, such as surface texture or subsoil clay content, and utilized parameteric estimates (i.e. mean and confidence intervals). They also clearly demonstated the disconnect between the limits set by taxonomic units and those observed within map unit components. This secondary issue is now addressed by Soil Survey Technical Note 4 (USDA, 2003), which allows the range (i.e. low and high) of map unit components to extend beyond those specificed by the OSD. 
 
 While it is possible to manipulate pedon data directly in NASIS; the majority of existing functions within NASIS have been designed to analyze and evaluate component-level aggregate data. It is possible to export data from NASIS to other software, but none of the alternatives provide the same concise summary of data as do the standardized reports for component data in NASIS. New reports could be added to NASIS, but complex reports are difficult to write because NASIS currently supports a limited implementation of the Structured Query Language (SQL) which has few functions for performing statistical analysis. We advocate exporting pedon data to R (R Core Development Team, 2015), which allows soil scientists to leverage numerous R functions designed for organizing and analyzing data. Scripting reports in R provides access to current report-writing capability (Xie, 2014; Allaire et al., 2015), and user-contributed functions specifically designed for digital soil morphometrics, such as the aqp (Beaudette et al., 2012), soilDB (Beaudette and Skovlin, 2015), and soiltexture (Moeys, 2015) packages.
 
@@ -76,11 +76,11 @@ _* sorted by sophistication_
 # Methods - R
 
 ## Summary or report workflow
-    0. Setup ODBC connection and install additional packages
-    1. Develop and assign generalized horizonation labels (GHL)
-    2. Generate report and evaluate
+    1. Setup ODBC connection and install additional packages
+    2. Develop and assign generalized horizonation labels (GHL)
+    3. Generate report and evaluate
 
-RStudio, an Integrated Development Environment (IDE) for R, is used to generate summary reports in R. It provides a minimalist Graphical User Interface (GUI) that organizes the R environment into four task oriented windows. The initial start up process of using RStudio and R to run the reports requires the user to install several R packages and their dependencies (Roecker, 2015), and setup an ODBC connection to NASIS (Beaudette, 2015). These steps are fully documented online, and readers are pointed to these reference documents for full details. R is a highly extendable environment, and is in dynamic development, so installing additional packages is a common practice as packages are updated or new packages become available. 
+RStudio, an Integrated Development Environment (IDE) for R, is used to generate summary reports in R. It provides a minimalist Graphical User Interface (GUI) that organizes the R environment into four task oriented windows. The initial start up process of using RStudio and R to run the reports requires the user to install several R packages and their dependencies (Roecker, 2015) [what is this?], and setup an ODBC connection to NASIS (Beaudette, 2015). These steps are fully documented online, and readers are pointed to these reference documents for full details. R is a highly extendable environment, and is in dynamic development, so installing additional packages is a common practice as packages are updated or new packages become available. 
 
 Prior to aggregating horizons, it is necessary to develop a list of GHL to specify which horizons are similar enough to be aggregated. This is accomplished by mapping the existing horizon designations for each horizon, and matching them to a generalized (i.e. simplified) horizonation sequence for each soil series or component. The assumption is made that the existing horizon designations accurately reflect the soil morphology and the corresponding soil properties of the horizons. For established soil series, the Official Series Description (OSD) can be used as a starting point for determining the appropriate GHL to assign to the horizons for the soil in question. The OSD provides a sample of likely horizons within either the typical pedon described or the range of characteristics (RIC) sections. For example, multiple argillic horizons might be aggregated or grouped together if it is determined that they are similar in clay content and other characteristics and that such an aggregation is not going to effect the use and management of that soil.  For example, Bw and Btk horizons might be aggregated if the development of the Btk horizon is incipient and doesn't meet the definition of an argillic or calcic diagnostic horizon. Another approach is to examine the frequency with which each horizon occurs. Horizons that occur frequently are likely to be the most representative. Lastly it is useful to graphically examine uni-variate or multivariate summaries of each horizon (Beaudette and Skovlin, 2015). 
 
@@ -149,7 +149,14 @@ As an example the following tables and figures show excerpts from all the field 
 load("miami_field.RData")
 load("miami_lab.RData")
 
-kable(addmargins(table(miami_field$genhz, miami_field$hzname)), digits = 0, caption = "Horizon designations vs generic horizon designations (counts)")
+# truncated cross-tabulation
+cross.tab <- table(miami_field$genhz, miami_field$hzname)
+# get top-N columns, without including not-used
+top.hz <- order(apply(cross.tab[1:7, ], 2, sum), decreasing = TRUE)[1:20]
+
+kable(cross.tab[, top.hz], digits = 0, caption = "Horizon Designations vs. Generalized Horizon Labels (truncated counts)")
+
+# kable(addmargins(table(miami_field$genhz, miami_field$hzname)), digits = 0, caption = "Horizon Designations vs. Generalized Horizon Labels (counts)")
 
 cols <- brewer.pal(n = length(levels(miami_field$genhz)), name = "Set1") 
 hz.names <- levels(miami_field$genhz)
@@ -172,7 +179,7 @@ h.lo <- melt(h, id.vars="genhz", measure.vars = c('clay', 'phfield'))
 h.5n <- ddply(h.lo, .(variable, genhz), .fun = sum5n)
 h.wi <- dcast(h.5n, genhz ~ variable, value.var = 'range')
 
-kable(h.wi, align = "c", caption = "Summary of Miami field pedons by generic horizon (min, 25th, median, 75th, max)(n)")
+kable(h.wi, align = "c", caption = "Summary of Miami field pedons by generalized horizon label (min, 25th, median, 75th, max)(n)")
 
 lh.num <- lh[c("genhz", "claytot", "ph1to1h2o")]
 lh.lo <- melt(lh.num, id.vars="genhz", measure.vars=c("claytot", "ph1to1h2o"))
@@ -180,32 +187,32 @@ lh.5n <- ddply(lh.lo, .(variable, genhz), .fun=sum5n)
 lh.c <- dcast(lh.5n, genhz~variable, value.var = "range")
 
 # change variable names via factor levels
-h.lo$variable <- factor(h.lo$variable, levels=c('clay', 'phfield'), labels=c('Field Est. Clay (%)', 'Field Est. pH'))
-lh.lo$variable <- factor(lh.lo$variable, levels=c('claytot', 'ph1to1h2o'), labels=c('Lab Meas. Clay (%)', 'Lab Meas. pH (1:1 H2O)'))
+h.lo$variable <- factor(h.lo$variable, levels=c('clay', 'phfield'), labels=c('Field Estimated Clay (%)', 'Field Estimated pH'))
+lh.lo$variable <- factor(lh.lo$variable, levels=c('claytot', 'ph1to1h2o'), labels=c('Lab Measured Clay (%)', 'Lab Measured pH (1:1 H2O)'))
 
-kable(lh.c, align = "c", caption = "Summary of Miami lab pedons by generic horizon (min, 25th, median, 75th, max)(n)")
+kable(lh.c, align = "c", caption = "Summary of Miami lab pedons by generalized horizon label (min, 25th, median, 75th, max)(n)")
 
-qplot(genhz, value, data = h.lo, geom = "boxplot", ylab='', xlab = "Generalized Horizon Label", main = "Boxplot of Miami field pedons by generic horizon") + facet_wrap(~variable, scales = "free") + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+qplot(genhz, value, data = h.lo, geom = "boxplot", ylab='', xlab = "Generalized Horizon Label", main = "Boxplot of Miami field pedons by generalized horizon label") + facet_wrap(~variable, scales = "free") + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
 
-qplot(genhz, value, data = lh.lo, geom = "boxplot", ylab='', xlab = "Generalized Horizon Label", main = "Boxplot of Miami lab pedons by generic horizon") + facet_wrap(~variable, scales = "free", ncol = 4) + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+qplot(genhz, value, data = lh.lo, geom = "boxplot", ylab='', xlab = "Generalized Horizon Label", main = "Boxplot of Miami lab pedons by generalized horizon label") + facet_wrap(~variable, scales = "free", ncol = 4) + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
 
-kable(addmargins(table(h$genhz, h$texture_class)), digits = 0, caption = "Texture of Miami field pedons by generic horizon (counts)")
+kable(addmargins(table(h$genhz, h$texture_class)), digits = 0, caption = "Texture of Miami field pedons by generalized horizon label (counts)")
 
-kable(addmargins(table(lh$genhz, lh$lab_texcl)), digits = 0, caption = "Texture of Miami lab pedons by generic horizon (counts)")
+kable(addmargins(table(lh$genhz, lh$lab_texcl)), digits = 0, caption = "Texture of Miami lab pedons by generalized horizon label (counts)")
 
 ```
 
 # Conclusion
 
-Rarely can soil scientists observe full pedons or polypedons in the field. Therefore we can only approximate their variability by examining several soil profiles and comparing multiple descriptions. The ability to compare collections of soil pedons is a critical step in soil survey workflow. Until recently, the NCSS has lacked efficient digital tools that enable soil scientists to readily aggregate and summarize soils data. To address the challenges of this process, members of the Western Regional Cooperative Soil Survey Technology Committee have developed R Markdown reports that provide the ability to quickly summarize the data elements typically used to develop OSD and soil map unit components. This represents an example of reproducible research, whereby soil scientists can verify the results of others.  Progress in the the past has been hampered by several issues. 
+Rarely can soil scientists observe full pedons or polypedons in the field. Therefore we can only approximate their variability by examining several soil profiles and comparing multiple descriptions. The ability to compare collections of soil pedons is a critical step in soil survey workflow. Until recently, the NCSS has lacked efficient digital tools that enable soil scientists to readily aggregate and summarize soils data. To address the challenges of this process, members of the Western Regional Cooperative Soil Survey Technology Committee have developed R Markdown reports that provide the ability to quickly summarize the data elements typically used to develop OSD and soil map unit components. This represents an example of reproducible research, whereby soil scientists can verify the results of others. Progress in the the past has been hampered by several issues. 
 
 While soil scientists are adept at collecting data, a majority struggle with trying to efficiently analyze the volume of data present in the NASIS database. We believe that the soil profile descriptions within NASIS are a valuable resource and should be evaluated prior to any future updates to existing soil surveys. 
 
-From an organizational perspective the data can be difficult to use and summarize. Using the relational structure of the NASIS database combined with the extensible data handling and statistical analysis capabilities of R, it is possible to generate powerful graphical and tabular summaries for collections of pedon data.  The scripting environment in R allows many data handling, statistical, and summarization processes to be bundled into one report.  The assignment of GHL in correlating similar horizon designations for summary is a fundamental step in this process, which both requires soil scientists expert knowledge and helps expand their knowledge. Graphical displays of soil data continue to expand in capability within R making it a useful platform for generating reports summarizing pedon data.
+From an organizational perspective the data can be difficult to use and summarize. Using the relational structure of the NASIS database combined with the extensible data handling and statistical analysis capabilities of R, it is possible to generate powerful graphical and tabular summaries for collections of pedon data. The scripting environment in R allows many data handling, statistical, and summarization processes to be bundled into one report. The assignment of GHL in correlating similar horizon designations for summary is a fundamental step in this process, which both requires soil scientists expert knowledge and helps expand their knowledge. Graphical displays of soil data continue to expand in capability within R making it a useful platform for generating reports summarizing pedon data.
 
 Point data could serve as a validation dataset for the future spatial update
 
-What did you learn? "Alfred"
+What did you learn? (question posed by Alfred to many presenters)
 
 - we have a wealth of existing data
 - data on soil series should be viewed in aggregate
