@@ -26,9 +26,7 @@ Soil scientists have been collecting field and lab pedon descriptions for over a
 
 # Introduction
 
-The National Cooperative Soil Survey (NCSS) has amassed a substantial amount of legacy pedon data in support of developing soil surveys over the last 100 years. This data consists of field estimates, observations, and laboratory measurements. Unlike the soil map unit polygon layers and their associated attribute data (component data), pedon data represent unaggregated (point) data from individual observations of soils on the landscape. The wealth of observations in pedon data make it invaluable as a resource for future updates to existing soil surveys. Updates to the aggregated component data have been taking place on a national scale as part of the Soil Data Join and Recorrelation (SDJR) Initiative since 2012 (403-305-NI, 2013). In the future, additional updates are planned for the spatial data.
-
-Since the introduction of the National Soil Information System (NASIS) in 1994 (Fortner and Price, 2012), approximately 606,595 field pedons and approximately 63,000 lab pedons have been digitized. While significant, this represents only a small portion of total field pedons ever described. In addition, it is speculated that the real number is approximately 30 percent less, more like 400,000 pedons, due to duplicate records and placeholders in the NASIS database (Ferguson, 2015). The ambiguity in this number reflects the view that pedon data is considered supporting data, and thus is not subjected to more rigorous review performed on component data which is distributed to the public in combination with soil map layers.
+The National Cooperative Soil Survey (NCSS) has amassed a substantial amount of legacy pedon data in support of developing soil surveys over the last 100 years. This data consists of field estimates, observations, and laboratory measurements. Unlike the soil map unit polygon layers and their associated attribute data (component data), pedon data represent unaggregated (point) data from individual observations of soils on the landscape. The wealth of observations in pedon data make it invaluable as a resource for future updates to existing soil surveys. Updates to the aggregated component data have been taking place on a national scale as part of the Soil Data Join and Recorrelation (SDJR) Initiative since 2012 (403-305-NI, 2013). In the future, additional updates are planned for the spatial data. Since the introduction of the National Soil Information System (NASIS) in 1994 (Fortner and Price, 2012), approximately 400,000 field pedons and approximately 63,000 lab pedons have been digitized (Ferguson, 2015). While significant, this represents only a small portion of total field pedons ever described.
 
 ```{r, echo=FALSE, warning=FALSE}
 
@@ -54,6 +52,8 @@ A fundamental step in the mapping process involves aggregating numerous horizon 
     5. lack of training in new software
 
 The second number on the list, is close a second. It stems from several factors, including the sampling bias, the completeness of each observation, the method the measurement, and fluid soil series concepts. How soil scientist weight the first 3 factors in their decision making process is where the science meets the art. The last factor is a victim of the first 3, because as a soil scientist collects more data their concept of the soil series may change and thus necessiate changing the OSD. This undermines the utility of the soil series labels given to pedons in NASIS, because changing the OSD may necessitate changing labels to existing pedons. Therefore a soil scientist needs to ensure that their dataset is representative of the soil series or component they're trying to summarize. All these issues make it difficult to automate the aggregation process.
+
+Prior to the advent of NASIS their were many early attempts at estimate the RIC for soil properties (Young etal., 1991; Jansen and Arnold, 1976). These earlier attempts looked at estimates for portions of the soil profile, such as surface texture or subsoil clay content, and utilized parameteric estimates (i.e. mean and confidence intervals). They also clearly demonstated the disconnect between the limits set by taxonomic units and those observed within map unit components. This secondary issue is now addressed by Soil Survey Technical Note 4 (USDA, 2003), which allows the range (i.e. low and high) of map unit components to extend beyond those specificed by the OSD. 
 
 While it is possible to manipulate pedon data directly in NASIS; the majority of existing functions within NASIS have been designed to analyze and evaluate component-level aggregate data. It is possible to export data from NASIS to other software, but none of the alternatives provide the same concise summary of data as do the standardized reports for component data in NASIS. New reports could be added to NASIS, but complex reports are difficult to write because NASIS currently supports a limited implementation of the Structured Query Language (SQL) which has few functions for performing statistical analysis. We advocate exporting pedon data to R (R Core Development Team, 2015), which allows soil scientists to leverage numerous R functions designed for organizing and analyzing data. Scripting reports in R provides access to current report-writing capability (Xie, 2014; Allaire et al., 2015), and user-contributed functions specifically designed for digital soil morphometrics, such as the aqp (Beaudette et al., 2012), soilDB (Beaudette and Skovlin, 2015), and soiltexture (Moeys, 2015) packages.
 
@@ -155,14 +155,13 @@ cols <- brewer.pal(n = length(levels(miami_field$genhz)), name = "Set1")
 hz.names <- levels(miami_field$genhz)
 miami_field$genhz.soil_color <- cols[match(miami_field$genhz, hz.names)] # assign a color to each generalized horizon label
 plot(miami_field[1:10], name = 'hzname', color = 'genhz.soil_color', label = 'pedon_id') # plot generalized horizons via color and add a legend
-legend('bottomleft', legend=hz.names, pt.bg=c(cols), pch=22)
-title("Sample of soil profile plots of field pedons")
+title("Sample of soil profile plots for field pedons")
 
 hz.names <- levels(miami_lab$genhz)
 miami_lab$genhz.soil_color <- cols[match(miami_lab$genhz, hz.names)] # assign a color to each generalized horizon label
 plot(miami_lab[1:10], name = 'hzname', color = 'genhz.soil_color', label = 'labpeiid') # plot generalized horizons via color and add a legend
 legend('bottomleft', legend=hz.names, pt.bg=c(cols), pch=22)
-title("Sample of soil profile plots of lab pedons")
+title("Sample of soil profile plots for lab pedons")
 
 p <- c(0, 0.25, 0.5, 0.75, 1)
 
@@ -182,9 +181,9 @@ lh.c <- dcast(lh.5n, genhz~variable, value.var = "range")
 
 kable(lh.c, align = "c", caption = "Summary of Miami lab pedons by generic horizon (min, 25th, median, 75th, max)(n)")
 
-qplot(genhz, value, data = h.lo, geom = "boxplot", ylab = "cm", main = "Boxplot of Miami field pedons by generic horizon") + facet_wrap(~variable, scales = "free") + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+qplot(genhz, value, data = h.lo, geom = "boxplot", xlab = "Generalized Horizon Label", main = "Boxplot of Miami field pedons by generic horizon") + facet_wrap(~variable, scales = "free") + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
 
-qplot(genhz, value, data = lh.lo, geom = "boxplot", main = "Boxplot of Miami lab pedons by generic horizon") + facet_wrap(~variable, scales = "free", ncol = 4) + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+qplot(genhz, value, data = lh.lo, geom = "boxplot", xlab = "Generalized Horizon Label", main = "Boxplot of Miami lab pedons by generic horizon") + facet_wrap(~variable, scales = "free", ncol = 4) + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
 
 kable(addmargins(table(h$genhz, h$texture_class)), digits = 0, caption = "Texture of Miami field pedons by generic horizon (counts)")
 
@@ -192,24 +191,15 @@ kable(addmargins(table(lh$genhz, lh$lab_texcl)), digits = 0, caption = "Texture 
 
 ```
 
-The tables and figures shown above, and the online examples demonstrate an attempt to streamline the aggregation of point data. Prior to the advent of NASIS their were many early attempts at estimate the RIC for soil properties (Young etal., 1991; Jansen and Arnold, 1976). These earlier attempts looked at estimates for portions of the soil profile, such as surface texture or subsoil clay content (not necessary GHL), and preferred parameteric estimates (i.e. mean and confidence intervals). They also clearly demonstated the disconnect between the limits for taxonomic units and map unit components. This secondary issue is now addressed by Soil Survey Technical Note 4 (USDA, 2003), which allows map unit components to L and H values to range beyond that of a soil series taxonomic boundaries.
-
-
 # Conclusion
 
-Rarely can soil scientists observe full pedons or polypedons in the field. Therefore we can only approximate the range of variability in characteristics by examining several soil profiles and comparing multiple descriptions. While this is a common problem few tools are readily available within the NCSS to generate summaries of several pedons, and fewer are efficient. For these reasons we believe the legacy field and lab pedon data stored within NASIS is under utilized. To address this problem the Western Regional Cooperative Soil Survey Committee developed R Markdown reports that summarize the data typically used to develop OSD, and soil map unit components. This process formalized the vague NCSS protocol by importing data from NASIS into R, and uses R Markdown to generate reports of field and lab pedons that can summarizes the typical soil properties.
+Rarely can soil scientists observe full pedons or polypedons in the field. Therefore we can only approximate their variability by examining several soil profiles and comparing multiple descriptions. The ability to compare collections of soil pedons is a critical step in soil survey workflow. Until recently, the NCSS has lacked efficient digital tools that enable soil scientists to readily aggregate and summarize soils data. To address the challenges of this process, members of the Western Regional Cooperative Soil Survey Technology Committee have developed R Markdown reports that provide the ability to quickly summarize the data elements typically used to develop OSD and soil map unit components. This represents an example of reproducible research, whereby soil scientists can verify the results of others.  Progress in the the past has been hampered by several issues. 
 
-I THINK WE NEED TO REWORK THE ABOVE PARAGRAPH LIKE THIS.....still a little bit rough though!
-Rarely can soil scientists observe full pedons or polypedons in the field. Therefore we can only approximate the range of variability in properties by examining several soil profiles and comparing multiple descriptions. The ability to compare collections of soil pedons is a critical step in soil survey workflow. Until recently, the NCSS has lacked digital tools that enable soil scientists to readily aggregate and summarize soils data. To address the challenges of this process and the lack of tools, members of the Western Regional Cooperative Soil Survey Committee developed R Markdown reports to provide the ability to summarize the data typically used to develop OSD and aggregate soil map unit component data.
+While soil scientists are adept at collecting data, a majority struggle with trying to efficiently analyze the volume of data present in the NASIS database. We believe that the soil profile descriptions within NASIS are a valuable resource and should be evaluated prior to any future updates to existing soil surveys. 
 
-
-Soil profile descriptions within the NASIS database represent a immense body of observations. From an organizational perspective the data can be difficult to use and summarize. Using the relational structure of the NASIS database combined with the extensible data handling and statistical analysis capabilities of R, it is possible to generate powerful graphical and tabular summaries for collections of pedon data.  The scripting environment in R allows many data handling, statistical, and summarization processes to be bundled into one report.  The assignment of GHL in correlating similar horizon designations for summary is a fundamental step in this process, which both requires soil scientists expert knowledge and helps expand their knowledge. Graphical displays of soil data continue to expand in capability within R making it a useful platform for generating reports summarizing pedon data.
+From an organizational perspective the data can be difficult to use and summarize. Using the relational structure of the NASIS database combined with the extensible data handling and statistical analysis capabilities of R, it is possible to generate powerful graphical and tabular summaries for collections of pedon data.  The scripting environment in R allows many data handling, statistical, and summarization processes to be bundled into one report.  The assignment of GHL in correlating similar horizon designations for summary is a fundamental step in this process, which both requires soil scientists expert knowledge and helps expand their knowledge. Graphical displays of soil data continue to expand in capability within R making it a useful platform for generating reports summarizing pedon data.
 
 Point data could serve as a validation dataset for the future spatial update
-
-* Find some where to cite Fred Young. Young and others have described a similar process for evaluating the soils within a given map units, but we think 
-
-Mixture of the graphics and 
 
 What did you learn? "Alfred"
 
@@ -221,19 +211,19 @@ What did you learn? "Alfred"
 - Soil scientists are great at collecting data, but we have to just as good at analyzing it.
 
 # Acknowledgements
-Alena Stephens, John Hammerly, Jennifer Outcalt, Henry Ferguson, Paul Finnell, and others...
+Alena Stephens, John Hammerly, Henry Ferguson, Paul Finnell, and others...
 
 # References
-JJ Allaire, Joe Cheng, Yihui Xie, Jonathan McPherson, Winston      Chang, Jeff Allen, Hadley Wickham and Rob Hyndman (2015). rmarkdown: Dynamic Documents for R. R package version 0.6.1. http://CRAN.R-project.org/package=rmarkdown
+Allaire. J.J., Cheng, J., Xie, Y., McPherson, J., Chang, W., Allen, J., Wickham, H., and Hyndman, R. (2015). rmarkdown: Dynamic Documents for R. R package version 0.6.1. http://CRAN.R-project.org/package=rmarkdown
   
-  Beaudette, D.E., Roudier P., and A.T. O'Geen. Algorithms for
+Beaudette, D.E., Roudier P., and A.T. O'Geen. Algorithms for
   Quantitative Pedology: A Toolkit for Soil Scientists. 2012
 
-Beaudette, D.E., and J.M. Skovlin (2015)a. soilDB: Soil Database
+Beaudette, D.E., and Skovlin, J.M. (2015)a. soilDB: Soil Database
   Interface. R package version 1.5-2.
   HTTP://CRAN.R-project.org/package=soilDB
   
-Beaudette, D.E., and J.M. Skovlin (2015)b. Assigning Generalized Horizon Labels https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/gen-hz-assignment.html?root=aqp
+Beaudette, D.E., and Skovlin, J.M. (2015)b. Assigning Generalized Horizon Labels https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/gen-hz-assignment.html?root=aqp
 
 Beaudette, D.E., 2015. Setup an ODBC Connection to the Local NASIS Database. https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/setup_local_nasis.html?root=aqp
 
@@ -241,15 +231,17 @@ Ferguson, H., 2015. Personal communication.
 
 Fortner, J.R., and Price, A.B., (2012). United States Soil Survey Databases. In: P.M. Huang, Y. Li, and M.E. Sumner, eds. pp. 1-12. Handbook of Soil Sciences: Resource Management and Environmental Impacts 2nd edition, CRC Press. 
 
-Julien Moeys (2015). soiltexture: Functions for Soil Texture Plot,
+Jansen, I.J., and Arnold, R.W (1976). Defining Ranges of Soil Characteristics. Soil Science Society of America Journal 40, 89-92.
+
+Moeys, J. (2015). soiltexture: Functions for Soil Texture Plot,
   Classification and Transformation. R package version 1.3.3.
   HTTP://CRAN.R-project.org/package=soiltexture
 
 R Development Core Team, 2015.R:A Language and Environment for Statistical Computing. R Foundation for Statistical Computing. Vienna, Austria. ISBN3-900051-07-0.
 
-Schoeneberger, P.J., D.A. Wysocki, E.C. Benham, and Soil Survey Staff. 2012. Field book for describing and sampling soils, Version 3.0. Natural Resources Conservation Service, National Soil Survey Center, Lincoln, NE.
+Schoeneberger, P.J., Wysocki, D.A., Benham, E.C., and Soil Survey Staff (2012). Field book for describing and sampling soils, Version 3.0. Natural Resources Conservation Service, National Soil Survey Center, Lincoln, NE.
 
-Soil Survey Division Staff, 1993. Soil survey manual. Soil Conservation Service. U.S. Department of Agriculture Handbook 18.
+Soil Survey Division Staff (1993). Soil survey manual. Soil Conservation Service. U.S. Department of Agriculture Handbook 18.
 
 U.S. Department of Agriculture (USDA), Natural Resources Conservation Service. National soil survey handbook, title 430-VI. Available online. Accessed [06/24/2015].
 
