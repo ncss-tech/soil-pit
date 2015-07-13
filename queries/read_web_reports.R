@@ -24,9 +24,15 @@ test2 <- strsplit(test2[[1]], "\\|")
 test2 <- na.omit(as.numeric(unlist(test2))) # Success
 
 
-# State Correlation Reports
-url <- "https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-Correlation_state_fy_id&asymbol=IN%25&fy=2015" # Works ... Thanks Kevin
-
+# WEB-Correlation_state_fy_ids
+url <- "https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-Correlation_state_fy_id&asymbol=%25&fy=2015" # Works ... Thanks Kevin
 test <- getURLContent(url, ssl.verifypeer=F)
-
 test2 <- readHTMLTable(test)
+
+# Rename, subset and find spatial changes
+test2 <- test2[[1]]
+names(test2) <- unlist(lapply(names(test2), function(x) strsplit(x, "\n")[[1]][2]))
+names(test2) <- unlist(lapply(names(test2), function(x) paste(strsplit(x, " ")[[1]], collapse = "_")))
+test3 <- subset(test2, grepl("11-", Office))
+test3 <- data.frame(lapply(test3, function(x) as.character(x)), stringsAsFactors = F)
+
