@@ -26,4 +26,7 @@ test2 <- na.omit(as.numeric(unlist(test2))) # Success
 
 # State Correlation Reports
 url <- "https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-Correlation_state_fy_id&asymbol=IN%25&fy=2015" # Works ... Thanks Kevin
+
 test <- getURLContent(url, ssl.verifypeer=F)
+
+test2 <- readHTMLTable(test)
