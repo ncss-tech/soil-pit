@@ -1,5 +1,6 @@
 library(RCurl)
 library(XML)
+library(plyr)
 library(stringr)
 
 
@@ -25,14 +26,43 @@ test2 <- na.omit(as.numeric(unlist(test2))) # Success
 
 
 # WEB-Correlation_state_fy_ids
+library(RCurl)
+library(XML)
 url <- "https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-Correlation_state_fy_id&asymbol=%25&fy=2015" # Works ... Thanks Kevin
-test <- getURLContent(url, ssl.verifypeer=F)
-test2 <- readHTMLTable(test)
+scor <- getURLContent(url, ssl.verifypeer = F)
+scor2 <- readHTMLTable(test, stringsAsFactors = F)
 
 # Rename, subset and find spatial changes
 test2 <- test2[[1]]
 names(test2) <- unlist(lapply(names(test2), function(x) strsplit(x, "\n")[[1]][2]))
 names(test2) <- unlist(lapply(names(test2), function(x) paste(strsplit(x, " ")[[1]], collapse = "_")))
 test3 <- subset(test2, grepl("11-", Office))
-test3 <- data.frame(lapply(test3, function(x) as.character(x)), stringsAsFactors = F)
+
+ddply(test3, .(Office), summarize, sum(Project_Name))
+
+# WEB-PROJECT-Counties+with+approved+projects+DU
+url <- "https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-PROJECT-Counties+with+approved+projects+DU&fy=2015"
+dureport <- getURLContent(url, ssl.verifypeer = F)
+dureport2 <- readHTMLTable(dureport)
+
+doc = htmlParse(dureport)
+tableNodes <- getNodeSet(doc, "//table")
+
+l <- list()
+for (i in 1:length(tableNodes)){
+  l[[i]] <- rbind(readHTMLList(tableNodes[[i]]), stringsAsFactors = F)
+}
+dureport3 <- ldply(l)
+dureport3 <- data.frame(lapply(dureport3, function(x) as.character(x)), stringsAsFactors = F)
+names(dureport3) <- dureport3[1, ]
+dureport3 <- dureport3[-1, ]
+names(dureport3) <- unlist(lapply(names(dureport3), function(x) paste(strsplit(x, " ")[[1]], collapse = "_")))
+
+                
+# Rename, subset and find spatial changes
+test2 <- dureport2[[1]]
+names(test2) <- unlist(lapply(names(test2), function(x) strsplit(x, "\n")[[1]][2]))
+names(test2) <- unlist(lapply(names(test2), function(x) paste(strsplit(x, " ")[[1]], collapse = "_")))
+test3 <- subset(test2, grepl("11-", Office))
+
 
