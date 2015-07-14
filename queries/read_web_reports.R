@@ -27,8 +27,6 @@ test2 <- na.omit(as.numeric(unlist(test2))) # Success
 
 
 # WEB-Correlation_state_fy_ids
-library(RCurl)
-library(XML)
 url <- "https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-Correlation_state_fy_id&asymbol=%25&fy=2015" # Works ... Thanks Kevin
 scor <- getURLContent(url, ssl.verifypeer = F)
 scor2 <- readHTMLTable(scor, stringsAsFactors = F)
@@ -39,16 +37,20 @@ names(test2) <- unlist(lapply(names(test2), function(x) strsplit(x, "\n")[[1]][2
 names(test2) <- unlist(lapply(names(test2), function(x) paste(strsplit(x, " ")[[1]], collapse = "_")))
 test3 <- subset(test2, grepl("11-", Office))
 test3$Spatial <- test3$New_lmuiid != test3$Old_lmuiid | test3$New_Symbol != test3$Old_Musym
-ddply(test3, .(Office), summarize, sum(Spatial))
+test3 <- data.frame(lapply(test3, function(x) x))
+
+test <- subset(test3, Spatial == TRUE)
+ddply(test, .(Office), summarize, length(unique(Project_Name)))
 
 
 
 # WEB-PROJECT-Counties+with+approved+projects+DU
 url <- "https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-PROJECT-Counties+with+approved+projects+DU&fy=2015"
 dureport <- getURLContent(url, ssl.verifypeer = F)
-dureport2 <- readHTMLTable(dureport)
+
+# This report has a funky structure, need to reformat
 doc = htmlParse(dureport)
-tableNodes <- getNodeSet(doc, "//table")
+tableNodes <- getNodeSet(doc, "//tr")
 
 l <- list()
 for (i in 1:length(tableNodes)){
@@ -62,6 +64,8 @@ names(dureport3) <- dureport3[1, ]
 dureport3 <- dureport3[-1, ]
 names(dureport3) <- unlist(lapply(names(dureport3), function(x) paste(strsplit(x, " ")[[1]], collapse = "_")))
 dureport3 <- subset(dureport3, grepl("11-", Office))
+dureport3 <- data.frame(lapply(dureport3, function(x) x))
+
 
 ddply(dureport3, .(Office), summarize, length(unique(Project_Name)))
 
