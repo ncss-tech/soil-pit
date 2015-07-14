@@ -69,3 +69,4 @@ dureport3 <- data.frame(lapply(dureport3, function(x) x))
 
 ddply(dureport3, .(Office), summarize, length(unique(Project_Name)))
 
+
