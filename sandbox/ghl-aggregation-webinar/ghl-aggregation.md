@@ -21,7 +21,7 @@ css: custom.css
 <ul style="color: white; font-size:75%;">
 <li>`aqp` version 1.8</li>
 <li>`soilDB` version 1.5-2</li>
-<li>`sharpshootR` version NA</li>
+<li>`sharpshootR` version 0.7-2</li>
 </ul>
 
 What is R?
