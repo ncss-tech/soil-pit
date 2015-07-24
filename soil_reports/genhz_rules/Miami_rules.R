@@ -1,18 +1,17 @@
 ghr <- list(
-  n = c("Ap", 
-        "A", 
+  n = c("A",
+        "Ap", 
         "E", 
         "Bt", 
         "2Bt", 
-        "2BCt", 
-        "2Cd", 
-        "missing"),
+        "2BCt",
+        "2Cd"),
   
-  p = c("Ap|AP|A p",
-        "^A$,A1|A2|A3",
-        "^E", "BT|Bt1|Bt2|Bt3",
-        "2B t1|2B1|2B2|2B22T|2B22T|2B23T|2B3|2Bt",
-        "BC",
-        "Cd",
-        "missing")
+  p = c("A",
+        "Ap|AP|A p",
+        "E", 
+        "T|t",
+        "2B",
+        "BC|CB|B3",
+        "2C|d")
   )

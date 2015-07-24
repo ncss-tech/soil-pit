@@ -1,5 +1,5 @@
 na_replace <- function(x){
-  if(class(x) == "character" | class(x) == "logical") {x <- replace(x, is.na(x) | x == "NA", "missing")} 
+  if(class(x)[1] == "character" | class(x)[1] == "logical") {x <- replace(x, is.na(x) | x == "NA", "missing")} 
   else (x <-  x)
 }
 
