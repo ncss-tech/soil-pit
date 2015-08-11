@@ -3,55 +3,57 @@
 ```{r, echo=FALSE, eval=FALSE}
 # These figures don't compare with Alena's spreadsheets. Her spreadsheets have additional counties that aren't captured in the Project Record.
 
-setwd("I:/")
+options(stringsAsFactors=F)
 
+library(knitr)
 library(plyr)
+library(stringr)
+library(RCurl)
+library(XML)
 
-# Summarize the NASIS web report "Identify surveys with projects ready to upload" for State Soil Scientists
+data(state)
 
-ssurgo.v <- c("ia.csv", "il.csv", "ks.csv", "in.csv", "mi.csv", "mn.csv", "mo.csv", "ne.csv", "oh.csv", "ok.csv", "sd.csv", "wi.csv")
+# WEB-MLRA_Goals_Progress
 
-combine.df <- function(ssurgo.v){
-  l <- list()
-  l.s <- list()
-  l.l <- list()  
-  for(i in seq(ssurgo.v)){
-   l[[i]] <- read.csv(ssurgo.v[i])
-   l.s[[i]] <- subset(l[[i]], State.Responsible == "Indiana")
-   l.l[[i]] <- length(unique(l.s[[i]]$Area.Symbol))   
-  }
-  df <- ldply(l.s)
-  v <- unlist(l.l)
-  return(list(df=df, v=v))
-}
+goals <- goals_report(2015, "11-%25")
+# goals <- read.csv("report_goals_2015_08_11.csv")
 
-nasis <- combine.df(ssurgo.v)
-nasis.df <- nasis$df
+goals <- subset(goals, SS_Office != "")
 
-length(unique(nasis.df$Project.Name)) # number of sdjr projects
-length(unique(nasis.df$Area.Symbol)) # number of ssa
+kable(ddply(goals, .(SS_Office), summarise, n = length(unique(Project_Name))), caption = "Number or SDJR projects per SS Office")
 
-# Summarize DU report vs. Project_Record
-# Using the select by location function in ArcGIS I get a total of 99 counties need spatial recert, from the RTSD-SAPOLYGON, while 136 for the Region SSURGO
-# du.pr.m dataframe shows overlap between the DU report and Project Record Feature Class.
-# The DU report say 83 counties need to be updated, but the Project Record ID says 73.
-# When comparing the Project Record and SAPOLYGON for the Region I get 65 counties need spatial cert and an additional 8 need update outside our region
 ```
 
 ```{r, summarize geodatabase tabular changes, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, results='asis'}
 # This assumes no changes have been made to the ORIG columns, could run a check against an unedited copy. Need to add addition scripts to see if the number of MUSYM edited = the total number of MUSYM.
-library(plyr)
-library(xtable)
 
-# DU report
-du <- read.csv("C:/Users/stephen.roecker/Documents/du.csv", stringsAsFactors = FALSE) # du report
-du.r11 <- subset(du, State.Responsible == "Indiana" & Office == "11-ATL") # subset for Region 11
+# Digitizing unit report (proposed spatial changes in NASIS)
+fy <- 2015
 
-office.n <- ddply(du.r11, .(Office), summarize, n=length(Project.Name)); # number of projects per office
-print(xtable(office.n, caption="Number of SDJR project per MLRA Office"), type="html", caption.placement="top")
+# du <- du_report(fy)
+du <- read.csv("report_digitizing_unit_2015_08_11.csv")
 
-du.check <- ddply(du.r11, .(Office, p.name=abbreviate(Project.Name, 35), natmusym=nationalmusym), summarize, du.musym=paste(unique(musym), collapse=", ")) # project by natmusym and musym
-print(xtable(du.check, caption="Summary of proposed SDJR changes to SSURGO"), type="html", caption.placement="top")
+du11 <- subset(du, State_Responsible == "Indiana")
+
+du11_np <- ddply(du11, .(Office), summarize, n_projects = length(unique(Project_Name)))
+kable(du11_np, caption = "Number of proposed spatial changes")
+
+# Correlation report (completed spatial changes in NASIS)
+data(state)
+st <- tolower(state.abb)
+st_p <- paste0(st, "%25")
+
+# corr <- correlation_report(st_p, 2015)
+corr <- read.csv("report_correlation_2015_08_11.csv")
+corr$region <- unlist(lapply(corr$Office, function(x) strsplit(x, "-")[[1]][1]))
+
+corr11 <- subset(corr, grepl("11-", Office))
+
+corr11_np <- ddply(corr11, .(Office), summarize, n_projects = length(unique(Project_Name)))
+kable(corr11_np, caption = "Number of completed spatial changes")
+
+du_check <- ddply(corr11, .(Office, Area_Symbol, abbreviate(Project_Name, 50), new_musym = New_Symbol, 20), summarize, old_musym = paste(unique(Old_Musym), collapse=", ")) # project by natmusym and musym
+kable(du_check, caption = "Spatial correlation legend by area symbol")
 
 # national keys
 natkey <- read.csv("C:/Users/stephen.roecker/Documents/legkeys.csv", stringsAsFactor=FALSE)
@@ -70,20 +72,20 @@ print(xtable(geo.check, caption="Summary of changes to the RTSD geodatabase by S
 
 ```{r, checks}
 # Checks
-check1 <- merge(geo.check, du.check, by="natmusym", all.x=TRUE) # match geo.check to du.check
+check1 <- merge(geo.check, du_check, by="natmusym", all.x=TRUE) # match geo.check to du_check
 check1 <- check1[order(check1$ssa, check1$p.name), c("Office", "ssa", "p.name", "natmusym", "ORIG_MUSYM", "new.musym", "du.musym", "n.polygons", "acres")] # order by p.name and resort columns
 row.names(check1) <- 1:nrow(check1) 
 # fix either by adding the fiscal year (i.e. 2015) to the sequence column in the Project Mapunit table, or by undoing unapproved changes to the RTSD geodatabase.
 print(check1) # Matches between the RTSD geodatabase to the digitizing unit report
 # Missing SDJR project names indicate either that the fiscal year hasn't been populated in the Project Mapunit table, or that the changes to the RTSD weren't approabed.
 
-id <- match(geo.check$natmusym, du.check$natmusym, incomparables=TRUE)
+id <- match(geo.check$natmusym, du_check$natmusym, incomparables=TRUE)
 geo.mis <- unique(geo.check$natmusym[is.na(id)]) # natmusym missing from geodatabase
 geo.mis # natmusym present in the RTSD geodatabase, but missing from the digitizing unit report
 length(geo.mis) # number of missing natmuysm
 
-id <- match(du.check$natmusym, geo.check$natmusym, incomparables=TRUE)
-du.mis <- unique(du.check$natmusym[is.na(id)]) # natmusym missing from du report
+id <- match(du_check$natmusym, geo.check$natmusym, incomparables=TRUE)
+du.mis <- unique(du_check$natmusym[is.na(id)]) # natmusym missing from du report
 du.mis # natmusym present in the digitizing unit report, but missing from the RTSD geodatabase
 # fix either by removing the fiscal year (i.e. 2015) from the sequence column in the Project Mapunit table, or by making the proposed SDJR changes to the RTSD geodatabase.
 length(du.mis) # number of missing natmusym
@@ -101,7 +103,7 @@ names(pr.c.n2) <- c("AREASYMBOL", "RECERT_NEEDED", "nMUSYM")
 
 
 # Compare DU Report vs Project Record by SDJR projects
-du.pr.m <- merge(pr.c.n, du.r11.n, by.x="PROJECT_NAME", by.y="Project.Name",  all=T)
+du.pr.m <- merge(pr.c.n, du_r11.n, by.x="PROJECT_NAME", by.y="Project.Name",  all=T)
 names(du.pr.m) <- c("Project.Name", "Recert.Needed", "npolyons", "nMUSYM")
 write.csv(du.pr.m, "Region11_DUcert.csv")
 
