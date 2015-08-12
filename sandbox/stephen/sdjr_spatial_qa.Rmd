@@ -1,27 +1,29 @@
 # Report of changes requiring SSURGO recertification
 
-```{r, echo=FALSE, eval=FALSE}
+```{r, echo=FALSE, warning=FALSE}
 # These figures don't compare with Alena's spreadsheets. Her spreadsheets have additional counties that aren't captured in the Project Record.
 
 options(stringsAsFactors=F)
 
+library(foreign)
 library(knitr)
 library(plyr)
 library(stringr)
 library(RCurl)
 library(XML)
 
+source("C:/workspace/soil-pit/trunk/queries/kssl_reports.R")
+
 data(state)
 
 # WEB-MLRA_Goals_Progress
 
-goals <- goals_report(2015, "11-%25")
-# goals <- read.csv("report_goals_2015_08_11.csv")
+# goals <- goals_report(2015, "11-%25")
+goals <- read.csv("C:/workspace/report_goals_2015_08_11.csv")
 
 goals <- subset(goals, SS_Office != "")
 
 kable(ddply(goals, .(SS_Office), summarise, n = length(unique(Project_Name))), caption = "Number or SDJR projects per SS Office")
-
 ```
 
 ```{r, summarize geodatabase tabular changes, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, results='asis'}
@@ -31,12 +33,13 @@ kable(ddply(goals, .(SS_Office), summarise, n = length(unique(Project_Name))), c
 fy <- 2015
 
 # du <- du_report(fy)
-du <- read.csv("report_digitizing_unit_2015_08_11.csv")
+du <- read.csv("C:/workspace/report_digitizing_unit_2015_08_11.csv")
 
 du11 <- subset(du, State_Responsible == "Indiana")
 
 du11_np <- ddply(du11, .(Office), summarize, n_projects = length(unique(Project_Name)))
 kable(du11_np, caption = "Number of proposed spatial changes")
+
 
 # Correlation report (completed spatial changes in NASIS)
 data(state)
@@ -44,75 +47,43 @@ st <- tolower(state.abb)
 st_p <- paste0(st, "%25")
 
 # corr <- correlation_report(st_p, 2015)
-corr <- read.csv("report_correlation_2015_08_11.csv")
+corr <- read.csv("C:/workspace/report_correlation_2015_08_11.csv")
 corr$region <- unlist(lapply(corr$Office, function(x) strsplit(x, "-")[[1]][1]))
+corr$ssa_musym <- paste0(corr$Area_Symbol, "_", corr$New_Symbol)
 
-corr11 <- subset(corr, grepl("11-", Office))
+corr11 <- subset(corr, grepl("11-WAV", Office))
 
 corr11_np <- ddply(corr11, .(Office), summarize, n_projects = length(unique(Project_Name)))
 kable(corr11_np, caption = "Number of completed spatial changes")
 
-du_check <- ddply(corr11, .(Office, Area_Symbol, abbreviate(Project_Name, 50), new_musym = New_Symbol, 20), summarize, old_musym = paste(unique(Old_Musym), collapse=", ")) # project by natmusym and musym
-kable(du_check, caption = "Spatial correlation legend by area symbol")
+corr_check <- ddply(corr11, .(Office, pname = abbreviate(Project_Name, 50), ssa_musym, musym_corr = New_Symbol), summarize, old_musym_corr = paste(unique(Old_Musym), collapse = ", ")) # project by natmusym and musym
+kable(corr_check, caption = "NASIS spatial correlation legend by area symbol")
 
-# national keys
-natkey <- read.csv("C:/Users/stephen.roecker/Documents/legkeys.csv", stringsAsFactor=FALSE)
 
-# geodatabase
-mupolygon <- read.csv("C:/Users/stephen.roecker/Documents/mupolygon.csv", stringsAsFactors=FALSE)
-id <- mupolygon$Editor_Field != ""
+# Geodatabase report (completed spatial changes in geodatabase)
+mupolygon <- read.csv("M:/geodata/project_data/11WAV/mupolygon_edit.csv")
+
+id <- (mupolygon$Editor_Field != "" | mupolygon$MUSYM != mupolygon$ORIG_MUSYM) & mupolygon$ORIG_MUSYM != ""
 edit <- mupolygon[id, ]
-id <- edit$MUSYM != edit$ORIG_MUSYM
-tab <- edit[id, ]
-tab <- merge(tab, natkey, by.x="ORIG_MUKEY", by.y="mukey")
+edit$ssa_musym <- paste0(edit$AREASYMBOL, "_", edit$MUSYM)
 
-geo.check <- ddply(tab, .(ssa=AREASYMBOL, natmusym, ORIG_MUSYM), summarize, new.musym=paste(sort(unique(MUSYM)), collapse=", "), n.polygons=length(ORIG_MUSYM), acres = round(sum(Shape_Area*0.000247), 0))
-print(xtable(geo.check, caption="Summary of changes to the RTSD geodatabase by Soil Survey Area"), type="html", caption.placement="top")
+geo_check <- ddply(edit, .(ssa_musym, AREASYMBOL, musym_geo = MUSYM), summarise, old_musym_geo = paste(unique(ORIG_MUSYM), collapse=", "), n_polygons = length(ORIG_MUSYM), acres = round(sum(Shape_Area*0.000247), 0))
+
+kable(geo_check, caption="Summary of changes to the RTSD geodatabase by Soil Survey Area")
 ```
 
 ```{r, checks}
 # Checks
-check1 <- merge(geo.check, du_check, by="natmusym", all.x=TRUE) # match geo.check to du_check
-check1 <- check1[order(check1$ssa, check1$p.name), c("Office", "ssa", "p.name", "natmusym", "ORIG_MUSYM", "new.musym", "du.musym", "n.polygons", "acres")] # order by p.name and resort columns
-row.names(check1) <- 1:nrow(check1) 
-# fix either by adding the fiscal year (i.e. 2015) to the sequence column in the Project Mapunit table, or by undoing unapproved changes to the RTSD geodatabase.
-print(check1) # Matches between the RTSD geodatabase to the digitizing unit report
-# Missing SDJR project names indicate either that the fiscal year hasn't been populated in the Project Mapunit table, or that the changes to the RTSD weren't approabed.
+check1 <- join(corr_check, geo_check, by="ssa_musym", type = "full") # match geo_check to corr_check
+kable(check1) # Matches between the RTSD geodatabase to the digitizing unit report
 
-id <- match(geo.check$natmusym, du_check$natmusym, incomparables=TRUE)
-geo.mis <- unique(geo.check$natmusym[is.na(id)]) # natmusym missing from geodatabase
-geo.mis # natmusym present in the RTSD geodatabase, but missing from the digitizing unit report
-length(geo.mis) # number of missing natmuysm
+id <- match(corr_check$ssa_musym, geo_check$ssa_musym, incomparables=TRUE)
+corr_mis <- unique(corr_check$ssa_musym[is.na(id)]) # natmusym missing from geodatabase
+corr_mis # ssa_musym present in NASIS, but missing from the geodatabase
+length(corr_mis) # number of missing ssa_musym
 
-id <- match(du_check$natmusym, geo.check$natmusym, incomparables=TRUE)
-du.mis <- unique(du_check$natmusym[is.na(id)]) # natmusym missing from du report
-du.mis # natmusym present in the digitizing unit report, but missing from the RTSD geodatabase
-# fix either by removing the fiscal year (i.e. 2015) from the sequence column in the Project Mapunit table, or by making the proposed SDJR changes to the RTSD geodatabase.
-length(du.mis) # number of missing natmusym
-```
-
-```{r, echo=FALSE, eval=FALSE}
-# Project Record
-pr <- read.csv("Region_11_Project_Record_09092014.txt")
-pr.c <- subset(pr, RECERT_NEEDED == "Yes")
-length(unique(pr.c$PROJECT_NAME)); # number of projects
-length(unique(pr.c$AREASYMBOL)); # number of ssa
-pr.c.n <- ddply(pr.c, .(PROJECT_NAME, RECERT_NEEDED), summarize, length(PROJECT_NAME)); # number of polygons per project
-pr.c.n2 <- ddply(pr.c, .(AREASYMBOL, RECERT_NEEDED), summarize, length(PROJECT_NAME)); # number of polygons per area
-names(pr.c.n2) <- c("AREASYMBOL", "RECERT_NEEDED", "nMUSYM")
-
-
-# Compare DU Report vs Project Record by SDJR projects
-du.pr.m <- merge(pr.c.n, du_r11.n, by.x="PROJECT_NAME", by.y="Project.Name",  all=T)
-names(du.pr.m) <- c("Project.Name", "Recert.Needed", "npolyons", "nMUSYM")
-write.csv(du.pr.m, "Region11_DUcert.csv")
-
-# compare RTSD-SAPOLYGON vs
-sa <- read.csv("SAPOLYGON.txt")
-sa.n <- ddply(sa, .(AREASYMBOL), summarize, length(AREASYMBOL)); # number of polygons per ssa
-names(sa.n) <- c("AREASYMBOL", "nSSA")
-sa.pr.m <- merge(sa.n, pr.c.n2, by="AREASYMBOL") # number of musym per ssa that need recert
-length(unique(sa.pr.m$AREASYMBOL)) # number of ssa within Region 11 needing recert 
-sa.pr.m2 <- merge(subset(sa.pr.m, select=c("AREASYMBOL", "nMUSYM")), pr.c.n2, by="AREASYMBOL", all=T) # number of musym per ssa that need recert, 65 ssa in Region 11 need recert and 8 in other regions
-write.csv(sa.pr.m2, "Region11_SAcert.csv")
+id <- match(geo_check$ssa_musym, corr_check$ssa_musym, incomparables=TRUE)
+geo_mis <- unique(geo_check$ssa_musym[is.na(id)]) # ssa_musym missing from geodatabase
+geo_mis # ssa_musym present in the geodatabase, but missing from NASIS
+length(geo_mis) # number of missing natmusym
 ```
