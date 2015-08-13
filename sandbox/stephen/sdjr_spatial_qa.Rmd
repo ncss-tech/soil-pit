@@ -16,6 +16,8 @@ source("C:/workspace/soil-pit/trunk/queries/kssl_reports.R")
 
 data(state)
 
+SS_Office <- "11-WAV"
+
 # WEB-MLRA_Goals_Progress
 
 # goals <- goals_report(2015, "11-%25")
@@ -51,14 +53,14 @@ corr <- read.csv("C:/workspace/report_correlation_2015_08_11.csv")
 corr$region <- unlist(lapply(corr$Office, function(x) strsplit(x, "-")[[1]][1]))
 corr$ssa_musym <- paste0(corr$Area_Symbol, "_", corr$New_Symbol)
 
-corr11 <- subset(corr, grepl("11-WAV", Office))
+corr11 <- subset(corr, grepl(SS_Office, Office))
 
 corr11_np <- ddply(corr11, .(Office), summarize, n_projects = length(unique(Project_Name)))
 kable(corr11_np, caption = "Number of completed spatial changes")
 
 corr_check <- ddply(corr11, .(Office, pname = abbreviate(Project_Name, 50), ssa_musym, musym_corr = New_Symbol), summarize, old_musym_corr = paste(unique(Old_Musym), collapse = ", ")) # project by natmusym and musym
-kable(corr_check, caption = "NASIS spatial correlation legend by area symbol")
 
+write.csv(corr_check, paste0("report_corr_check_", SS_Office, "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
 
 # Geodatabase report (completed spatial changes in geodatabase)
 mupolygon <- read.csv("M:/geodata/project_data/11WAV/mupolygon_edit.csv")
@@ -69,13 +71,21 @@ edit$ssa_musym <- paste0(edit$AREASYMBOL, "_", edit$MUSYM)
 
 geo_check <- ddply(edit, .(ssa_musym, AREASYMBOL, musym_geo = MUSYM), summarise, old_musym_geo = paste(unique(ORIG_MUSYM), collapse=", "), n_polygons = length(ORIG_MUSYM), acres = round(sum(Shape_Area*0.000247), 0))
 
-kable(geo_check, caption="Summary of changes to the RTSD geodatabase by Soil Survey Area")
+write.csv(geo_check, paste0("report_geo_check_", SS_Office, "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
 ```
 
 ```{r, checks}
 # Checks
+corr_check$ssa_musym <- paste0(corr_check$ssa_musym, "_", corr_check$old_musym_corr)
+geo_check$ssa_musym <- paste0(geo_check$ssa_musym, "_", geo_check$old_musym_geo)
+
+
 check1 <- join(corr_check, geo_check, by="ssa_musym", type = "full") # match geo_check to corr_check
-kable(check1) # Matches between the RTSD geodatabase to the digitizing unit report
+check1_filter <- check1[apply(is.na(check1), 1, any), ]
+kable(check1_filter) # Matches between the RTSD geodatabase to the NASIS correlation report
+
+write.csv(check1, paste0("report_check1_", SS_Office, "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
+write.csv(check1_filter, paste0("report_check1_filter_", SS_Office, "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
 
 id <- match(corr_check$ssa_musym, geo_check$ssa_musym, incomparables=TRUE)
 corr_mis <- unique(corr_check$ssa_musym[is.na(id)]) # natmusym missing from geodatabase
