@@ -4,14 +4,14 @@
 This report summarizes the geographic setting of a list of MUSYM within a shapefile. It is intented to be used to compare and contrast map units, and suggest possible Low, RV, and High values for soil components. 
 
 ```{r load-data, echo=FALSE, results='hide', message=FALSE}
-shp <- "201511IND030_Gslm,ssbstr,0t2ps,of"
+shp <- "201511IND057_Cslm,WLwln,6t12ps,se_QA"
 
 dir <- "M:/geodata/project_data/"
 geodatabase <- "RTSD_Region_11_IND_FY15.gdb"
 office <- "11IND"
 
 # Defaults
-samplePercent <- 15
+samplePercent <- 20
 p <- c(0, 0.25, 0.5, 0.75, 1)
 
 pd <- paste0(dir, office, "/")
@@ -23,6 +23,7 @@ cache <- paste0(dsn, "_", samplePercent, ".Rdata")
 
 ```{r LoadPackages, include=F}
 library(knitr)
+library(lattice)
 library(circular)
 library(maps)
 library(sp)
@@ -127,9 +128,9 @@ kable(mlra_acres, digits = 0, align = "c", caption = "Summary of Acres by MLRA")
 
 # pol.lo1$SSA_MUSYM <- as.factor(pol.lo1$SSA_MUSYM)
 levels(pol.lo1$SSA_MUSYM) <- levels(pol.lo1$SSA_MUSYM)[length(levels(pol.lo1$SSA_MUSYM)):1]
-# bwplot(SSA_MUSYM ~ value | variable, data = pol.lo1, scales = list(x="free"), main = "Boxplots of polygon metrics")
+bwplot(SSA_MUSYM ~ value | variable[length(pol.lo1$variable):1], data = pol.lo1, scales = list(x="free"), main = "Boxplots of polygon metrics", as.table = TRUE)
 
-qplot(SSA_MUSYM, value, data = pol.lo1, geom = "boxplot", main = "Boxplots of polygon metrics") + facet_wrap(~variable, scales = "free") + theme(axis.text.x = element_text(angle=45, hjust = 1, vjust = 1))
+# qplot(SSA_MUSYM, value, data = pol.lo1, geom = "boxplot", main = "Boxplots of polygon metrics") + facet_wrap(~variable, scales = "free") + theme(axis.text.x = element_text(angle=45, hjust = 1, vjust = 1))
 ```
 
 ## Contingency tables (percent) 
@@ -161,7 +162,7 @@ kable(cbind(data.c[c(1, 7:9)], aspect.c["aspect"], data.n["n"]), align = "c")
 
 temp <- factor(unique(data$SSA_MUSYM))
 
-# bwplot(factor(SSA_MUSYM, levels=levels(temp)[length(levels(temp)):1]) ~ value|variable, data=data.lo, scales=list(x="free"), main = "Boxplots of map unit properties")
+bwplot(factor(SSA_MUSYM, levels=levels(temp)[length(levels(temp)):1]) ~ value|variable, data=data.lo, scales=list(x="free"), main = "Boxplots of map unit properties", as.table = TRUE, layout = c(2, 4))
 
-qplot(SSA_MUSYM, value, data = data.lo, geom = "boxplot", main = "Boxplots of map unit properties") + facet_wrap(~variable, scales = "free", ncol = 2) + theme(axis.text.x = element_text(angle=45, hjust=1, vjust=1))
+# qplot(SSA_MUSYM, value, data = data.lo, geom = "boxplot", main = "Boxplots of map unit properties") + facet_wrap(~variable, scales = "free", ncol = 2) + theme(axis.text.x = element_text(angle=45, hjust=1, vjust=1))
 ```

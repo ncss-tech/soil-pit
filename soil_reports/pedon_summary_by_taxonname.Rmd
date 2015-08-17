@@ -5,7 +5,7 @@ output:
 # Pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Clermont"
+series <- "Cincinnati"
 
 # Set percentiles
 p <- c(0, 0.25, 0.5, 0.75, 1)
