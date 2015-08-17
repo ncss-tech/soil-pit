@@ -1,7 +1,7 @@
-;# Lab pedon report
+# Lab pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Genesee"
+series <- "Miami"
 
 # Set percentiles
 p <- c(0, 0.25, 0.5, 0.75, 1)
@@ -11,8 +11,9 @@ p <- c(0, 0.25, 0.5, 0.75, 1)
 # load libraries
 library(aqp)
 library(soilDB)
+library(lattice)
 library(plyr)
-library(ggplot2)
+# library(ggplot2)
 library(reshape2)
 library(stringr)
 library(knitr)
@@ -74,11 +75,19 @@ if (dim(s)[1] != 0) {
   }
 ```
 
-```{r format site data, echo=FALSE, warnings=FALSE, results='asis'}
+```{r format site data, echo=FALSE, warnings=FALSE, results='asis', message=FALSE}
 kable(subset(s, select = c("pedon_id", "taxonname", "tax_subgroup", "part_size_class", "pedon_type", "describer")))
 
-plot(l, label="labpeiid")
-title("Soil profile plots")
+n <- length(l)-1
+interval <- 15
+times <- ceiling(n/interval)
+x <- rep(1:(times + 1), each = interval, length.out = n)
+
+for (i in seq(times)){
+  plot(l[c(x == i)], label = "upedonid")
+  title("Soil profile plots")
+  }
+
 ```
 
 
@@ -94,8 +103,9 @@ lp.5n <- ddply(lp.lo, .(variable), .fun = sum5n)
 kable(lp.5n, caption = "Summary of aggregate profile attributes")
 
 if (nrow(na.exclude(lp.lo)) > 6) {
-  # bwplot(variable ~ value, data=lp.lo, scales = list(x="free"), xlab = "percent", main = "Boxplots of aggregate profile attributes")
-  qplot(variable, value, data = lp.lo, geom = "boxplot", ylab = "percent", main = "Boxplots of aggregate profile attributes")
+  bwplot(value ~ variable, data=lp.lo, ylab = "percent", main = "Boxplots of aggregate profile attributes")
+  
+  # qplot(variable, value, data = lp.lo, geom = "boxplot", ylab = "percent", main = "Boxplots of aggregate profile attributes")
   }         
 
 lp.lo1 <- melt(lp, id.vars="labpeiid", measure.vars = c("psctopdepth", "pscbotdepth"))
@@ -108,10 +118,11 @@ lp.5n <- ddply(lp.lo, .(variable), .fun = sum5n)
 kable(lp.5n, digits = 0, align = "c", caption = "Depths and thickness of particle size control section (min, 25th, median, 75th, max)(n)")
 
 if (length(na.exclude(lp.thk$thickness)) > 1){
-qplot(variable, value, data = lp.lo, geom = "boxplot", ylab = "cm", main = "Boxplots of particle size control section depths and thickness") + facet_wrap(~variable, scales = "free", ncol = 4)
+  # qplot(variable, value, data = lp.lo, geom = "boxplot", ylab = "cm", main = "Boxplots of particle size control section depths and thickness") + facet_wrap(~variable, scales = "free", ncol = 4)
+  
+  ylim <- c(max(lp.lo$value, na.rm = T), min(lp.lo$value, na.rm = T))
+  bwplot(value ~ variable, data=lp.lo, ylim = ylim, ylab="cm", main = "Boxplots of particle size control section depths and thickness")
 }
-
-# bwplot(factor(variable, levels=levels(lp.lo$variable)[length(levels(lp.lo$variable)):1]) ~ value|variable, data=lp.lo, scales=list(x="free"), xlab="cm", horizontal=T, main = "Boxplots of particle size control section depths and thickness")
   
 ```
 
@@ -119,7 +130,16 @@ qplot(variable, value, data = lp.lo, geom = "boxplot", ylab = "cm", main = "Boxp
 ### Summary of soil horizons
 
 ```{r, echo=FALSE, results='asis', warning=FALSE, fig.width=8}
-kable(addmargins(table(lh$genhz, lh$hzname)), digits = 0, caption = "Horizon designations vs generic horizon designations (counts)")
+hz_t <- addmargins(table(lh$genhz, lh$hzname))
+
+n <- ncol(hz_t)-1
+interval <- 15
+times <- ceiling(n/interval)
+x <- rep(1:(times+1), each = interval, length.out = n)
+
+for (i in seq(times)){
+  print(kable(hz_t[, c(TRUE, x == i)], align = "c", digits = 0, caption = "Horizon designations vs generic horizon designations (counts)"))
+  }
 
 
 genhz.thk <- ddply(lh, .(labpeiid, genhz), summarize, thickness = sum(hzdepb - hzdept))
@@ -132,9 +152,12 @@ lh.c <- dcast(lh.5n, genhz ~ variable, value.var = "range")
 
 kable(lh.c, digits = 0, align = "c", caption = "Depths and thickness of generic horizons (min, 25th, median, 75th, max)(n)")
 
-# bwplot(factor(genhz, levels=levels(lh$genhz)[length(levels(lh$genhz)):1]) ~ value|variable, data=lh.lo, scales=list(x="free"), xlab="cm", horizontal=T, main = "Boxplots of horizon depths and thickness")          
+n1 <- length(levels(lh.lo$genhz))
+l <- levels(lh.lo$genhz)[n1:1]
 
-qplot(genhz, value, data = lh.lo, geom = "boxplot", ylab = "cm", main = "Boxplots of horizon depths and thickness") + facet_wrap(~variable, scales = "free") + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+bwplot(factor(lh.lo$genhz, levels = l) ~ value | variable, data = lh.lo, scales =list(x="free"), main = "Box plots of numeric variables by generic horizon", as.table = TRUE)
+
+# qplot(genhz, value, data = lh.lo, geom = "boxplot", ylab = "cm", main = "Boxplots of horizon depths and thickness") + facet_wrap(~variable, scales = "free") + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
 
 ```        
 
@@ -163,10 +186,13 @@ nh <- ncol(lh.num) / 4 * 2
 ```
 
 ```{r, echo=FALSE, warning=FALSE, fig.height=nh, fig.width=8}
+n1 <- length(levels(lh.lo$genhz))
+n2 <- round(length(levels(lh.lo$variable))/4, 0)
+l <- levels(lh.lo$genhz)[n1:1]
 
-# bwplot(factor(lh.lo$genhz, levels = levels(lh.lo$genhz)[length(levels(lh.lo$genhz)):1]) ~ value|variable, data = lh.lo, scales=list(x="free"), main = "Box plots of numeric variables by generic horizon")  
+bwplot(factor(lh.lo$genhz, levels = l) ~ value | variable, data = lh.lo, scales=list(x="free"), main = "Box plots of numeric variables by generic horizon", as.table = TRUE, layout = c(4, n2))
 
-qplot(genhz, value, data = lh.lo, geom = "boxplot", main = "Boxplots of numeric variables by generic horizon") + facet_wrap(~variable, scales = "free", ncol = 4) + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+# qplot(genhz, value, data = lh.lo[1:100, ], geom = "boxplot", main = "Boxplots of numeric variables by generic horizon") + facet_wrap(~variable, scales = "free", ncol = 4) + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
 
 ```
 
