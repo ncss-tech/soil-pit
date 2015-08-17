@@ -27,7 +27,7 @@ vegi <- vegi[id, ]
 
 # Convert to a spatial object and project
 vegi_sp <- vegi
-coordinates(vegi_sp) <- ~x+y
+coordinates(vegi_sp) <- ~ x + y
 proj4string(vegi_sp) <- CRS("+init=epsg:4326")
 
 # Write a shapefile
@@ -87,9 +87,9 @@ pairs(na.exclude(vegig[2:5]), panel=panel.smooth, diag.panel=panel.hist, upper.p
 # GLM
 # vegi
 vegi_full <- glm(plantsym ~ . + ns(maat, 2) + ns(map, 2) + ns(msp, 3), data = vegig, family = binomial)
-vegi_glm <- glm(plantsym ~ ns(map, 2) + maat + msp, data = vegig, family = binomial)
+vegi_glm <- glm(plantsym ~ maat + ns(map, 2) + msp, data = vegig, family = binomial)
 summary(vegi_glm)
-confusionMatrix(vegi_glm$y>0.5, predict(vegi_glm, type = "response")>0.5)
+confusionMatrix(vegi_glm$y > 0.5, predict(vegi_glm, type = "response") > 0.5)
 
 plot(vegi_glm)
 termplot(vegi_glm, partial.resid = TRUE) # looks like their is an outlier in this plot thats screwing up the plot, removed observation 181, remoing 50, 3, 56 also helps and allows for a 3rd order spline

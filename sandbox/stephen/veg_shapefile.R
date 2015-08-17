@@ -10,6 +10,8 @@ veg <- get_vegplot_from_NASIS_db()
 test <- join(veg$inventory, site, by = "siteiid", type = "left")
 test2 <- test[complete.cases(test$x, test$y), ]
 
+pain2
+
 # Convert to a spatial object and project
 coordinates(test2) <- ~x+y
 proj4string(test2) <- CRS("+init=epsg:4326")
