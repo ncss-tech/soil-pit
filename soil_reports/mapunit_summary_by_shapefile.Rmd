@@ -11,7 +11,7 @@ geodatabase <- "RTSD_Region_11_IND_FY15.gdb"
 office <- "11IND"
 
 # Defaults
-samplePercent <- 20
+samplePercent <- 21
 p <- c(0, 0.25, 0.5, 0.75, 1)
 
 pd <- paste0(dir, office, "/")
@@ -50,8 +50,14 @@ if (!file.exists(cache)){
   geodata <- raster_extract(mupolygon.s)
   mapunit.df <- cbind(mupolygon.s, over(mupolygon.s, mupolygon))
   data <- cbind(mapunit.df[c("AREASYMBOL", "MUSYM")], geodata)
+  
+  mlra <- readOGR(dsn = "M:/geodata/project_data/11REGION/mlra_a_r11.shp", layer = "mlra_a_r11", encoding = "ESRI Shapefile")
+  mlra_i <- intersect(mupolygon, mlra)
+  mlra_df <- data.frame(mlra_i, stringsAsFactors = F)
+  mlra_df$Acres <- gArea(mlra_i, byid = TRUE) * 0.000247105
+  mlra_acres <- ddply(mlra_df, .(mlra = MLRARSYM), summarise, acres = sum(Acres))
 
-  data.l <- list(data = data, mupolygon = mupolygon, sapolygon = sapolygon)
+  data.l <- list(data = data, mupolygon = mupolygon, sapolygon = sapolygon, mlra_acres = mlra_acres)
   save(data.l, file = cache)
 } else load(file = cache) #load cache file
 
@@ -59,7 +65,7 @@ if (!file.exists(cache)){
 data <- data.l$data
 mupolygon <- data.l$mupolygon
 sapolygon <- data.l$sapolygon
-mlra <- readOGR(dsn = "M:/geodata/project_data/11REGION/mlra_a_r11.shp", layer = "mlra_a_r11", encoding = "ESRI Shapefile")
+mlra_acres <- data.l$mlra_acres
 
 
 data$SSA_MUSYM <- as.character(paste(data$AREASYMBOL, data$MUSYM))
@@ -119,16 +125,12 @@ pol.5n <- join(pol.5n1, pol.5n2, by = "SSA_MUSYM")
 
 kable(pol.5n, digits = 0, align = "c", caption = "Summary of MUSYM by AREASYMBOL")
 
-mlra_i <- intersect(mupolygon, mlra)
-mlra_df <- data.frame(mlra_i, stringsAsFactors = F)
-mlra_df$Acres <- gArea(mlra_i, byid = TRUE) * 0.000247105
-mlra_acres <- ddply(mlra_df, .(mlra = MLRARSYM), summarise, acres = sum(Acres))
-
 kable(mlra_acres, digits = 0, align = "c", caption = "Summary of Acres by MLRA")
 
 # pol.lo1$SSA_MUSYM <- as.factor(pol.lo1$SSA_MUSYM)
-levels(pol.lo1$SSA_MUSYM) <- levels(pol.lo1$SSA_MUSYM)[length(levels(pol.lo1$SSA_MUSYM)):1]
-bwplot(SSA_MUSYM ~ value | variable[length(pol.lo1$variable):1], data = pol.lo1, scales = list(x="free"), main = "Boxplots of polygon metrics", as.table = TRUE)
+pol.lo1$SSA_MUSYM <- factor(pol.lo1$SSA_MUSYM, levels = rev(unique(pol.lo1$SSA_MUSYM)))
+                                                          
+bwplot(SSA_MUSYM ~ value | variable, data = pol.lo1, scales = list(x="free"), main = "Boxplots of polygon metrics", as.table = TRUE)
 
 # qplot(SSA_MUSYM, value, data = pol.lo1, geom = "boxplot", main = "Boxplots of polygon metrics") + facet_wrap(~variable, scales = "free") + theme(axis.text.x = element_text(angle=45, hjust = 1, vjust = 1))
 ```
@@ -140,7 +142,15 @@ bwplot(SSA_MUSYM ~ value | variable[length(pol.lo1$variable):1], data = pol.lo1,
 kable(prop.table(xtabs(~ SSA_MUSYM + slope_classes, data = data), margin = 1) * 100, align = "c", digits=0, caption="Slope classes")
 kable(prop.table(xtabs(~ SSA_MUSYM + aspect_classes, data = data), margin = 1) * 100, align = "c", digits = 0, caption = "Aspect classes")
 kable(prop.table(xtabs(~ SSA_MUSYM + valley_classes, data = data), margin = 1) * 100, align = "c", digits = 0, caption = "Upland vs. lowland")
-kable(addmargins(prop.table(xtabs(~ SSA_MUSYM + lulc_classes, data = data), margin = 1) * 100), digits = 0, align = "c", caption = "Landuse and Landcover")
+
+lulc_t <- addmargins(prop.table(xtabs(~ SSA_MUSYM + lulc_classes, data = data), margin = 1)) * 100
+
+idx <- pindex(lulc_t, 10)
+
+for (i in unique(idx)){
+  print(kable(lulc_t[, c(idx == i)], digits = 0, align = "c", caption = "Landuse and Landcover"))
+  }
+
 ```
 
 ## Quantile breaks
@@ -160,9 +170,9 @@ aspect.c <- dcast(aspect.5n, SSA_MUSYM ~ variable, value.var = 'range')
 kable(cbind(data.c[c(1:6)], data.n["n"]), align = "c")
 kable(cbind(data.c[c(1, 7:9)], aspect.c["aspect"], data.n["n"]), align = "c")
 
-temp <- factor(unique(data$SSA_MUSYM))
+data.lo$SSA_MUSYM <- factor(data.lo$SSA_MUSYM, levels = rev(unique(data.lo$SSA_MUSYM)))
 
-bwplot(factor(SSA_MUSYM, levels=levels(temp)[length(levels(temp)):1]) ~ value|variable, data=data.lo, scales=list(x="free"), main = "Boxplots of map unit properties", as.table = TRUE, layout = c(2, 4))
+bwplot(SSA_MUSYM ~ value|variable, data=data.lo, scales=list(x="free"), main = "Boxplots of map unit properties", as.table = TRUE, layout = c(2, 4))
 
 # qplot(SSA_MUSYM, value, data = data.lo, geom = "boxplot", main = "Boxplots of map unit properties") + facet_wrap(~variable, scales = "free", ncol = 2) + theme(axis.text.x = element_text(angle=45, hjust=1, vjust=1))
 ```

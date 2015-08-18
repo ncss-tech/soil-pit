@@ -1,9 +1,11 @@
 pindex <- function(x, interval){
-  n <- x -1
+  if (class(x)[1] == "data.frame") {x1 <- dim(x)[2]; x2 <- 1}
+  if (class(x)[1] == "SoilProfileCollection") {x1 <- length(x); x2 <-0}
+  if (class(x)[1] == "table") {x1 <- dim(x)[2]; x2 <- 0}
+  n <- x1 - x2
   times <- ceiling(n/interval)
-  x <- rep(1:(times + 1), each = interval, length.out = n)
-  
-} 
+  x <- rep(1:(times + x2), each = interval, length.out = n)
+}
 
 na_replace <- function(x){
   if(class(x)[1] == "character" | class(x)[1] == "logical") {x <- replace(x, is.na(x) | x == "NA", "missing")} 

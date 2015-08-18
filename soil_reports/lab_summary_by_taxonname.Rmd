@@ -78,11 +78,11 @@ if (dim(s)[1] != 0) {
 ```{r format site data, echo=FALSE, warnings=FALSE, results='asis', message=FALSE}
 kable(subset(s, select = c("pedon_id", "taxonname", "tax_subgroup", "part_size_class", "pedon_type", "describer")))
 
-idx <- pindex(length(l), 15)
+idx <- pindex(l, 15)
   
 for (i in unique(idx)){
   plot(l[idx == i], label = "upedonid")
-  title("Soil profile plots")[1]
+  title("Soil profile plots")
   }
 ```
 
@@ -96,7 +96,7 @@ lp.sub <- subset(lp, select=c("noncarbclaywtavg", "claytotwtavg", "le0to100", "w
 lp.lo <- melt(lp.sub, measure.vars=c("noncarbclaywtavg", "claytotwtavg", "le0to100", "wf0175wtavgpsc", "volfractgt2wtavg", "cec7clayratiowtavg"))
 lp.5n <- ddply(lp.lo, .(variable), .fun = sum5n)
 
-kable(lp.5n, caption = "Summary of aggregate profile attributes")
+kable(lp.5n, caption = "Summary of aggregate profile attributes", align = "c")
 
 if (nrow(na.exclude(lp.lo)) > 6) {
   bwplot(value ~ variable, data = lp.lo, ylab = "percent", main = "Boxplots of aggregate profile attributes")
@@ -128,10 +128,10 @@ if (length(na.exclude(lp.thk$thickness)) > 1){
 ```{r, echo=FALSE, results='asis', warning=FALSE, fig.width=8}
 hz_t <- addmargins(table(lh$genhz, lh$hzname))
 
-idx <- pindex(dim(hz_t)[2],15)
+idx <- pindex(hz_t, 15)
 
 for (i in unique(idx)){
-  print(kable(hz_t[, c(TRUE, idx == i)], align = "c", digits = 0, caption = "Horizon designations vs generic horizon designations (counts)"))
+  print(kable(hz_t[, c(idx == i)], align = "c", digits = 0, caption = "Horizon designations vs generic horizon designations (counts)"))
   }
 
 
@@ -164,10 +164,10 @@ lh.lo <- melt(lh.num, id.vars="genhz", measure.vars=names(lh.num)[c(1:(ncol(lh.n
 lh.5n <- ddply(lh.lo, .(variable, genhz), .fun=sum5n)
 lh.c <- dcast(lh.5n, genhz~variable, value.var = "range")
 
-idx <- pindex(dim(lh.c)[2], 4)
+idx <- pindex(lh.c, 4)
 
 for (i in unique(idx)){
-  print(kable(lh.c[c(TRUE, idx == i)], align = "c"))
+  print(kable(lh.c[, c(TRUE, idx == i)], align = "c"))
   }
 
 nh <- ncol(lh.num) / 4 * 2
@@ -179,7 +179,7 @@ n <- ceiling(length(levels(lh.lo$variable))/4)
 
 bwplot(genhz ~ value | variable, data = lh.lo, scales=list(x="free"), main = "Box plots of numeric variables by generic horizon", as.table = TRUE, layout = c(4, n))
 
-# qplot(genhz, value, data = lh.lo[1:100, ], geom = "boxplot", main = "Boxplots of numeric variables by generic horizon") + facet_wrap(~variable, scales = "free", ncol = 4) + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+# qplot(genhz, value, data = lh.lo, geom = "boxplot", main = "Boxplots of numeric variables by generic horizon") + facet_wrap(~variable, scales = "free", ncol = 4) + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
 
 ```
 
