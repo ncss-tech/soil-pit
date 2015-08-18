@@ -1,3 +1,10 @@
+pindex <- function(x, interval){
+  n <- x -1
+  times <- ceiling(n/interval)
+  x <- rep(1:(times + 1), each = interval, length.out = n)
+  
+} 
+
 na_replace <- function(x){
   if(class(x)[1] == "character" | class(x)[1] == "logical") {x <- replace(x, is.na(x) | x == "NA", "missing")} 
   else (x <-  x)

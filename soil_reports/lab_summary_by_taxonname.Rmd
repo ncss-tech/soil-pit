@@ -78,16 +78,12 @@ if (dim(s)[1] != 0) {
 ```{r format site data, echo=FALSE, warnings=FALSE, results='asis', message=FALSE}
 kable(subset(s, select = c("pedon_id", "taxonname", "tax_subgroup", "part_size_class", "pedon_type", "describer")))
 
-n <- length(l)-1
-interval <- 15
-times <- ceiling(n/interval)
-x <- rep(1:(times + 1), each = interval, length.out = n)
-
-for (i in seq(times)){
-  plot(l[c(x == i)], label = "upedonid")
-  title("Soil profile plots")
+idx <- pindex(length(l), 15)
+  
+for (i in unique(idx)){
+  plot(l[idx == i], label = "upedonid")
+  title("Soil profile plots")[1]
   }
-
 ```
 
 
@@ -103,7 +99,7 @@ lp.5n <- ddply(lp.lo, .(variable), .fun = sum5n)
 kable(lp.5n, caption = "Summary of aggregate profile attributes")
 
 if (nrow(na.exclude(lp.lo)) > 6) {
-  bwplot(value ~ variable, data=lp.lo, ylab = "percent", main = "Boxplots of aggregate profile attributes")
+  bwplot(value ~ variable, data = lp.lo, ylab = "percent", main = "Boxplots of aggregate profile attributes")
   
   # qplot(variable, value, data = lp.lo, geom = "boxplot", ylab = "percent", main = "Boxplots of aggregate profile attributes")
   }         
@@ -132,13 +128,10 @@ if (length(na.exclude(lp.thk$thickness)) > 1){
 ```{r, echo=FALSE, results='asis', warning=FALSE, fig.width=8}
 hz_t <- addmargins(table(lh$genhz, lh$hzname))
 
-n <- ncol(hz_t)-1
-interval <- 15
-times <- ceiling(n/interval)
-x <- rep(1:(times+1), each = interval, length.out = n)
+idx <- pindex(dim(hz_t)[2],15)
 
-for (i in seq(times)){
-  print(kable(hz_t[, c(TRUE, x == i)], align = "c", digits = 0, caption = "Horizon designations vs generic horizon designations (counts)"))
+for (i in unique(idx)){
+  print(kable(hz_t[, c(TRUE, idx == i)], align = "c", digits = 0, caption = "Horizon designations vs generic horizon designations (counts)"))
   }
 
 
@@ -152,10 +145,9 @@ lh.c <- dcast(lh.5n, genhz ~ variable, value.var = "range")
 
 kable(lh.c, digits = 0, align = "c", caption = "Depths and thickness of generic horizons (min, 25th, median, 75th, max)(n)")
 
-n1 <- length(levels(lh.lo$genhz))
-l <- levels(lh.lo$genhz)[n1:1]
+lh.lo$genhz <- factor(lh.lo$genhz, levels = rev(levels(lh.lo$genhz)))
 
-bwplot(factor(lh.lo$genhz, levels = l) ~ value | variable, data = lh.lo, scales =list(x="free"), main = "Box plots of numeric variables by generic horizon", as.table = TRUE)
+bwplot(genhz ~ value | variable, data = lh.lo, scales =list(x="free"), main = "Box plots of numeric variables by generic horizon", as.table = TRUE)
 
 # qplot(genhz, value, data = lh.lo, geom = "boxplot", ylab = "cm", main = "Boxplots of horizon depths and thickness") + facet_wrap(~variable, scales = "free") + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
 
@@ -166,31 +158,25 @@ bwplot(factor(lh.lo$genhz, levels = l) ~ value | variable, data = lh.lo, scales 
 Five number summary (min, 25th, median, 75th, max)(percentiles) and total number of observations (n)
 
 ```{r, echo=FALSE, results='asis', warning=FALSE}
-
 lh.num <- lh[c(12:(ncol(lh)-4), ncol(lh)-1, ncol(lh))]
 lh.num <- Filter(f = function(x) !all(is.na(x)), x = lh.num)
 lh.lo <- melt(lh.num, id.vars="genhz", measure.vars=names(lh.num)[c(1:(ncol(lh.num)-1))])
 lh.5n <- ddply(lh.lo, .(variable, genhz), .fun=sum5n)
 lh.c <- dcast(lh.5n, genhz~variable, value.var = "range")
 
-n <- ncol(lh.c)-1
-interval <- 4
-times <- ceiling(n/interval)
-x <- rep(1:(times+1), each = interval, length.out = n)
+idx <- pindex(dim(lh.c)[2], 4)
 
-for (i in seq(times)){
-  print(kable(lh.c[c(TRUE, x == i)], align = "c"))
+for (i in unique(idx)){
+  print(kable(lh.c[c(TRUE, idx == i)], align = "c"))
   }
 
 nh <- ncol(lh.num) / 4 * 2
 ```
 
 ```{r, echo=FALSE, warning=FALSE, fig.height=nh, fig.width=8}
-n1 <- length(levels(lh.lo$genhz))
-n2 <- round(length(levels(lh.lo$variable))/4, 0)
-l <- levels(lh.lo$genhz)[n1:1]
+n <- ceiling(length(levels(lh.lo$variable))/4)
 
-bwplot(factor(lh.lo$genhz, levels = l) ~ value | variable, data = lh.lo, scales=list(x="free"), main = "Box plots of numeric variables by generic horizon", as.table = TRUE, layout = c(4, n2))
+bwplot(genhz ~ value | variable, data = lh.lo, scales=list(x="free"), main = "Box plots of numeric variables by generic horizon", as.table = TRUE, layout = c(4, n))
 
 # qplot(genhz, value, data = lh.lo[1:100, ], geom = "boxplot", main = "Boxplots of numeric variables by generic horizon") + facet_wrap(~variable, scales = "free", ncol = 4) + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
 
