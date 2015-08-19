@@ -101,17 +101,16 @@ print(vegi_rf)
 varImpPlot(vegi_rf)
 
 predfun <- function(model, data) {
-  v <- predict(model, data, type="response")
+  v <- predict(model, data, type="prob")
 }
-boer4.raster <- predict(geodata.r, boer4.glm, fun=predfun, index=1, progress='text')
-writeRaster(boer4.raster,filename="G:/workspace/boer4.glm2.raster.tif",format="GTiff",datatype="FLT4S",overwrite=T,NAflag=-99999, progress="text")
+vegi_raster <- predict(geodata, vegi_rf, fun=predfun, index=1, progress='text')
+writeRaster(vegi_raster,filename="M:/geodata/vegi_raster.tif",format="GTiff",datatype="FLT4S",overwrite=T,NAflag=-99999, progress="text")
 
 
 # Bioclim
 library(dismo)
-geodata.sb.r <- geodata.r[[c(11,14)]]
-boer4.sb.df <- subset(boer4.df, boer4=="boer4")
-boer4.sb.sp <- boer4.sb.df ; coordinates(boer4.sb.sp) <- ~easting+northing
-boer4.bc <- bioclim(geodata.sb.r,boer4.sb.sp)
-boer4.bc.r <- predict(geodata.sb.r, boer4.bc, progress="text")
+vegi_sp2 <- subset(vegi_sp, plantsym == "CORA")
+vegi_e <- extract(geodata, vegi_sp2)
+vegi_bc <- bioclim(vegi_e)
+vegi_bcr <- predict(geodata, vegi_bc, progress="text")
 writeRaster(boer4.bc.r,filename="G:/workspace/boer4.bioclim.raster.tif",format="GTiff",datatype="FLT4S",overwrite=T,NAflag=-99999, progress="text")
