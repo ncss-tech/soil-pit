@@ -33,7 +33,7 @@ st <- tolower(state.abb)
 st_p <- paste0(st, "%25")
 
 corr <- correlation_report(st_p, 2015)
-# corr <- read.csv("report_correlation_2015_08_11.csv")
+# corr2 <- read.csv("report_correlation_2015_08_19_0.csv")
 # corr$region <- unlist(lapply(corr$Office, function(x) strsplit(x, "-")[[1]][1]))
 
 corr11 <- subset(corr, grepl("11-", Office))

@@ -27,7 +27,7 @@ du_report <- function(fy) {
 # WEB-Correlation_state_fy_ids
 
 correlation_report <- function(asymbol, fy){
-  url <- paste0("https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-Correlation_state_fy_id&asymbol=", asymbol, "%25&fy=", fy) # Works ... Thanks Kevin
+  url <- paste0("https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-Correlation_state_fy&asymbol=", asymbol, "%25&fy=", fy) # Works ... Thanks Kevin
   
   url_download <- function(x) {
     l <- list()
@@ -70,11 +70,12 @@ correlation_report <- function(asymbol, fy){
   corr$spatial_musym <- corr$New_Symbol != corr$Old_Musym2
   corr$region <- unlist(lapply(corr$Office, function(x) strsplit(x, "-")[[1]][1]))
   
-  corr <- subset(corr, spatial == TRUE)
+  corr_spatial <- subset(corr, spatial == TRUE)
   
-  write.csv(corr, file = paste0("report_correlation_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
+  write.dbf(corr, file = paste0("report_correlation_", format(Sys.time(), "%Y_%m_%d"), ".dbf"))
+  write.dbf(corr_spatial, file = paste0("report_correlation_", format(Sys.time(), "%Y_%m_%d"), "_spatial.dbf"))
   
-  return(corr)
+  return(list(corr = corr, corr_spatial = corr_spatial))
 }
 
 # WEB-MLRA_Goals_Progress

@@ -189,7 +189,6 @@ kable(addmargins(table(lh$genhz, lh$lab_texcl)), digits = 0, caption = "Texture 
 if (any(lh$stratextsflag != 0)){
   kable(addmargins(table(lh$genhz, lh$stratextsflag)), digits=0, caption = "Stratified flag by generic horizon")
   }
-
 ```
 
 

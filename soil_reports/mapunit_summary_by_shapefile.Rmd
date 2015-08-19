@@ -4,14 +4,14 @@
 This report summarizes the geographic setting of a list of MUSYM within a shapefile. It is intented to be used to compare and contrast map units, and suggest possible Low, RV, and High values for soil components. 
 
 ```{r load-data, echo=FALSE, results='hide', message=FALSE}
-shp <- "201511IND057_Cslm,WLwln,6t12ps,se_QA"
+shp <- "201511IND041_Foxloam0t2percntslps_QA"
 
 dir <- "M:/geodata/project_data/"
 geodatabase <- "RTSD_Region_11_IND_FY15.gdb"
 office <- "11IND"
 
 # Defaults
-samplePercent <- 21
+samplePercent <- 20
 p <- c(0, 0.25, 0.5, 0.75, 1)
 
 pd <- paste0(dir, office, "/")
