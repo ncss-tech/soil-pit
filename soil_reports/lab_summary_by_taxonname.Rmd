@@ -1,7 +1,7 @@
 # Lab pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Miami"
+series <- "Fox"
 
 # Set percentiles
 p <- c(0, 0.25, 0.5, 0.75, 1)
@@ -116,7 +116,7 @@ kable(lp.5n, digits = 0, align = "c", caption = "Depths and thickness of particl
 if (length(na.exclude(lp.thk$thickness)) > 1){
   # qplot(variable, value, data = lp.lo, geom = "boxplot", ylab = "cm", main = "Boxplots of particle size control section depths and thickness") + facet_wrap(~variable, scales = "free", ncol = 4)
   
-  ylim <- c(max(lp.lo$value, na.rm = T), min(lp.lo$value, na.rm = T))
+  ylim <- c(max(lp.lo$value, na.rm = T) + 5, min(lp.lo$value, na.rm = T) - 5)
   bwplot(value ~ variable, data=lp.lo, ylim = ylim, ylab="cm", main = "Boxplots of particle size control section depths and thickness")
 }
   

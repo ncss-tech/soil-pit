@@ -5,7 +5,7 @@ output:
 # Pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Miami"
+series <- "Fox"
 
 # Set percentiles
 p <- c(0, 0.25, 0.5, 0.75, 1)
@@ -17,6 +17,7 @@ p <- c(0, 0.25, 0.5, 0.75, 1)
 library(aqp)
 library(soilDB)
 library(circular)
+library(lattice)
 library(RColorBrewer)
 library(plyr)
 library(ggplot2)
@@ -80,8 +81,14 @@ kable(subset(s, select = c("pedon_id", "taxonname", "tax_subgroup", "part_size_c
 cols <- brewer.pal(n = length(levels(pedons$genhz)), name = "Set1") 
 hz.names <- levels(pedons$genhz)
 pedons$genhz.soil_color <- cols[match(pedons$genhz, hz.names)] # assign a color to each generalized horizon label
-plot(pedons, name = 'hzname', color = 'genhz.soil_color', label = 'pedon_id') # plot generalized horizons via color and add a legend
-title("Soil profile plots")
+
+
+idx <- pindex(pedons, 15)
+  
+for (i in unique(idx)){
+  plot(pedons[idx == i], name = 'hzname', color = 'genhz.soil_color', label = 'pedon_id')
+  title("Soil profile plots")
+  }
 ```
 
 
@@ -103,7 +110,9 @@ kable(srf.5n, align = "c", caption =  "Surface rock fragments (min, 25th, median
  
 
 if (sum(srf$total_srf, na.rm = T) != 0) {
-  qplot(variable, value, data = srf.lo, geom = "boxplot", ylab = "%", main = "Boxplots of surface rock fragments") + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  bwplot(variable ~ variable, data = srf.lo, ylab = "percent", main = "Boxplots of surface rock fragments")
+  
+  # qplot(variable, value, data = srf.lo, geom = "boxplot", ylab = "%", main = "Boxplots of surface rock fragments") + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
   }         
 ```
 
@@ -135,7 +144,9 @@ kable(diag.wi, align = "c", caption = "Depths and thickness of diagnostic horizo
 
 
 if (!all(is.na(diag.lo$value))) {
-  qplot(diag_kind, value, data = diag.lo, geom = "boxplot", ylab = "cm", main = "Boxplots of diagnostic horizon and feature depths") + facet_wrap(~variable, scales = "free") + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  bwplot(diag_kind ~ value | variable, data = diag.lo, scales =list(x="free"), main = "Boxplots of diagnostic horizon and feature depths", as.table = TRUE)
+  
+  # qplot(diag_kind, value, data = diag.lo, geom = "boxplot", ylab = "cm", main = "Boxplots of diagnostic horizon and feature depths") + facet_wrap(~variable, scales = "free") + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
 }
 ```
 
@@ -153,7 +164,11 @@ genhz.5n <- ddply(genhz.lo, .(variable, genhz), .fun = sum5n)
 
 kable(dcast(genhz.5n, genhz ~ variable, value.var = 'range'), align = "c", caption = "Depths and thickness of generic horizons (min, 25th, median, 75th, max)(n)")
 
-qplot(genhz, value, data = genhz.lo, geom = "boxplot", ylab = "cm", main = "Boxplots of horizon generic horizon depths and thickness") + facet_wrap(~variable, scales = "free") + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+genhz.lo$genhz <- factor(genhz.lo$genhz, levels = rev(levels(genhz.lo$genhz)))
+
+bwplot(genhz ~ value | variable, data = genhz.lo, scales =list(x="free"), main = "Boxplots of horizon generic horizon depths and thickness", as.table = TRUE)
+
+# qplot(genhz, value, data = genhz.lo, geom = "boxplot", ylab = "cm", main = "Boxplots of horizon generic horizon depths and thickness") + facet_wrap(~variable, scales = "free") + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
 ```
 
 ```{r genhz numeric variables, echo=FALSE, results='asis', warning=FALSE, fig.height=8, fig.width=8}
@@ -171,7 +186,12 @@ kable(h.wi[1:5], align = "c", caption = "Numeric variables by generic horizon (m
 kable(h.wi[c(1, 6:9)], align = "c")
 kable(h.wi[c(1, 10:13)], align = "c")
 
-qplot(genhz, value, data = h.lo, geom = "boxplot", ylab = "cm", main = "Boxplots of numeric variable by generic horizon") + facet_wrap(~variable, scales = "free") + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+h.lo$genhz <- factor(h.lo$genhz, levels = rev(levels(h.lo$genhz)))
+n <- ceiling(length(levels(h.lo$variable))/4)
+
+bwplot(genhz ~ value | variable, data = h.lo, scales=list(x="free"), main = "Box plots of numeric variables by generic horizon", as.table = TRUE, layout = c(4, n))
+
+# qplot(genhz, value, data = h.lo, geom = "boxplot", ylab = "cm", main = "Boxplots of numeric variable by generic horizon") + facet_wrap(~variable, scales = "free") + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
 ```
 </p>
 
