@@ -154,7 +154,13 @@ if (!all(is.na(diag.lo$value))) {
 ### Summary of soil horizons
 
 ```{r hzname vs genhz, echo=FALSE, results='asis'}
-kable(addmargins(table(h$genhz, h$hzname)), digits = 0, caption = "Horizon designations vs generic horizon designations (counts)") 
+hz_t <- addmargins(table(h$genhz, h$hzname))
+
+idx <- pindex(hz_t, 15)
+
+for (i in unique(idx)){
+  print(kable(hz_t[, c(idx == i)], align = "c", digits = 0, caption = "Horizon designations vs generic horizon designations (counts)"))
+  }
 
 genhz.thk <- ddply(h, .(phiid, genhz), summarize, thickness=sum(hzdepb-hzdept))
 genhz.lo <- melt(h, id.vars="genhz", measure.vars = c('hzdept', 'hzdepb'))
@@ -196,9 +202,19 @@ bwplot(genhz ~ value | variable, data = h.lo, scales=list(x="free"), main = "Box
 </p>
 
 ```{r, echo=FALSE, results='asis'}
-kable(addmargins(table(h$genhz, h$texture_class)), digits = 0, caption = "Texture by generic horizon (counts)")
+tc <- c("cos", "s", "fs", "vfs", "lcos", "ls", "lfs", "lvfs", "cosl", "sl", "fsl", "vfsl", "l", "sil", "si", "scl", "cl", "sicl", "sc", "sic", "c", "NA")
+tc <- tc[tc %in% unique(h$texture_class)]
+h$texture_class <- factor(h$texture_class, levels = tc)
 
-kable(addmargins(table(h$genhz, h$texture)), digits = 0, caption = "Tex Mod & Class by generic horizon (counts)")
+kable(addmargins(table(h$genhz, h$texture_class, exclude = NULL)), digits = 0, caption = "Texture by generic horizon (counts)")
+
+hz_tex <- addmargins(table(h$genhz, h$texture))
+idx <- pindex(hz_tex, 15)
+
+for (i in unique(idx)){
+  print(kable(hz_tex[, c(idx == i)], align = "c", digits = 0, caption = "Tex Mod & Class by generic horizon (counts)"))
+  }
+
 ```
 
 
@@ -232,11 +248,13 @@ if (!all(is.na(s$aspect_field))) {
   aspect.lo <- melt(aspect, measure.vars = "aspect_field")
   aspect.lo$value <- circular(aspect.lo$value, template="geographic", units="degrees", modulo="2pi")
   aspect.5n <- ddply(aspect.lo, .(variable), .fun = sum5n)
-  kable(rbind(morf.5n, aspect.5n), caption = "Elevation, slope gradient and aspect (min, 25th, median, 75th, max)(n)")
-} else(kable(morf.5n, caption="Elevation and slope gradient (min, 25th, median, 75th, max)(n)")
+  kable(rbind(morf.5n, aspect.5n), caption = "Elevation, slope gradient and aspect (min, 25th, median, 75th, max)(n)", align = "c")
+} else(kable(morf.5n, caption="Elevation and slope gradient (min, 25th, median, 75th, max)(n)", align = "c")
 )         
 
-qplot("variable", value, data = morf.lo, geom = "boxplot", main = "Boxplots of elevation and slope gradient") + facet_wrap(~variable, scales = "free")
+bwplot(~ value | variable, data = morf.lo, scales=list(x="free"), main = "Boxplots of elevation and slope gradient", as.table = TRUE)
+
+# qplot("variable", value, data = morf.lo, geom = "boxplot", main = "Boxplots of elevation and slope gradient") + facet_wrap(~variable, scales = "free")
 
 if (!all(is.na(s[c("pmorigin", "pmkind", "landform.string")]))){
   pm_comb <- factor(paste0(s$pmorigin, " ", s$pmkind))
@@ -244,7 +262,6 @@ if (!all(is.na(s[c("pmorigin", "pmkind", "landform.string")]))){
   pm.lf <- addmargins(table(pm_comb, pm_land))
   kable(pm.lf, caption="Parent material vs landform (counts)")
   }
-
 
 if (!all(is.na(s[c("shapedown", "shapeacross")]))) {
   s$shapedown <- factor(s$shapedown, levels=c("Convex", "Linear", "Concave", "missing"))

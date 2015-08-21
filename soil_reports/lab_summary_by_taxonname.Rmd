@@ -18,6 +18,7 @@ library(reshape2)
 library(stringr)
 library(knitr)
 library(maps)
+library(RColorBrewer)
 
 source("report_functions.R")
 source(paste0("./genhz_rules/", series, "_rules.R"))
@@ -78,10 +79,14 @@ if (dim(s)[1] != 0) {
 ```{r format site data, echo=FALSE, warnings=FALSE, results='asis', message=FALSE}
 kable(subset(s, select = c("pedon_id", "taxonname", "tax_subgroup", "part_size_class", "pedon_type", "describer")))
 
+cols <- brewer.pal(n = length(levels(l$genhz)), name = "Set1") 
+hz.names <- levels(l$genhz)
+l$genhz.soil_color <- cols[match(l$genhz, hz.names)] # assign a color to each generalized horizon label
+
 idx <- pindex(l, 15)
   
 for (i in unique(idx)){
-  plot(l[idx == i], label = "upedonid")
+  plot(l[idx == i], name = 'hzname', color = 'genhz.soil_color', label = 'upedonid')
   title("Soil profile plots")
   }
 ```
@@ -99,7 +104,7 @@ lp.5n <- ddply(lp.lo, .(variable), .fun = sum5n)
 kable(lp.5n, caption = "Summary of aggregate profile attributes", align = "c")
 
 if (nrow(na.exclude(lp.lo)) > 6) {
-  bwplot(value ~ variable, data = lp.lo, ylab = "percent", main = "Boxplots of aggregate profile attributes")
+  bwplot(variable ~ value, data = lp.lo, ylab = "percent", main = "Boxplots of aggregate profile attributes", as.table = TRUE)
   
   # qplot(variable, value, data = lp.lo, geom = "boxplot", ylab = "percent", main = "Boxplots of aggregate profile attributes")
   }         
@@ -184,6 +189,10 @@ bwplot(genhz ~ value | variable, data = lh.lo, scales=list(x="free"), main = "Bo
 ```
 
 ```{r, echo=FALSE, results='asis'}
+tc <- c("cos", "s", "fs", "vfs", "lcos", "ls", "lfs", "lvfs", "cosl", "sl", "fsl", "vfsl", "l", "sil", "si", "scl", "cl", "sicl", "sc", "sic", "c", "NA")
+tc <- tc[tc %in% unique(lh$lab_texcl)]
+lh$lab_texcl <- factor(lh$lab_texcl, levels = tc)
+
 kable(addmargins(table(lh$genhz, lh$lab_texcl)), digits = 0, caption = "Texture by generic horizon")
 
 if (any(lh$stratextsflag != 0)){
