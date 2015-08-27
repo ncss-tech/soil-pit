@@ -1,10 +1,10 @@
 # Lab pedon report
 ```{r enter soil series name}
 # Set soil series
-series <- "Fox"
+series <- "Miami"
 
 # Set percentiles
-p <- c(0, 0.25, 0.5, 0.75, 1)
+p <- c(0.05, 0.5, 0.95)
 ```
 
 ```{r load packages, include=FALSE}
@@ -88,6 +88,7 @@ idx <- pindex(l, 15)
 for (i in unique(idx)){
   plot(l[idx == i], name = 'hzname', color = 'genhz.soil_color', label = 'upedonid')
   title("Soil profile plots")
+  legend('bottomleft', legend = hz.names, pt.bg = cols, pch = 22, horiz = TRUE, pt.cex = 2, text.width = 1)
   }
 ```
 
