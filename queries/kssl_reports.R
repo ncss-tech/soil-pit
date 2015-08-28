@@ -72,8 +72,8 @@ correlation_report <- function(asymbol, fy){
   
   corr_spatial <- subset(corr, spatial == TRUE)
   
-  write.dbf(corr, file = paste0("report_correlation_", format(Sys.time(), "%Y_%m_%d"), ".dbf"))
-  write.dbf(corr_spatial, file = paste0("report_correlation_", format(Sys.time(), "%Y_%m_%d"), "_spatial.dbf"))
+  write.csv(corr, file = paste0("report_correlation_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
+  write.csv(corr_spatial, file = paste0("report_correlation_", format(Sys.time(), "%Y_%m_%d"), "_spatial.csv"))
   
   return(list(corr = corr, corr_spatial = corr_spatial))
 }
@@ -98,5 +98,27 @@ goals_report <- function(fy, off){
   write.csv(goals, file = paste0("report_goals_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
   
   return(goals)
+}
+
+legends_report <- function(as) {
+  url <- paste0("https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-legends&off=", as)
+  
+  url_download <- function(x) {
+    l <- list()
+    for (i in seq(x)){
+      leg_w <- getURLContent(x[i], ssl.verifypeer = F)
+      if (nchar(leg_w) > 900) {
+        l[[i]] <- readHTMLTable(leg_w, stringsAsFactors = F)[[1]]}
+    }
+    ldply(l)
+  }
+  
+  leg <- url_download(url)
+  
+  # Rename, subset and find spatial changes
+  names(leg) <- unlist(lapply(names(leg), function(x) strsplit(x, "\n")[[1]][3]))
+  names(leg) <- sapply(names(leg), function(x) paste(strsplit(x, " ")[[1]], collapse = "_"))
+  
+  return(leg)
 }
 
