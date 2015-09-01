@@ -37,7 +37,7 @@ report <- correlation_report(st_p, 2015)
 # corr$region <- unlist(lapply(corr$Office, function(x) strsplit(x, "-")[[1]][1]))
 attach(report)
 
-corr11 <- subset(corr_spatial, grepl("11-", Office))
+corr11 <- subset(corr, grepl("11-", Office))
 corr11 <- rename(corr11, c("Project_Name" = "pname", "New_Symbol" = "musym_corr", "Old_Musym2" = "old_musym_corr"))
 
 ddply(corr11, .(Office), summarize, nProjects = length(unique(pname)))

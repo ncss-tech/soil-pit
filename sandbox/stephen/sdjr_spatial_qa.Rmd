@@ -18,17 +18,25 @@ source("C:/workspace/soil-pit/trunk/queries/kssl_reports.R")
 data(state)
 
 fy <- 2015
-SS_Office <- "11-ATL"
+SS_Office <- "11-WAV"
+mupolygon <- read.csv("M:/geodata/project_data/11WAV/mupolygon_edits.csv")
 
 # goals <- goals_report(2015, "11-%25")
 goals <- read.csv("C:/workspace/report_goals_2015_08_11.csv")
 # du <- du_report(fy)
-du <- read.csv("C:/workspace/report_digitizing_unit_2015_08_27.csv")
+du <- read.csv("C:/workspace/report_digitizing_unit_2015_09_01.csv")
+
+st <- tolower(state.abb)
+st_p <- paste0(st, "%25")
 # corr <- correlation_report(st_p, 2015)
-corr <- read.csv("C:/workspace/report_correlation_2015_08_27_spatial.csv")
-mupolygon <- read.dbf("M:/geodata/project_data/11ATL/mupolygon_edits.dbf", as.is = TRUE)
+corr <- read.csv("C:/workspace/report_correlation_2015_09_01_spatial.csv")
+
 region <- read.csv("M:/geodata/soils/SSA_Regional_Ownership_MASTER_MLRA_OFFICE.txt")
 
+st <- toupper(c("ia", "il", "in", "ks", "ky", "mi", "mn", "mo", "ne", "oh", "ok", "sd", "wi"))
+st_p <- paste0(st, "%")
+# leg <- legends_report(st_p)
+leg <- read.csv("C:/workspace/report_legends_2015_09_01.csv")
 
 # WEB-MLRA_Goals_Progress
 
@@ -38,11 +46,11 @@ kable(ddply(goals, .(SS_Office), summarise, n = length(unique(Project_Name))), c
 ```
 
 
-```{r, summarize geodatabase tabular changes, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, results='asis'}
+```{r, summarize geodatabase tabular changes, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
 
 # Digitizing unit report (proposed spatial changes in NASIS)
 
-du11 <- subset(du, State_Responsible == "Indiana" & Office == SS_Office)
+du11 <- subset(du, State_Responsible == "Indiana")
 
 du11_np <- ddply(du11, .(Office), summarize, n_projects = length(unique(Project_Name)))
 kable(du11_np, caption = "Number of proposed spatial changes")
@@ -50,53 +58,69 @@ kable(du11_np, caption = "Number of proposed spatial changes")
 
 # Correlation report (completed spatial changes in NASIS)
 
-corr11 <- subset(corr, Office == SS_Office)
-corr11 <- rename(corr11, c("Area_Symbol" = "AREASYMBOL", "Project_Name" = "pname", "New_Symbol" = "musym_nasis", "Old_Musym2" = "old_musym_nasis"))
-corr11$key <- paste0(corr11$Area_Symbol, "_", corr11$musym_nasis)
+corr <- rename(corr, c("Area_Symbol" = "AREASYMBOL", "Project_Name" = "pname", "New_Symbol" = "musym", "Old_Musym2" = "old_musym"))
+corr$key <- with(corr, paste0(AREASYMBOL, "_", musym))
 
+corr11 <- subset(corr, region == 11)
 corr11_np <- ddply(corr11, .(Office), summarize, n_projects = length(unique(pname)))
 kable(corr11_np, caption = "Number of completed spatial changes")
 
-
-nasis_check <- ddply(corr11, .(Office, pname = abbreviate(pname, 50), key, AREASYMBOL, musym_nasis), summarize, old_musym_nasis = unique(old_musym_nasis)) # project by natmusym and musym
-nasis_check2 <- subset(nasis_check, select = c(Office, pname, key, AREASYMBOL, musym_nasis, old_musym_nasis))
+corr11 <- subset(corr, Office == SS_Office)
+nasis_check <- ddply(corr11, .(Office, pname = abbreviate(pname, 50), key, AREASYMBOL, musym), summarize, old_musym = unique(old_musym)) # project by natmusym and musym
+nasis_check2 <- subset(nasis_check, select = c(Office, pname, key, AREASYMBOL, musym, old_musym))
 
 write.csv(nasis_check, paste0("report_nasis_check_", SS_Office, "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
 
 # Geodatabase report (completed spatial changes in geodatabase)
 
-mupolygon <- rename(mupolygon, c("MUSYM" = "musym_geo", "ORIG_MUSYM" = "old_musym_geo"))
-id <- (mupolygon$musym_geo != mupolygon$old_musym_geo & mupolygon$old_musym_geo != "") | mupolygon$Editor_Fie != ""
+mupolygon <- rename(mupolygon, c("MUSYM" = "musym", "ORIG_MUSYM" = "old_musym"))
+id <- (mupolygon$musym != mupolygon$old_musym & mupolygon$old_musym != "") | mupolygon$Editor_Fie != ""
 edit <- mupolygon[id, ]
-edit$key <- paste0(edit$AREASYMBOL, "_", edit$musym_geo)
+edit$key <- paste0(edit$AREASYMBOL, "_", edit$musym)
 
-geo_check <- ddply(edit, .(key, AREASYMBOL, musym_geo), summarise, old_musym_geo = paste(unique(old_musym_geo), collapse=", "), n_polygons = length(old_musym_geo), acres = round(sum(Shape_Area*0.000247), 0))
-geo_check2 <- ddply(edit, .(key, AREASYMBOL, musym_geo), summarize, old_musym_geo = unique(old_musym_geo))
+geo_check <- ddply(edit, .(key, AREASYMBOL, musym), summarise, n_polygons = length(old_musym), acres = round(sum(Shape_Area*0.000247), 0), n_old_musym = length(unique(old_musym)), old_musym = paste(unique(old_musym), collapse=", "))
+geo_check2 <- ddply(edit, .(key, AREASYMBOL, musym), summarize, old_musym_geo = unique(old_musym))
 
 write.csv(geo_check, paste0("report_geo_check_", SS_Office, "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
 ```
 
 ```{r, checks, echo=FALSE}
 # Checks
-nasis_check2$key <- with(nasis_check2, paste0(key, "_", old_musym_nasis))
+nasis_check2$key <- with(nasis_check2, paste0(key, "_", old_musym))
 geo_check2$key <- with(geo_check2, paste0(key, "_", old_musym_geo))
 
 
 check <- join(nasis_check2, geo_check2, by="key", type = "full") # match geo_check2 to nasis_check
 check_filter <- check[apply(is.na(check), 1, any), ]
-kable(check_filter, caption = "Matches between NASIS and the RTSD geodatabase")
+
+test <- paste0(leg$mapunit_symbol, "_", leg$area_symbol)
+test2 <- paste0(check_filter$musym, "_", check_filter$AREASYMBOL)
+
+
+check_filter$in_legend <- test2 %in% test
+test2 <- which(with(check_filter, musym == old_musym_geo))
+check_filter <- check_filter[-test2, ]
+test <- !(is.na(check_filter$Office) & check_filter$in_legend == TRUE )
+check_filter2 <- check_filter[test, ]
+check_filter3 <- check_filter[!test, ]
+
+
+kable(check_filter2, caption = "Matches between NASIS and the RTSD geodatabase")
 print("Missing values (NA) need to be either added/removed from NASIS or the RTSD geodatabase")
+
+kable(check_filter3, caption = "Mismatches between NASIS and the RTSD geodatabase")
+print("Missing values (NA) need to be either added/removed from NASIS or the RTSD geodatabase. Odds are they are splits that need to be relinked to the additional mapunit.")
 
 write.csv(check, paste0("report_check_", SS_Office, "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
 write.csv(check_filter, paste0("report_check_filter_", SS_Office, "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
 
-id <- match(nasis_check2$key, geo_check2$key, incomparables=TRUE)
-nasis_mis <- unique(nasis_check2$key[is.na(id)]) # key present in NASIS, but missing from the geodatabase
-length(nasis_mis); print("number of musym missing from the RTSD geodatabase")
+# id <- match(nasis_check2$key, geo_check2$key, incomparables=TRUE)
+# nasis_mis <- unique(nasis_check2$key[is.na(id)]) # key present in NASIS, but missing from the geodatabase
+# length(nasis_mis); print("number of musym missing from the RTSD geodatabase")
 
-id <- match(geo_check2$key, nasis_check2$key, incomparables=TRUE)
-geo_mis <- unique(geo_check2$key[is.na(id)]) # key present in the geodatabase, but missing from NASIS
-length(geo_mis); print("number of musym missing from NASIS")
+# id <- match(geo_check2$key, nasis_check2$key, incomparables=TRUE)
+# geo_mis <- unique(geo_check2$key[is.na(id)]) # key present in the geodatabase, but missing from NASIS
+# length(geo_mis); print("number of musym missing from NASIS")
 
 ```
 ```{r, adjacent regions}

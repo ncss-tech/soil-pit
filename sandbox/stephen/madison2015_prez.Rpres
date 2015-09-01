@@ -1,4 +1,6 @@
 
+.libPaths(c("C:/R/win-library/3.1", "C:/Program Files/R/R-3.1.1/library"))
+
 Digital summaries of legacy pedon descriptions
 ========================================================
 author: Stephen Roecker, Dylan Beaudette, Jay Skovlin, Skye Wills
@@ -21,7 +23,7 @@ _* sorted by database sophistication_
 Legacy pedon data within the US
 ========================================================
 
-```{r, echo=FALSE}
+```{r, echo=T}
 library(aqp)
 library(soilDB)
 library(plyr)
@@ -91,8 +93,8 @@ NASIS data structure
 # The data elements used in the NRCS databases are well defined, thus we simply need some why of summarizing it quickly.
 clay <- data.frame(Low = rep("?", 3), RV = rep("?", 3), High = rep("?", 3), textureRV = rep("?", 3), texture2 = rep("?", 3), texture3 = rep("?", 3))
 row.names(clay) <- c("A", "B" ,"C")
-kable(clay[1:3], align = "c")
-kable(clay[4:6], align = "c")
+#kable(clay[1:3], align = "c")
+#kable(clay[4:6], align = "c")
 ```
 ### Site (Covariate) data
 - slope
@@ -206,7 +208,7 @@ data(loafercreek, package = 'soilDB')
 pedons <- loafercreek
 d <- sort(table(pedons$hzname), decreasing=TRUE)
 d <- rbind(d)
-kable(as.data.frame.matrix(d))
+#kable(as.data.frame.matrix(d))
 ```
 - graphically examine
 
@@ -252,7 +254,7 @@ Evaluate typical horizonation
 ```{r assign-ghl-print-table, results='asis', echo=FALSE}
 pedons$genhz <- generalize.hz(pedons$hzname, n, p) 
 # cross-tabulate original horizon designations and GHL
-kable(addmargins(table(pedons$genhz, pedons$hzname)))
+#kable(addmargins(table(pedons$genhz, pedons$hzname)))
 
 # cross-tabulation of original names (columns) vs. GHL (rows)
 # be sure to check the `not-used` row

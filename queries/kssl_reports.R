@@ -118,6 +118,12 @@ legends_report <- function(as) {
   # Rename, subset and find spatial changes
   names(leg) <- unlist(lapply(names(leg), function(x) strsplit(x, "\n")[[1]][3]))
   names(leg) <- sapply(names(leg), function(x) paste(strsplit(x, " ")[[1]], collapse = "_"))
+  names(leg) <- tolower(names(leg))
+  
+  num <- c("total_acres", "area_acres")
+  leg[num] <- sapply(leg[num], as.numeric)
+  
+  write.csv(leg, file = paste0("report_legends_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
   
   return(leg)
 }
