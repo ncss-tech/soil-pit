@@ -15,9 +15,9 @@ library(RCurl)
 library(XML)
 
 
-SS_Office <- "11-ATL"
+SS_Office <- "11-WAV"
 fy <- 2015
-mupolygon <- read.csv("M:/geodata/project_data/11ATL/mupolygon_edits_final.csv", as.is=T)
+mupolygon <- read.dbf("M:/geodata/project_data/11WAV/mupolygon_edits.dbf", as.is = TRUE)
 
 
 data(state)
@@ -66,8 +66,6 @@ kable(corr11_np, caption = "Number of completed spatial changes")
 
 corr11 <- subset(corr, Office == SS_Office)
 nasis_qa <- ddply(corr11, .(Office, pname, AREASYMBOL, musym), summarize, n_old_musym = length(unique(old_musym)), old_musym = paste0(unique(old_musym), collapse=", ")) # project by natmusym and musym
-write.csv(nasis_qa, paste0("C:/workspace/report_nasis_qa_", SS_Office, "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
-
 nasis_qa2 <- ddply(nasis_qa, .(Office, pname, AREASYMBOL, musym, n_old_musym), summarize, old_musym = strsplit(old_musym, ", ")[[1]])
 
 
@@ -78,29 +76,30 @@ id <- (mupolygon$musym != mupolygon$old_musym & mupolygon$old_musym != "") | mup
 edit <- mupolygon[id, ]
 
 geo_qa <- ddply(edit, .(AREASYMBOL, musym), summarise, n_polygons = length(old_musym), acres = round(sum(Shape_Area*0.000247), 0), n_old_musym = length(unique(old_musym)), old_musym_geo = paste0(unique(old_musym), collapse=", "))
-write.csv(geo_qa, paste0("C:/workspace/report_geo_qa_", SS_Office, "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
-
 geo_qa2 <- ddply(geo_qa, .(AREASYMBOL, musym, n_polygons, acres, n_old_musym), summarize, old_musym = strsplit(old_musym_geo, ", ")[[1]])
+
 ```
 
-```{r, qas, echo=FALSE}
-# qas
+```{r, QA checks, echo=FALSE}
+# QA checks
 key <- c("AREASYMBOL", "musym", "old_musym")
 qa <- merge(nasis_qa2, geo_qa2, by = key, all = TRUE) # match geo_qa2 to nasis_qa2
 # qa <- join(nasis_qa2, geo_qa2, by = key, type = "full") # match geo_qa2 to nasis_qa2
-qa0 <- qa[apply(is.na(qa), 1, any), ]
 
 leg_key <- with(leg, paste0(mapunit_symbol, "_", area_symbol))
-qa_key <- with(qa0, paste0(musym, "_", AREASYMBOL))
-qa0$in_legend <- qa_key %in% leg_key
+qa_key <- with(qa, paste0(musym, "_", AREASYMBOL))
 
-qa_m1 <- with(qa0, musym != old_musym)
-qa <- qa0[qa_m1, ]
-qa_m2 <- (!is.na(qa0$pname))
-qa1 <- qa0[qa_m2, ]
-qa2 <- qa0[!qa_m2, ]
-qa_m3 <- qa0$in_legend != TRUE
-qa3 <- qa0[qa_m3, ]
+qa$match <- with(qa, musym == old_musym)
+qa$in_legend <- qa_key %in% leg_key
+qa$in_nasis <- !is.na(qa$pname)
+qa$in_geodatabase <- is.na(qa$pname)
+
+qa0 <- qa[apply(is.na(qa), 1, any), ]
+qa0 <- qa0[qa0$match == FALSE, ] # remove where musym = old musym
+
+qa1 <- qa0[qa0$in_nasis == TRUE, ]
+qa2 <- qa0[qa0$in_geodatabase == TRUE, ]
+qa3 <- qa0[qa0$in_legend == FALSE, ]
 
 kable(qa1, caption = "NASIS changes missing from the geodatabase")
 print("Missing values (NA) need to be either added/removed from NASIS or the RTSD geodatabase, Otherwise they maybe splits that need to be relinked to a new additional mapunit.")
@@ -110,7 +109,7 @@ print("Missing values (NA) need to be either added/removed from NASIS or the RTS
 
 kable(qa3, caption = "Geodatabase musym missing from the legend")
 
-write.csv(qa, paste0("C:/workspace/report_qa_", SS_Office, "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
+write.csv(qa, paste0("C:/workspace/report_spatial_qa_", SS_Office, "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
 
 # id <- match(nasis_qa2$key, geo_qa2$key, incomparables=TRUE)
 # nasis_mis <- unique(nasis_qa2$key[is.na(id)]) # key present in NASIS, but missing from the geodatabase
@@ -121,8 +120,10 @@ write.csv(qa, paste0("C:/workspace/report_qa_", SS_Office, "_", format(Sys.time(
 # length(geo_mis); print("number of musym missing from NASIS")
 
 ```
-```{r, adjacent regions}
+```{r, adjacent regions, echo=FALSE}
 outside <- merge(region, qa, by = "AREASYMBOL")
-subset(outside, Region != 11)
+outside$key <- with(outside, paste0(AREASYMBOL, "_", musym))
+outside <- subset(outside, Region != 11 & match == FALSE, select = c("Region", "AREASYMBOL", "musym", "old_musym", "n_polygons", "acres", "pname", "key", "in_legend"))
+kable(outside, caption = "MUSYM that need updating outside of Region 11")
 
 ```
