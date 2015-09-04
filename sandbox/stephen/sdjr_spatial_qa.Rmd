@@ -15,27 +15,28 @@ library(RCurl)
 library(XML)
 
 
-SS_Office <- "11-WAV"
+SS_Office <- "11-GAL"
 fy <- 2015
-mupolygon <- read.dbf("M:/geodata/project_data/11WAV/mupolygon_edits.dbf", as.is = TRUE)
+R_Office <- 10
+mupolygon <- read.dbf("M:/geodata/project_data/11WAV/mupolygon_edits_from_Region10.dbf", as.is = TRUE)
 
 
 data(state)
 st <- paste0(tolower(state.abb), "%25")
 st <- paste0(toupper(c("ia", "il", "in", "ks", "ky", "mi", "mn", "mo", "ne", "oh", "ok", "sd", "wi")), "%25")
 
-# goals <- goals_report(fy, "11-%25")
+# goals <- goals_report(fy, paste0(R_Office, "-%25"))
 goals <- read.csv("C:/workspace/report_goals_2015_09_02.csv")
 # du <- du_report(fy)
-du <- read.csv("C:/workspace/report_digitizing_unit_2015_09_02.csv")
+du <- read.csv("C:/workspace/report_digitizing_unit_2015_09_03.csv")
 
 # corr <- correlation_report(st, 2015)
-corr <- read.csv("C:/workspace/report_correlation_2015_09_02_spatial.csv")
+corr <- read.csv("C:/workspace/report_correlation_2015_09_03_spatial.csv")
 
 region <- read.csv("M:/geodata/soils/SSA_Regional_Ownership_MASTER_MLRA_OFFICE.txt")
 
 # leg <- legends_report(st)
-leg <- read.csv("C:/workspace/report_legends_2015_09_02.csv")
+leg <- read.csv("C:/workspace/report_legends_2015_09_03.csv")
 
 ```
 
@@ -44,28 +45,28 @@ leg <- read.csv("C:/workspace/report_legends_2015_09_02.csv")
 
 # WEB-MLRA_Goals_Progress
 
-goals <- subset(goals, SS_Office != "" & grepl("11-", SS_Office))
+goals <- subset(goals, SS_Office != "" & grepl(paste0(R_Office, "-"), SS_Office))
 goals_np <- ddply(goals, .(SS_Office), summarise, n_projects = length(unique(Project_Name)), goaled = sum(Goaled), claimed = sum(Reported))
 kable(goals_np, caption = "Number or SDJR projects per SS Office")
 
 
 # Digitizing unit report (proposed spatial changes in NASIS)
 
-du11 <- subset(du, State_Responsible == "Indiana")
-du11_np <- ddply(du11, .(Office), summarize, n_projects = length(unique(Project_Name)))
-kable(du11_np, caption = "Number of proposed spatial changes")
+du_r <- subset(du, State_Responsible == "Indiana")
+du_r_np <- ddply(du_r, .(Office), summarize, n_projects = length(unique(Project_Name)))
+kable(du_r_np, caption = "Number of proposed spatial changes")
 
 
 # Correlation report (completed spatial changes in NASIS)
 
 corr <- rename(corr, c("Area_Symbol" = "AREASYMBOL", "Project_Name" = "pname", "New_Symbol" = "musym", "Old_Musym2" = "old_musym"))
 
-corr11 <- subset(corr, region == 11)
-corr11_np <- ddply(corr11, .(Office), summarize, n_projects = length(unique(pname)))
-kable(corr11_np, caption = "Number of completed spatial changes")
+corr_r <- subset(corr, region == R_Office)
+corr_r_np <- ddply(corr_r, .(Office), summarize, n_projects = length(unique(pname)))
+kable(corr_r_np, caption = "Number of completed spatial changes")
 
-corr11 <- subset(corr, Office == SS_Office)
-nasis_qa <- ddply(corr11, .(Office, pname, AREASYMBOL, musym), summarize, n_old_musym = length(unique(old_musym)), old_musym = paste0(unique(old_musym), collapse=", ")) # project by natmusym and musym
+# corr_r <- subset(corr, Office == SS_Office)
+nasis_qa <- ddply(corr_r, .(Office, pname, AREASYMBOL, musym), summarize, n_old_musym = length(unique(old_musym)), old_musym = paste0(unique(old_musym), collapse=", ")) # project by natmusym and musym
 nasis_qa2 <- ddply(nasis_qa, .(Office, pname, AREASYMBOL, musym, n_old_musym), summarize, old_musym = strsplit(old_musym, ", ")[[1]])
 
 
@@ -77,6 +78,7 @@ edit <- mupolygon[id, ]
 
 geo_qa <- ddply(edit, .(AREASYMBOL, musym), summarise, n_polygons = length(old_musym), acres = round(sum(Shape_Area*0.000247), 0), n_old_musym = length(unique(old_musym)), old_musym_geo = paste0(unique(old_musym), collapse=", "))
 geo_qa2 <- ddply(geo_qa, .(AREASYMBOL, musym, n_polygons, acres, n_old_musym), summarize, old_musym = strsplit(old_musym_geo, ", ")[[1]])
+write.csv(geo_qa, paste0("C:/workspace/report_spatial_geo_qa_", SS_Office, "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
 
 ```
 
@@ -91,23 +93,23 @@ qa_key <- with(qa, paste0(musym, "_", AREASYMBOL))
 
 qa$match <- with(qa, musym == old_musym)
 qa$in_legend <- qa_key %in% leg_key
-qa$in_nasis <- !is.na(qa$pname)
+qa$in_project <- !is.na(qa$pname)
 qa$in_geodatabase <- is.na(qa$pname)
 
 qa0 <- qa[apply(is.na(qa), 1, any), ]
 qa0 <- qa0[qa0$match == FALSE, ] # remove where musym = old musym
 
-qa1 <- qa0[qa0$in_nasis == TRUE, ]
+qa1 <- qa0[qa0$in_project == TRUE, ]
 qa2 <- qa0[qa0$in_geodatabase == TRUE, ]
 qa3 <- qa0[qa0$in_legend == FALSE, ]
 
-kable(qa1, caption = "NASIS changes missing from the geodatabase")
+# kable(qa1, caption = "NASIS changes missing from the geodatabase")
 print("Missing values (NA) need to be either added/removed from NASIS or the RTSD geodatabase, Otherwise they maybe splits that need to be relinked to a new additional mapunit.")
 
 kable(qa2, caption = "Geodatabase changes missing from NASIS")
 print("Missing values (NA) need to be either added/removed from NASIS or the RTSD geodatabase, Otherwise they maybe splits that need to be relinked to a new additional mapunit.")
 
-kable(qa3, caption = "Geodatabase musym missing from the legend")
+# kable(qa3, caption = "Geodatabase musym missing from the legend")
 
 write.csv(qa, paste0("C:/workspace/report_spatial_qa_", SS_Office, "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
 
@@ -123,7 +125,7 @@ write.csv(qa, paste0("C:/workspace/report_spatial_qa_", SS_Office, "_", format(S
 ```{r, adjacent regions, echo=FALSE}
 outside <- merge(region, qa, by = "AREASYMBOL")
 outside$key <- with(outside, paste0(AREASYMBOL, "_", musym))
-outside <- subset(outside, Region != 11 & match == FALSE, select = c("Region", "AREASYMBOL", "musym", "old_musym", "n_polygons", "acres", "pname", "key", "in_legend"))
-kable(outside, caption = "MUSYM that need updating outside of Region 11")
+outside <- subset(outside, Region != R_Office & match == FALSE, select = c("Region", "AREASYMBOL", "pname", "musym", "old_musym", "n_polygons", "acres", "key", "in_legend"))
+kable(outside, caption = "MUSYM that need updating outside of Region")
 
 ```

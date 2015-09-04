@@ -12,7 +12,13 @@ library(stringr)
 library(RCurl)
 library(XML)
 
+source("C:/workspace/soil-pit/trunk/queries/kssl_reports.R")
+
+
 ```{r du report, echo=FALSE}
+
+goals <- goals_report(fy, "11-%25")
+
 # WEB-PROJECT-Counties+with+approved+projects+DU
 fy <- 2015
 
@@ -41,6 +47,11 @@ corr11 <- subset(corr, grepl("11-", Office))
 corr11 <- rename(corr11, c("Project_Name" = "pname", "New_Symbol" = "musym_corr", "Old_Musym2" = "old_musym_corr"))
 
 ddply(corr11, .(Office), summarize, nProjects = length(unique(pname)))
+
+
+
+st <- paste0(toupper(c("ia", "il", "in", "ks", "ky", "mi", "mn", "mo", "ne", "oh", "ok", "sd", "wi")), "%25")
+leg <- legends_report(st)
 
 ```
 
