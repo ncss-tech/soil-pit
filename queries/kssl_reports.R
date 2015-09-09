@@ -25,7 +25,10 @@ du_report <- function(fy) {
 }
 
 # WEB-Correlation_state_fy_ids
-
+# new similar reports by Jason, 
+# https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-ARCGIS_PROJECT-CHANGES_FY&asymbol=WI001&fy=2015
+# https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-ARCGIS_PROJECT-CHANGES_FY
+# https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-PROJECT-LMU_TEXT_METADATA_BY_AREASYMBOL
 correlation_report <- function(asymbol, fy){
   url <- paste0("https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-Correlation_state_fy&asymbol=", asymbol, "%25&fy=", fy) # Works ... Thanks Kevin
   

@@ -15,10 +15,10 @@ library(RCurl)
 library(XML)
 
 
-SS_Office <- "11-GAL"
+SS_Office <- "10-ALB"
 fy <- 2015
 R_Office <- 10
-mupolygon <- read.dbf("M:/geodata/project_data/11WAV/mupolygon_edits_from_Region10.dbf", as.is = TRUE)
+mupolygon <- read.dbf("L:/geodata/project_data/11WAV/mupolygon_edits_from_Region10.dbf", as.is = TRUE)
 
 
 data(state)
@@ -61,7 +61,7 @@ kable(du_r_np, caption = "Number of proposed spatial changes")
 
 corr <- rename(corr, c("Area_Symbol" = "AREASYMBOL", "Project_Name" = "pname", "New_Symbol" = "musym", "Old_Musym2" = "old_musym"))
 
-corr_r <- subset(corr, region == R_Office)
+corr_r <- subset(corr, grepl(SS_Office, Office))
 corr_r_np <- ddply(corr_r, .(Office), summarize, n_projects = length(unique(pname)))
 kable(corr_r_np, caption = "Number of completed spatial changes")
 
