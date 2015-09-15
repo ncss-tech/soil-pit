@@ -5,7 +5,7 @@ This report summarizes the geographic setting of a list of MUSYM within a shapef
 
 ```{r load-data, echo=FALSE, results='hide', message=FALSE}
 
-mukey <- c('161480') # List of mukey
+mukey <- c('161480', '161880') # List of mukey
 
 dir <- "M:/geodata/project_data/"
 geodatabase <- "RTSD_Region_11_IND_FY15.gdb"
@@ -22,6 +22,8 @@ shp <- paste0(mukey[c(1, length(mukey))], collapse=".")
 dsn <- paste0(pd, "cache/", shp, ".shp")
 cache_shp <- paste0(pd, "cache/", shp, ".shp")
 cache <- paste0(dsn, "_", samplePercent, ".Rdata")
+
+gdal_setInstallation(search_path=gdalpath, rescan=T)
 ```
 
 
@@ -59,7 +61,7 @@ if (!file.exists(cache)){
   mupolygon <- readOGR(dsn = dsn, layer = shp, encoding = "ESRI Shapefile")
   mupolygon@data$Acres <- mupolygon@data[, grepl("_area", tolower(names(mupolygon)))] * 0.000247105
   mupolygon@data$Circularity <- mupolygon@data[, grepl("_leng", tolower(names(mupolygon)))] / (2 * sqrt(mupolygon@data[, grepl("_area", tolower(names(mupolygon)))] / pi) * pi)
-  n <- round(sum(mupolygon@data[, grepl("_area", tolower(names(mupolygon)))]) / 900 * samplePercent / 100, 0)
+  n <- ceiling(sum(mupolygon@data[, grepl("_area", tolower(names(mupolygon)))]) / 900 * samplePercent / 100)
   
   # Sample soil map unit
   mupolygon.s <- spsample(mupolygon, n = n, "stratified")

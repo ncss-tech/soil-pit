@@ -43,7 +43,7 @@ if (!file.exists(cache)){
   mupolygon <- readOGR(dsn = dsn, layer = shp, encoding = "ESRI Shapefile")
   mupolygon@data$Acres <- mupolygon@data[, grepl("_area", tolower(names(mupolygon)))] * 0.000247105
   mupolygon@data$Circularity <- mupolygon@data[, grepl("_leng", tolower(names(mupolygon)))] / (2 * sqrt(mupolygon@data[, grepl("_area", tolower(names(mupolygon)))] / pi) * pi)
-  n <- round(sum(mupolygon@data[, grepl("_area", tolower(names(mupolygon)))]) / 900 * samplePercent / 100, 0)
+  n <- ceiling(sum(mupolygon@data[, grepl("_area", tolower(names(mupolygon)))]) / 900 * samplePercent / 100)
   
   # Sample soil map unit
   mupolygon.s <- spsample(mupolygon, n = n, "stratified")
