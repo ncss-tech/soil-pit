@@ -41,9 +41,9 @@ source("report_functions.R")
 if (!file.exists(cache)){
   sapolygon <- readOGR(dsn = paste0(pd, geodatabase), layer = "SAPOLYGON", encoding = "OpenFileGDB")
   mupolygon <- readOGR(dsn = dsn, layer = shp, encoding = "ESRI Shapefile")
-  mupolygon@data$Acres <- mupolygon@data$SHAPE_Area * 0.000247105
-  mupolygon@data$Circularity <- mupolygon@data$SHAPE_Leng / (2 * sqrt(mupolygon@data$SHAPE_Area / pi) * pi)
-  n <- round(sum(data.frame(mupolygon)$SHAPE_Area) / 900 * samplePercent / 100, 0)
+  mupolygon@data$Acres <- mupolygon@data[, grepl("_area", tolower(names(mupolygon)))] * 0.000247105
+  mupolygon@data$Circularity <- mupolygon@data[, grepl("_leng", tolower(names(mupolygon)))] / (2 * sqrt(mupolygon@data[, grepl("_area", tolower(names(mupolygon)))] / pi) * pi)
+  n <- round(sum(mupolygon@data[, grepl("_area", tolower(names(mupolygon)))]) / 900 * samplePercent / 100, 0)
   
   # Sample soil map unit
   mupolygon.s <- spsample(mupolygon, n = n, "stratified")
@@ -52,10 +52,9 @@ if (!file.exists(cache)){
   data <- cbind(mapunit.df[c("AREASYMBOL", "MUSYM")], geodata)
   
   mlra <- readOGR(dsn = "M:/geodata/project_data/11REGION/mlra_a_r11.shp", layer = "mlra_a_r11", encoding = "ESRI Shapefile")
-  mlra_i <- intersect(mupolygon, mlra)
-  mlra_df <- data.frame(mlra_i, stringsAsFactors = F)
-  mlra_df$Acres <- gArea(mlra_i, byid = TRUE) * 0.000247105
-  mlra_acres <- ddply(mlra_df, .(mlra = MLRARSYM), summarise, acres = sum(Acres))
+  mlra_i <- over(mupolygon.s, mlra)
+  mlra_acres <- ddply(mlra_i, .(MLRARSYM), summarize, mlra_percent = sum(length(OBJECTID)))
+  mlra_acres <- transform(mlra_acres, mlra_percent = round(mlra_percent / sum(mlra_percent) * 100, 0))
 
   data.l <- list(data = data, mupolygon = mupolygon, sapolygon = sapolygon, mlra_acres = mlra_acres)
   save(data.l, file = cache)
