@@ -1,0 +1,92 @@
+R and GIS
+========================================================
+author: Stephen Roecker
+date: 2015-09-22
+
+
+
+What is R?
+================
+- an analysis platform: calculator, statistics, GIS, etc...
+- programming language: object oriented
+- reproducible research: text + code + graphics
+![alt text](static-figures/rstudio.png)
+
+
+
+What is R?
+================
+- an integrator: analysis + GIS + database connectivity
+- ODBC and GDAL link R to nearly all possible formats/interfaces
+![alt text](static-figures/triangle.png)
+
+
+
+R packages for spatial data and analysis
+========================================
+
+- R spatial packages
+ - rgdal - importing/exporting
+ - proj4 - projections
+ - sp - vector and raster data (mostly)
+ - raster - raster data (on disk)
+- R GIS interface packages
+ - GDAL via rgdal or gdalUtils
+ - GRASS via spgrass6
+ - SAGA via  RSAGA
+ - ArcGIS via RPyGeo
+- ArcGIS interface to R
+ - R-ArcGIS on Github https://r-arcgis.github.io/
+
+
+
+R example
+=======================
+```{r}
+y <- 2 + 2
+y # or print(y)
+y <- c(1:10)
+mean(y)
+```
+R example
+=========================
+```{r}
+
+library(sp)
+data(meuse) # dataset from Burrough and McDonnell (1998)
+meuse[1:5, 1:5]
+```
+R example
+==========================
+```{r}
+meuse_sp <- meuse
+coordinates(meuse_sp) <- ~ x + y
+proj4string(meuse_sp) <- CRS("+init=epsg:28992")
+library(lattice)
+spplot(meuse_sp, zcol = "cadmium")
+```
+R example
+==========================
+```{r}
+var <- c("elev", "dist", "om", "cadmium")
+splom(meuse[var])
+```
+
+You Lost Me!
+========================
+"Why would I want to code my GIS work, that's why I never learned GRASS?"
+
+'Certain operations are more geared toward a GUI, others a commandline!'
+
+R GIS resources
+=====================================
+
+- Mailing list
+ - R-SIG-Geo
+ - stackoverflow
+- Books
+ - A Practical Guide to Geostatistical Mapping
+ - Applied Spatial Data Analysis with R
+ - Learning R for Geospatial Analysis
+ - An Introduction to R for Spatial Analysis & Mapping
+
