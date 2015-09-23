@@ -17,12 +17,15 @@ source("C:/workspace/soil-pit/trunk/queries/kssl_reports.R")
 
 ```{r du report, echo=FALSE}
 
-goals <- goals_report(fy, "11-%25")
+goals <- goals_report(2012, "%25")
+goals <- goals_report(2013, "%25")
+goals <- goals_report(2014, "%25")
+goals <- goals_report(2015, "%25")
 
 # WEB-PROJECT-Counties+with+approved+projects+DU
 fy <- 2015
 
-du <- du_report(fy)
+du2015 <- du_report(2015)
 # du <- read.csv("report_digiting_unit_2015_08_11.csv")
 
 du11 <- subset(du, State_Responsible == "Indiana")
@@ -36,12 +39,14 @@ ddply(du11, .(Office), summarize, nProjects = length(unique(Project_Name)))
 
 data(state)
 st <- tolower(state.abb)
-st_p <- paste0(st, "%25")
+asymbol <- paste0(st, "%25")
 
-report <- correlation_report(st_p, 2015)
+report2012 <- correlation_report(asymbol, 2012)
+report2014 <- correlation_report(asymbol, 2014)
+report2015 <- correlation_report(asymbol, 2015)
+report2013 <- correlation_report(asymbol, 2013)
 # corr <- read.csv("report_correlation_2015_09_02_spatial.csv")
 # corr$region <- unlist(lapply(corr$Office, function(x) strsplit(x, "-")[[1]][1]))
-attach(report)
 
 corr11 <- subset(corr, grepl("11-", Office))
 corr11 <- rename(corr11, c("Project_Name" = "pname", "New_Symbol" = "musym_corr", "Old_Musym2" = "old_musym_corr"))

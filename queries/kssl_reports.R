@@ -29,8 +29,10 @@ du_report <- function(fy) {
 # https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-ARCGIS_PROJECT-CHANGES_FY&asymbol=WI001&fy=2015
 # https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-ARCGIS_PROJECT-CHANGES_FY
 # https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-PROJECT-LMU_TEXT_METADATA_BY_AREASYMBOL
+
+
 correlation_report <- function(asymbol, fy){
-  url <- paste0("https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-Correlation_state_fy&asymbol=", asymbol, "%25&fy=", fy) # Works ... Thanks Kevin
+  url <- paste0("https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-Correlation_state_fy&asymbol=", asymbol, "&fy=", fy) # Works ... Thanks Kevin and Jason
   
   url_download <- function(x) {
     l <- list()
@@ -45,10 +47,10 @@ correlation_report <- function(asymbol, fy){
   corr <- url_download(url)
   
   # Rename, subset and find spatial changes
-  names(corr) <- unlist(lapply(names(corr), function(x) strsplit(x, "\n")[[1]][2]))
-  names(corr) <- sapply(names(corr), function(x) paste(strsplit(x, " ")[[1]], collapse = "_"))
+  names(corr) <- unlist(lapply(names(corr), function(x) strsplit(x, "\n")[[1]][3]))
   
-  corr$Region <- sapply(corr$Office, function(x) strsplit(x, "-")[[1]][1])
+  corr$region <- sapply(corr$sso, function(x) strsplit(x, "-")[[1]][1])
+  corr$fy <- fy
   
   z_error <- function(old, new){
     n <- nchar(old)
@@ -67,18 +69,12 @@ correlation_report <- function(asymbol, fy){
     return(new2)
   }
   
-  corr$Old_Musym2 <- mapply(z_error, old = corr$Old_Musym, new = corr$New_Symbol)
-  corr$spatial <- corr$New_lmuiid != corr$Old_lmuiid | corr$New_Symbol != corr$Old_Musym2
-  corr$spatial_mukey <- corr$New_lmuiid != corr$Old_lmuiid
-  corr$spatial_musym <- corr$New_Symbol != corr$Old_Musym2
-  corr$region <- unlist(lapply(corr$Office, function(x) strsplit(x, "-")[[1]][1]))
+  corr$old_musym2 <- mapply(z_error, old = corr$old_musym, new = corr$new_musym)
+  corr$spatial <- corr$new_musym != corr$old_musym2
+
+  write.csv(corr, file = paste0("report_correlation_fy", fy, "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
   
-  corr_spatial <- subset(corr, spatial == TRUE)
-  
-  write.csv(corr, file = paste0("report_correlation_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
-  write.csv(corr_spatial, file = paste0("report_correlation_", format(Sys.time(), "%Y_%m_%d"), "_spatial.csv"))
-  
-  return(list(corr = corr, corr_spatial = corr_spatial))
+  return(corr = corr)
 }
 
 # WEB-MLRA_Goals_Progress
@@ -86,7 +82,7 @@ correlation_report <- function(asymbol, fy){
 goals_report <- function(fy, off){
   url <- paste0("https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-MLRA_Goals_Progress&fy=", fy, "&off=", off)
   goals_w <- getURLContent(url, ssl.verifypeer = F)
-  doc = htmlParse(goals_w)
+  doc <- htmlParse(goals_w)
   tableNodes <- getNodeSet(doc, "//tr")
   l <- list()
   for (i in 1:length(tableNodes)){
@@ -97,8 +93,9 @@ goals_report <- function(fy, off){
   names(goals) <- c(goals[1, ])
   names(goals) <- sapply(names(goals), function(x) paste(strsplit(x, " ")[[1]], collapse = "_"))
   goals <- goals[-1, ]
+  goals$fy <- fy
   
-  write.csv(goals, file = paste0("report_goals_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
+  write.csv(goals, file = paste0("report_goals_fy", fy, "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
   
   return(goals)
 }
