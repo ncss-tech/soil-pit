@@ -38,7 +38,7 @@ correlation_report <- function(asymbol, fy){
     l <- list()
     for (i in seq(x)){
       cor_w <- getURLContent(x[i], ssl.verifypeer = F)
-      if (nchar(cor_w) > 900) {
+      if (length(readHTMLTable(cor_w, stringsAsFactors = F)) > 0) {
         l[[i]] <- readHTMLTable(cor_w, stringsAsFactors = F)[[1]]}
     }
     ldply(l)
