@@ -36,7 +36,7 @@ corr <- read.csv("C:/workspace/report_correlation_2015_09_03_spatial.csv")
 region <- read.csv("M:/geodata/soils/SSA_Regional_Ownership_MASTER_MLRA_OFFICE.txt")
 
 # leg <- legends_report(st)
-leg <- read.csv("C:/workspace/report_legends_2015_09_03.csv")
+leg <- read.csv("C:/workspace/fy15_qa_spatial/report_legends_2015_09_03.csv")
 
 ```
 

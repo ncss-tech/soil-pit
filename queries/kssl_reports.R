@@ -107,7 +107,7 @@ legends_report <- function(as) {
     l <- list()
     for (i in seq(x)){
       leg_w <- getURLContent(x[i], ssl.verifypeer = F)
-      if (nchar(leg_w) > 900) {
+      if (length(readHTMLTable(cor_w, stringsAsFactors = F)) > 0) {
         l[[i]] <- readHTMLTable(leg_w, stringsAsFactors = F)[[1]]}
     }
     ldply(l)

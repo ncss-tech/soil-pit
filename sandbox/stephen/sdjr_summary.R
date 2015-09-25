@@ -5,7 +5,7 @@ library(plyr)
 library(lattice)
 
 fy <- c(2012, 2013, 2014, 2015)
-date <- "2015_09_18"
+date <- "2015_09_24"
 date2 <- "2015_09_23"
 
 corr_reports <- "report_correlation_fy"
@@ -53,14 +53,53 @@ sum(test$goal)
 
 
 
-# Compare Legend Acres to Project Acres
-corrs2 <- ddply(corrs, .(region, fy, projectname, project_type, sso, areasymbol), summarize, n = length(unique(new_acres)), acres = paste0(unique(new_acres), collapse = ", "))
-corrs3 <- ddply(corrs2, .(region, fy, projectname, project_type, sso, areasymbol, n), summarize, acres = sum(as.numeric(strsplit(acres, ", ")[[1]])))
+# Summarize acres by areasymbol
+corrs2 <- ddply(corrs, .(fy, region, projectname, project_type, sso, areasymbol), summarize, n = length(unique(new_acres)), acres = paste0(unique(new_acres), collapse = ", "))
+corrs3 <- ddply(corrs2, .(fy, region, sso, projectname, project_type, areasymbol, n), summarize, acres = sum(as.numeric(strsplit(acres, ", ")[[1]])))
 
 
 corrs3$acres <- as.numeric(corrs3$acres)
 
-corrs_sub <- subset(corrs3, region == 11 & fy == 2015 & project_type == "SDJR")
+corrs_sub <- subset(corrs3, region == 11 & project_type == "SDJR")
 corrs_sub$st <- substr(corrs_sub$areasymbol, 1, 2)
 
-test <- ddply(corrs_sub, .(areasymbol), summarize, acres = sum(acres))
+test <- ddply(corrs_sub, .(fy, st, areasymbol), summarize, acres = sum(acres))
+
+test2 <- reshape(test, idvar = c("areasymbol"), v.names = "acres", timevar = "fy", direction = "wide")
+#test2$acres.2012[is.na(test2$acres.2012)] <- 0
+#test2$acres.2013[is.na(test2$acres.2013)] <- 0
+#test2$acres.2014[is.na(test2$acres.2014)] <- 0
+test2$acres.2015[is.na(test2$acres.2015)] <- 0
+fy <- c("FY2012", "FY2013", "FY2014", "FY2015")
+names(test2)[3:6] <- fy
+
+ssa <- readOGR(dsn = "M:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs", encoding = "ESRI Shapefile")
+ssa <- spTransform(ssa, CRS("+init=epsg:5070"))
+ssa$state <- substr(ssa$areasymbol, 1, 2)
+
+test3 <- join(data.frame(ssa), test2, by = "areasymbol")
+
+ssa@data <- test3
+temp <- subset(ssa, state == "WI")
+temp2 <- temp[fy]
+spplot(temp2)
+
+# Summarize acres by musym
+corrs2 <- ddply(corrs, .(fy), summarize, key = unique(new_mukey))
+
+corrs2 <- subset(corrs2, fy == 2015 & region 11)
+
+r <- raster("M:/geodata/soils/gssurgo_fy15_250m.tif")
+r <- ratify(r, count=TRUE)
+rat <- levels(r)[[1]]
+names(corrs2)[2] <- "ID"
+rat_new <- join(rat, corrs2, type = "left", by = "ID")
+levels(r) <- rat_new
+
+r_new <- deratify(r, att='fy', filename='gSSURGO_test.tif', overwrite=TRUE, datatype='INT4U', format='GTiff', progress = "text")
+
+# check: OK
+plot(r_new)
+
+
+
