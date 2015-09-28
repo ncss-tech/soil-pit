@@ -1,8 +1,10 @@
 # Compare the goals to the corrselation report
 
 options(stringsAsFactors = FALSE)
+
 library(plyr)
 library(lattice)
+library(raster)
 
 fy <- c(2012, 2013, 2014, 2015)
 date <- "2015_09_24"
@@ -63,7 +65,12 @@ corrs3$acres <- as.numeric(corrs3$acres)
 corrs_sub <- subset(corrs3, region == 11 & project_type == "SDJR")
 corrs_sub$st <- substr(corrs_sub$areasymbol, 1, 2)
 
-test <- ddply(corrs_sub, .(fy, st, areasymbol), summarize, acres = sum(acres))
+goals_sub <- subset(goals, Region == 11 & project_type == "SDJR")
+test3 <- ddply(goals_sub, .(fy), summarize, acres = sum(Reported))
+
+
+test <- ddply(corrs_sub, .(fy), summarize, acres = sum(acres))
+
 
 test2 <- reshape(test, idvar = c("areasymbol"), v.names = "acres", timevar = "fy", direction = "wide")
 #test2$acres.2012[is.na(test2$acres.2012)] <- 0
@@ -85,21 +92,39 @@ temp2 <- temp[fy]
 spplot(temp2)
 
 # Summarize acres by musym
-corrs2 <- ddply(corrs, .(fy), summarize, key = unique(new_mukey))
+corrs2 <- ddply(corrs, .(fy, region), summarize, key = unique(new_mukey))
 
-corrs2 <- subset(corrs2, fy == 2015 & region 11)
+c14 <- subset(corrs2, fy == 2014 & region == 11)
+c15 <- subset(corrs2, fy == 2015 & region == 11)
 
-r <- raster("M:/geodata/soils/gssurgo_fy15_250m.tif")
-r <- ratify(r, count=TRUE)
-rat <- levels(r)[[1]]
-names(corrs2)[2] <- "ID"
-rat_new <- join(rat, corrs2, type = "left", by = "ID")
-levels(r) <- rat_new
+r14 <- raster("M:/geodata/soils/gssurgo_fy14_250m.tif")
+r14_dbf <- read.dbf("M:/geodata/soils/gssurgo_fy14_30m.tif.vat.dbf")
+r14 <- ratify(r14, count=TRUE)
+rat <- levels(r14)[[1]]
+names(r14_dbf)[1] <- "ID"
+names(c14)[3] <- "MUKEY"
+rat_new <- join(rat, r14_dbf, type = "left", by = "ID")
+rat_new <- join(rat_new, c14, type = "left", by = "MUKEY")
+r14_2 <- r14
+levels(r14_2) <- rat_new
 
-r_new <- deratify(r, att='fy', filename='gSSURGO_test.tif', overwrite=TRUE, datatype='INT4U', format='GTiff', progress = "text")
+r14_new <- deratify(r14_2, att='fy', filename='gSSURGO_fy14_progress.tif', overwrite=TRUE, datatype='INT4U', format='GTiff', progress = "text")
 
 # check: OK
-plot(r_new)
+plot(r14_new)
+
+
+r15 <- raster("M:/geodata/soils/gssurgo_fy15_250m.tif")
+r15 <- ratify(r15, count=TRUE)
+rat <- levels(r15)[[1]]
+names(c15)[3] <- "MUKEY"
+rat_new <- join(rat, c15, type = "left", by = "MUKEY")
+levels(r15) <- rat_new
+
+r15_new <- deratify(r15, att='fy', filename='gSSURGO_fy15_progress.tif', overwrite=TRUE, datatype='INT4U', format='GTiff', progress = "text")
+
+# check: OK
+plot(r15_new)
 
 
 
