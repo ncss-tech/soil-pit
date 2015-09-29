@@ -5,6 +5,7 @@ options(stringsAsFactors = FALSE)
 library(plyr)
 library(lattice)
 library(raster)
+library(rgdal)
 
 fy <- c(2012, 2013, 2014, 2015)
 date <- "2015_09_24"
@@ -108,23 +109,31 @@ rat_new <- join(rat_new, c14, type = "left", by = "MUKEY")
 r14_2 <- r14
 levels(r14_2) <- rat_new
 
-r14_new <- deratify(r14_2, att='fy', filename='gSSURGO_fy14_progress.tif', overwrite=TRUE, datatype='INT4U', format='GTiff', progress = "text")
+r14_new <- raster("C:/workspace/gSSURGO_fy14_progress.tif")
+# r14_new <- deratify(r14_2, att='fy', filename='gSSURGO_fy14_progress.tif', overwrite=TRUE, datatype='INT4U', format='GTiff', progress = "text")
 
 # check: OK
 plot(r14_new)
 
 
 r15 <- raster("M:/geodata/soils/gssurgo_fy15_250m.tif")
+r15_dbf <- read.dbf("M:/geodata/soils/gssurgo_fy15_30m.tif.vat.dbf")
 r15 <- ratify(r15, count=TRUE)
 rat <- levels(r15)[[1]]
+names(r15_dbf)[1] <- "ID"
 names(c15)[3] <- "MUKEY"
-rat_new <- join(rat, c15, type = "left", by = "MUKEY")
+rat_new <- join(rat, r15_dbf, type = "left", by = "ID")
+rat_new <- join(rat_new, c15, type = "left", by = "MUKEY")
 levels(r15) <- rat_new
 
-r15_new <- deratify(r15, att='fy', filename='gSSURGO_fy15_progress.tif', overwrite=TRUE, datatype='INT4U', format='GTiff', progress = "text")
+r15_new <- raster("C:/workspace/gSSURGO_fy15_progress.tif")
+# r15_new <- deratify(r15, att='fy', filename='gSSURGO_fy15_progress.tif', overwrite=TRUE, datatype='INT4U', format='GTiff', progress = "text")
 
 # check: OK
 plot(r15_new)
 
+wi <- subset(ssa, state == "wi")
+
+spplot(test, sp.layout = wi, maxpixels = 50000, xlim = bbox(wi)[1, ], ylim = bbox(wi)[2, ], at = seq(2013, 2015, 1), col.regions = rainbow(3))
 
 

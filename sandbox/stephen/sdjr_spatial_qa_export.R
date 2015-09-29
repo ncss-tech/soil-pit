@@ -5,7 +5,7 @@ library(foreign)
 # Set parameters
 
 region  <- 11
-ownership <- read.csv("M:/geodata/soils/SSA_Regional_OWnership_MASTER_MLRA_OFFICE.txt")
+ownership <- read.csv("M:/geodata/soils/SSA_Regional_Ownership_MASTER_MLRA_OFFICE.csv")
 
 
 
@@ -15,7 +15,7 @@ ownership <- read.csv("M:/geodata/soils/SSA_Regional_OWnership_MASTER_MLRA_OFFIC
 qa_mu <- read.table("M:/geodata/project_data/11WAV/QA_MapunitCheck_RTSD_Region_11_WAV_FY15_edited_gdb.txt", sep = "\t", header = TRUE)
 
 
-R11 <- subset(ownership, Region  == region)
+R11 <- subset(ownership, Region == region)
 qa_mu_R11 <- qa_mu[qa_mu$SurveyID %in% R11$AREASYMBOL, ]
 
 
@@ -51,4 +51,4 @@ corr2[corr2$sso == "11GAL, 11WAV", "dom"] <- "11WAV"
 corr2[corr2$AREASYMBOL == "IL015", "dom"] <- "11WAV"
 corr2[corr2$AREASYMBOL == "WI045", "dom"] <- "11JUE"
 
-write.csv(corr2, paste0("region11_spatial_changes_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
+write.csv(corr2, paste0("region11_SSURGO_export_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
