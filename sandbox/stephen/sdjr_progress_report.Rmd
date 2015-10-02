@@ -1,0 +1,64 @@
+---
+title: "Region 11 SDJR Progress for Wisconsin"
+output: word_document
+---
+
+For the past several years Soil Survey Offices in the East Central Glaciated Region (11) have focused their work on the Soil Data Join and Recorrelation (SDJR) National Initiative. The goal of this Initiative has been to increase the consistency of the Soil SURvey GeOgraphic database (SSURGO) across political boundaries. A summary of the affected areas and soils are presented below.
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
+setwd("C:/workspace")
+options(stringsAsFactors = FALSE)
+
+library(knitr)
+library(plyr)
+library(lattice)
+library(foreign)
+library(raster)
+library(rgdal)
+
+st <- "IN"
+
+load(file = "corrs_fy_summary.Rdata")
+load(file = "goals_fy_summary.Rdata")
+load(file = "ssa.Rdata")
+
+
+fy13_r_new <- raster("C:/workspace/gSSURGO_fy13_progress.tif")
+fy14_r_new <- raster("C:/workspace/gSSURGO_fy14_progress.tif")
+fy15_r_new <- raster("C:/workspace/gSSURGO_fy15_progress.tif")
+
+corrs$state <- substr(corrs$areasymbol, 1, 2)
+corrs_sub <- subset(corrs, region == 11 & state == st)
+
+corrs2<- ddply(corrs_sub, .(fy, state, projectname, new_muname), summarize, n = length(unique(new_acres)), acres = paste0(unique(new_acres), collapse = ", "))
+corrs2 <- ddply(corrs2, .(fy, state, projectname, new_muname, n), summarize, acres = sum(as.numeric(strsplit(acres, ", ")[[1]])))
+corrs2$acres <- as.numeric(corrs2$acres)
+
+
+test <- ddply(corrs2, .(fy), summarize, acres = formatC(sum(acres), format = "fg", big.mark = ","))
+# test2 <- reshape(test, idvar = "state", v.names = "acres", timevar = "fy", direction = "wide")
+# fy <- c("FY2013", "FY2014", "FY2015")
+# names(test2)[2:4] <- fy
+
+
+
+test2 <- ddply(corrs2, .(fy, state, projectname, acres), summarize, comp = unlist(lapply(strsplit(new_muname, ", "), function(x) x[1])))
+test2 <- ddply(test2, .(fy, state, projectname, acres), summarize, comp = unlist(lapply(strsplit(comp, " "), function(x) x[1])))
+test2 <- ddply(test2, .(fy, state, projectname, acres), summarize, comp = unlist(lapply(strsplit(comp, "-"), function(x) x)))
+test2 <- ddply(test2, .(fy, comp), summarize, acres = sum(as.numeric(acres)))
+test2 <- ddply(test2, .(fy), summarize, soil_series = na.exclude(c(list(comp[1:5]))))
+
+test3 <- join(test, test2, by = "fy")
+names(test3) <- c("Fiscal Year", "Affected Acres", "Top 5 Soil Series Affected")
+kable(test3, align = "l")
+
+
+
+ssa$state <- substr(ssa$areasymbol, 1, 2)
+ssa_sub <- subset(ssa, state == st)
+fy_r <- stack(fy13_r_new, fy14_r_new, fy15_r_new)
+names(fy_r) <- c("FY13", "FY14", "FY15")
+spplot(fy_r, sp.layout = ssa_sub, maxpixels = 500, xlim = -1e4+bbox(ssa_sub)[1, ], ylim = -1e4+bbox(ssa_sub)[2, ], colorkey = FALSE, col.regions = "blue", strip = strip.custom(bg = grey(0.85)), main = "Time series of SDJR Progress", fontsize = 12)
+
+```
