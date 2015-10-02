@@ -105,7 +105,6 @@ rat_new <- join(rat, fy13_r_dbf, type = "left", by = "ID")
 rat_new <- join(rat_new, fy13, type = "left", by = "MUKEY")
 fy13_r_2 <- fy13_r
 levels(fy13_r_2) <- rat_new
-fy13_r_new <- raster("C:/workspace/gSSURGO_fy13_progress.tif")
 # fy13_r_new <- deratify(fy13_r_2, att='fy', filename='gSSURGO_fy13_progress.tif', overwrite=TRUE, datatype='INT4U', format='GTiff', progress = "text")
 
 
@@ -118,7 +117,6 @@ rat_new <- join(rat, fy14_r_dbf, type = "left", by = "ID")
 rat_new <- join(rat_new, fy14, type = "left", by = "MUKEY")
 fy14_r_2 <- fy14_r
 levels(fy14_r_2) <- rat_new
-fy14_r_new <- raster("C:/workspace/gSSURGO_fy14_progress.tif")
 # fy14_r_new <- deratify(fy14_r_2, att='fy', filename='gSSURGO_fy14_progress.tif', overwrite=TRUE, datatype='INT4U', format='GTiff', progress = "text")
 
 
@@ -130,13 +128,18 @@ names(fy15_r_dbf)[1] <- "ID"
 rat_new <- join(rat, fy15_r_dbf, type = "left", by = "ID")
 rat_new <- join(rat_new, fy15, type = "left", by = "MUKEY")
 levels(fy15_r) <- rat_new
-fy15_r_new <- raster("C:/workspace/gSSURGO_fy15_progress.tif")
 # fy15_r_new <- deratify(fy15_r, att='fy', filename='gSSURGO_fy15_progress.tif', overwrite=TRUE, datatype='INT4U', format='GTiff', progress = "text")
 
+fy13_r_new <- raster("C:/workspace/gSSURGO_fy13_progress.tif")
+fy14_r_new <- raster("C:/workspace/gSSURGO_fy14_progress.tif")
+fy15_r_new <- raster("C:/workspace/gSSURGO_fy15_progress.tif")
+ssa <- readOGR(dsn = "M:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs", encoding = "ESRI Shapefile")
+ssa <- spTransform(ssa, CRS("+init=epsg:5070"))
+ssa$state <- substr(ssa$areasymbol, 1, 2)
 wi <- subset(ssa, state == "WI")
 test <- stack(fy13_r_new, fy14_r_new, fy15_r_new)
 names(test) <- c("FY13_SDJR_Progress", "FY14_SDJR_Progress", "FY15_SDJR_Progress")
-spplot(test, sp.layout = wi, maxpixels = 5000, xlim = bbox(wi)[1, ], ylim = bbox(wi)[2, ], colorkey = FALSE, col.regions = "blue", strip = strip.custom(bg = grey(0.85)))
+spplot(test, sp.layout = wi, maxpixels = 5000000, xlim = bbox(wi)[1, ], ylim = bbox(wi)[2, ], colorkey = FALSE, col.regions = "blue", strip = strip.custom(bg = grey(0.85)))
 
 test_f <- function(x) test = unique(x)
 
