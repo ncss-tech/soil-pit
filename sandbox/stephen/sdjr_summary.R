@@ -105,8 +105,8 @@ rat_new <- join(rat, fy13_r_dbf, type = "left", by = "ID")
 rat_new <- join(rat_new, fy13, type = "left", by = "MUKEY")
 fy13_r_2 <- fy13_r
 levels(fy13_r_2) <- rat_new
-# fy13_r_new <- raster("C:/workspace/gSSURGO_fy13_progress.tif")
-fy13_r_new <- deratify(fy13_r_2, att='fy', filename='gSSURGO_fy13_progress.tif', overwrite=TRUE, datatype='INT4U', format='GTiff', progress = "text")
+fy13_r_new <- raster("C:/workspace/gSSURGO_fy13_progress.tif")
+# fy13_r_new <- deratify(fy13_r_2, att='fy', filename='gSSURGO_fy13_progress.tif', overwrite=TRUE, datatype='INT4U', format='GTiff', progress = "text")
 
 
 fy14_r <- raster("M:/geodata/soils/gssurgo_fy14_250m.tif")
