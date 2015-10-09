@@ -1,12 +1,12 @@
 ---
-title: "Region 11 SDJR Progress for Wisconsin"
+title: "Region 11 SDJR Progress for Iowa"
 output: word_document
 ---
 
 For the past several years Soil Survey Offices in the East Central Glaciated Region (11) have focused their work on the Soil Data Join and Recorrelation (SDJR) National Initiative. The goal of this Initiative has been to increase the consistency of the Soil SURvey GeOgraphic database (SSURGO) across political boundaries. A summary of the affected areas and soils are presented below.
 
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=3}
 setwd("C:/workspace")
 options(stringsAsFactors = FALSE)
 
@@ -17,7 +17,7 @@ library(foreign)
 library(raster)
 library(rgdal)
 
-st <- "IN"
+st <- "IA"
 
 load(file = "corrs_fy_summary.Rdata")
 load(file = "goals_fy_summary.Rdata")
@@ -50,7 +50,7 @@ test2 <- ddply(test2, .(fy, comp), summarize, acres = sum(as.numeric(acres)))
 test2 <- ddply(test2, .(fy), summarize, soil_series = na.exclude(c(list(comp[1:5]))))
 
 test3 <- join(test, test2, by = "fy")
-names(test3) <- c("Fiscal Year", "Affected Acres", "Top 5 Soil Series Affected")
+names(test3) <- c("Fiscal Year", "Affected Acres", "Top 5 Soil Series Affected in Iowa")
 kable(test3, align = "l")
 
 
@@ -59,6 +59,7 @@ ssa$state <- substr(ssa$areasymbol, 1, 2)
 ssa_sub <- subset(ssa, state == st)
 fy_r <- stack(fy13_r_new, fy14_r_new, fy15_r_new)
 names(fy_r) <- c("FY13", "FY14", "FY15")
-spplot(fy_r, sp.layout = ssa_sub, maxpixels = 500, xlim = -1e4+bbox(ssa_sub)[1, ], ylim = -1e4+bbox(ssa_sub)[2, ], colorkey = FALSE, col.regions = "blue", strip = strip.custom(bg = grey(0.85)), main = "Time series of SDJR Progress", fontsize = 12)
+spplot(fy_r, sp.layout = ssa_sub, maxpixels = 5000000, xlim = bbox(ssa_sub)[1, ] + c(-1e4, 1e4), ylim = bbox(ssa_sub)[2, ] + c(-1e4, 1e4), colorkey = FALSE, col.regions = "blue", strip = strip.custom(bg = grey(0.85)), main = "Time series of SDJR Progress", fontsize = 12)
+
 
 ```
