@@ -43,8 +43,8 @@ corrs2$acres <- as.numeric(corrs2$acres)
 
 #corrs4 <- ddply(corrs3, .(region, fy, projectname, project_type, sso), summarize, acres = sum(acres), goal = sum(goal))
                               
-corrs_sub <- subset(corrs2, region == 11 & fy == 2015 & project_type == "SDJR")
-goals_sub <- subset(goals, Region == 11 & fy == 2015 & project_type == "SDJR")
+corrs_sub <- subset(corrs2, fy == 2015 & project_type == "SDJR")
+goals_sub <- subset(goals, fy == 2015 & project_type == "SDJR")
 
 j <- join(corrs_sub, goals_sub, type = "full", by = "projectname")
 id <- which(is.na(j$region) & j$Reported > 0)
