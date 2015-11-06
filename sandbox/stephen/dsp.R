@@ -5,7 +5,8 @@ library(maps)
 options(stringsAsFactors = FALSE)
 
 # Read in data
-local <- "M:/"
+# local <- "M:/"
+local <- "C:/Users/Stephen/Google Drive/"
 data <- read.csv(paste0(local, "projects/dsp/dsp_data.csv"))
 site <- read.csv(paste0(local, "projects/dsp/dsp_site.csv"))
 label <- read.csv(paste0(local, "projects/dsp/dsp_label.csv"))
@@ -21,7 +22,9 @@ names(site)[grep("pedon_lab_", names(site))] <- "lab_samp"
 
 data$bd <- apply(data[, grep("bd_", names(data))], 1, mean, na.rm = T)
 data$cf_labvol <- ifelse(is.na(data$cf_labvol), 0, data$cf_labvol)
+data$total_c <- with(data, ifelse(is.na(total_c), tot_c, total_c)) # Could possibly create a label column to differentiate
 data$c_gcm <- with(data, total_c * (100 - cf_labvol) * bd * (hor_bottom - hor_top))
+data <- data[!names(data) %in% c("tot_c")]
 site <- site[!names(site) %in% c("pedontype", "pedonpurpose")]
 
 
@@ -51,19 +54,21 @@ map("state")
 plot(data_spc1@sp, add = T)
 
 #test <- slice(data_spc, 1 ~ ., strict = F)
-data_spc$test <- paste0(data_spc$dsp_project, "_", data_spc$comparison)
-
+data_spc$group <- paste0(abbreviate(data_spc$dsp_project, 10))
 l <- list()
-x <- unique(data_spc$test)
+x <- unique(data_spc$group)
 for (i in seq(x)){
-  sub <- data_spc[data_spc$test == x[i]]
-  l[[i]] <- slab(sub, ~ total_c, slab.structure = 5)
+  sub <- data_spc[which(data_spc$group == x[i])]
+  l[[i]] <- slab(sub, as.factor(comparison) ~ total_c + ph_h20 + clay, slab.structure = 5)
+  l[[i]]$dsp_project <- x[i]
 }
+names(l) <- x
+test <- do.call(rbind, l)
+test <- subset(test, dsp_project == x[1])
 
-test <- slab(data_spc, test ~ ph_h20, slab.structure = 5)
-xyplot(top ~ p.q50 | test, data=test, ylab='Depth',
+xyplot(top ~ p.q50 | variable, groups = as.factor(comparison), data=test, ylab='Depth',
        xlab='median bounded by 25th and 75th percentiles',
-       lower=test$p.q25, upper=test$p.q75, ylim=c(250,-5),
+       lower=test$p.q25, upper=test$p.q75, ylim=c(100,-5),
        panel=panel.depth_function, 
        prepanel=prepanel.depth_function,
        cf=test$contributing_fraction, scales=list(x=list(alternating=1))
