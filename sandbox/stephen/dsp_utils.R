@@ -28,7 +28,8 @@ depth_plots <- function(slabs, project, group){
       names(sub_project) <- "project"
       sub <- cbind(sub, sub_project)
       
-      col <- brewer.pal(n = length(unique(sub$variable)), name = "Set1")
+      if (class(sub$variable) == "factor") {col <- brewer.pal(n = nlevels(sub$variable), name = "RdYlBu")}
+      else(col <- brewer.pal(n = length(unique(sub$variable)), name = "RdYlBu"))
       
       sub_plot <- xyplot(top ~ p.q50 | variable + project, groups = as.factor(group), data= sub,
                          ylab='Depth', xlab='median bounded by 25th and 75th percentiles',

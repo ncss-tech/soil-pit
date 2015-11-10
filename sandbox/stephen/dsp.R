@@ -19,6 +19,7 @@ local <- "M:/"
 data <- read.csv(paste0(local, "projects/dsp/dsp_data.csv"))
 site <- read.csv(paste0(local, "projects/dsp/dsp_site.csv"))
 label <- read.csv(paste0(local, "projects/dsp/dsp_label.csv"))
+geodata <- read.csv(paste0(local, "projects/dsp/geodata.csv"))
 
 
 # Rename headings and fix things
@@ -38,79 +39,17 @@ data$total_n <- with(data, ifelse(is.na(total_n), tot_n, total_n)) # Could possi
 data$n_gcm2 <- with(data, total_n * (100 - cf_labvol) * bd * (hor_bottom - hor_top))
 data <- data[!names(data) %in% c("tot_c")]
 site <- site[!names(site) %in% c("pedontype", "pedonpurpose")]
-
+site$idx <- row.names(site)
 
 
 # Load geodata
 
-nlcd <- raster("M:/geodata/land_use_land_cover/nlcd_2011_landcover_2011_edition_2014_03_31.img")
-landfire <- raster("M:/geodata/land_use_land_cover/us_130evt.tif")
-cotton <- raster("M:/geodata/land_use_land_cover/crop_frequency_2008-2014/crop_frequency_cotton_2008-2014_nobackground.img")
-corn <- raster("M:/geodata/land_use_land_cover/crop_frequency_2008-2014/crop_frequency_corn_2008-2014_no-background.img")
-wheat <- raster("M:/geodata/land_use_land_cover/crop_frequency_2008-2014/crop_frequency_wheat_2008-2014_nobackground.img")
-soybeans <- raster("M:/geodata/land_use_land_cover/crop_frequency_2008-2014/crop_frequency_soybeans_2008-2014_nobackground.img")
-elev <- raster("M:/geodata/elevation/ned/ned30m_aea.img")
-slope <- raster("M:/geodata/elevation/ned/ned30m_aea_slope.tif")
-ppt <- raster("M:/geodata/climate/prism/PRISM_ppt_30yr_normal_800mM2_all_asc/PRISM_ppt_30yr_normal_800mM2_annual_asc.asc")
-tmean <- raster("M:/geodata/climate/prism/PRISM_tmean_30yr_normal_800mM2_all_asc/PRISM_tmean_30yr_normal_800mM2_annual_asc.asc")
-ffp <- raster("M:/geodata/climate/rmrs/ffp.txt"); proj4string(ffp) <- CRS("+init=epsg:4326")
-eco <- readOGR(dsn = "M:/geodata/ecology", layer = "us_eco_l4_no_st", encoding = "ESRI Shapefile")
-mlra <- readOGR(dsn = "M:/geodata/soils", layer = "mlra_a_mbr", encoding = "ESRI Shapefile")
-
-nlcd_txt <- read.csv("M:/geodata/land_use_land_cover/nlcd_2011_landcover_2011_edition_2014_03_31.txt")
-landfire_txt <- read.csv("M:/geodata/land_use_land_cover/us_130evt.txt")
-
-idx <- complete.cases(site[c("x", "y")])
-site_sp <- site[idx, ]
-coordinates(site_sp) <- ~ x + y
-proj4string(site_sp) <- CRS("+init=epsg:4326")
-# writeOGR(site_sp, dsn = "M:/projects/dsp", layer = "site_points", driver = "ESRI Shapefile", overwrite_layer = TRUE)
-
-map("state")
-plot(site_sp, add = T)
-
-geodata <- data.frame(
-  nlcd = extract(nlcd, site_sp), 
-  cotton = extract(cotton, site_sp), 
-  corn = extract(corn, site_sp), 
-  wheat = extract(wheat, site_sp), 
-  soybeans = extract(soybeans, site_sp), 
-  landfire = extract(landfire, site_sp), 
-  elev = extract(elev, site_sp), 
-  slope = extract(slope, site_sp), 
-  tmean = extract(tmean, site_sp), 
-  ppt = extract(ppt, site_sp), 
-  ffp = extract(ffp, site_sp)
-  )
-geodata <- cbind(geodata,
-                 over(spTransform(site_sp, proj4string(eco)), eco)[c("US_L3NAME", "US_L4NAME")], 
-                 over(spTransform(site_sp, proj4string(mlra)), mlra)[c("MLRA_ID", "MLRARSYM")]
-)
-geodata$nlcd <- nlcd_txt[match(geodata$nlcd, nlcd_txt$Value), "Land_Cover"]
-geodata$landfire <- landfire_txt[match(geodata$landfire, landfire_txt$VALUE), "SAF_SRM"]
-
-temp <- function(x1, x2, x3, x4, x5, x6){
-  nonag <- x1 != "Cultivated Crops" & x6 != "LF 80: Agriculture" & x6 != "LF 20: Developed"
-  ag <- !nonag
-  if(is.na(x1)) {res = NA}
-  if(nonag) {res = x6}
-  if(ag) {res = as.character(x2)}
-  if(ag & x2 == 0) {res = as.character(x3)}
-  if(ag & x2 == 0 & x3 == 0) {res = as.character(x4)}
-  if(ag & x2 == 0 & x3 == 0 & x4 == 0) {res = as.character(x5)}
-  return(res)
-}
-geodata$gcomparison <- unlist(mapply(temp, geodata$nlcd, geodata$cotton, geodata$corn, geodata$wheat, geodata$soybeans, geodata$landfire))
-# write.csv(geodata, "geodata.csv")
-
-site[idx, "nlcd"] <- geodata$nlcd 
-site[idx, "cotton"] <- geodata$cotton
-site[idx, "corn"] <- geodata$corn 
-site[idx, "wheat"] <- geodata$wheat 
-site[idx, "landfire"] <- geodata$landfire 
-site[idx, "gcomparison"] <- geodata$gcomparison
-site[idx, "slope"] <- geodata$slope
-
+site <- join(site, geodata, by = "idx", type = "left")
+names(site) <- tolower(names(site))
+site$corn <- ordered(site$corn)
+site$cotton <- ordered(site$cotton)
+site$wheat <- ordered(site$wheat)
+site$soybeans <- ordered(site$soybeans)
 
 
 # Inspect projects
@@ -118,22 +57,23 @@ site[idx, "slope"] <- geodata$slope
 dsp_sum <- ddply(data, .(kssl_project), summarize, n_pedons = length(unique(user_pedon_id)), n_compare = length(unique(comparison)), n_plots = length(table(plot)))
 # kssl_project != dsp_project, WTF
 
-dsp <- join(data, dsp_sum[c("kssl_project", "n_compare")], by = "kssl_project", type = "left")
+dsp_df <- join(data, dsp_sum[c("kssl_project", "n_compare")], by = "kssl_project", type = "left")
 
-dsp <- join(dsp, site, by = "user_pedon_id", type = "left")
-dsp$kssl_project <- with(dsp, ifelse(is.na(kssl_project), "missing", kssl_project)) # Some of the sites don't match any pedons
-dsp$piid <- paste0(dsp$user_pedon_id, "_", dsp$user_site_id)
+dsp_df <- join(dsp_df, site, by = "user_pedon_id", type = "left")
+dsp_df$kssl_project <- with(dsp_df, ifelse(is.na(kssl_project), "missing", kssl_project)) # Some of the sites don't match any pedons
+dsp_df$piid <- paste0(dsp_df$user_pedon_id, "_", dsp_df$user_site_id)
 
-dsp$mcomparison <- with(dsp, ifelse(n_compare == 1 & !is.na(gcomparison), gcomparison, comparison))
+dsp_df$mcomparison <- with(dsp_df, ifelse(n_compare == 1 & !is.na(gcomparison), gcomparison, comparison))
 
-by(dsp, dsp["kssl_project"], function(x) table(x$mcomparison))
+by(dsp_df, dsp_df["kssl_project"], function(x) table(x$mcomparison))
 
 
 
 # Build dsp object
 
+dsp <- dsp_df
 depths(dsp) <- piid ~ hor_top + hor_bottom
-site(dsp) <- ~ user_pedon_id + user_site_id + pedon_id + lab_samp + name + dsp_project + kssl_project + pr_name + n_compare + comparison + nlcd + cotton + corn + wheat + landfire + gcomparison + mcomparison + cond + crop + agronfeat + plot + plot_id + plot_layout + region_strata + drainagecl + earthcovkind1 + earthcovkind2 + x + y + geographic_coord_source + slope + current_taxon_name + soil + pedon_type + pedon_purpose + taxonkind + order + suborder + great_group + subgroup + family
+site(dsp) <- ~ user_pedon_id + user_site_id + pedon_id + lab_samp + name + dsp_project + kssl_project + pr_name + n_compare + comparison + nlcd + cotton + corn + wheat + landfire + gcomparison + mcomparison + cond + crop + agronfeat + plot + plot_id + plot_layout + mlra_id + mlrarsym + us_l3name + us_l4name + region_strata + rocktype1 + rocktype2 + drainagecl + earthcovkind1 + earthcovkind2 + x + y + geographic_coord_source + elev + slope  + ppt + tmean + ffp + current_taxon_name + soil + pedon_type + pedon_purpose + taxonkind + order + suborder + great_group + subgroup + family
 # for some reason collectors, labpedonno and date won't promote to site 
 # why does pedon_lab_sample__ almost equal pedonlabno, 
 # data_site[with(data_site, which(lab_samp != labpedonno)), ]
@@ -148,22 +88,21 @@ site(dsp) <- ~ user_pedon_id + user_site_id + pedon_id + lab_samp + name + dsp_p
 
 ## Split the projects and compute slabs
 
-dsp_slabs <- slab_p(dsp, "kssl_project", "comparison")
-depth_plots(dsp_slabs, "kssl_project", "comparison")
-dsp_slabs <- slab_p(dsp, "kssl_project", "nlcd")
-depth_plots(dsp_slabs, "kssl_project", "nlcd")
-dsp_slabs <- slab_p(dsp, "kssl_project", "landfire")
-depth_plots(dsp_slabs, "kssl_project", "landfire")
-dsp_slabs <- slab_p(dsp, "kssl_project", "corn")
-depth_plots(dsp_slabs, "kssl_project", "corn")
-dsp_slabs <- slab_p(dsp, "kssl_project", "cotton")
-depth_plots(dsp_slabs, "kssl_project", "cotton")
-dsp_slabs <- slab_p(dsp, "kssl_project", "wheat")
-depth_plots(dsp_slabs, "kssl_project", "wheat")
+comparison_slab <- slab_p(dsp, "kssl_project", "comparison")
+nlcd_slab <- slab_p(dsp, "kssl_project", "nlcd")
+landfire_slab <- slab_p(dsp, "kssl_project", "landfire")
+corn_slab <- slab_p(dsp, "kssl_project", "corn")
+cotton_slab <- slab_p(dsp, "kssl_project", "cotton")
+wheat_slab <- slab_p(dsp, "kssl_project", "wheat")
 
 ## Generate depth plots for each project
 
-depth_plots(dsp_slabs, project)
+depth_plots(comparison_slab, "kssl_project", "comparison")
+depth_plots(nlcd_slab, "kssl_project", "nlcd")
+depth_plots(landfire_slab, "kssl_project", "landfire")
+depth_plots(corn_slab, "kssl_project", "corn")
+depth_plots(cotton_slab, "kssl_project", "cotton")
+depth_plots(wheat_slab, "kssl_project", "wheat")
 
 # Multivariate plots
 
@@ -197,4 +136,4 @@ for (i in seq(x)){
   }
 
 
-
+anova(lm(c_gcm2 ~ clay + ppt + tmean + comparison + plot, data = dsp_df))
