@@ -9,7 +9,7 @@ library(raster)
 library(cluster)
 
 options(stringsAsFactors = FALSE)
-
+source("C:/workspace/soil-pit/trunk/sandbox/stephen/dsp_utils.R")
 
 # Read in data
 
@@ -40,14 +40,22 @@ data <- data[!names(data) %in% c("tot_c")]
 site <- site[!names(site) %in% c("pedontype", "pedonpurpose")]
 
 
+
 # Load geodata
 
 nlcd <- raster("M:/geodata/land_use_land_cover/nlcd_2011_landcover_2011_edition_2014_03_31.img")
+landfire <- raster("M:/geodata/land_use_land_cover/us_130evt.tif")
 cotton <- raster("M:/geodata/land_use_land_cover/crop_frequency_2008-2014/crop_frequency_cotton_2008-2014_nobackground.img")
 corn <- raster("M:/geodata/land_use_land_cover/crop_frequency_2008-2014/crop_frequency_corn_2008-2014_no-background.img")
 wheat <- raster("M:/geodata/land_use_land_cover/crop_frequency_2008-2014/crop_frequency_wheat_2008-2014_nobackground.img")
 soybeans <- raster("M:/geodata/land_use_land_cover/crop_frequency_2008-2014/crop_frequency_soybeans_2008-2014_nobackground.img")
-landfire <- raster("M:/geodata/land_use_land_cover/us_130evt.tif")
+elev <- raster("M:/geodata/elevation/ned/ned30m_aea.img")
+slope <- raster("M:/geodata/elevation/ned/ned30m_aea_slope.tif")
+ppt <- raster("M:/geodata/climate/prism/PRISM_ppt_30yr_normal_800mM2_all_asc/PRISM_ppt_30yr_normal_800mM2_annual_asc.asc")
+tmean <- raster("M:/geodata/climate/prism/PRISM_tmean_30yr_normal_800mM2_all_asc/PRISM_tmean_30yr_normal_800mM2_annual_asc.asc")
+ffp <- raster("M:/geodata/climate/rmrs/ffp.txt"); proj4string(ffp) <- CRS("+init=epsg:4326")
+eco <- readOGR(dsn = "M:/geodata/ecology", layer = "us_eco_l4_no_st", encoding = "ESRI Shapefile")
+mlra <- readOGR(dsn = "M:/geodata/soils", layer = "mlra_a_mbr", encoding = "ESRI Shapefile")
 
 nlcd_txt <- read.csv("M:/geodata/land_use_land_cover/nlcd_2011_landcover_2011_edition_2014_03_31.txt")
 landfire_txt <- read.csv("M:/geodata/land_use_land_cover/us_130evt.txt")
@@ -56,11 +64,30 @@ idx <- complete.cases(site[c("x", "y")])
 site_sp <- site[idx, ]
 coordinates(site_sp) <- ~ x + y
 proj4string(site_sp) <- CRS("+init=epsg:4326")
-writeOGR(site_sp, dsn = "M:/projects/dsp", layer = "site_points", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+# writeOGR(site_sp, dsn = "M:/projects/dsp", layer = "site_points", driver = "ESRI Shapefile", overwrite_layer = TRUE)
 
-lcover <- data.frame(nlcd = extract(nlcd, site_sp), cotton = extract(cotton, site_sp), corn = extract(corn, site_sp), wheat = extract(wheat, site_sp), soybeans = extract(soybeans, site_sp), landfire = extract(landfire, site_sp))
-lcover$nlcd <- nlcd_txt[match(lcover$nlcd, nlcd_txt$Value), "Land_Cover"]
-lcover$landfire <- landfire_txt[match(lcover$landfire, landfire_txt$VALUE), "SAF_SRM"]
+map("state")
+plot(site_sp, add = T)
+
+geodata <- data.frame(
+  nlcd = extract(nlcd, site_sp), 
+  cotton = extract(cotton, site_sp), 
+  corn = extract(corn, site_sp), 
+  wheat = extract(wheat, site_sp), 
+  soybeans = extract(soybeans, site_sp), 
+  landfire = extract(landfire, site_sp), 
+  elev = extract(elev, site_sp), 
+  slope = extract(slope, site_sp), 
+  tmean = extract(tmean, site_sp), 
+  ppt = extract(ppt, site_sp), 
+  ffp = extract(ffp, site_sp)
+  )
+geodata <- cbind(geodata,
+                 over(spTransform(site_sp, proj4string(eco)), eco)[c("US_L3NAME", "US_L4NAME")], 
+                 over(spTransform(site_sp, proj4string(mlra)), mlra)[c("MLRA_ID", "MLRARSYM")]
+)
+geodata$nlcd <- nlcd_txt[match(geodata$nlcd, nlcd_txt$Value), "Land_Cover"]
+geodata$landfire <- landfire_txt[match(geodata$landfire, landfire_txt$VALUE), "SAF_SRM"]
 
 temp <- function(x1, x2, x3, x4, x5, x6){
   nonag <- x1 != "Cultivated Crops" & x6 != "LF 80: Agriculture" & x6 != "LF 20: Developed"
@@ -73,14 +100,17 @@ temp <- function(x1, x2, x3, x4, x5, x6){
   if(ag & x2 == 0 & x3 == 0 & x4 == 0) {res = as.character(x5)}
   return(res)
 }
-lcover$gcomparison <- unlist(mapply(temp, lcover$nlcd, lcover$cotton, lcover$corn, lcover$wheat, lcover$soybeans, lcover$landfire))
+geodata$gcomparison <- unlist(mapply(temp, geodata$nlcd, geodata$cotton, geodata$corn, geodata$wheat, geodata$soybeans, geodata$landfire))
+# write.csv(geodata, "geodata.csv")
 
-site[idx, "nlcd"] <- lcover$nlcd 
-site[idx, "cotton"] <- lcover$cotton
-site[idx, "corn"] <- lcover$corn 
-site[idx, "wheat"] <- lcover$wheat 
-site[idx, "landfire"] <- lcover$landfire 
-site[idx, "gcomparison"] <- lcover$gcomparison
+site[idx, "nlcd"] <- geodata$nlcd 
+site[idx, "cotton"] <- geodata$cotton
+site[idx, "corn"] <- geodata$corn 
+site[idx, "wheat"] <- geodata$wheat 
+site[idx, "landfire"] <- geodata$landfire 
+site[idx, "gcomparison"] <- geodata$gcomparison
+site[idx, "slope"] <- geodata$slope
+
 
 
 # Inspect projects
@@ -99,69 +129,41 @@ dsp$mcomparison <- with(dsp, ifelse(n_compare == 1 & !is.na(gcomparison), gcompa
 by(dsp, dsp["kssl_project"], function(x) table(x$mcomparison))
 
 
+
 # Build dsp object
 
 depths(dsp) <- piid ~ hor_top + hor_bottom
-site(dsp) <- ~ user_pedon_id + user_site_id + pedon_id + lab_samp + name + dsp_project + kssl_project + pr_name + n_compare + comparison + nlcd + cotton + corn + wheat + landfire + gcomparison + mcomparison + cond + crop + agronfeat + plot + plot_id + plot_layout + region_strata + drainagecl + earthcovkind1 + earthcovkind2 + x + y + geographic_coord_source + current_taxon_name + soil + pedon_type + pedon_purpose + taxonkind + order + suborder + great_group + subgroup + family
+site(dsp) <- ~ user_pedon_id + user_site_id + pedon_id + lab_samp + name + dsp_project + kssl_project + pr_name + n_compare + comparison + nlcd + cotton + corn + wheat + landfire + gcomparison + mcomparison + cond + crop + agronfeat + plot + plot_id + plot_layout + region_strata + drainagecl + earthcovkind1 + earthcovkind2 + x + y + geographic_coord_source + slope + current_taxon_name + soil + pedon_type + pedon_purpose + taxonkind + order + suborder + great_group + subgroup + family
 # for some reason collectors, labpedonno and date won't promote to site 
 # why does pedon_lab_sample__ almost equal pedonlabno, 
 # data_site[with(data_site, which(lab_samp != labpedonno)), ]
 
-dsp1 <- subsetProfiles(dsp, s="x != 'NA'")
-dsp2 <- subsetProfiles(dsp, s="x == 'NA'")
-
-coordinates(dsp1) <- ~ x + y
-map("state")
-plot(dsp1@sp, add = T)
+# dsp1 <- subsetProfiles(dsp, s="x != 'NA'")
+# coordinates(dsp1) <- ~ x + y
+# dsp2 <- subsetProfiles(dsp, s="x == 'NA'")
 
 
 
-## Aggregate properties by depth interval
+# Aggregate properties by depth interval
 
-# Split the projects and compute slabs
-comp <- "nlcd"
-l <- list()
-x <- unique(dsp$kssl_project)
+## Split the projects and compute slabs
 
-for (i in seq(x)){
-  idx <- which(dsp$kssl_project == x[i] & !is.na(site(dsp)[comp]))
-  if(length(idx) > 0) {
-  sub <- dsp[idx]
-  group <- site(sub)[comp]
-  names(group) <- "group"
-  slot(sub, "site") <- cbind(site(sub), group) 
-  l[[i]] <- slab(sub, group ~ clay + ph_h20 + bs_nh4oac + c_gcm2 + mehlich_p + bgluc, slab.structure = 5)
-  l[[i]]$kssl_project <- x[i]
-  }
-}
-names(l) <- x
-dsp_slabs <- do.call(rbind, l)
+dsp_slabs <- slab_p(dsp, "kssl_project", "comparison")
+depth_plots(dsp_slabs, "kssl_project", "comparison")
+dsp_slabs <- slab_p(dsp, "kssl_project", "nlcd")
+depth_plots(dsp_slabs, "kssl_project", "nlcd")
+dsp_slabs <- slab_p(dsp, "kssl_project", "landfire")
+depth_plots(dsp_slabs, "kssl_project", "landfire")
+dsp_slabs <- slab_p(dsp, "kssl_project", "corn")
+depth_plots(dsp_slabs, "kssl_project", "corn")
+dsp_slabs <- slab_p(dsp, "kssl_project", "cotton")
+depth_plots(dsp_slabs, "kssl_project", "cotton")
+dsp_slabs <- slab_p(dsp, "kssl_project", "wheat")
+depth_plots(dsp_slabs, "kssl_project", "wheat")
 
+## Generate depth plots for each project
 
-# Generate depth plots for each project
-for (i in seq(x)){
-  idx <- dsp_slabs$kssl_project == x[i]
-  if(sum(idx) > 0) {
-  sub <- subset(dsp_slabs, idx) # subset by kssl_project
-  sub <- sub[which(apply(sub, 1, function(x) !any(is.na(x)))), ] # remove missing variables
-  
-  col <- brewer.pal(n = length(unique(sub$variable)), name = "Set1")
-  
-  sub_plot <- xyplot(top ~ p.q50 | variable + kssl_project, groups = as.factor(group), data= sub,
-                     ylab='Depth', xlab='median bounded by 25th and 75th percentiles',
-                     lower = sub$p.q25, upper = sub$p.q75, ylim = c(max(sub$bottom), 0),
-                     panel = panel.depth_function, alpha = 0.25, sync.colors = TRUE,
-                     prepanel = prepanel.depth_function,
-                     par.settings = list(superpose.line = list(lwd = 2, col = col)),
-                     cf = sub$contributing_fraction, scales = list(relation = "free"),
-                     auto.key = list(columns = 2, lines = TRUE, points = FALSE)
-                     )
-  png(file = paste0(getwd(), "/figures/", x[i], "_slab_",  comp,".png"))
-  print(sub_plot)
-  dev.off()
-  }
-  }
-
+depth_plots(dsp_slabs, project)
 
 # Multivariate plots
 
