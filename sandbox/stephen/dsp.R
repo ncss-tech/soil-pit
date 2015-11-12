@@ -12,81 +12,26 @@ library(lme4)
 
 options(stringsAsFactors = FALSE)
 source("C:/workspace/soil-pit/trunk/sandbox/stephen/dsp_utils.R")
+source("C:/workspace/soil-pit/trunk/sandbox/stephen/gfits.R")
 
 # Read in data
 
-setwd("C:/Users/Stephen/Google Drive/projects/dsp")
-# setwd("M:/projects/dsp")
-data <- read.csv("dsp_data.csv")
-site <- read.csv("dsp_site.csv")
-label <- read.csv("dsp_label.csv")
-load("geodata.Rdata")
+# setwd("C:/Users/Stephen/Google Drive/projects/dsp")
+setwd("M:/projects/dsp")
+load("dsp_prep.Rdata")
+load("dsp_geodata.Rdata")
 
-
-# Rename headings and fix things
-
-names(data) <- tolower(gsub("\\.", "_", names(data)))
-names(data) <- gsub("hor_", "", names(data))
-names(data)[which(names(data) == "userpedonid")] <- "user_pedon_id"
-names(data)[which(names(data) == "bd_recon_moist")] <- "fm_recon_moist"
-
-names(site) <- tolower(gsub("\\.", "_", names(site)))
-names(site)[grep("std_", names(site))] <- c("y", "x")
-names(site)[grep("pedon_lab_", names(site))] <- "lab_samp"
-
-
-data$mid <- with(data, round((bottom - top) / 2))
-data$bd <- apply(data[, grep("bd_", names(data))], 1, mean, na.rm = T)
-data$cf_labvol <- ifelse(is.na(data$cf_labvol), 0, data$cf_labvol)
-data$total_c <- with(data, ifelse(is.na(total_c), tot_c, total_c)) # Could possibly create a label column to differentiate
-data$c_gcm2 <- with(data, total_c * (100 - cf_labvol) * bd * (bottom - top))
-data$total_n <- with(data, ifelse(is.na(total_n), tot_n, total_n)) # Could possibly create a label column to differentiate
-data$n_gcm2 <- with(data, total_n * (100 - cf_labvol) * bd * (bottom - top))
-data <- data[!names(data) %in% c("tot_c")]
-
-site <- site[!names(site) %in% c("pedontype", "pedonpurpose")]
-site$idx <- row.names(site)
-
-
-# Load geodata
-
-site <- join(site, geodata, by = "idx", type = "left")
-names(site) <- tolower(names(site))
-site$corn <- ordered(site$corn)
-site$cotton <- ordered(site$cotton)
-site$wheat <- ordered(site$wheat)
-site$soybeans <- ordered(site$soybeans)
 
 
 # Inspect projects
 
-dsp_sum <- ddply(data, .(kssl_project), summarize, n_pedons = length(unique(user_pedon_id)), n_compare = length(unique(comparison)), n_plots = length(table(plot)))
-# kssl_project != dsp_project, WTF
+map("state", main = "test")
+map.axes()
+title("Location of the Dynamic Soil Property Studies")
+plot(site_sp, add = T)
 
-dsp_df <- join(data, dsp_sum[c("kssl_project", "n_compare")], by = "kssl_project", type = "left")
+by(dsp_df, dsp_df["kssl_project"], function(x) table(x$mcomparison))
 
-dsp_df <- join(dsp_df, site, by = "user_pedon_id", type = "left")
-dsp_df$kssl_project <- with(dsp_df, ifelse(is.na(kssl_project), "missing", kssl_project)) # Some of the sites don't match any pedons
-dsp_df$piid <- paste0(dsp_df$user_pedon_id, "_", dsp_df$user_site_id)
-
-dsp_df$mcomparison <- with(dsp_df, ifelse(n_compare == 1 & !is.na(gcomparison), gcomparison, comparison))
-
-# by(dsp_df, dsp_df["kssl_project"], function(x) table(x$mcomparison))
-
-
-
-# Build dsp object
-
-dsp <- dsp_df
-depths(dsp) <- piid ~ top + bottom
-site(dsp) <- ~ user_pedon_id + user_site_id + pedon_id + lab_samp + name + dsp_project + kssl_project + pr_name + n_compare + comparison + nlcd + cotton + corn + wheat + landfire + gcomparison + mcomparison + cond + crop + agronfeat + plot + plot_id + plot_layout + mlra_id + mlrarsym + us_l3name + us_l4name + region_strata + rocktype1 + rocktype2 + drainagecl + earthcovkind1 + earthcovkind2 + x + y + geographic_coord_source + elev + slope  + ppt + tmean + ffp + current_taxon_name + soil + pedon_type + pedon_purpose + taxonkind + order + suborder + great_group + subgroup + family
-# for some reason collectors, labpedonno and date won't promote to site 
-# why does pedon_lab_sample__ almost equal pedonlabno, 
-# data_site[with(data_site, which(lab_samp != labpedonno)), ]
-
-# dsp1 <- subsetProfiles(dsp, s="x != 'NA'")
-# coordinates(dsp1) <- ~ x + y
-# dsp2 <- subsetProfiles(dsp, s="x == 'NA'")
 
 
 
@@ -116,8 +61,8 @@ dsp_slice <- slice(dsp, 5 ~ ., strict = FALSE)
 x <- unique(dsp_slice$kssl_project)
 
 for (i in seq(x)){
-  var <- c("clay", "ph_h20", "bs_nh4oac", "c_gcm2", "mehlich_p", "bgluc")
-  dsp_sub <- dsp_slice[which(dsp_slice$kssl_project == x[i])]
+  var <- c("clay", "ph_h20", "bs_nh4oac", "c_gcm2", "bd", "mehlich_p", "bgluc")
+  dsp_sub <- dsp[which(dsp$kssl_project == x[i])]
   sub <- as(dsp_sub, "data.frame")
   sub <- Filter(function(x) !all(is.na(x)), x = sub) # remove missing columns
   col_idx <- which(names(sub) %in% var)
@@ -127,16 +72,17 @@ for (i in seq(x)){
   
   if (ncol(sub2) <= nrow(sub2) + 1) {
   sub_mds <- metaMDS(daisy(sub2, metric = "gower", stand = TRUE))
-  sub_mds_df <- data.frame(sub_mds$point, group = as.factor(sub[row_idx, "group"]), kssl_project = as.factor(sub[row_idx, "kssl_project"]))
+  sub_mds_df <- data.frame(sub_mds$point, group = as.factor(sub[row_idx, "comparison"]), kssl_project = as.factor(sub[row_idx, "kssl_project"]), hzname = sub[row_idx, "desg"])
   
   col <- brewer.pal(n = length(levels(sub_mds_df$group)), name = "Set1") 
   
   sub_plot <- xyplot(MDS1 ~ MDS2 | kssl_project, groups = group, data = sub_mds_df, 
                      aspect = 1,
                      auto.key = list(columns=length(levels(sub_mds_df$group))),
-                     par.settings=list(superpose.symbol=list(pch=19, cex=2, alpha=0.5, col = col))
-  )
-  png(file = paste0(getwd(), "/figures/", x[i], "_mds.png"))
+                     par.settings=list(superpose.symbol=list(pch=19, cex=2, alpha=0.5, col = col)))
+  sub_plot <- sub_plot + layer(panel.abline(h=0, v=0, col='grey', lty=3)) + layer(panel.text(sub_mds_df$MDS2, sub_mds_df$MDS1, sub_mds_df$hzname, cex=0.85, font=2, pos=3))
+                     
+  png(file = paste0(getwd(), "/figures/", x[i], "_mds.png"), width = 9, height = 9, units = "in", res = 150)
   print(sub_plot)
   dev.off()}
   }
@@ -146,5 +92,29 @@ for (i in seq(x)){
 # Analyze effects
 histogram(~ log(c_gcm2), dsp_df)
 
-c_glm <-  glm(c_gcm2 ~ ns(mid, 3) + clay + ppt + tmean + slope + comparison + plot, data = dsp_df, family = gaussian(link = "log"))
-anova(c_glm, test = "F")
+c_glm <-  glm(c_gcm2 ~ ns(depth, 3) + clay + ppt + tmean + slope + comparison + plot, data = dsp_df, family = quasipoisson())
+test <- anova(c_glm, test = "F")
+test_dev <- data.frame(dev = round(test$Deviance[-1] / test[1, "Resid. Dev"], 2), names = attributes(test)$row.names[-1], depth = "0 - 70 cm")
+
+
+dsp_sub <- dsp_df[dsp_df$depth < 10, ]
+c_glm2 <-  glm(c_gcm2 ~ ns(depth, 3) + clay + ppt + tmean + slope + comparison + plot, data = dsp_sub, family = quasipoisson())
+test_sub <- anova(c_glm2, test = "F")
+test_sub_dev <- data.frame(dev = round(test_sub$Deviance[-1] / test_sub[1, "Resid. Dev"], 2), names = attributes(test_sub)$row.names[-1], depth = "0 - 10 cm")
+
+dsp_sub2 <- dsp_df[dsp_df$depth > 10, ]
+c_glm3 <-  glm(c_gcm2 ~ ns(depth, 3) + clay + ppt + tmean + slope + comparison + plot, data = dsp_sub2, family = quasipoisson())
+test_sub2 <- anova(c_glm3, test = "F")
+test_sub_dev2 <- data.frame(dev = round(test_sub2$Deviance[-1] / test_sub2[1, "Resid. Dev"], 2), names = attributes(test_sub2)$row.names[-1], depth = "10 - 70 cm")
+
+glm_table <- rbind(test_dev, test_sub_dev, test_sub_dev2)
+glm_table$depth <- with(glm_table, factor(depth, levels = c("0 - 70 cm", "0 - 10 cm", "10 - 70 cm")))
+glm_table$names <- with(glm_table, factor(names, levels = test_dev$names)
+
+png(file = paste0(getwd(), "/figures/", "glm_plots.png"), width = 9, height = 5, units = "in", res = 150)
+barchart(dev ~ names | depth, data = glm_table, scales = list(rot = c(45, 0)))
+dev.off()
+# kable(test)
+# kable(test)
+
+

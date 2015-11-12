@@ -1,4 +1,8 @@
-options(stringsAsFactors = TRUE)
+library(sp)
+library(rgdal)
+library(raster)
+
+options(stringsAsFactors = FALSE)
 
 nlcd <- raster("M:/geodata/land_use_land_cover/nlcd_2011_landcover_2011_edition_2014_03_31.img")
 landfire <- raster("M:/geodata/land_use_land_cover/us_130evt.tif")
@@ -23,9 +27,6 @@ site_sp <- site[idx, ]
 coordinates(site_sp) <- ~ x + y
 proj4string(site_sp) <- CRS("+init=epsg:4326")
 # writeOGR(site_sp, dsn = "M:/projects/dsp", layer = "site_points", driver = "ESRI Shapefile", overwrite_layer = TRUE)
-
-map("state")
-plot(site_sp, add = T)
 
 geodata <- data.frame(
   idx = which(idx),
@@ -61,5 +62,5 @@ temp <- function(x1, x2, x3, x4, x5, x6){
   return(res)
 }
 geodata$gcomparison <- unlist(mapply(temp, geodata$nlcd, geodata$cotton, geodata$corn, geodata$wheat, geodata$soybeans, geodata$landfire))
-save(geodata, file = "geodata.Rdata")
+save(geodata, site_sp, file = "dsp_geodata.Rdata")
 
