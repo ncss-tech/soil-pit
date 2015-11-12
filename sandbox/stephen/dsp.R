@@ -3,41 +3,47 @@ library(lattice)
 library(RColorBrewer)
 library(plyr)
 library(foreign)
-library(maps)
 library(rgdal)
 library(raster)
+library(maps)
 library(cluster)
+library(splines)
+library(lme4)
 
 options(stringsAsFactors = FALSE)
 source("C:/workspace/soil-pit/trunk/sandbox/stephen/dsp_utils.R")
 
 # Read in data
 
-setwd("M:/projects/dsp")
-local <- "M:/"
-# local <- "C:/Users/Stephen/Google Drive/"
-data <- read.csv(paste0(local, "projects/dsp/dsp_data.csv"))
-site <- read.csv(paste0(local, "projects/dsp/dsp_site.csv"))
-label <- read.csv(paste0(local, "projects/dsp/dsp_label.csv"))
-geodata <- read.csv(paste0(local, "projects/dsp/geodata.csv"))
+setwd("C:/Users/Stephen/Google Drive/projects/dsp")
+# setwd("M:/projects/dsp")
+data <- read.csv("dsp_data.csv")
+site <- read.csv("dsp_site.csv")
+label <- read.csv("dsp_label.csv")
+load("geodata.Rdata")
 
 
 # Rename headings and fix things
 
 names(data) <- tolower(gsub("\\.", "_", names(data)))
+names(data) <- gsub("hor_", "", names(data))
 names(data)[which(names(data) == "userpedonid")] <- "user_pedon_id"
 names(data)[which(names(data) == "bd_recon_moist")] <- "fm_recon_moist"
+
 names(site) <- tolower(gsub("\\.", "_", names(site)))
 names(site)[grep("std_", names(site))] <- c("y", "x")
 names(site)[grep("pedon_lab_", names(site))] <- "lab_samp"
 
+
+data$mid <- with(data, round((bottom - top) / 2))
 data$bd <- apply(data[, grep("bd_", names(data))], 1, mean, na.rm = T)
 data$cf_labvol <- ifelse(is.na(data$cf_labvol), 0, data$cf_labvol)
 data$total_c <- with(data, ifelse(is.na(total_c), tot_c, total_c)) # Could possibly create a label column to differentiate
-data$c_gcm2 <- with(data, total_c * (100 - cf_labvol) * bd * (hor_bottom - hor_top))
+data$c_gcm2 <- with(data, total_c * (100 - cf_labvol) * bd * (bottom - top))
 data$total_n <- with(data, ifelse(is.na(total_n), tot_n, total_n)) # Could possibly create a label column to differentiate
-data$n_gcm2 <- with(data, total_n * (100 - cf_labvol) * bd * (hor_bottom - hor_top))
+data$n_gcm2 <- with(data, total_n * (100 - cf_labvol) * bd * (bottom - top))
 data <- data[!names(data) %in% c("tot_c")]
+
 site <- site[!names(site) %in% c("pedontype", "pedonpurpose")]
 site$idx <- row.names(site)
 
@@ -65,14 +71,14 @@ dsp_df$piid <- paste0(dsp_df$user_pedon_id, "_", dsp_df$user_site_id)
 
 dsp_df$mcomparison <- with(dsp_df, ifelse(n_compare == 1 & !is.na(gcomparison), gcomparison, comparison))
 
-by(dsp_df, dsp_df["kssl_project"], function(x) table(x$mcomparison))
+# by(dsp_df, dsp_df["kssl_project"], function(x) table(x$mcomparison))
 
 
 
 # Build dsp object
 
 dsp <- dsp_df
-depths(dsp) <- piid ~ hor_top + hor_bottom
+depths(dsp) <- piid ~ top + bottom
 site(dsp) <- ~ user_pedon_id + user_site_id + pedon_id + lab_samp + name + dsp_project + kssl_project + pr_name + n_compare + comparison + nlcd + cotton + corn + wheat + landfire + gcomparison + mcomparison + cond + crop + agronfeat + plot + plot_id + plot_layout + mlra_id + mlrarsym + us_l3name + us_l4name + region_strata + rocktype1 + rocktype2 + drainagecl + earthcovkind1 + earthcovkind2 + x + y + geographic_coord_source + elev + slope  + ppt + tmean + ffp + current_taxon_name + soil + pedon_type + pedon_purpose + taxonkind + order + suborder + great_group + subgroup + family
 # for some reason collectors, labpedonno and date won't promote to site 
 # why does pedon_lab_sample__ almost equal pedonlabno, 
@@ -136,4 +142,9 @@ for (i in seq(x)){
   }
 
 
-anova(lm(c_gcm2 ~ clay + ppt + tmean + comparison + plot, data = dsp_df))
+
+# Analyze effects
+histogram(~ log(c_gcm2), dsp_df)
+
+c_glm <-  glm(c_gcm2 ~ ns(mid, 3) + clay + ppt + tmean + slope + comparison + plot, data = dsp_df, family = gaussian(link = "log"))
+anova(c_glm, test = "F")
