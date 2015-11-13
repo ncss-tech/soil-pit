@@ -92,24 +92,24 @@ for (i in seq(x)){
 # Analyze effects
 histogram(~ log(c_gcm2), dsp_df)
 
-c_glm <-  glm(c_gcm2 ~ ns(depth, 3) + clay + ppt + tmean + slope + comparison + plot, data = dsp_df, family = quasipoisson())
+c_glm <-  glm(c_gcm2 ~ ns(depth, 3) + clay + precip + temp + slope + comparison + plot, data = dsp_df, family = quasipoisson())
 test <- anova(c_glm, test = "F")
 test_dev <- data.frame(dev = round(test$Deviance[-1] / test[1, "Resid. Dev"], 2), names = attributes(test)$row.names[-1], depth = "0 - 70 cm")
 
 
 dsp_sub <- dsp_df[dsp_df$depth < 10, ]
-c_glm2 <-  glm(c_gcm2 ~ ns(depth, 3) + clay + ppt + tmean + slope + comparison + plot, data = dsp_sub, family = quasipoisson())
+c_glm2 <-  glm(c_gcm2 ~ ns(depth, 3) + clay + precip + temp + slope + comparison + plot, data = dsp_sub, family = quasipoisson())
 test_sub <- anova(c_glm2, test = "F")
 test_sub_dev <- data.frame(dev = round(test_sub$Deviance[-1] / test_sub[1, "Resid. Dev"], 2), names = attributes(test_sub)$row.names[-1], depth = "0 - 10 cm")
 
 dsp_sub2 <- dsp_df[dsp_df$depth > 10, ]
-c_glm3 <-  glm(c_gcm2 ~ ns(depth, 3) + clay + ppt + tmean + slope + comparison + plot, data = dsp_sub2, family = quasipoisson())
+c_glm3 <-  glm(c_gcm2 ~ ns(depth, 3) + clay + precip + temp + slope + comparison + plot, data = dsp_sub2, family = quasipoisson())
 test_sub2 <- anova(c_glm3, test = "F")
 test_sub_dev2 <- data.frame(dev = round(test_sub2$Deviance[-1] / test_sub2[1, "Resid. Dev"], 2), names = attributes(test_sub2)$row.names[-1], depth = "10 - 70 cm")
 
 glm_table <- rbind(test_dev, test_sub_dev, test_sub_dev2)
 glm_table$depth <- with(glm_table, factor(depth, levels = c("0 - 70 cm", "0 - 10 cm", "10 - 70 cm")))
-glm_table$names <- with(glm_table, factor(names, levels = test_dev$names)
+glm_table$names <- with(glm_table, factor(names, levels = test_dev$names))
 
 png(file = paste0(getwd(), "/figures/", "glm_plots.png"), width = 9, height = 5, units = "in", res = 150)
 barchart(dev ~ names | depth, data = glm_table, scales = list(rot = c(45, 0)))
