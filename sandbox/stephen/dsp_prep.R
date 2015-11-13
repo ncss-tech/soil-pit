@@ -8,9 +8,9 @@ options(stringsAsFactors = FALSE)
 
 # setwd("C:/Users/Stephen/Google Drive/projects/dsp")
 setwd("M:/projects/dsp")
-data <- read.csv("dsp_data.csv")
-site <- read.csv("dsp_site.csv")
-label <- read.csv("dsp_label.csv")
+data <- read.csv("./data/dsp_data.csv")
+site <- read.csv("./data/dsp_site.csv")
+label <- read.csv("./data/dsp_label.csv")
 
 
 # Rename headings and fix things
@@ -70,7 +70,7 @@ dsp_df$mcomparison <- with(dsp_df, ifelse(n_compare == 1 & !is.na(gcomparison), 
 
 dsp <- dsp_df
 depths(dsp) <- piid ~ top + bottom
-site(dsp) <- ~ user_pedon_id + user_site_id + pedon_id + lab_samp + name + dsp_project + kssl_project + pr_name + n_compare + comparison + nlcd + cotton + corn + wheat + landfire + gcomparison + mcomparison + cond + crop + agronfeat + plot + plot_id + plot_layout + mlra_id + mlrarsym + us_l3name + us_l4name + region_strata + rocktype1 + rocktype2 + drainagecl + earthcovkind1 + earthcovkind2 + x + y + geographic_coord_source + elev + slope  + ppt + tmean + ffp + current_taxon_name + soil + pedon_type + pedon_purpose + taxonkind + order + suborder + great_group + subgroup + family
+site(dsp) <- ~ user_pedon_id + user_site_id + pedon_id + lab_samp + name + dsp_project + kssl_project + pr_name + n_compare + comparison + nlcd + cotton + corn + wheat + landfire + gcomparison + mcomparison + cond + crop + agronfeat + plot + plot_id + plot_layout + mlra_id + mlrarsym + us_l3name + us_l4name + region_strata + rocktype1 + rocktype2 + drainagecl + earthcovkind1 + earthcovkind2 + x + y + geographic_coord_source + elev + slope  + precip + temp + ffp + current_taxon_name + soil + pedon_type + pedon_purpose + taxonkind + order + suborder + great_group + subgroup + family
 # for some reason collectors, labpedonno and date won't promote to site 
 # why does pedon_lab_sample__ almost equal pedonlabno, 
 # data_site[with(data_site, which(lab_samp != labpedonno)), ]
@@ -79,4 +79,4 @@ site(dsp) <- ~ user_pedon_id + user_site_id + pedon_id + lab_samp + name + dsp_p
 # coordinates(dsp1) <- ~ x + y
 # dsp2 <- subsetProfiles(dsp, s="x == 'NA'")
 
-save(data, site, dsp_df, dsp, file = "dsp_prep.Rdata")
+save(data, site, dsp_df, dsp, file = "./data/dsp_prep.Rdata")

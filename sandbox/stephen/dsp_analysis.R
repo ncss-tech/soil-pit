@@ -18,8 +18,8 @@ source("C:/workspace/soil-pit/trunk/sandbox/stephen/gfits.R")
 
 # setwd("C:/Users/Stephen/Google Drive/projects/dsp")
 setwd("M:/projects/dsp")
-load("dsp_prep.Rdata")
-load("dsp_geodata.Rdata")
+load("./data/dsp_prep.Rdata")
+load("./data/dsp_geodata.Rdata")
 
 
 

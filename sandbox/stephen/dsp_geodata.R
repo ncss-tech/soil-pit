@@ -4,6 +4,8 @@ library(raster)
 
 options(stringsAsFactors = FALSE)
 
+setwd("M:/projects/dsp")
+
 nlcd <- raster("M:/geodata/land_use_land_cover/nlcd_2011_landcover_2011_edition_2014_03_31.img")
 landfire <- raster("M:/geodata/land_use_land_cover/us_130evt.tif")
 cotton <- raster("M:/geodata/land_use_land_cover/crop_frequency_2008-2014/crop_frequency_cotton_2008-2014_nobackground.img")
@@ -12,8 +14,8 @@ wheat <- raster("M:/geodata/land_use_land_cover/crop_frequency_2008-2014/crop_fr
 soybeans <- raster("M:/geodata/land_use_land_cover/crop_frequency_2008-2014/crop_frequency_soybeans_2008-2014_nobackground.img")
 elev <- raster("M:/geodata/elevation/ned/ned30m_aea.img")
 slope <- raster("M:/geodata/elevation/ned/ned30m_aea_slope.tif")
-ppt <- raster("M:/geodata/climate/prism/PRISM_ppt_30yr_normal_800mM2_all_asc/PRISM_ppt_30yr_normal_800mM2_annual_asc.asc")
-tmean <- raster("M:/geodata/climate/prism/PRISM_tmean_30yr_normal_800mM2_all_asc/PRISM_tmean_30yr_normal_800mM2_annual_asc.asc")
+precip <- raster("M:/geodata/climate/prism/PRISM_ppt_30yr_normal_800mM2_all_asc/PRISM_ppt_30yr_normal_800mM2_annual_asc.asc")
+temp <- raster("M:/geodata/climate/prism/PRISM_tmean_30yr_normal_800mM2_all_asc/PRISM_tmean_30yr_normal_800mM2_annual_asc.asc")
 ffp <- raster("M:/geodata/climate/rmrs/ffp.txt"); proj4string(ffp) <- CRS("+init=epsg:4326")
 eco <- readOGR(dsn = "M:/geodata/ecology", layer = "us_eco_l4_no_st", encoding = "ESRI Shapefile")
 mlra <- readOGR(dsn = "M:/geodata/soils", layer = "mlra_a_mbr", encoding = "ESRI Shapefile")
@@ -26,7 +28,7 @@ idx <- which(complete.cases(site[c("x", "y")]))
 site_sp <- site[idx, ]
 coordinates(site_sp) <- ~ x + y
 proj4string(site_sp) <- CRS("+init=epsg:4326")
-# writeOGR(site_sp, dsn = "M:/projects/dsp", layer = "site_points", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+# writeOGR(site_sp, dsn = "M:/projects/dsp/data", layer = "site_points", driver = "ESRI Shapefile", overwrite_layer = TRUE)
 
 geodata <- data.frame(
   idx = which(idx),
@@ -38,8 +40,8 @@ geodata <- data.frame(
   landfire = extract(landfire, site_sp), 
   elev = extract(elev, site_sp), 
   slope = extract(slope, site_sp), 
-  tmean = extract(tmean, site_sp), 
-  ppt = extract(ppt, site_sp), 
+  temp = extract(tmean, site_sp), 
+  precip = extract(ppt, site_sp), 
   ffp = extract(ffp, site_sp)
 )
 geodata <- cbind(geodata,
@@ -62,5 +64,5 @@ temp <- function(x1, x2, x3, x4, x5, x6){
   return(res)
 }
 geodata$gcomparison <- unlist(mapply(temp, geodata$nlcd, geodata$cotton, geodata$corn, geodata$wheat, geodata$soybeans, geodata$landfire))
-save(geodata, site_sp, file = "dsp_geodata.Rdata")
+save(geodata, site_sp, file = "./data/dsp_geodata.Rdata")
 
