@@ -1,0 +1,148 @@
+# Dom Component NASIS report. The yellow highlighted area is the dominant component part of the script. 
+
+PARAMETER area2 ELEMENT area.areasymbol PROMPT 'Survey Symbol for wildcards use % '.
+
+BASE TABLE component.
+
+EXEC SQL
+SELECT DISTINCT areasymbol, lmapunitiid/1 AS mukey, musym, dmuiid, muiid, muname, farmlndcl, coiid/1 AS coiid, component.compname AS tc, comppct_r, majcompflag 
+FROM REAL area_type
+INNER JOIN        REAL area BY default AND areasymbol LIKE area2 AND areatypename = 'non-mlra soil survey area'
+INNER JOIN        REAL legend BY default AND legendsuituse = 'current wherever mapped'
+INNER JOIN        REAL lmapunit BY default
+INNER JOIN  REAL mapunit BY default AND mustatus = 'correlated'
+INNER JOIN  REAL correlation BY default
+INNER JOIN  REAL datamapunit BY default AND repdmu = 1
+INNER JOIN  REAL component BY default 
+AND component.coiid =
+(SELECT TOP 1 c1.coiid FROM component AS c1 
+INNER JOIN datamapunit AS d1 ON  d1.dmuiid=c1.dmuiidref
+INNER JOIN correlation AS cor1 ON cor1.dmuiidref=d1.dmuiid AND repdmu =1
+INNER JOIN mapunit AS c ON c.muiid=cor1.muiidref AND c.muiid=mapunit.muiid ORDER BY c1.comppct_r DESC, c1.coiid);.
+
+# component_wtavg_pH_SDA_query - This query calculates the weighted average pH in the 0-50 cm depth range for major components
+-- Calculate horizon bottom depth as 50 for horizons that span the 50 cm depth.
+
+SELECT legend.areasymbol, legend.areaname, mapunit.musym, mapunit.muname, mapunit.mukey, component.cokey, component.compname, component.comppct_r, chorizon.hzdept_r, case when hzdepb_r > 50 then 50 else hzdepb_r end AS bot_depth, chorizon.ph1to1h2o_r INTO #table1
+
+FROM legend
+
+INNER JOIN mapunit on legend.lkey = mapunit.lkey
+INNER JOIN component ON mapunit.mukey = component.mukey
+INNER JOIN chorizon on component.cokey = chorizon.cokey 
+-- Modify the areasymbol criteria to run for any soil survey area.  Use LIKE 'OR%' to
+-- run for entire State.  Remove completely to run for entire Soil Data Mart database.
+
+WHERE chorizon.hzdept_r <50 AND chorizon.ph1to1h2o_r Is Not Null AND component.majcompflag = 'yes' AND legend.areasymbol = 'OR620'
+
+ORDER BY legend.areasymbol, mapunit.musym, component.comppct_r DESC , chorizon.hzdept_r
+-- Calculate horizon thicknesses
+
+SELECT areasymbol, areaname, musym, muname, mukey, cokey, compname, comppct_r, hzdept_r, bot_depth, ph1to1h2o_r, bot_depth- hzdept_r AS hz_thickness
+
+INTO #table2
+FROM #table1
+
+ORDER BY areasymbol, musym, comppct_r DESC , hzdept_r
+-- Calculate pH multiplied by horizon thickness
+
+SELECT areasymbol, areaname, musym, muname, mukey, cokey, compname, comppct_r, hzdept_r, bot_depth, ph1to1h2o_r, hz_thickness, ph1to1h2o_r * hz_thickness AS pH_x_thickness
+
+INTO #table3
+FROM #table2
+
+ORDER BY areasymbol, musym, comppct_r DESC , hzdept_r
+-- Calculate sums of horizon thicknesses and sums of pH x thicknesses
+
+SELECT areasymbol, areaname, musym, muname, mukey, cokey, compname, comppct_r, sum(hz_thickness) AS sum_thickness,  sum(pH_x_thickness) AS sum_pH_x_thickness
+
+INTO #table4
+FROM #table3
+
+GROUP BY areasymbol, areaname, musym, muname, mukey, cokey, compname, comppct_r
+
+ORDER BY areasymbol, musym, comppct_r DESC
+
+-- Calculate weighted average pH for components
+
+SELECT areasymbol, areaname, musym, muname, mukey, cokey, compname, comppct_r, CAST(sum_pH_x_thickness / sum_thickness AS Decimal(4,1)) AS pH_wtavg_0_50
+
+FROM #table4
+
+ORDER BY areasymbol, musym, comppct_r DESC
+
+
+
+# component_wtavg_pH_SDA_query - This query calculates the weighted average pH in the 0-50 cm depth range for major components
+
+-- Calculate horizon bottom depth as 50 for horizons that span the 50 cm depth.
+
+SELECT legend.areasymbol, legend.areaname, mapunit.musym, mapunit.muname, mapunit.mukey, component.cokey, component.compname, component.comppct_r, chorizon.hzdept_r, case when hzdepb_r > 50 then 50 else hzdepb_r end AS bot_depth, chorizon.ph1to1h2o_r
+
+INTO #table1
+
+FROM legend
+
+INNER JOIN mapunit on legend.lkey = mapunit.lkey
+INNER JOIN component ON mapunit.mukey = component.mukey
+INNER JOIN chorizon on component.cokey = chorizon.cokey 
+-- Modify the areasymbol criteria to run for any soil survey area.  Use LIKE 'OR%' to
+-- run for entire State.  Remove completely to run for entire Soil Data Mart database.
+
+WHERE chorizon.hzdept_r <50 AND chorizon.ph1to1h2o_r Is Not Null AND component.majcompflag = 'yes' AND legend.areasymbol = 'OR620'
+
+ORDER BY legend.areasymbol, mapunit.musym, component.comppct_r DESC , chorizon.hzdept_r
+-- Calculate horizon thicknesses
+
+
+SELECT areasymbol, areaname, musym, muname, mukey, cokey, compname, comppct_r, hzdept_r, bot_depth, ph1to1h2o_r, bot_depth- hzdept_r AS hz_thickness
+
+INTO #table2
+
+
+FROM #table1
+
+ORDER BY areasymbol, musym, comppct_r DESC , hzdept_r
+-- Calculate pH multiplied by horizon thickness
+
+
+SELECT areasymbol, areaname, musym, muname, mukey, cokey, compname, comppct_r, hzdept_r, bot_depth, ph1to1h2o_r, hz_thickness, ph1to1h2o_r * hz_thickness AS pH_x_thickness
+
+INTO #table3
+FROM #table2
+
+ORDER BY areasymbol, musym, comppct_r DESC , hzdept_r
+-- Calculate sums of horizon thicknesses and sums of pH x thicknesses
+
+SELECT areasymbol, areaname, musym, muname, mukey, cokey, compname, comppct_r, sum(hz_thickness) AS sum_thickness,  sum(pH_x_thickness) AS sum_pH_x_thickness
+
+INTO #table4
+
+FROM #table3
+GROUP BY areasymbol, areaname, musym, muname, mukey, cokey, compname, comppct_r
+ORDER BY areasymbol, musym, comppct_r DESC
+-- Calculate weighted average pH for components
+
+SELECT areasymbol, areaname, musym, muname, mukey, cokey, compname, comppct_r, CAST(sum_pH_x_thickness / sum_thickness AS Decimal(4,1)) AS pH_wtavg_0_50
+
+FROM #table4
+
+ORDER BY areasymbol, musym, comppct_r DESC
+
+
+
+# sda_sql_query_for_taxonomy - SDA SQL query for taxonomy- Note will not get result for consociations of miscellaneous areas such as water -Rob Vaughan with help from Steve Campbell 
+
+SELECT
+legend.areasymbol, legend.lkey, mapunit.muname, mapunit.mukey, component.cokey, component.comppct_r, component.compname, component.compkind, component.taxclname, component.taxorder, component.taxsuborder, component.taxgrtgroup, component.taxsubgrp, component.taxpartsize, component.taxpartsizemod, component.taxtempcl, component.taxmoistscl, component.taxtempregime, component.soiltaxedition
+
+FROM legend
+INNER JOIN mapunit ON legend.lkey = mapunit.lkey  
+LEFT OUTER JOIN component ON mapunit.mukey = component.mukey  
+  
+WHERE legend.areasymbol LIKE 'WY043%' AND 
+component.cokey = (SELECT TOP 1 component.cokey FROM component.mukey = mapunit.mukey AND component.taxorder is not null ORDER BY component.comppct_r DESC)
+ORDER BY component.comppct_r DESC)
+
+ORDER BY legend.areasymbol, legend.lkey, mapunit.mukey, component.cokey
+
