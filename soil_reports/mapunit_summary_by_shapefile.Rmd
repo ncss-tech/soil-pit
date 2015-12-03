@@ -4,10 +4,10 @@
 This report summarizes the geographic setting of a list of MUSYM within a shapefile. It is intented to be used to compare and contrast map units, and suggest possible Low, RV, and High values for soil components. 
 
 ```{r load-data, echo=FALSE, results='hide', message=FALSE}
-shp <- "201511IND015_Cslm,WLwlnd,2t6psl,e_QA"
+shp <- "201611IND002_Cslm,SOTPln,2t6psl,e_QA"
 
 dir <- "M:/geodata/project_data/"
-geodatabase <- "RTSD_Region_11_IND_FY15.gdb"
+geodatabase <- "RTSD_R11-IND_FY16.gdb"
 office <- "11IND"
 
 # Defaults
@@ -127,7 +127,7 @@ kable(pol.5n, digits = 0, align = "c", caption = "Summary of MUSYM by AREASYMBOL
 kable(mlra_acres, digits = 0, align = "c", caption = "Summary of Acres by MLRA")
 
 # pol.lo1$SSA_MUSYM <- as.factor(pol.lo1$SSA_MUSYM)
-pol.lo1$SSA_MUSYM <- factor(pol.lo1$SSA_MUSYM, levels = rev(unique(pol.lo1$SSA_MUSYM)))
+pol.lo1$SSA_MUSYM <- factor(pol.lo1$SSA_MUSYM, levels = rev(sort(unique(pol.lo1$SSA_MUSYM))))
                                                           
 bwplot(SSA_MUSYM ~ value | variable, data = pol.lo1, scales = list(x="free"), main = "Boxplots of polygon metrics", as.table = TRUE)
 
@@ -169,7 +169,7 @@ aspect.c <- dcast(aspect.5n, SSA_MUSYM ~ variable, value.var = 'range')
 kable(cbind(data.c[c(1:6)], data.n["n"]), align = "c")
 kable(cbind(data.c[c(1, 7:9)], aspect.c["aspect"], data.n["n"]), align = "c")
 
-data.lo$SSA_MUSYM <- factor(data.lo$SSA_MUSYM, levels = rev(unique(data.lo$SSA_MUSYM)))
+data.lo$SSA_MUSYM <- factor(data.lo$SSA_MUSYM, levels = rev(sort(unique(data.lo$SSA_MUSYM))))
 
 bwplot(SSA_MUSYM ~ value|variable, data=data.lo, scales=list(x="free"), main = "Boxplots of map unit properties", as.table = TRUE, layout = c(2, 4))
 
