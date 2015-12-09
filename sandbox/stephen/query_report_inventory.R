@@ -5,7 +5,7 @@ get_queries_NASIS_db <- function() {
   if(!requireNamespace('RODBC'))
     stop('please install the `RODBC` package', call.=FALSE)
   
-  q <- "SELECT lmapunitiid
+  q <- "SELECT lmapunitiid, muacres
   
   FROM lmapunit_View_1;"
   
