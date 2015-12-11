@@ -1,0 +1,204 @@
+# Lab pedon report
+```{r enter soil series name}
+# Set soil series
+series <- "Treaty"
+
+# Set percentiles
+p <- c(0, 0.25, 0.5, 0.75, 1)
+```
+
+```{r load packages, include=FALSE}
+# load libraries
+library(aqp)
+library(soilDB)
+library(lattice)
+library(plyr)
+# library(ggplot2)
+library(reshape2)
+library(stringr)
+library(knitr)
+library(maps)
+library(RColorBrewer)
+
+source("report_functions.R")
+source(paste0("./genhz_rules/", series, "_rules.R"))
+```
+
+```{r fetch and format, load-data, echo=FALSE, warning=FALSE}
+# load NASIS data
+l <- fetchNASISLabData()
+f <- fetchNASIS()
+
+lh <- horizons(l)
+lp <- site(l)
+h <- horizons(f)
+s <- site(f)
+
+names(lh) <- unlist(strsplit(names(lh), "measured"))
+lh$cec7clay <- round(lh$cec7 / (lh$claytot - lh$claycarb), 2)
+lp$cec7clayratiowtavg <- lp$cec7clayratiowtavg * 100
+
+for (i in seq(nrow(lh))){
+  if (is.na(lh$hzname[i])) {lh$hzname[i] <-lh$hznameoriginal[i]}
+}
+
+lh$hzname[is.na(lh$hzname)] <- "missing"
+lh$genhz <- generalize.hz(lh$hzname, ghr$n, ghr$p)
+horizons(l) <- lh
+lh$hzdepm <- (lh$hzdept + lh$hzdepb)/2
+genhz_med <- sort(tapply(lh$hzdepm, lh$genhz, median))
+l$genhz <- factor(lh$genhz, levels = names(genhz_med), ordered = TRUE)                                                                                                       
+
+h$hzname[is.na(h$hzname)] <- "missing"
+h$genhz <- generalize.hz(h$hzname, ghr$n, ghr$p)
+horizons(f) <- h
+h$hzdepm <- (h$hzdept + h$hzdepb)/2
+genhz_med <- sort(tapply(h$hzdepm, h$genhz, median))
+f$genhz <- factor(h$genhz, levels = names(genhz_med), ordered = TRUE)                                                                                                       
+
+lh <- horizons(l)
+h <- horizons(f)
+
+h <- data.frame(lapply(h, na_replace), stringsAsFactors = FALSE)
+
+```
+
+
+## Brief summary of NCSS lab pedon data
+```{r plot of pedons and locations, echo=FALSE}
+if (dim(s)[1] != 0) {
+  s.sub <- s[complete.cases(s[c('x_std', 'y_std')]),]
+  coordinates(s.sub) <- ~x_std + y_std
+  plot(s.sub, pch=16, main = "Map of pedons with coordinates")
+  map("county", lwd = 0.5, add=T)
+  map("state",lwd = 2, add=T)
+  map.axes()
+  }
+```
+
+```{r format site data, echo=FALSE, warnings=FALSE, results='asis', message=FALSE}
+kable(subset(s, select = c("pedon_id", "taxonname", "tax_subgroup", "part_size_class", "pedon_type", "describer")))
+
+cols <- brewer.pal(n = length(levels(l$genhz)), name = "Set1") 
+hz.names <- levels(l$genhz)
+l$genhz.soil_color <- cols[match(l$genhz, hz.names)] # assign a color to each generalized horizon label
+
+idx <- pindex(l, 15)
+  
+for (i in unique(idx)){
+  plot(l[idx == i], name = 'hzname', color = 'genhz.soil_color', label = 'upedonid')
+  title("Soil profile plots")
+  legend('bottomleft', legend = hz.names, pt.bg = cols, pch = 22, horiz = TRUE, pt.cex = 2, text.width = 1)
+  }
+```
+
+
+## Range in characteristics for NCSS pedon lab data
+### Summary of soil profiles
+Five number summary (min, 25th, median, 75th, max)(percentiles)
+```{r, echo=FALSE, results='asis', warning=FALSE, fig.width=8}
+# Summarize site data
+lp.sub <- subset(lp, select=c("noncarbclaywtavg", "claytotwtavg", "le0to100", "wf0175wtavgpsc", "volfractgt2wtavg", "cec7clayratiowtavg"))
+lp.lo <- melt(lp.sub, measure.vars=c("noncarbclaywtavg", "claytotwtavg", "le0to100", "wf0175wtavgpsc", "volfractgt2wtavg", "cec7clayratiowtavg"))
+lp.5n <- ddply(lp.lo, .(variable), .fun = sum5n)
+
+kable(lp.5n, caption = "Summary of aggregate profile attributes", align = "c")
+
+if (nrow(na.exclude(lp.lo)) > 6) {
+  bwplot(variable ~ value, data = lp.lo, ylab = "percent", main = "Boxplots of aggregate profile attributes", as.table = TRUE)
+  
+  # qplot(variable, value, data = lp.lo, geom = "boxplot", ylab = "percent", main = "Boxplots of aggregate profile attributes")
+  }         
+
+lp.lo1 <- melt(lp, id.vars="labpeiid", measure.vars = c("psctopdepth", "pscbotdepth"))
+lp.thk <- ddply(lp, .(labpeiid), summarize, thickness = sum(pscbotdepth - psctopdepth))
+lp.lo2 <- melt(lp.thk, id.vars = "labpeiid", measure.vars = "thickness")
+lp.lo <- rbind(lp.lo1, lp.lo2)
+
+lp.5n <- ddply(lp.lo, .(variable), .fun = sum5n)
+
+kable(lp.5n, digits = 0, align = "c", caption = "Depths and thickness of particle size control section (min, 25th, median, 75th, max)(n)")
+
+if (length(na.exclude(lp.thk$thickness)) > 1){
+  # qplot(variable, value, data = lp.lo, geom = "boxplot", ylab = "cm", main = "Boxplots of particle size control section depths and thickness") + facet_wrap(~variable, scales = "free", ncol = 4)
+  
+  ylim <- c(max(lp.lo$value, na.rm = T) + 5, min(lp.lo$value, na.rm = T) - 5)
+  bwplot(value ~ variable, data=lp.lo, ylim = ylim, ylab="cm", main = "Boxplots of particle size control section depths and thickness")
+}
+  
+```
+
+
+### Summary of soil horizons
+
+```{r, echo=FALSE, results='asis', warning=FALSE, fig.width=8}
+hz_t <- addmargins(table(lh$genhz, lh$hzname))
+
+idx <- pindex(hz_t, 15)
+
+for (i in unique(idx)){
+  print(kable(hz_t[, c(idx == i)], align = "c", digits = 0, caption = "Horizon designations vs generic horizon designations (counts)"))
+  }
+
+
+genhz.thk <- ddply(lh, .(labpeiid, genhz), summarize, thickness = sum(hzdepb - hzdept))
+genhz.lo <- melt(genhz.thk, id.vars="genhz", measure.vars="thickness")
+
+lh.lo <- melt(lh, id.vars = "genhz", measure.vars = c("hzdept", "hzdepb"))
+lh.lo <- rbind(lh.lo, genhz.lo)
+lh.5n <- ddply(lh.lo, .(variable, genhz), .fun = sum5n)
+lh.c <- dcast(lh.5n, genhz ~ variable, value.var = "range")
+
+kable(lh.c, digits = 0, align = "c", caption = "Depths and thickness of generic horizons (min, 25th, median, 75th, max)(n)")
+
+lh.lo$genhz <- factor(lh.lo$genhz, levels = rev(levels(lh.lo$genhz)))
+
+bwplot(genhz ~ value | variable, data = lh.lo, scales =list(x="free"), main = "Box plots of numeric variables by generic horizon", as.table = TRUE)
+
+# qplot(genhz, value, data = lh.lo, geom = "boxplot", ylab = "cm", main = "Boxplots of horizon depths and thickness") + facet_wrap(~variable, scales = "free") + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+
+```        
+
+
+## Range in characteristics for generic horizons 
+Five number summary (min, 25th, median, 75th, max)(percentiles) and total number of observations (n)
+
+```{r, echo=FALSE, results='asis', warning=FALSE}
+lh.num <- lh[c(12:(ncol(lh)-4), ncol(lh)-1, ncol(lh))]
+lh.num <- Filter(f = function(x) !all(is.na(x)), x = lh.num)
+lh.lo <- melt(lh.num, id.vars="genhz", measure.vars=names(lh.num)[c(1:(ncol(lh.num)-1))])
+lh.5n <- ddply(lh.lo, .(variable, genhz), .fun=sum5n)
+lh.c <- dcast(lh.5n, genhz~variable, value.var = "range")
+
+idx <- pindex(lh.c, 4)
+
+for (i in unique(idx)){
+  print(kable(lh.c[, c(TRUE, idx == i)], align = "c"))
+  }
+
+nh <- ncol(lh.num) / 4 * 2
+```
+
+```{r, echo=FALSE, warning=FALSE, fig.height=nh, fig.width=8}
+lh.lo$genhz <- factor(lh.lo$genhz, levels = rev(levels(lh.lo$genhz)))
+n <- ceiling(length(levels(lh.lo$variable))/4)
+
+bwplot(genhz ~ value | variable, data = lh.lo, scales=list(x="free"), main = "Box plots of numeric variables by generic horizon", as.table = TRUE, layout = c(4, n))
+
+# qplot(genhz, value, data = lh.lo, geom = "boxplot", main = "Boxplots of numeric variables by generic horizon") + facet_wrap(~variable, scales = "free", ncol = 4) + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+
+```
+
+```{r, echo=FALSE, results='asis'}
+tc <- c("cos", "s", "fs", "vfs", "lcos", "ls", "lfs", "lvfs", "cosl", "sl", "fsl", "vfsl", "l", "sil", "si", "scl", "cl", "sicl", "sc", "sic", "c", "NA")
+tc <- tc[tc %in% unique(lh$lab_texcl)]
+lh$lab_texcl <- factor(lh$lab_texcl, levels = tc)
+
+kable(addmargins(table(lh$genhz, lh$lab_texcl)), digits = 0, caption = "Texture by generic horizon")
+
+if (any(lh$stratextsflag != 0)){
+  kable(addmargins(table(lh$genhz, lh$stratextsflag)), digits=0, caption = "Stratified flag by generic horizon")
+  }
+```
+
+
