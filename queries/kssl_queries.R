@@ -41,7 +41,7 @@ correlation_report <- function(asymbol, fy){
       if (length(readHTMLTable(cor_w, stringsAsFactors = F)) > 0) {
         l[[i]] <- readHTMLTable(cor_w, stringsAsFactors = F)[[1]]}
     }
-    ldply(l)
+    if (length(l >  0)) ldply(l) else message("no data")
   }
   
   corr <- url_download(url)

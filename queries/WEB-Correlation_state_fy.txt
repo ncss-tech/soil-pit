@@ -1,0 +1,66 @@
+#Jason Nemecek 5/21/2013
+#Stephen Roecker 2015-09-23
+
+PARAMETER asymbol CHARACTER PROMPT  "Area Symbol - caution; wildcard use percent (%) instead of asterisk(*) e.g WI%" REQUIRED.
+PARAMETER fy NUMERIC PROMPT 'Fiscal Year (4 digits eg 2015)' REQUIRED.
+
+
+##PARAMETER project CHAR ELEMENT project.projectname PROMPT 'Project Name (example: %MLRA 122% or SDJR%)' REQUIRED.
+
+EXEC SQL SELECT DISTINCT 1 AS id, 
+RTRIM(a2.areasymbol) AS sso,
+RTRIM(area.areasymbol) AS areasymbol,
+RTRIM (ilmu.musym) AS old_musym, 
+RTRIM (almu.musym) AS new_musym, 
+RTRIM(imu.nationalmusym)AS old_natsym,
+RTRIM(amu.nationalmusym)AS new_natsym,
+ilmu.lmapunitiid/1 AS old_mukey,
+almu.lmapunitiid/1 AS new_mukey,
+ilmu.muacres/1 AS old_acres,
+almu.muacres/1 AS new_acres,
+projectlandcategoryacres/1 AS project_acres,
+updtnrcsacresg/1 AS acre_goal,
+RTRIM(imu.muname) AS old_muname,
+RTRIM(amu.muname) AS new_muname,
+RTRIM(aproject.projectiid) AS projectiid,
+RTRIM(aproject.uprojectid) AS uprojectid, 
+RTRIM(aproject.projectname) AS projectname
+
+
+FROM REAL areatype
+INNER JOIN REAL area BY default AND areatypename = 'non-mlra soil survey area' AND area.areasymbol LIKE asymbol 
+INNER JOIN REAL legend ON area.areaiid = legend.areaiidref AND  legendsuituse = "current wherever mapped" AND  legend.legendsuituse = 3
+INNER JOIN REAL lmapunit AS almu ON almu.liidref = legend.liid AND almu.mustatus != "additional"
+INNER JOIN REAL mapunit AS amu ON amu.muiid = almu.muiidref
+INNER JOIN REAL correlation AS acor ON acor.muiidref = amu.muiid 
+INNER JOIN REAL lmapunit AS ilmu ON ilmu.liidref = legend.liid AND ilmu.mustatus IN( "additional" , "correlated") --- ADDED CORRELATED TO INCLUDE MAP UNITS WHERE IT WAS DROPPED BU NOT SPLIT ALSO HAVE TO ADD WHERE THE MUUID NOT THE SAME
+#AND ilmu.mustatus = "additional" 
+INNER JOIN REAL mapunit AS imu ON imu.muiid = ilmu.muiidref AND amu.muiid != imu.muiid -- NEW
+INNER JOIN REAL correlation AS icor ON icor.muiidref = imu.muiid AND icor.repdmu = 1
+INNER JOIN REAL projectmapunit AS aprojectmapunit ON aprojectmapunit.muiidref = amu.muiid 
+INNER JOIN REAL projectmapunit AS iprojectmapunit ON iprojectmapunit.muiidref = imu.muiid 
+INNER JOIN REAL project AS aproject ON aprojectmapunit.projectiidref = aproject.projectiid AND aproject.projectname LIKE '%MLRA%' AND aproject.projectapprovedflag = 1
+INNER JOIN REAL area AS a2 ON a2.areaiid = aproject.mlrassoareaiidref
+INNER JOIN REAL project AS iproject ON iprojectmapunit.projectiidref = iproject.projectiid AND iproject.projectname LIKE '%MLRA%' AND iproject.projectapprovedflag = 1
+INNER JOIN REAL projectlandcatbreakdown ON projectlandcatbreakdown.projectiidref = aproject.projectiid 
+INNER JOIN REAL projectmappinggoal pmg ON pmg.projectiidref = aproject.projectiid
+INNER JOIN REAL projectmilestone ON projectmilestone.projectiidref = aproject.projectiid
+INNER JOIN REAL milestonetype ON milestonetype.milestonetypeiid = projectmilestone.milestonetypeiidref 
+AND #((milestonetypename = 'SDJR 12. Correlation activities completed' AND YEAR(milestonedatecompleted) = fy AND MONTH(milestonedatecompleted) < 10) OR
+( #(milestonetypename = 'Complete Correlation activities' AND YEAR(milestonedatecompleted) = fy + 1) OR 
+(milestonetypename = 'Complete Correlation activities' AND YEAR(milestonedatecompleted) = fy AND MONTH(milestonedatecompleted) < 10) OR 
+(milestonetypename = 'Complete Correlation activities' AND YEAR(milestonedatecompleted) = (fy -1) AND MONTH(milestonedatecompleted) >= 10) OR
+
+
+#(milestonetypename = 'SDJR 12. Correlation activities completed' AND YEAR(milestonedatecompleted) = fy + 1) OR 
+(milestonetypename = 'SDJR 12. Correlation activities completed' AND YEAR(milestonedatecompleted) = fy AND MONTH(milestonedatecompleted) < 10) OR 
+(milestonetypename = 'SDJR 12. Correlation activities completed' AND YEAR(milestonedatecompleted) = (fy -1) AND MONTH(milestonedatecompleted) >= 10))
+ #milestonetypename = 'Project Completed Date'
+  #   (milestonetypename = 'SDJR 12. Correlation activities completed' AND YEAR(milestonedatecompleted) = (fy -1) AND MONTH(milestonedatecompleted) >= 10))
+WHERE acor.dmuiidref = icor.dmuiidref 
+AND almu.liidref = ilmu.liidref;
+SORT BY sso, areasymbol,  new_musym SYM.
+#AGGREGATE COLUMN #new_mlra_mu FIRST,
+# aproject.projectname FIRST , #new_mlra_mu FIRST,
+# amu.muiid FIRST,
+#imu.muiid FIRST, proj_id FIRST.

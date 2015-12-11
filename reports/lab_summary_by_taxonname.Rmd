@@ -20,7 +20,7 @@ library(knitr)
 library(maps)
 library(RColorBrewer)
 
-source("report_functions.R")
+source("../soilDB_x/utils.R")
 source(paste0("./genhz_rules/", series, "_rules.R"))
 ```
 

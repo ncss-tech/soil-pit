@@ -34,7 +34,7 @@ library(plyr)
 library(ggplot2)
 library(reshape2)
 
-source("report_functions.R")
+source("../soilDB_x/utils.R")
 ```
 ```{r map unit summary function, echo=FALSE}
 ## local functions

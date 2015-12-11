@@ -1,8 +1,8 @@
 library(soilDB)
 library(plyr)
 
-source("C:/workspace/soil-pit/trunk/soilDB_x/utils.R")
-source("C:/workspace/soil-pit/trunk/soilDB_x/get_component_data_from_NASIS_db.R")
+source("C:/workspace/soil-pit.git/trunk/soilDB_x/utils.R")
+source("C:/workspace/soil-pit.git/trunk/soilDB_x/get_component_data_from_NASIS_db.R")
 
 options(stringsAsFactors = FALSE)
 
