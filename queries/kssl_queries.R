@@ -37,17 +37,19 @@ correlation_report <- function(asymbol, fy){
   url_download <- function(x) {
     l <- list()
     for (i in seq(x)){
+      cat(paste("working on", x[i], "\n"))
       cor_w <- getURLContent(x[i], ssl.verifypeer = F)
       if (length(readHTMLTable(cor_w, stringsAsFactors = F)) > 0) {
         l[[i]] <- readHTMLTable(cor_w, stringsAsFactors = F)[[1]]}
     }
-    if (length(l >  0)) ldply(l) else message("no data")
+    test <- length(l) > 0
+    if (test) ldply(l) else message("no data")
   }
   
   corr <- url_download(url)
   
   # Rename, subset and find spatial changes
-  names(corr) <- unlist(lapply(names(corr), function(x) strsplit(x, "\n")[[1]][3]))
+  names(corr) <- gsub("\n", "", names(corr))
   
   corr$region <- sapply(corr$sso, function(x) strsplit(x, "-")[[1]][1])
   corr$fy <- fy
@@ -77,10 +79,35 @@ correlation_report <- function(asymbol, fy){
   return(corr = corr)
 }
 
+correlation_report2 <- function(asym, pid){
+  url <- paste0("https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-Correlation2_state_fy&asym=", asym, "&pid=", pid) # Works ... Thanks Kevin and Jason
+  
+  url_download <- function(x) {
+    l <- list()
+    for (i in seq(x)){
+      cat(paste("working on", x[i], "\n"))
+      cor_w <- getURLContent(x[i], ssl.verifypeer = F)
+      if (length(readHTMLTable(cor_w, stringsAsFactors = F)) > 0) {
+        l[[i]] <- readHTMLTable(cor_w, stringsAsFactors = F)[[1]]}
+    }
+    test <- length(l) > 0
+    if (test) ldply(l) else message("no data")
+  }
+  
+  corr <- url_download(url)
+  
+  # Rename, subset and find spatial changes
+  names(corr) <- gsub("\n", "", names(corr))
+  
+  
+  write.csv(corr, file = paste0("report_correlation_fy", fy, "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
+  
+  return(corr = corr)
+}
 # WEB-MLRA_Goals_Progress
 
 goals_report <- function(fy, off){
-  url <- paste0("https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-MLRA_Goals_Progress&fy=", fy, "&off=", off)
+  url <- paste0("https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-MLRA_Goals_Progress_Office_FY&fy=", fy, "&off=", off)
   goals_w <- getURLContent(url, ssl.verifypeer = F)
   doc <- htmlParse(goals_w)
   tableNodes <- getNodeSet(doc, "//tr")
