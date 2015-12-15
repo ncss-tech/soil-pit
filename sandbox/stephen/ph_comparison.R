@@ -1,0 +1,14 @@
+test <- read.csv("ph_example_data.csv")
+library(plyr)
+test2 <- na.exclude(test)
+ddply(test2, .(method1), summarize, min=min(field-lab), mean=round(mean(abs(field-lab)),1), max=max(field-lab), cor=round(cor(field,lab),1))
+
+par(mfrow=c(1,2))
+par(pty="s")
+test2.ind <-subset(test2, method1=="indicator")
+test2.meter <-subset(test2, method1=="meter")
+plot(test2.ind$field, test2.ind$lab, main="Indicator vs. lab meter pH", ylab="lab", xlab="indicator")
+abline(0,1)
+plot(test2.meter$field, test2.meter$lab, main="Field vs. lab meter pH", ylab="lab", xlab="field")
+abline(0,1)
+dev.off
