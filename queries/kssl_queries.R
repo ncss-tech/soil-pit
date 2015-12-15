@@ -79,6 +79,8 @@ correlation_report <- function(asymbol, fy){
   return(corr = corr)
 }
 
+
+
 correlation_report2 <- function(asym, pid){
   url <- paste0("https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-Correlation2_state_fy&asym=", asym, "&pid=", pid) # Works ... Thanks Kevin and Jason
   
@@ -91,7 +93,7 @@ correlation_report2 <- function(asym, pid){
         l[[i]] <- readHTMLTable(cor_w, stringsAsFactors = F)[[1]]}
     }
     test <- length(l) > 0
-    if (test) ldply(l) else message("no data")
+    if (test) do.call("rbind", l) else message("no data")
   }
   
   corr <- url_download(url)
@@ -99,11 +101,16 @@ correlation_report2 <- function(asym, pid){
   # Rename, subset and find spatial changes
   names(corr) <- gsub("\n", "", names(corr))
   
-  
-  write.csv(corr, file = paste0("report_correlation_fy", fy, "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
+  temp <- group_by(corr, projectiid, areasymbol) %>% summarize(n_musym = length(old_musym))
+  corr <- left_join(corr, temp, by = c("projectiid", "areasymbol"))
+
+  write.csv(corr, file = paste0("report_correlation_fy", pid, "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
   
   return(corr = corr)
 }
+
+
+
 # WEB-MLRA_Goals_Progress
 
 goals_report <- function(fy, off){
