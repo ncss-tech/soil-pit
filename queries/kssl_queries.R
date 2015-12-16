@@ -81,8 +81,8 @@ correlation_report <- function(asymbol, fy){
 
 
 
-correlation_report2 <- function(asym, pid){
-  url <- paste0("https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-Correlation2_state_fy&asym=", asym, "&pid=", pid) # Works ... Thanks Kevin and Jason
+sdjr_correlation <- function(asym, fyear1, fyear2){
+  url <- paste0("https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-Correlation2_state_fy&asym=", asym, "&fyear1=", fyear1, "&fyear2=", fyear2)
   
   url_download <- function(x) {
     l <- list()
@@ -103,8 +103,10 @@ correlation_report2 <- function(asym, pid){
   
   temp <- group_by(corr, projectiid, areasymbol) %>% summarize(n_musym = length(old_musym))
   corr <- left_join(corr, temp, by = c("projectiid", "areasymbol"))
+  corr$spatial <- ifelse(corr$n_musym > 1 & corr$projecttypename == "SDJR", TRUE, FALSE)
+  
 
-  write.csv(corr, file = paste0("report_correlation_fy", pid, "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
+  write.csv(corr, file = paste0("report_correlation_fy", fyear2, "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
   
   return(corr = corr)
 }
