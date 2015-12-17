@@ -8,6 +8,7 @@ output: html_document
 options(stringsAsFactors=F)
 
 library(plyr)
+library(dplyr)
 library(stringr)
 library(RCurl)
 library(XML)
