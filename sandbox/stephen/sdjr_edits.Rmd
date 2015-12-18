@@ -14,7 +14,7 @@ library(RCurl)
 library(XML)
 library(rgdal)
 
-source("C:/workspace/soil-pit/trunk/queries/kssl_reports.R")
+source("C:/workspace/soil-pit.git/trunk/queries/kssl_queries.R")
 
 
 ```{r du report, echo=FALSE}
