@@ -4,17 +4,18 @@ ghr <- list(
         "E", 
         "Bt",
         "2Bt",
+        "2Cd",
+        "C",
         "2BC",
-        "2Cd", 
         "missing"),
   
   p = c("A", 
         "p|P", 
         "E", 
-        "BE", 
         "t|T", 
-        "2Bt|IIBt",
+        "2B|IIB",
+        "d",
+        "C",
         "BC|B3",
-        "^C|2C|IIC|3C",
         "missing")
   )

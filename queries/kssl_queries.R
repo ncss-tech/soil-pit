@@ -82,7 +82,7 @@ correlation_report <- function(asymbol, fy){
 
 
 sdjr_correlation <- function(asymbol, project_id, start_date, finish_date){
-  url <- paste0("https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-Correlation2_state_fy&asymbol=", asymbol, "&project_id=", project_id, "&start_date=", start_date, "&finish_date=", finish_date)
+  url <- paste0("https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-spatial_asym_uprojectid_dates&asymbol=", asymbol, "&project_id=", project_id, "&start_date=", start_date, "&finish_date=", finish_date)
   
   url_download <- function(x) {
     l <- list()
