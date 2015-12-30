@@ -8,7 +8,6 @@ options(stringsAsFactors = FALSE)
 
 
 comp <- get_component_data_from_NASIS_db()
-metadata <- get_metadata()
 
 comp <- na_remove(comp)
-comp <- metadata_replace(comp, metadata)
+comp <- metadata_replace(df)
