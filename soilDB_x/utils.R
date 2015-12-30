@@ -112,22 +112,17 @@ na_remove <- function(df, by = "col"){
 
 
 metadata_replace <- function(df, metadata){
-  idx <- which(sapply(metadata$ColumnPhysicalName, function(x) any(x %in% names(df))))
-  idx_names <- unique(names(idx))
+  metadata_idx <- which(sapply(metadata$ColumnPhysicalName, function(x) any(x %in% names(df))))
+  metadata_names <- unique(names(metadata_idx))
   
-  l <- list()
-  
-  for (i in seq(df)){
-    if (any(names(df[i]) %in% idx_names)) {
+  for (i in seq_along(df)){
+    if (any(names(df[i]) %in% metadata_names)) {
       sub <- metadata[metadata$ColumnPhysicalName %in% names(df[i]), ]
-      names(sub)[names(sub) == "ChoiceValue"] <- names(df[i])
-      l[i] <- data.frame(join(df[i], sub[c(names(df[i]), "ChoiceLabel")], by = names(df[i]), type = "left", match = "first")$ChoiceLabel)
-    } else l[i] = df[i]
+      df[i] <- factor(df[i], levels = sub$ChoiceValue, labels = sub$ChoiceLabel)
+    } else df[i] = df[i]
   }
   
-  x <- data.frame(l)
-  names(x) <- names(df)
-  return(x)
+  return(df)
 }
 
 
