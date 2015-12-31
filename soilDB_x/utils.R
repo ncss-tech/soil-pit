@@ -1,3 +1,23 @@
+get_new <- function(q = q) {
+  # must have RODBC installed
+  if(!requireNamespace('RODBC'))
+    stop('please install the `RODBC` package', call.=FALSE)
+  
+  
+  
+  # setup connection local NASIS
+  channel <- RODBC::odbcDriverConnect(connection = "DSN=nasis_local; UID=NasisSqlRO; PWD=nasisRe@d0n1y")
+  
+  # exec query
+  d <- RODBC::sqlQuery(channel, q, stringsAsFactors = FALSE)
+  
+  # close connection
+  RODBC::odbcClose(channel)
+  
+  # done
+  return(d)
+}
+
 pindex <- function(x, interval){
   if (class(x)[1] == "data.frame") {x1 <- dim(x)[2]; x2 <- 1}
   if (class(x)[1] == "SoilProfileCollection") {x1 <- length(x); x2 <-0}
