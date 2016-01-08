@@ -12,7 +12,7 @@ download.file("https://raw.githubusercontent.com/ncss-tech/soil-pit/master/sandb
 # Download latest report and rules
 download.file("https://raw.githubusercontent.com/ncss-tech/soil-pit/master/reports/pedon_summary_by_taxonname.Rmd", "C:/soil-pit/reports/pedon_summary_by_taxonname.Rmd", method = "libcurl")
 download.file("https://raw.githubusercontent.com/ncss-tech/soil-pit/master/reports/lab_summary_by_taxonname.Rmd", "C:/soil-pit/reports/lab_summary_by_taxonname.Rmd", method = "libcurl")
-download.file("https://raw.githubusercontent.com/ncss-tech/soil-pit/master/soilDB_x/utils.R", "C:/soil-pit/reports/utils.R", method = "libcurl")
+download.file("https://raw.githubusercontent.com/ncss-tech/soil-pit/master/soilDB_x/utils.R", "C:/soil-pit/soilDB_x/utils.R", method = "libcurl")
 download.file("https://raw.githubusercontent.com/ncss-tech/soil-pit/master/reports/genhz_rules/genhz_rules.zip", "C:/soil-pit/reports/genhz_rules/genhz_rules.zip", method = "libcurl")
 
 download.file("https://raw.githubusercontent.com/ncss-tech/soil-pit/master/reports/mapunit_summary_by_shapefile.Rmd", "C:/soil-pit/reports/mapunit_summary_by_shapefile.Rmd", method = "libcurl") 
