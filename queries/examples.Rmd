@@ -353,3 +353,49 @@ lm.muacres,
 dmudesc.
 End section.
 ```
+
+```{r, }
+# This email is for my documentation and I chose to send it for your information.  Do with it what you wish.
+# 
+# There has been a natural progression of Division initiatives - first, RaCA allowing folks to see remote areas of the MLRA and sample soils within the MLRA; then SDJR allowing folks to take ownership of their MLRA to evaluate map units and harmonize data.  Time will come to begin using the harmonized SDJR information to document the MLRA.  Several of us are working on the latter.  Having some preliminary analysis, I thought I would share with you some findings.  As you are aware, geology (parent material) and physiography are two of the seven MLRA criteria, and after 4 years of SDJR, these properties should be clean enough to be mined from the Soil Data Mart.  To assist this MLRA project, I was asked to write an SDA query to mine the parent material, the landform, and the restrictions.  Feel free to modify and use the sql to map your areas.
+
+--start sql
+SELECT areasymbol, musym, m.mukey, c.cokey, compname, comppct_r
+, case when charindex(' ', pmgroupname, charindex(' ', pmgroupname) - 1) = 0
+then pmgroupname else left(pmgroupname, charindex(' ', pmgroupname, charindex(' ', pmgroupname) - 1)) end AS pm
+, pmgroupname, copmkey, pmorder, pmmodifier, pmgenmod, pmkind, pmorigin
+, (SELECT TOP 1 cogeomordesc.geomfname FROM cogeomordesc WHERE c.cokey = cogeomordesc.cokey AND cogeomordesc.rvindicator='yes' and cogeomordesc.geomftname = 'Landform') as landform
+, (SELECT TOP 1  resdept_r  from corestrictions WHERE c.cokey = corestrictions.cokey and reskind is not null) as restrictiondepth
+, (SELECT TOP 1 reskind from corestrictions WHERE c.cokey = corestrictions.cokey and reskind is not null) as restrictionkind
+, ROW_NUMBER() Over(Partition by m.mukey order by l.areasymbol, m.mukey, c.comppct_r DESC, pmorder) as RowNum 
+INTO #PM_LAND 
+FROM legend l
+inner join mapunit m on l.lkey=m.lkey and l.areasymbol <> 'US'
+inner join component c on m.mukey=c.mukey AND c.cokey = (SELECT TOP 1 component.cokey FROM component WHERE component.mukey=m.mukey ORDER BY component.comppct_r DESC)
+left outer join copmgrp on c.cokey = copmgrp.cokey AND copmgrp.rvindicator='yes'
+left outer join copm on copmgrp.copmgrpkey=copm.copmgrpkey
+order by areasymbol, musym, comppct_r desc, pmorder
+
+SELECT areasymbol, musym, mukey, cokey, compname, comppct_r, pm, case when pmorigin is null then pmkind when pmkind is null then pmorigin else pmorigin +' '+pmkind end as parentmaterial
+, pmgroupname, landform, restrictionkind, pmorder, pmmodifier, pmgenmod, pmkind, pmorigin, restrictiondepth, RowNum
+FROM #PM_LAND
+WHERE RowNum = (SELECT TOP 1 RowNum FROM #PM_LAND pl WHERE pl.mukey=#PM_LAND.mukey ORDER BY RowNum desc)
+ORDER BY areasymbol, musym, pmorder desc
+--end sql
+
+# The sql pulls the dominant component information.  
+# The 'pm' column is extracted from the first word in the pm group name column (typically surface pm).  
+# The 'parentmaterial'  column is extracted as a concatenation of the PM origin and PM Kind from the lowest level data recorded in the component parent material table, assuming closest to the geological processes.   
+# The 'pmgroupname' comes from what you populated in the copmgrp table
+# The 'landform' comes from the first landform instance you populated.  
+# The 'restrictionkind' column is the first instance of a restriction you populated.
+# The pmkind and pmorigin are those entries with the highest row count based on the sql (lowest level).  This could have been pulled using pmorder, however inconsistent population of the field necessitated a different method of extraction.
+# The intent of restricting the PM column to the first word and the 'parentmaterial' column to the lowest set of information is to reduce the amount of information and thereby improving the ability to map the features.  
+# 
+# You can change the l.areasymbol <> 'US' to read l.areasymbol like 'ID%' to retrieve a specific state worth of data.  Remember, this is using the 2015 SDM data and does not include the vast amount of work that has been completed this fiscal year.
+# 
+# The first sql extracts the data.  
+# 
+# The second sql transforms the data needed for mapping:  Notice on the map unit 388, the surface pm would be 'colluvium' and the 'geology' parentmaterial would be Limestone Residuum.  
+
+```
