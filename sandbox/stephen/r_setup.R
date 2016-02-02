@@ -1,6 +1,6 @@
 dir.create(path="C:/workspace", recursive = T)
 dir.create(path="C:/workspace/soil-pit/reports/genhz_rules", recursive = T) 
-dir.create(path="C:/workspace/soil-pit/reports/soilDB_x", recursive = T) 
+dir.create(path="C:/workspace/soil-pit/soilDB_x", recursive = T) 
 dir.create(path="C:/R/win-library/3.2", recursive = T)
 
 x <- '.libPaths(c("C:/R/win-library/3.2", "C:/Program Files/R/R-3.2.1/library"))'
