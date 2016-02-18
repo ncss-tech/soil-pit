@@ -48,15 +48,15 @@ if (!file.exists(cache)){
   # Sample soil map unit
   mupolygon.s <- spsample(mupolygon, n = n, "stratified")
   geodata <- raster_extract(mupolygon.s)
-  mapunit.df <- cbind(mupolygon.s, over(mupolygon.s, mupolygon))
+  mapunit.df <- over(mupolygon.s, mupolygon)
   data <- cbind(mapunit.df[c("AREASYMBOL", "MUSYM")], geodata)
   
-  mlra <- readOGR(dsn = "M:/geodata/project_data/11REGION/mlra_a_r11.shp", layer = "mlra_a_r11", encoding = "ESRI Shapefile")
-  mlra_i <- over(mupolygon.s, mlra)
-  mlra_acres <- ddply(mlra_i, .(MLRARSYM), summarize, mlra_percent = sum(length(OBJECTID)))
-  mlra_acres <- transform(mlra_acres, mlra_percent = round(mlra_percent / sum(mlra_percent) * 100, 0))
+#  mlra <- readOGR(dsn = "M:/geodata/project_data/11REGION/mlra_a_r11.shp", layer = "mlra_a_r11", encoding = "ESRI Shapefile")
+#  mlra_i <- over(mupolygon.s, mlra)
+#  mlra_acres <- ddply(mlra_i, .(MLRARSYM), summarize, mlra_percent = sum(length(OBJECTID)))
+#  mlra_acres <- transform(mlra_acres, mlra_percent = round(mlra_percent / sum(mlra_percent) * 100, 0))
 
-  data.l <- list(data = data, mupolygon = mupolygon, sapolygon = sapolygon, mlra_acres = mlra_acres)
+  data.l <- list(data = data, mupolygon = mupolygon, sapolygon = sapolygon)
   save(data.l, file = cache)
 } else load(file = cache) #load cache file
 
@@ -64,7 +64,7 @@ if (!file.exists(cache)){
 data <- data.l$data
 mupolygon <- data.l$mupolygon
 sapolygon <- data.l$sapolygon
-mlra_acres <- data.l$mlra_acres
+# mlra_acres <- data.l$mlra_acres
 
 
 data$SSA_MUSYM <- as.character(paste(data$AREASYMBOL, data$MUSYM))
@@ -124,7 +124,7 @@ pol.5n <- join(pol.5n1, pol.5n2, by = "SSA_MUSYM")
 
 kable(pol.5n, digits = 0, align = "c", caption = "Summary of MUSYM by AREASYMBOL")
 
-kable(mlra_acres, digits = 0, align = "c", caption = "Summary of Acres by MLRA")
+# kable(mlra_acres, digits = 0, align = "c", caption = "Summary of Acres by MLRA")
 
 # pol.lo1$SSA_MUSYM <- as.factor(pol.lo1$SSA_MUSYM)
 pol.lo1$SSA_MUSYM <- factor(pol.lo1$SSA_MUSYM, levels = rev(sort(unique(pol.lo1$SSA_MUSYM))))
