@@ -68,7 +68,7 @@ get_component_correlation_data_from_NASIS_db <- function(dropAdditional=TRUE, dr
   
   FROM  datamapunit_View_1 dmu
   
-  INNER JOIN correlation_View_1 corr ON corr.dmuiidref = dmu.muiid 
+  INNER JOIN correlation_View_1 corr ON corr.dmuiidref = dmu.dmuiid 
   INNER JOIN mapunit_View_1 mu ON mu.muiid = corr.muiidref 
   LEFT OUTER JOIN lmapunit ON lmapunit.muiidref = mu.muiid
   LEFT OUTER JOIN legend ON legend.liid = lmapunit.liidref
@@ -262,6 +262,10 @@ fetchNASIS_component_data <- function(rmHzErrors=TRUE, minColumns = TRUE) {
   ## TODO: make this error more informative
   # add site data to object
   site(f.chorizon) <- f.comp # left-join via coiid
+  
+  n <- length(unique(f.comp$coiid))
+  if(n != length(unique(site(f.chorizon)$coiid)))
+    message(paste(n, "components are missing horizon data"))
   
   
   # print any messages on possible data quality problems:
