@@ -22,7 +22,7 @@ get_component_data_from_NASIS_db <- function(minColumns = TRUE) {
   
   from <- "FROM component_View_1 comp
 
-  INNER JOIN datamapunit_View_1 dmu ON dmu.dmuiid = comp.dmuiidref
+  INNER JOIN datamapunit dmu ON dmu.dmuiid = comp.dmuiidref
 
   ORDER BY dmudesc, coiid, comppct_r DESC;"
   
@@ -63,19 +63,19 @@ get_component_correlation_data_from_NASIS_db <- function(dropAdditional=TRUE, dr
   # must have RODBC installed
   if(!requireNamespace('RODBC'))
     stop('please install the `RODBC` package', call.=FALSE)
-  
-  q <- "SELECT mu.muiid, musym, nationalmusym, mu.muname, mukind, mustatus, muacres, farmlndcl, repdmu, dmuiid, areasymbol, areaname, ssastatus, cordate
+
+  q <- "SELECT mu.muiid, areaname, areasymbol, musym, nationalmusym, mu.muname, mukind, mustatus, muacres, ssastatus, cordate, farmlndcl, repdmu, dmuiid
   
   FROM  datamapunit_View_1 dmu
   
-  INNER JOIN correlation_View_1 corr ON corr.dmuiidref = dmu.dmuiid 
-  INNER JOIN mapunit_View_1 mu ON mu.muiid = corr.muiidref 
+  LEFT OUTER JOIN correlation corr ON corr.dmuiidref = dmu.dmuiid 
+  LEFT OUTER JOIN mapunit mu ON mu.muiid = corr.muiidref 
   LEFT OUTER JOIN lmapunit ON lmapunit.muiidref = mu.muiid
   LEFT OUTER JOIN legend ON legend.liid = lmapunit.liidref
   LEFT OUTER JOIN area ON area.areaiid = legend.areaiidref
   
   ORDER BY dmuiid;"
-  
+
   # setup connection local NASIS
   channel <- RODBC::odbcDriverConnect(connection="DSN=nasis_local;UID=NasisSqlRO;PWD=nasisRe@d0n1y")
   
@@ -179,8 +179,8 @@ get_copedon_from_NASIS_db <- function() {
   
   FROM copedon_View_1 copedon
   
-  LEFT OUTER JOIN pedon ON pedon.peiid = copedon.peiidref;
-  "
+  LEFT OUTER JOIN pedon ON pedon.peiid = copedon.peiidref;"
+  
   # setup connection local NASIS
   channel <- RODBC::odbcDriverConnect(connection="DSN=nasis_local;UID=NasisSqlRO;PWD=nasisRe@d0n1y")
   
@@ -201,7 +201,7 @@ get_component_horizon_data_from_NASIS_db <- function(minColumns = TRUE) {
   if(!requireNamespace('RODBC'))
     stop('please install the `RODBC` package', call.=FALSE)
   
-  select_min <- "SELECT coiidref as coiid, chiid, hzname, hzdept_r, hzdepb_r, fragvoltot_l, fragvoltot_r, fragvoltot_h, sandtotal_r, silttotal_r, claytotal_r, texture, om_r, dbovendry_r, ksat_r, awc_r, lep_r, sar_r, ec_r, cec7_r, sumbases_r, ph1to1h2o_r"
+  select_min <- "SELECT coiidref as coiid, chiid, hzname, hzdept_r, hzdepb_r, fragvoltot_r, sandtotal_r, silttotal_r, claytotal_r, texture, om_r, dbovendry_r, ksat_r, awc_r, lep_r, sar_r, ec_r, cec7_r, sumbases_r, ph1to1h2o_r"
   
   select_max <- "SELECT *"
   
@@ -222,6 +222,9 @@ get_component_horizon_data_from_NASIS_db <- function(minColumns = TRUE) {
   # close connection
   RODBC::odbcClose(channel)
   
+  if(any("coiidref" %in% names(d)))
+    names(d)[names(d) == "coiidref"] <- "coiid"
+  
   # done
   return(d)
 }
@@ -236,11 +239,11 @@ fetchNASIS_component_data <- function(rmHzErrors=TRUE, minColumns = TRUE) {
   
   # load data in pieces
   f.comp <- get_component_data_from_NASIS_db(minColumns)
-  f.chorizon <- get_component_horizon_data_from_NASIS_db()
+  f.chorizon <- get_component_horizon_data_from_NASIS_db(minColumns)
   
   # optionally test for bad horizonation... flag, and remove
   if(rmHzErrors) {
-    f.chorizon.test <- ddply(f.chorizon, 'coiid', test_hz_logic, topcol='hzdept_r', bottomcol='hzdepb_r', strict=TRUE)
+    f.chorizon.test <- ddply(f.chorizon, 'coiid', test_hz_logic, topcol='hzdept_r', bottomcol = 'hzdepb_r', strict=TRUE)
     
     # which are the good (valid) ones?
     good.ids <- as.character(f.chorizon.test$coiid[which(f.chorizon.test$hz_logic_pass)])
@@ -254,6 +257,11 @@ fetchNASIS_component_data <- function(rmHzErrors=TRUE, minColumns = TRUE) {
       assign('component.hz.problems', value=bad.ids, envir=soilDB.env)
   }
   
+  # remove extra columns when minColumns = FALSE, e.g. SELECT *
+  if(minColumns == FALSE) {
+    idx <- match(names(f.chorizon), names(f.comp), incomparables = "coiid")
+    f.chorizon <- f.chorizon[is.na(idx)]
+  }
   
   # upgrade to SoilProfilecollection
   depths(f.chorizon) <- coiid ~ hzdept_r + hzdepb_r

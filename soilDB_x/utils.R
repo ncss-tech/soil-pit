@@ -131,7 +131,7 @@ na_remove <- function(df, by = "col"){
 }
 
 
-metadata_replace <- function(df){
+.metadata_replace <- function(df){
   get_metadata <- function() {
     # must have RODBC installed
     if(!requireNamespace('RODBC'))
