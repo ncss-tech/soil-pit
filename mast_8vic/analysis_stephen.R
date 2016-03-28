@@ -1,50 +1,50 @@
 # Analysis of Mojave Mean Annual Soil Temperature (tempC) Dataset
 
-setwd("I:/workspace/soilTemperatureMonitoring/R")
+setwd("M:/projects/soilTemperatureMonitoring/R")
 
 library(sp)
 library(raster)
 library(plyr)
-library(rms)
+library(car)
 
 # Read tempC data
-mastList.df <- read.csv("HOBO_List_2013_0923_master.csv", header=T)
-mastSites.df <- read.csv("mastSites.csv")
-mast.df <- join(mastSites.df,mastList.df,by="siteid")
-mast.df <- subset(mast.df, select=c(siteid, tempF, numDays, utmeasting, utmnorthing))
-mast.df$tempC <- (mast.df$tempF-32)*(5/9)
+sites_df <- read.csv("HOBO_List_2013_0923_master.csv")
+mast_df <- read.csv("mastSites.csv")
 
-mast.sp <- mast.df
-coordinates(mast.sp) <- ~ utmeasting+utmnorthing
-proj4string(mast.sp)<- ("+init=epsg:26911")
+mast_df <- join(mast_df, sites_df, by = "siteid")
+mast_df <- subset(mast_df, select = c(siteid, tempF, numDays, utmeasting, utmnorthing))
+mast_df$tempC <- (mast_df$tempF - 32) * (5 / 9)
+
+mast_sp <- mast_df
+coordinates(mast_sp) <- ~ utmeasting + utmnorthing
+proj4string(mast_sp)<- ("+init=epsg:26911")
 
 # Read geodata
-setwd("C:/geodata/project_data/vic8/")
-grid.list <- c("ned30m_vic8.tif",
-               "ned30m_vic8_solarcv.tif",
-               "landsat30m_vic8_tc123.tif",
-               "prism30m_vic8_ppt_1981_2010_annual_mm.tif",
-               "prism30m_vic8_tavg_1981_2010_annual_C.tif"
+folder <- "M:/geodata/project_data/8VIC/"
+files <- c(elev = "ned30m_8VIC.tif",
+           solar = "ned30m_8VIC_solarcv.tif",
+           tc = "landsat30m_8VIC_tc123.tif",
+           precip = "prism30m_8VIC_ppt_1981_2010_annual_mm.tif",
+           temp = "prism30m_8VIC_tmean_1981_2010_annual_C.tif"
 )
 
-library(raster)
-geodata <- stack(c(grid.list))
-grid.names <- c("elev","solar","tc1", "tc2", "tc3", "precip", "temp")
-names(geodata) <- c(grid.names)
+geodata_f <- sapply(files, function(x) paste0(folder, x))
 
-geodata.df <- extract(geodata, mast.sp, df=TRUE)
-data <- cbind(mast.df, geodata.df)
+geodata_r <- stack(geodata_f)
+
+data <- data.frame(mast_df, extract(geodata_r, mast_sp))
 
 # Exploratory data analysis
 # Summary of tempC data
-qqnorm(data$tempC, dist="norm")
-pairs(data[,c(3,4,6,7,11,14,15)], panel=panel.smooth, diag.panel=panel.hist, upper.panel=panel.cor)
+qqnorm(data$tempC)
+qqline(data$tempC)
+spm(data[, c("tempC", names(geodata_r))])
 
 # Compare environmental representativeness of hobo locations 
 ned.sp <- readGDAL("ned60m_deserts.tif")
 proj4string(ned.sp)<- ("+init=epsg:26911")
-ned.s <- spsample(ned.sp,n=5000,type="stratified")
-geodata.s <- extract(geodata,ned.s,sp=T)
+ned.s <- spsample(ned.sp, n = 5000, type = "stratified")
+geodata.s <- extract(geodata, ned.s, sp = TRUE)
 geodata.s <- geodata.s@data
 
 library(Hmisc)
@@ -59,28 +59,43 @@ png(filename="P:/R/plots/histbb_geodata.png",width=8.5,height=11,units="in",res=
 dev.off()
 
 # Estimate tempC model
-mast.lm <- lm(tempC~temp+solar+precip+tc1,data=data, weights=numDays)
-mast.full <- lm(tempC~.,data=data, weights=numDays)
+full <- lm(tempC ~ .,data = data, weights = numDays)
+mast_lm <- lm(tempC ~ temp + solar + precip + tc_1, data = data, weights = numDays)
 
-plot(data$tempC~predict(mast.lm),ylab="Observed tempC",
-     xlab="Predicted tempC",main="Observed vs. predicted tempC")
+plot(data$tempC ~ predict(mast_lm),
+     ylab = "Observed tempC",
+     xlab = "Predicted tempC",
+     main = "Observed vs. predicted tempC")
 abline(0,1)
 
-png(filename="P:/R/mast_diagnostics.png",width=8.5,height=8.5,units="in",res=200)
-par(mfcol=c(2,2))
-pty="s"
-plot(mast.lm)
+png(filename="mast_diagnostics.png", width=8.5, height=8.5, units = "in", res = 200)
+par(mfcol = c(2, 2))
+pty = "s"
+plot(mast_lm)
 dev.off()
 
 # Validate tempC model
-mast.ols1<-ols(tempC~temp+solar+precip+tc1,data=data,x=T,y=T,weights=numDays)
-mast.ols2<-ols(tempC~elev+solar+precip+tc1,data=data,x=T,y=T,weights=numDays)
-mast.ols3<-ols(tempC~temp+solar+tc2+tc1,data=data,x=T,y=T,weights=numDays)
-mast.ols4<-ols(tempC~elev+solar+tc2+tc1,data=data,x=T,y=T,weights=numDays)
-validate(mast.ols1,B=6,method="crossvalidation",bw=T)
-validate(mast.ols2,B=6,method="crossvalidation",bw=T)
-validate(mast.ols3,B=6,method="crossvalidation",bw=T)
-validate(mast.ols4,B=6,method="crossvalidation",bw=T)
+# Create folds
+folds <- createFolds(train$fragst, k = 10)
+
+# Cross validate
+cv_results <- lapply(folds, function(x) {
+  train <- train[-x,]
+  test <- train[x,]
+  model <- lm(fragst ~ ., data = train)
+  actual <- test$frags
+  predict <- predict(model, test)
+  RMSE <- sqrt(mean((actual - predict)^2, na.rm = TRUE))
+  R2 <- cor(actual, predict, use = "pairwise")^2
+  return(c(RMSE = RMSE, R2 = R2))
+}
+)
+
+# Convert to a data.frame
+cv_results <- do.call(rbind, cv_results)
+
+# Summarize results
+summary(cv_results)
 
 # Predict tempC model
 predfun <- function(model, data) {

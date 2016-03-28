@@ -1,6 +1,8 @@
 # get file names of HOBO temp data
-p <- ("P:/dataRaw/rawTxtFiles_50cmClean")
-files <- list.files(path=p)
+setwd("M:/projects/soilTemperatureMonitoring/dataRaw/rawTxtFilesClean")
+
+p <- getwd()
+files <- list.files(path = p)
 
 # temp list to hold data
 l <- list()
@@ -22,9 +24,9 @@ for(i in seq_along(files))
   }
 
 # re-combined into single DF
-mastSeries.df <- ldply(l)
-mastSeries.df$site<-as.factor(mastSeries.df$site)
+mastSeries_df <- ldply(l)
+mastSeries_df$site<-as.factor(mastSeries_df$site)
 rm(l) ; gc()
 
 ## save cached copy
-save(mastSeries.df, file="P:/R/mastSeries.Rda")
+save(mastSeries_df, file="M:/projects/soilTemperatureMonitoring/R/mastSeries.Rdata")

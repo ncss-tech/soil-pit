@@ -1,4 +1,4 @@
-setwd("P:/dataRaw/rawTxtFiles")
+setwd("M:/projects/soilTemperatureMonitoring/R")
 
 library(lattice)
 library(latticeExtra)
@@ -17,17 +17,17 @@ source("P:/R/process_files_test.R")
 # source('process_gis_data.R')
 
 # load cached versions
-load(file="P:/R/mastSeries.Rda")
+load(file = "mastSeries.Rdata")
 
 load('hobo_gis_data.Rda')
 
 # Plot sites visually inspect for flat lines and spikes
-test<-subset(mastSeries.df,site == "JTNP08")
+test<-subset(mastSeries_df,site == "JTNP08")
 test.zoo<-read.zoo(test[,c(1,3)],format = "%m/%d/%y %H:%M:%S",tz="GMT")
 plot(test.zoo,ylab="tempF")
 
 # Aggregate by Year, Month, and Julian day (i.e. 1-365, 366 for leap years)
-ms.df<-mastSeries.df
+ms.df<-mastSeries_df
 ms.df$date<-as.POSIXlt(ms.df$date,format="%m/%d/%y %H:%M:%S")
 ms.df$day<-as.character(format(ms.df$date, "%m/%d/%y"))
 ms.df$Jday <- as.integer(format(ms.df$date, "%j"))
@@ -41,7 +41,7 @@ mastSites.df <- aggregate(tempF ~ siteid, data=ms.Jd.df, FUN=mean)
 mastSites.df$siteid <- as.factor(mastSites.df$siteid)
 
 mastSites.df <- join(mastSites.df,ms.D.df,by="siteid")
-write.csv(mastSites.df,"P:/R/mastSites.csv")
+write.csv(mastSites.df, "mastSites.csv")
 
 ## fit model: this is used to fill missing data
 dd <- datadist(d.daily)
