@@ -6,6 +6,7 @@ library(sp)
 library(raster)
 library(plyr)
 library(car)
+library(caret)
 
 # Read tempC data
 sites_df <- read.csv("HOBO_List_2013_0923_master.csv")
@@ -76,14 +77,15 @@ dev.off()
 
 # Validate tempC model
 # Create folds
-folds <- createFolds(train$fragst, k = 10)
+folds <- createFolds(data$tempC, k = 10)
+train <- data
 
 # Cross validate
 cv_results <- lapply(folds, function(x) {
   train <- train[-x,]
   test <- train[x,]
-  model <- lm(fragst ~ ., data = train)
-  actual <- test$frags
+  model <- lm(tempC ~ temp + solar + precip + tc_1, weights = numDays, data = train)
+  actual <- test$tempC
   predict <- predict(model, test)
   RMSE <- sqrt(mean((actual - predict)^2, na.rm = TRUE))
   R2 <- cor(actual, predict, use = "pairwise")^2
