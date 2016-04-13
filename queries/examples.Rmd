@@ -414,16 +414,18 @@ WHERE comppct_r = (SELECT MAX(comppct_r) FROM component AS c2 WHERE mukey = '170
 
 library(plyr)
 
+# Set working directory
+setwd("C:/workspace")
+
 # read in component text file
-component <- read.csv("C:/workspace/component.csv")
+component <- read.csv("component.csv")
 
 # ddply
 component_max <- ddply(component, .(mukey), function(x) x[which.max(x$comppct_r), ])
-
 
 # or
 component_max <- do.call("rbind", by(component, list(component$mukey), function(x) x[which.max(x$comppct_r), ]))
 
 # save output
-write.csv(component_max, file = "C:/workspace/component_max.csv")
+write.csv(component_max, file = "component_max.csv")
 ```

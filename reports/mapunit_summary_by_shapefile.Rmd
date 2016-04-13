@@ -4,20 +4,20 @@
 This report summarizes the geographic setting of a list of MUSYM within a shapefile. It is intented to be used to compare and contrast map units, and suggest possible Low, RV, and High values for soil components. 
 
 ```{r load-data, echo=FALSE, results='hide', message=FALSE}
-shp <- "201611IND011_Mllsclm,SOTPln,0t2ps_QA"
+shp <- "M:/geodata/project_data/11IND/cache/201611IND044_Fxsltlm,0t2prcntslps_QA.shp"
 
-dir <- "M:/geodata/project_data/"
-geodatabase <- "RTSD_R11-IND_FY16.gdb"
-office <- "11IND"
+geodatabase <- "M:/geodata/project_data/11IND/RTSD_R11-IND_FY16.gdb"
 
 # Defaults
-samplePercent <- 20
+samplePercent <- 16
 p <- c(0, 0.25, 0.5, 0.75, 1)
 
-pd <- paste0(dir, office, "/")
-rd <- paste0(dir, "11REGION/")
-dsn <- paste0(pd, "cache/", shp, ".shp")
-cache <- paste0(dsn, "_", samplePercent, ".Rdata")
+dir <- "M:/geodata/project_data/"
+office <- "11IND"
+
+office_folder <- paste0(dir, office, "/")
+region_folder <- paste0(dir, "11REGION/")
+cache <- paste0(shp, "_", samplePercent, ".Rdata")
 ```
 
 
@@ -31,7 +31,6 @@ library(raster)
 library(rgdal)
 library(rgeos)
 library(plyr)
-library(ggplot2)
 library(reshape2)
 
 source("../soilDB_x/utils.R")
@@ -39,8 +38,12 @@ source("../soilDB_x/utils.R")
 ```{r map unit summary function, echo=FALSE}
 ## local functions
 if (!file.exists(cache)){
-  sapolygon <- readOGR(dsn = paste0(pd, geodatabase), layer = "SAPOLYGON", encoding = "OpenFileGDB")
-  mupolygon <- readOGR(dsn = dsn, layer = shp, encoding = "ESRI Shapefile")
+  layer <- sub(".shp", "", shp)
+  layer <- strsplit(layer, "/")
+  layer <- layer[[1]][length(layer[[1]])]
+  
+  sapolygon <- readOGR(dsn = geodatabase, layer = "SAPOLYGON", encoding = "OpenFileGDB")
+  mupolygon <- readOGR(dsn = shp, layer = layer, encoding = "ESRI Shapefile")
   mupolygon@data$Acres <- mupolygon@data[, grepl("_area", tolower(names(mupolygon)))] * 0.000247105
   mupolygon@data$Circularity <- mupolygon@data[, grepl("_leng", tolower(names(mupolygon)))] / (2 * sqrt(mupolygon@data[, grepl("_area", tolower(names(mupolygon)))] / pi) * pi)
   n <- ceiling(sum(mupolygon@data[, grepl("_area", tolower(names(mupolygon)))]) / 900 * samplePercent / 100)

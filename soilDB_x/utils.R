@@ -70,60 +70,74 @@ ogr_extract <- function(pd, geodatabase, cache, project){
     verbose = TRUE)
 }
   
+
 raster_extract <- function(x){
   # Load grids
-  g10.st <- stack(
-    paste0(pd, "ned10m_", office, "_slope5.tif"), 
-    paste0(pd, "ned10m_", office, "_aspect5.tif")
-    )
-  g30.st <- stack(
-    paste0(pd, "ned30m_", office, ".tif"),
-    paste0(pd, "ned30m_", office, "_wetness.tif"),
-    paste0(pd, "ned30m_", office, "_mvalleys.tif"),
-    paste0(pd, "ned30m_", office, "_z2stream.tif"),
-    paste0(pd, "nlcd30m_", office, "_lulc2011.tif")
-    )
-  g800.st <- stack(
-    paste0(rd, "prism800m_11R_ppt_1981_2010_annual_mm.tif"),
-    paste0(rd, "prism800m_11R_tmean_1981_2010_annual_C.tif")
-    )
-  g1000.st <- stack(
-    paste0(rd, "rmrs1000m_11R_ffp_1961_1990_annual_days.tif")
-    )
+  files <- c(
+    slope     = paste0(office_folder, "ned10m_", office, "_slope5.tif"),
+    aspect    = paste0(office_folder, "ned10m_", office, "_aspect5.tif"),
+    elev      = paste0(office_folder, "ned30m_", office, ".tif"),
+    wetness   = paste0(office_folder, "ned30m_", office, "_wetness.tif"),
+    valley    = paste0(office_folder, "ned30m_", office, "_mvalleys.tif"),
+    relief    = paste0(office_folder, "ned30m_", office, "_z2stream.tif"),
+    lulc      = paste0(office_folder, "nlcd30m_", office, "_lulc2011.tif"),
+    ppt       = paste0(region_folder, "prism800m_11R_ppt_1981_2010_annual_mm.tif"),
+    temp      = paste0(region_folder, "prism800m_11R_tmean_1981_2010_annual_C.tif"),
+    ffp       = paste0(region_folder, "rmrs1000m_11R_ffp_1961_1990_annual_days.tif")
+  )
   
-  names(g10.st) <- c("slope", "aspect")
-  names(g30.st) <- c("elev", "wetness", "valley", "relief", "lulc")
-  names(g800.st) <- c("ppt", "temp")
-  names(g1000.st) <- c("ffp")
+  # test for missing files
+  test <- sapply(files, function(x) file.exists(x))
+  if (!any(test)) message("file not found ", files[!test])
   
-  # Extract geodata
-  g10.e <- extract(g10.st, x)
-  g30.e <- extract(g30.st, x)
-  g800.e <- extract(g800.st, x)
-  g1000.e <- extract(g1000.st, x)
-  geodata <- data.frame(g10.e, g30.e, g800.e, g1000.e)
+  # import rasters
+  geodata_r <- lapply(files, function(x) raster(x))
+  
+  # stack rasters with matching extent, resolution and projection
+stack_info <- do.call("rbind", lapply(geodata_r, function(x) data.frame( 
+    bb = paste(bbox(extent(x)), collapse = ", "),
+    res= paste(res(x), collapse = ", "),
+    proj = proj4string(x))))
+  stack_info <- transform(stack_info, group = paste(bb, res, proj))
+  test2 <- unique(stack_info$group)
+  
+  geodata_l <- list()
+  for (i in seq_along(test2)) {
+    geodata_l[i] <- stack(unlist(geodata_r[stack_info$group %in% test2[i]]))
+  }
+  
+  # extract data
+  geodata <- lapply(geodata_l, function(y) extract(y, x))
+  geodata <- as.data.frame(do.call("cbind", geodata))
   
   # Prep data
-  geodata$aspect <- circular(geodata$aspect, template="geographic", units="degrees", modulo="2pi")
+  if ("slope" %in% names(geodata)) {
+    slope <- c(0, 2, 6, 12, 18, 30, 50, 75, 350)
+    geodata$slope_classes <- cut(geodata$slope, breaks = slope, right=FALSE)
+    levels(geodata$slope_classes) <- c("0-2","2-6","6-12","12-18","18-30","30-50","50-75","75-350")
+  }
   
-  slope<-c(0, 2, 6, 12, 18, 30, 50, 75, 350)
-  aspect<-c(0, 23, 68, 113, 158, 203, 248, 293, 338, 360) 
-  valley<-c(0, 0.5, 30)
-  lulc <- 1:256-1
+  if ("aspect" %in% names(geodata)) {
+    geodata$aspect <- circular(geodata$aspect, template="geographic", units="degrees", modulo="2pi")
+    aspect <- c(0, 23, 68, 113, 158, 203, 248, 293, 338, 360) 
+    geodata$aspect_classes <- cut(geodata$aspect, breaks = aspect, right=FALSE)
+    levels(geodata$aspect_classes) <- c("N","NE","E","SE","S","SW","W","NW","N")
+  }
   
-  geodata$slope_classes <- cut(geodata$slope, breaks = slope, right=FALSE)
-  geodata$aspect_classes <- cut(geodata$aspect, breaks = aspect, right=FALSE)
-  geodata$valley_classes <- cut(geodata$valley, breaks = valley, right=FALSE)
-  geodata$lulc_classes <- cut(geodata$lulc, breaks = lulc, right=FALSE)
+  if ("valley" %in% names(geodata)) {
+    valley <- c(0, 0.5, 30)
+    geodata$valley_classes <- cut(geodata$valley, breaks = valley, right=FALSE)
+    levels(geodata$valley_classes) <- c("upland","lowland")
+  }
   
-  levels(geodata$slope_classes) <- c("0-2","2-6","6-12","12-18","18-30","30-50","50-75","75-350")
-  levels(geodata$aspect_classes) <- c("N","NE","E","SE","S","SW","W","NW","N")
-  levels(geodata$valley_classes) <- c("upland","lowland")
-  levels(geodata$lulc_classes) <- c('Unclassified','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','Open Water','Perennial Snow/Ice','NA','NA','NA','NA','NA','NA','NA','NA','Developed, Open Space','Developed, Low Intensity','Developed, Medium Intensity','Developed, High Intensity','NA','NA','NA','NA','NA','NA','Barren Land','NA','NA','NA','NA','NA','NA','NA','NA','NA','Deciduous Forest','Evergreen Forest','Mixed Forest','NA','NA','NA','NA','NA','NA','NA','NA','Shrub/Scrub','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','Herbaceuous','NA','NA','NA','NA','NA','NA','NA','NA','NA','Hay/Pasture','Cultivated Crops','NA','NA','NA','NA','NA','NA','NA','Woody Wetlands','NA','NA','NA','NA','Emergent Herbaceuous Wetlands','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA')
-
+  if ("lulc" %in% names(geodata)) {
+    lulc <- 1:256-1
+    geodata$lulc_classes <- cut(geodata$lulc, breaks = lulc, right=FALSE)
+    levels(geodata$lulc_classes) <- c('Unclassified','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','Open Water','Perennial Snow/Ice','NA','NA','NA','NA','NA','NA','NA','NA','Developed, Open Space','Developed, Low Intensity','Developed, Medium Intensity','Developed, High Intensity','NA','NA','NA','NA','NA','NA','Barren Land','NA','NA','NA','NA','NA','NA','NA','NA','NA','Deciduous Forest','Evergreen Forest','Mixed Forest','NA','NA','NA','NA','NA','NA','NA','NA','Shrub/Scrub','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','Herbaceuous','NA','NA','NA','NA','NA','NA','NA','NA','NA','Hay/Pasture','Cultivated Crops','NA','NA','NA','NA','NA','NA','NA','Woody Wetlands','NA','NA','NA','NA','Emergent Herbaceuous Wetlands','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA')
+  }
+  
   return(geodata = geodata)
 }
-
 
 na_remove <- function(df, by = "col"){
   if (by == "col"){df[, which(apply(df, 2, function(x) !all(is.na(x))))]
