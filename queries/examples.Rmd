@@ -5,12 +5,21 @@ get_NASIS_db <- function() {
   if(!requireNamespace('RODBC'))
     stop('please install the `RODBC` package', call.=FALSE)
   
-  q <- "SELECT lmapunitiid, muacres, areasymbol
+  q <- "SELECT p.uprojectid, p.projectname, a.areasymbol, lmu.lmapunitiid AS mukey, lmu.musym, mu.nationalmusym, muacres
   
-  FROM lmapunit_View_1 lmu
-  
-  INNER JOIN legend ON legend.liid = lmu.liidref
-  INNER JOIN area ON area.areaiid = legend.areaiidref
+  FROM project p
+
+  INNER JOIN projectmapunit pmu ON pmu.projectiidref = p.projectiid
+  INNER JOIN mapunit mu ON mu.muiid = pmu.muiidref
+
+  LEFT OUTER JOIN lmapunit lmu ON lmu.muiidref = mu.muiid
+  LEFT OUTER JOIN legend l ON l.liid = lmu.liidref
+  INNER JOIN area a ON a.areaiid = p.mlrassoareaiidref
+
+  WHERE a.areasymbol LIKE '11-%' AND p.projectname LIKE 'SDJR%' AND p.uprojectid LIKE '2016%'
+      AND mu.mutype != 1
+
+  ORDER BY p.projectname, a.areasymbol
   ;"
   
   # setup connection local NASIS
