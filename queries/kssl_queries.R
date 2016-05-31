@@ -86,11 +86,11 @@ sdjr_correlation <- function(asymbol, project_id, start_date, finish_date){
   
   url_download <- function(x) {
     l <- list()
-    for (i in seq(x)){
+    for (i in seq_along(x)){
       cat(paste("working on", x[i], "\n"))
-      cor_w <- getURLContent(x[i], ssl.verifypeer = F)
-      if (length(readHTMLTable(cor_w, stringsAsFactors = F)) > 0) {
-        l[[i]] <- readHTMLTable(cor_w, stringsAsFactors = F)[[1]]}
+      cor_w <- RCurl::getURLContent(x[i], ssl.verifypeer = F)
+      if (length(XML::readHTMLTable(cor_w, stringsAsFactors = F)) > 0) {
+        l[[i]] <- XML::readHTMLTable(cor_w, stringsAsFactors = F)[[1]]}
     }
     test <- length(l) > 0
     if (test) do.call("rbind", l) else message("no data")
@@ -103,8 +103,13 @@ sdjr_correlation <- function(asymbol, project_id, start_date, finish_date){
                    "projectname", "projectiid", "areasymbol", "old_musym", "old_nationalmusym", 
                    "old_mukey", "old_muname", "old_mutype", "old_muacres", "spatial")
   
-  temp <- group_by(corr, projectiid, areasymbol) %>% summarize(n_musym = length(old_musym))
-  corr <- left_join(corr, temp, by = c("projectiid", "areasymbol"))
+  vals <- c("projectiid", "areasymbol")
+  temp <- by(corr, corr[, vals], function(x) data.frame(unique(x[, vals]), n_musym = length(x$old_musym)))
+  temp <- do.call("rbind", temp)
+  corr <- merge(corr, temp, by = vals, all.x = TRUE, sort = FALSE)
+  
+#  temp <- group_by(corr, projectiid, areasymbol) %>% summarize(n_musym = length(old_musym))
+#  corr <- left_join(corr, temp, by = c("projectiid", "areasymbol"))
   corr$spatial <- ifelse(corr$n_musym > 1 & corr$projecttypename == "SDJR" & corr$spatial == FALSE, TRUE, corr$spatial)
   
 
