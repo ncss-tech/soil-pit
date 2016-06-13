@@ -1,3 +1,6 @@
+library(soilDB)
+library(vegan)
+
 test <- fetchNASIS_component_data(rmHzErrors = F)
 test2 <- subsetProfiles(test, s = "compname == 'Patton'")
 
@@ -9,3 +12,5 @@ d <- profile_compare(test2, vars = vars, k = 0, max_d = 200)
 
 h <- hclust(d)
 plot(as.dendrogram(h))
+
+plot(metaMDS(d))
