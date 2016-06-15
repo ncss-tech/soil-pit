@@ -98,19 +98,23 @@ sdjr_correlation <- function(asymbol, project_id, start_date, finish_date){
   
   corr <- url_download(url)
   
-  # Rename, subset and find spatial changes
-  names(corr) <- c("fy", "region", "office", "projecttypename", "uprojectid", 
-                   "projectname", "projectiid", "areasymbol", "old_musym", "old_nationalmusym", 
-                   "old_mukey", "old_muname", "old_mutype", "old_muacres", "spatial")
+# Rename, subset and find spatial changes
+  names(corr) <- gsub("\n", "", names(corr), fixed = TRUE)
+#   names(corr) <- c("fy", "region", "office", "projecttypename", "uprojectid", 
+#                    "projectname", "projectiid", "areasymbol", "old_musym", "old_nationalmusym", 
+#                    "old_mukey", "old_muname", "old_mutype", "old_muacres", "spatial")
   
   vals <- c("projectiid", "areasymbol")
-  temp <- by(corr, corr[, vals], function(x) data.frame(unique(x[, vals]), n_musym = length(x$old_musym)))
+  temp <- by(corr, corr[, vals], function(x) data.frame(
+    unique(x[, vals]),
+    n_musym = length(x$musym))
+    )
   temp <- do.call("rbind", temp)
   corr <- merge(corr, temp, by = vals, all.x = TRUE, sort = FALSE)
   
 #  temp <- group_by(corr, projectiid, areasymbol) %>% summarize(n_musym = length(old_musym))
 #  corr <- left_join(corr, temp, by = c("projectiid", "areasymbol"))
-  corr$spatial <- ifelse(corr$n_musym > 1 & corr$projecttypename == "SDJR" & corr$spatial == FALSE, TRUE, corr$spatial)
+  corr$spatial_change <- ifelse(corr$spatial_change == TRUE | (corr$n_musym > 1 & corr$projecttypename == "SDJR" & corr$spatial_change == FALSE), TRUE, corr$spatial)
   
 
   write.csv(corr, file = paste0("report_correlation_fy", format(as.Date(finish_date, "%m/%d/%Y"), "%Y"), "_", paste0(asymbol[1], "_", asymbol[length(asymbol)]), "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
