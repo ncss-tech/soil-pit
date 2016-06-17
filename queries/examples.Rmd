@@ -440,3 +440,158 @@ component_max <- do.call("rbind", by(component, list(component$mukey), function(
 # save output
 write.csv(component_max, file = "component_max.csv")
 ```
+
+```{WEB-spatial_asym_uprojectid_dates}
+# Stephen Roecker & Jason Nemecek
+# Old version was WEB-Correlation_state_fy
+# Improves on the old version because it doesn't require the projects to be correlated before they show up.
+
+
+PARAMETER asymbol CHARACTER PROMPT "area_symbol (e.g IN001 or IN%)" REQUIRED.
+PARAMETER project_id CHARACTER PROMPT 'user project id (e.g. 201611IND001 or 2016%)' REQUIRED.
+PARAMETER start_date CHARACTER PROMPT 'start_date (e.g. 10/01/2015)' REQUIRED.
+PARAMETER finish_date CHARACTER PROMPT 'finish_date (e.g. 10/01/2016)' REQUIRED.
+
+
+EXEC SQL SELECT DISTINCT 
+pmg.fiscalyear/1 fy, REPLACE(SUBSTRING(mlra.areasymbol, 1, 2), '-', '') region, mlra.areasymbol office, 
+projecttypename, p.projectiid/1 projectiid, p.uprojectid, p.projectname, a.areasymbol, lmu.musym, lmu.lmapunitiid/1 mukey,
+mu.nationalmusym, CODELABEL(mu.mutype) mutype, mu.muname, lmu.muacres/1 muacres,
+lmu_new.musym new_musym, lmu_new.lmapunitiid/1 new_mukey, mu_new.nationalmusym new_nationalmusym, CODELABEL(mu_new.mutype) new_mutype, mu_new.muname new_muname,
+lmu_new.muacres/1 new_muacres,
+CASE WHEN pmu.seqnum = YEAR('10/01/2016') OR # flagged in the project map unit table
+    lmu.muacres != lmu_new.muacres OR # split in the legend
+    (lmu.musym != lmu_new.musym AND # MUSYM change
+    (lmu.musym LIKE '[zx]%' OR lmu.musym LIKE '%[ZS]' OR lmu.musym LIKE '%[zx]' OR lmu.musym LIKE '%[Z]' OR # Region 11 rules for legend constraint error
+    lmu.musym LIKE '[a]%' OR lmu.musym LIKE '%[a]' OR lmu.musym LIKE '%[+]' OR lmu.musym LIKE '%[_old]')) OR # Other Region rules for legend constraint error
+    (SELECT COUNT(lmu2.lmapunitiid)
+    FROM  
+        project p2 INNER JOIN
+        projectmapunit pmu2 ON pmu2.projectiidref = p2.projectiid INNER JOIN
+        mapunit mu2 ON mu2.muiid = pmu2.muiidref INNER JOIN
+        lmapunit lmu2 ON lmu2.muiidref = mu2.muiid INNER JOIN 
+        legend l2 ON l2.liid = lmu2.liidref INNER JOIN
+        area a2 ON a2.areaiid = l2.areaiidref
+    WHERE l2.liid = l.liid AND p2.projectiid = p.projectiid AND a2.areaiid = a.areaiid AND
+        (mu2.mutype = 2 OR mu2.mutype IS NULL)) > 1
+    THEN 'TRUE' ELSE 'FALSE' END spatial_change, # CASE rules to detect a spatial change
+CASE WHEN lmu_new.lmapunitiid IS NULL THEN lmu.lmapunitiid ELSE lmu_new.lmapunitiid END current_mukey
+
+            
+FROM 
+    project p INNER JOIN  
+    projectmapunit pmu ON pmu.projectiidref = p.projectiid INNER JOIN 
+    projectmilestone pm ON pm.projectiidref = p.projectiid
+
+    LEFT OUTER JOIN  
+        projectmappinggoal pmg ON pmg.projectiidref = p.projectiid 
+
+    INNER JOIN  
+        mapunit mu ON mu.muiid = pmu.muiidref INNER JOIN  
+        lmapunit lmu ON lmu.muiidref = mu.muiid INNER JOIN  
+        legend l ON l.liid = lmu.liidref LEFT OUTER JOIN  
+        area a ON a.areaiid = l.areaiidref AND a.areasymbol LIKE asymbol INNER JOIN
+        areatype at ON at.areatypeiid = a.areatypeiidref
+             
+        INNER JOIN  
+            correlation cor ON cor.muiidref = mu.muiid AND cor.repdmu = 1
+             
+    INNER JOIN  
+        area mlra ON mlra.areaiid = p.mlrassoareaiidref LEFT OUTER JOIN 
+        projecttype pt ON pt.projecttypeiid = p.projecttypeiidref INNER JOIN 
+        milestonetype mt ON mt.milestonetypeiid = pm.milestonetypeiidref 
+              
+    LEFT OUTER JOIN
+        (project p_new INNER JOIN
+        projectmapunit pmu_new ON pmu_new.projectiidref = p_new.projectiid INNER JOIN 
+        mapunit mu_new ON mu_new.muiid = pmu_new.muiidref AND mu_new.mutype = 1 LEFT OUTER JOIN
+        lmapunit lmu_new ON lmu_new.muiidref = mu_new.muiid AND lmu_new.mustatus != "additional"
+        
+        INNER JOIN
+            correlation cor_new ON cor_new.muiidref = mu_new.muiid AND cor_new.repdmu != 1) 
+            ON p_new.projectiid = p.projectiid
+            AND cor_new.dmuiidref = cor.dmuiidref AND lmu_new.liidref = lmu.liidref
+
+WHERE 
+    (pm.seqnum = YEAR(start_date) OR mu.mutype != 1 OR mu.mutype IS NULL) AND
+    p.uprojectid LIKE project_id AND # projectid matches
+    ((milestonetypename LIKE '%Correlation activities%' AND 
+    pm.scheduledcompletiondate BETWEEN start_date AND finish_date) OR pmg.fiscalyear = YEAR(finish_date)) AND # project falls within the timeframe
+    p.projectapprovedflag = 1 AND # project is approved
+    legendsuituse != 1 AND at.areatypename = 'non-mlra soil survey area'
+             
+ORDER BY mlra.areasymbol, p.projectname, a.areasymbol, lmu.musym;.
+
+
+TEMPLATE basic TAG "td" ELEMENT "tr" 
+FIELD, FIELD, FIELD, FIELD, FIELD, FIELD, FIELD, FIELD, FIELD, FIELD,
+FIELD, FIELD, FIELD, FIELD, FIELD, FIELD, FIELD, FIELD, FIELD, FIELD,
+FIELD, FIELD.
+
+SECTION WHEN AT START  #sets the report name and initial header
+DATA
+ELEMENT OPEN "section" ATTRIB ("label", "SoilReport").    #opens section
+ELEMENT OPEN "table".                                                #opens table
+ELEMENT OPEN "thead".                                #Opens table header
+USING basic     
+"fy", 
+"region",
+"office",
+"projecttypename", 
+"projectiid",
+"uprojectid", 
+"projectname",
+"areasymbol", 
+"musym",
+"mukey", 
+"nationalmusym",
+"muname",
+"mutype",
+"muacres",
+"new_musym",
+"new_mukey",
+"new_nationalmusym",
+"new_mutype",
+"new_muname", 
+"new_muacres", 
+"spatial_change",
+"current_mukey".
+
+ELEMENT CLOSE "thead".                               #Closes table header
+ELEMENT OPEN "tbody".                                #opens table body
+END SECTION.
+
+SECTION     #adds the data to the report
+DATA
+USING basic 
+fy, 
+region,
+office,
+projecttypename, 
+projectiid,
+p.uprojectid, 
+p.projectname,
+a.areasymbol, 
+lmu.musym,
+mukey, 
+mu.nationalmusym,
+mu.muname,
+mutype,
+muacres,
+new_musym,
+new_mukey,
+new_nationalmusym,
+new_mutype,
+new_muname, 
+new_muacres, 
+spatial_change,
+current_mukey.   
+END SECTION.
+
+SECTION when at end   #closes the report
+DATA
+ELEMENT CLOSE "tbody".                              #Closes table body
+ELEMENT CLOSE "table".                               #closes table
+ELEMENT CLOSE "section".                           #closes section
+END SECTION.
+```

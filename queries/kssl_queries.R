@@ -114,7 +114,7 @@ sdjr_correlation <- function(asymbol, project_id, start_date, finish_date){
   
 #  temp <- group_by(corr, projectiid, areasymbol) %>% summarize(n_musym = length(old_musym))
 #  corr <- left_join(corr, temp, by = c("projectiid", "areasymbol"))
-  corr$spatial_change <- ifelse(corr$spatial_change == TRUE | (corr$n_musym > 1 & corr$projecttypename == "SDJR" & corr$spatial_change == FALSE), TRUE, corr$spatial)
+#  corr$spatial_change <- ifelse(corr$spatial_change == TRUE | (corr$n_musym > 1 & corr$projecttypename == "SDJR" & corr$spatial_change == FALSE), TRUE, corr$spatial)
   
 
   write.csv(corr, file = paste0("report_correlation_fy", format(as.Date(finish_date, "%m/%d/%Y"), "%Y"), "_", paste0(asymbol[1], "_", asymbol[length(asymbol)]), "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
