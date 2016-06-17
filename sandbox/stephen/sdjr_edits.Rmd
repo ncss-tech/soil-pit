@@ -64,6 +64,28 @@ ddply(corr11, .(Office), summarize, nProjects = length(unique(pname)))
 
 
 
+# WEB-spatial_asym_uprojectid_dates
+
+data(state)
+st <- tolower(state.abb)
+asymbol <- paste0(st, "%25")
+start_date <- "10/01/2015"
+finish_date <- "09/30/2016"
+project_id <- "2016%25"
+
+test <- sdjr_correlation(asymbol, "2016%25", start_date, finish_date)
+
+group_by(test, region) %>% filter(spatial_change == TRUE) %>% summarize(n_projects = length(unique(projectiid))) %>% arrange(desc(n_projects))
+
+group_by(test, region) %>% filter(spatial_change == TRUE) %>% summarize(n_musym = length(spatial_change)) %>% arrange(desc(n_musym))
+
+test_idx <- grepl("^z|z$|^x|x$", test$new_musym) & test$musym != test$new_musym & test$new_musym != ""
+head(test[test_idx, ])
+
+
+
+
+
 st <- paste0(toupper(c("ia", "il", "in", "ks", "ky", "mi", "mn", "mo", "ne", "oh", "ok", "sd", "wi")), "%25")
 leg <- legends_report(st)
 
