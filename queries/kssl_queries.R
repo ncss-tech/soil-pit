@@ -82,6 +82,8 @@ correlation_report <- function(asymbol, fy){
 
 
 sdjr_correlation <- function(asymbol, project_id, start_date, finish_date){
+  options(stringsAsFactors = FALSE)
+
   url <- paste0("https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-spatial_asym_uprojectid_dates&asymbol=", asymbol, "&project_id=", project_id, "&start_date=", start_date, "&finish_date=", finish_date)
   
   url_download <- function(x) {
@@ -89,8 +91,8 @@ sdjr_correlation <- function(asymbol, project_id, start_date, finish_date){
     for (i in seq_along(x)){
       cat(paste("working on", x[i], "\n"))
       cor_w <- RCurl::getURLContent(x[i], ssl.verifypeer = F)
-      if (length(XML::readHTMLTable(cor_w, stringsAsFactors = F)) > 0) {
-        l[[i]] <- XML::readHTMLTable(cor_w, stringsAsFactors = F)[[1]]}
+      if (length(XML::readHTMLTable(cor_w, stringsAsFactors = FALSE)) > 0) {
+        l[[i]] <- XML::readHTMLTable(cor_w, stringsAsFactors = FALSE)[[1]]}
     }
     test <- length(l) > 0
     if (test) do.call("rbind", l) else message("no data")
@@ -98,12 +100,10 @@ sdjr_correlation <- function(asymbol, project_id, start_date, finish_date){
   
   corr <- url_download(url)
   
+  
 # Rename, subset and find spatial changes
   names(corr) <- gsub("\n", "", names(corr), fixed = TRUE)
-#   names(corr) <- c("fy", "region", "office", "projecttypename", "uprojectid", 
-#                    "projectname", "projectiid", "areasymbol", "old_musym", "old_nationalmusym", 
-#                    "old_mukey", "old_muname", "old_mutype", "old_muacres", "spatial")
-  
+
   vals <- c("projectiid", "areasymbol")
   temp <- by(corr, corr[, vals], function(x) data.frame(
     unique(x[, vals]),
@@ -112,11 +112,28 @@ sdjr_correlation <- function(asymbol, project_id, start_date, finish_date){
   temp <- do.call("rbind", temp)
   corr <- merge(corr, temp, by = vals, all.x = TRUE, sort = FALSE)
   
-#  temp <- group_by(corr, projectiid, areasymbol) %>% summarize(n_musym = length(old_musym))
-#  corr <- left_join(corr, temp, by = c("projectiid", "areasymbol"))
-#  corr$spatial_change <- ifelse(corr$spatial_change == TRUE | (corr$n_musym > 1 & corr$projecttypename == "SDJR" & corr$spatial_change == FALSE), TRUE, corr$spatial)
+  corr <- transform(corr, muacres = as.numeric(muacres), new_muacres = as.numeric(new_muacres))
+  corr <- as.data.frame(lapply(corr[seq_along(corr)], function(x) if (is.character(x)) ifelse(x == "", NA, x) else x))
   
-
+  spatial <- function(muacres, new_muacres, n_musym, musym, new_musym) {
+    acre_test <- NA
+    n_test <- NA
+    musym_test <- NA
+    
+    if (!is.na(muacres) & !is.na(new_muacres)) {
+      if (muacres != new_muacres) acre_test <- TRUE else acre_test <- FALSE} else acre_test <- NA
+    if (!is.na(new_musym)) {
+      if (musym != new_musym & !grepl("^[zxa]|[zxaZS]$|+$|_old$", musym)) musym_test <- TRUE else musym_test <- FALSE} else musym_test <- NA
+    if (n_musym > 1) n_test <- TRUE else n_test <- FALSE
+    return(any(acre_test, n_test, musym_test))
+  }
+  
+  corr$spatial_change <- with(corr, mapply(spatial, muacres, new_muacres, n_musym, musym, new_musym))
+  
+#   (lmu.musym NOT LIKE '[zx]%' OR lmu.musym NOT LIKE '%[ZS]' OR lmu.musym NOT LIKE '%[zx]' OR lmu.musym NOT LIKE '%[Z]' OR # Region 11 rules for legend constraint error
+#   lmu.musym NOT LIKE '[a]%' OR lmu.musym NOT LIKE '%[a]' OR lmu.musym NOT LIKE '%[+]' OR lmu.musym NOT LIKE '%[_old]')) OR # Other Region rules for legend constraint error
+  
+  
   write.csv(corr, file = paste0("report_correlation_fy", format(as.Date(finish_date, "%m/%d/%Y"), "%Y"), "_", paste0(asymbol[1], "_", asymbol[length(asymbol)]), "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
   
   return(corr = corr)
