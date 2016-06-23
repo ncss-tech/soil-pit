@@ -71,18 +71,29 @@ ddply(corr11, .(Office), summarize, nProjects = length(unique(pname)))
 ssa <- readOGR(dsn = "M:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs", encoding = "ESRI Shapefile")@data
 st <- sort(unique(substr(ssa$areasymbol, 1, 2)))
 asymbol <- paste0(st, "%25")
-start_date <- "10/01/2014"
-finish_date <- "09/30/2015"
+start_date <- "10/01/2015"
+finish_date <- "09/30/2016"
 project_id <- "%25"
 
 test <- sdjr_correlation(asymbol, project_id, start_date, finish_date)
 
-group_by(test, region) %>% filter(projecttypename == "SDJR") %>% summarize(
+
+
+group_by(test, region) %>% filter(projecttypename == "SDJR" & fy == "2016" & ) %>% summarize(
   n_projects = length(unique(projectiid)),
   n_musym = length(unique(musym)),
   n_asymbol = length(unique(areasymbol)),
-  acres = sum(muacres, na.rm = TRUE)) %>% 
-  arrange(desc(acres))
+  n_spatial = sum(spatial_change, na.rm = T),
+  approved_acres = round(sum(muacres, na.rm = TRUE)),
+  correlated_acres = sum(new_muacres, na.rm = TRUE),
+  pct_complete_acres = round((correlated_acres / approved_acres) * 100)) %>% 
+  arrange(desc(correlated_acres))
+
+r10_test <- group_by(test, region, projectname) %>% filter(projecttypename == "SDJR" & region == "10") %>% summarize(
+  projecttypename = unique(projecttypename),
+  goaled = sum(muacres, na.rm = T) * 0.2,
+  acres = sum(muacres, na.rm = T))
+
 
 test_idx <- grepl("^z|z$|^x|x$", test$new_musym) & test$musym != test$new_musym & test$new_musym != ""
 head(test[test_idx, ])
