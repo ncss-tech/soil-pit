@@ -66,18 +66,23 @@ ddply(corr11, .(Office), summarize, nProjects = length(unique(pname)))
 
 # WEB-spatial_asym_uprojectid_dates
 
-data(state)
-st <- tolower(state.abb)
+# data(state)
+# st <- tolower(state.abb)
+ssa <- readOGR(dsn = "M:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs", encoding = "ESRI Shapefile")@data
+st <- sort(unique(substr(ssa$areasymbol, 1, 2)))
 asymbol <- paste0(st, "%25")
-start_date <- "10/01/2015"
-finish_date <- "09/30/2016"
-project_id <- "2016%25"
+start_date <- "10/01/2014"
+finish_date <- "09/30/2015"
+project_id <- "%25"
 
-test <- sdjr_correlation(asymbol, "2016%25", start_date, finish_date)
+test <- sdjr_correlation(asymbol, project_id, start_date, finish_date)
 
-group_by(test, region) %>% filter(spatial_change == TRUE) %>% summarize(n_projects = length(unique(projectiid))) %>% arrange(desc(n_projects))
-
-group_by(test, region) %>% filter(spatial_change == TRUE) %>% summarize(n_musym = length(spatial_change)) %>% arrange(desc(n_musym))
+group_by(test, region) %>% filter(projecttypename == "SDJR") %>% summarize(
+  n_projects = length(unique(projectiid)),
+  n_musym = length(unique(musym)),
+  n_asymbol = length(unique(areasymbol)),
+  acres = sum(muacres, na.rm = TRUE)) %>% 
+  arrange(desc(acres))
 
 test_idx <- grepl("^z|z$|^x|x$", test$new_musym) & test$musym != test$new_musym & test$new_musym != ""
 head(test[test_idx, ])
