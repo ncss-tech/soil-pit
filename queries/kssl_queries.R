@@ -112,7 +112,7 @@ sdjr_correlation <- function(asymbol, project_id, start_date, finish_date){
   temp <- do.call("rbind", temp)
   corr <- merge(corr, temp, by = vals, all.x = TRUE, sort = FALSE)
   
-  corr <- transform(corr, muacres = as.numeric(muacres), new_muacres = as.numeric(new_muacres))
+  corr <- transform(corr, muacres = as.numeric(muacres), new_muacres = as.numeric(new_muacres)) #, updateacres = as.numeric(updateacres))
   corr <- as.data.frame(lapply(corr[seq_along(corr)], function(x) if (is.character(x)) ifelse(x == "", NA, x) else x))
   
   spatial <- function(muacres, new_muacres, n_musym, musym, new_musym) {
