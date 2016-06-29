@@ -6,9 +6,10 @@ For the past several years Soil Survey Offices in the East Central Glaciated Reg
 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=3.75, fig.width=7.5}
-setwd("C:/workspace")
 options(stringsAsFactors = FALSE)
 
+.libPaths(c("C:/R/win-library/3.2", "C:/Program Files/R/R-3.2.1/library"))
+library(rmarkdown)
 library(knitr)
 library(plyr)
 library(dplyr)

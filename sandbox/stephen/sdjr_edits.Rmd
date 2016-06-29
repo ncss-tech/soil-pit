@@ -67,10 +67,10 @@ ddply(corr11, .(Office), summarize, nProjects = length(unique(pname)))
 
 # WEB-spatial_asym_uprojectid_dates
 
-# data(state)
-# st <- tolower(state.abb)
-ssa <- readOGR(dsn = "E:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs", encoding = "ESRI Shapefile")@data
-st <- sort(unique(substr(ssa$areasymbol, 1, 2)))
+data(state)
+st <- tolower(state.abb)
+# ssa <- readOGR(dsn = "E:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs", encoding = "ESRI Shapefile")@data
+# st <- sort(unique(substr(ssa$areasymbol, 1, 2)))
 # st <- paste0(c("in", "oh")) # Region 11
 asymbol <- paste0(st, "%25")
 start_date <- "10/01/2015"
@@ -79,7 +79,7 @@ project_id <- "%25"
 
 test <- sdjr_correlation(asymbol, project_id, start_date, finish_date)
 
-test2 <- group_by(test, region) %>% filter(projecttypename == "SDJR" & fy == "2016") %>% summarize(
+sdjr_us <- group_by(test, region) %>% filter(projecttypename == "SDJR" & fy == "2016") %>% summarize(
   n_projects       = length(unique(projectiid)),
   n_musym          = length(unique(musym)),
   n_asymbol        = length(unique(areasymbol)),
@@ -89,8 +89,19 @@ test2 <- group_by(test, region) %>% filter(projecttypename == "SDJR" & fy == "20
   pct_finished     = round((correlated_acres / approved_acres) * 100)) %>% 
   arrange(desc(correlated_acres))
 
-test2 <- 
-dotplot(correlated_acres ~ office, data = test2)
+dotplot(correlated_acres ~ region, data = sdjr_us)
+
+
+sdjr_region11 <- group_by(test, state = substr(areasymbol, 1, 2)) %>% filter(region == "11" & projecttypename == "SDJR" & fy == "2016") %>% summarize(
+  n_projects       = length(unique(projectiid)),
+  n_musym          = length(unique(musym)),
+  n_asymbol        = length(unique(areasymbol)),
+  n_spatial        = sum(spatial_change, na.rm = T),
+  approved_acres   = round(sum(muacres, na.rm = TRUE)),
+  correlated_acres = round(sum(new_muacres, na.rm = TRUE)),
+  pct_finished     = round((correlated_acres / approved_acres) * 100)) %>% 
+  arrange(state)
+
 
 r10_test <- group_by(test, region, projectname) %>% filter(projecttypename == "SDJR" & region == "10") %>% summarize(
   projecttypename = unique(projecttypename),
