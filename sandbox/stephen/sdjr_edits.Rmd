@@ -14,6 +14,8 @@ library(RCurl)
 library(XML)
 library(rgdal)
 library(ggplot2)
+library(lattice)
+library(RColorBrewer)
 
 source("C:/workspace/github/soil-pit/trunk/queries/kssl_queries.R")
 
@@ -68,9 +70,9 @@ ddply(corr11, .(Office), summarize, nProjects = length(unique(pname)))
 # WEB-spatial_asym_uprojectid_dates
 
 data(state)
-st <- tolower(state.abb)
-# ssa <- readOGR(dsn = "E:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs", encoding = "ESRI Shapefile")@data
-# st <- sort(unique(substr(ssa$areasymbol, 1, 2)))
+# st <- tolower(state.abb)
+ssa <- readOGR(dsn = "E:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs", encoding = "ESRI Shapefile")@data
+st <- sort(unique(substr(ssa$areasymbol, 1, 2)))
 # st <- paste0(c("in", "oh")) # Region 11
 asymbol <- paste0(st, "%25")
 start_date <- "10/01/2015"
@@ -92,7 +94,7 @@ sdjr_us <- group_by(test, region) %>% filter(projecttypename == "SDJR" & fy == "
 dotplot(correlated_acres ~ region, data = sdjr_us)
 
 
-sdjr_region11 <- group_by(test, state = substr(areasymbol, 1, 2)) %>% filter(region == "11" & projecttypename == "SDJR" & fy == "2016") %>% summarize(
+sdjr_region11 <- group_by(test, office) %>% filter(region == "11" & projecttypename == "SDJR" & fy == "2016") %>% summarize(
   n_projects       = length(unique(projectiid)),
   n_musym          = length(unique(musym)),
   n_asymbol        = length(unique(areasymbol)),
@@ -100,7 +102,18 @@ sdjr_region11 <- group_by(test, state = substr(areasymbol, 1, 2)) %>% filter(reg
   approved_acres   = round(sum(muacres, na.rm = TRUE)),
   correlated_acres = round(sum(new_muacres, na.rm = TRUE)),
   pct_finished     = round((correlated_acres / approved_acres) * 100)) %>% 
-  arrange(state)
+  arrange(office)
+
+sdjr_region11
+ggplot(sdjr_region11, aes(x = pct_finished, y = correlated_acres, color = office)) + geom_point(cex = 5) + scale_colour_brewer(palette="Spectral")
+
+sdjr_region11 <- as.data.frame(sdjr_region11)
+color <- brewer.pal(11, "RdYlBu")
+xyplot(correlated_acres ~ pct_finished, groups = office, data = sdjr_region11,
+       type = c("p", "g"), cex = 2, pch = 16, col = color,  
+       key = list(text = list(sdjr_region11$office), space = "right", 
+                  points = list(pch = 16, col = color, cex = 2))
+       )
 
 
 r10_test <- group_by(test, region, projectname) %>% filter(projecttypename == "SDJR" & region == "10") %>% summarize(
