@@ -1,10 +1,4 @@
----
-title: "sdjr_spatial_progress"
-author: "Stephen Roecker"
-date: "Monday, July 27, 2015"
-output: html_document
----
-
+# set options and load packages
 options(stringsAsFactors=F)
 
 library(plyr)
@@ -20,12 +14,12 @@ library(RColorBrewer)
 source("C:/workspace/github/soil-pit/trunk/queries/kssl_queries.R")
 
 
-```{r du report, echo=FALSE}
 
 goals <- goals_report(2012, "%25")
 goals <- goals_report(2013, "%25")
 goals <- goals_report(2014, "%25")
 goals <- goals_report(2015, "%25")
+goals <- goals_report(2016, "%25")
 
 # WEB-PROJECT-Counties+with+approved+projects+DU
 fy <- 2015
@@ -71,7 +65,7 @@ ddply(corr11, .(Office), summarize, nProjects = length(unique(pname)))
 
 data(state)
 # st <- tolower(state.abb)
-ssa <- readOGR(dsn = "E:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs", encoding = "ESRI Shapefile")@data
+ssa <- readOGR(dsn = "M:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs", encoding = "ESRI Shapefile")@data
 st <- sort(unique(substr(ssa$areasymbol, 1, 2)))
 # st <- paste0(c("in", "oh")) # Region 11
 asymbol <- paste0(st, "%25")
