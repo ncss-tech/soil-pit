@@ -1,6 +1,6 @@
 # Report of changes requiring SSURGO recertification
 
-```{r, echo=FALSE, warning=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # These figures don't compare with Alena's spreadsheets. Her spreadsheets have additional counties that aren't captured in the Project Record.
 # This assumes no changes have been made to the ORIG columns, could run Alena's qa against an unedited copy.
 
@@ -23,6 +23,8 @@ owners <- read.csv("M:/geodata/soils/SSA_Regional_Ownership_MASTER_MLRA_OFFICE.c
 # data(state)
 # st <- paste0(tolower(state.abb), "%25")
 st <- paste0(toupper(c("ia", "il", "in", "ks", "ky", "mi", "mn", "mo", "ne", "oh", "ok", "sd", "wi")), "%25")
+# ssa <- readOGR(dsn = "M:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs", encoding = "ESRI Shapefile")@data
+# st <- sort(unique(substr(ssa$areasymbol, 1, 2)))
 
 # goals <- goals_report(fy, paste0(region, "-%25"))
 goals <- read.csv("C:/workspace/report_goals_fy16_2016_08_31.csv")
@@ -51,22 +53,40 @@ kable(goals_summary, caption = "Number or SDJR projects per SS Office")
 
 # Correlation report (completed spatial changes in NASIS)
 
-corr_sub <- corr[corr$office %in% office & !is.na(corr$new_musym), ]
+corr_sub <- corr[corr$office %in% office &
+                   !is.na(corr$new_musym)
+                   , ]
+
 corr_summary <- ddply(corr_sub, .(office), summarize,
                       n_projects = length(unique(projectiid)),
                       acres = sum(muacres) * 0.2
                       )
+
+kable(corr_summary, caption = "Number of completed SDJR changes")
+
+
+corr_sub <- corr[corr$office %in% office &
+                   !is.na(corr$new_musym) &
+                   corr$spatial_change == TRUE
+                 , ]
+
+corr_summary <- ddply(corr_sub, .(office), summarize,
+                      n_projects = length(unique(projectiid)),
+                      acres = sum(muacres) * 0.2
+                      )
+
 kable(corr_summary, caption = "Number of completed spatial changes")
+
 
 vars <- c("office", "projectname", "areasymbol", "new_musym")
 nasis_qa <- ddply(corr_sub, vars, summarize, 
                   n_musym = length(unique(musym)),
-                  musym2 = paste0(unique(musym), collapse=", ")
+                  musym_c = paste0(unique(musym), collapse=", ")
                   )
-
-nasis_qa2 <- ddply(nasis_qa, c(vars, "new_musym", "n_musym"), summarize,
-                   musym = strsplit(musym2, ", ")[[1]]
+nasis_qa2 <- ddply(corr_sub, vars, summarize,
+                   musym = unique(musym)
                    )
+nasis_qa3 <- merge(nasis_qa2, nasis_qa, by = vars, all.x = TRUE)
 
 
 # Geodatabase report (completed spatial changes in geodatabase)
@@ -83,12 +103,12 @@ geo_qa <- ddply(mupolygon_edits, vars, summarise,
                 n_polygons = length(musym),
                 acres = round(sum(shape_area*0.000247), 0),
                 n_musym = length(unique(musym)),
-                musym2 = paste0(unique(musym), collapse=", ")
+                musym_c = paste0(unique(musym), collapse=", ")
                 )
-
-geo_qa2 <- ddply(geo_qa, c(vars, "n_polygons", "acres", "n_musym", "musym2"), summarize,
-                 musym = strsplit(musym2, ", ")[[1]]
+geo_qa2 <- ddply(mupolygon_edits,vars, summarize,
+                 musym = unique(musym)
                  )
+geo_qa3 <- merge(geo_qa2, geo_qa, by = vars, all.x = TRUE)
 
 
 write.csv(geo_qa2, 
@@ -103,32 +123,36 @@ write.csv(geo_qa2,
 
 ```{r, QA checks, echo=FALSE}
 # QA checks
-vars <- c("areasymbol", "new_musym", "musym")
-qa <- merge(nasis_qa2, geo_qa2, by = vars, all = TRUE) # match geo_qa2 to nasis_qa2
+vars <- c("areasymbol", "musym", "new_musym")
+qa <- merge(nasis_qa3, geo_qa3, by = vars, all = TRUE) # match geo_qa2 to nasis_qa2
 # qa2 <- join(nasis_qa2, geo_qa2, by = key, type = "full") # match geo_qa2 to nasis_qa2
 
 leg_key <- with(legends, paste0(mapunit_symbol, "_", area_symbol))
 qa_key <- with(qa, paste0(new_musym, "_", areasymbol))
 
 qa <- transform(qa, 
-                in_legend = qa_key %in% leg_key,
                 in_project = !is.na(projectname),
-                in_geodatabase = is.na(n_polygons)
+                in_geodatabase = !is.na(n_polygons),
+                in_legend = qa_key %in% leg_key
                 )
 
-qa0 <- subset(qa, new_musym != musym & apply(is.na(qa), 1, any)) # remove where musym = old musym
+qa_sub <- subset(qa, musym != new_musym & !grepl("^[zxaZ]|[zxaZS]$|\\+$|_old$", musym))
 
-qa1 <- qa0[qa0$in_project == TRUE, ]
-qa2 <- qa0[qa0$in_geodatabase == TRUE, ]
-qa3 <- qa0[qa0$in_legend == FALSE, ]
+qa_project <- subset(qa_sub, in_project == FALSE)
+qa_geo <- subset(qa_sub, in_geodatabase == FALSE)
+qa_leg <- subset(qa, in_legend == FALSE)
 
-kable(qa1, caption = "NASIS changes missing from the geodatabase")
-print("Missing values (NA) need to be either added/removed from NASIS or the RTSD geodatabase, Otherwise they maybe splits that need to be relinked to a new additional mapunit.")
+if (dim(qa_project)[1] != 0) {
+  kable(qa_project, caption = "SDJR Project changes missing from the Geodatabase - Missing values (NA) need to be either added/removed from NASIS or the RTSD geodatabase, Otherwise they maybe splits that need to be relinked to a new additional mapunit.")
+} else cat("SDJR Projects in NASIS match the Geodatabase")
 
-kable(qa2, caption = "Geodatabase changes missing from NASIS")
-print("Missing values (NA) need to be either added/removed from NASIS or the RTSD geodatabase, Otherwise they maybe splits that need to be relinked to a new additional mapunit.")
+if (dim(qa_geo)[1] != 0) {
+  kable(qa_geo, caption = "Geodatabase changes missing from the SDJR Projects in NASIS - Missing values (NA) need to be either added/removed from NASIS or the RTSD geodatabase, Otherwise they maybe splits that need to be relinked to a new additional mapunit.")
+} else cat("Geodatabase matches the SDJR Projects in NASIS")
 
-kable(qa3, caption = "Geodatabase musym missing from the legend")
+if (dim(qa_leg)[1] != 0) {
+  kable(qa_leg, caption = "Geodatabase musym missing from the legend")
+  } else cat("Legends in NASIS match the Geodatabase")
 
 write.csv(qa, paste0("C:/workspace/report_spatial_qa_", office, "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
 
@@ -141,12 +165,18 @@ write.csv(qa, paste0("C:/workspace/report_spatial_qa_", office, "_", format(Sys.
 # length(geo_mis); print("number of musym missing from NASIS")
 
 ```
+
 ```{r, adjacent regions, echo=FALSE}
-outside <- merge(qa, owners, by.x = "areasymbol", by.y = "AREASYMBOL", sort = FALSE, all.x = TRUE)
-outside$key <- with(outside, paste0(areasymbol, "_", musym))
-outside <- subset(outside, outside$office %in% office & new_musym != musym, 
-                  select = c(office, areasymbol, projectname, new_musym, musym, n_polygons, acres, key, in_legend))
+corr_owners <- merge(qa, owners, by.x = "areasymbol", by.y = "AREASYMBOL", all.x = TRUE)
 
-kable(outside, caption = "MUSYM that need updating outside of Region")
+outside <- subset(corr_owners, 
+                  !(corr_owners$Region %in% region), 
+                  select = c(Region, office, areasymbol, projectname, new_musym, musym, n_polygons, acres, in_legend))
 
+if (dim(outside)[1] != 0) {
+  kable(outside, caption = "MUSYM that need updating outside of Region")
+  } else cat(c("No changes from", office, "to surrounding MLRA offices"))
+
+
+# Need Check for changes from other regions
 ```

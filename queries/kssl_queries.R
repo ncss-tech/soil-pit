@@ -142,7 +142,7 @@ sdjr_correlation <- function(asymbol, project_id, start_date, finish_date){
     else acre_test <- NA
     # musym test
     if (!is.na(new_musym)) {
-      if (musym != new_musym & !grepl("^[zxaZ]|[zxaZS]$|+$|_old$", musym)) 
+      if (musym != new_musym & !grepl("^[zxaZ]|[zxaZS]$|\\+$|_old$", musym)) 
         {musym_test <- TRUE} 
       else musym_test <- FALSE} 
     else musym_test <- NA
