@@ -133,6 +133,26 @@ sdjr_correlation <- function(asymbol, project_id, start_date, finish_date){
                     current_mukey = ifelse(musym != new_musym & !is.na(new_mukey), new_mukey, mukey))
   corr <- as.data.frame(lapply(corr[seq_along(corr)], function(x) if (is.character(x)) ifelse(x == "", NA, x) else x))
   
+  z_clean <- function(old, new){
+    new <- new
+    old_clean <- old
+    n <- nchar(old)
+    begin1 <- substr(old, 2, n)
+    end1 <- substr(old, 1, n - 1)
+    end4 <- substr(old, 1, n - 4)
+    
+    if (!is.na(new)) {
+      if (grepl("^[zxaZ]{1}", old) & old != new) {old_clean = begin1} else old_clean
+      if (grepl("[zxZS]${1}", old) & old != new) {old_clean = end1} else old_clean # Joe recommended using |\\+${1}, but appears to be legit in some cases
+      if (grepl("_old${3}", old) & old != new) {old_clean = end4} else old_clean
+    } else old_clean == NA
+    
+    return(old_clean)
+  }
+  
+  corr$musym_orig <- corr$musym
+  corr$musym <- mapply(z_clean, corr$musym, corr$new_musym)
+  
   spatial <- function(muacres, new_muacres, n_musym, musym, new_musym) {
     acre_test <- NA
     n_test <- NA
@@ -145,7 +165,7 @@ sdjr_correlation <- function(asymbol, project_id, start_date, finish_date){
     else acre_test <- NA
     # musym test
     if (!is.na(new_musym)) {
-      if (musym != new_musym & !grepl("^[zxaZ]|[zxaZS]$|\\+$|_old$", musym)) 
+      if (musym != new_musym) 
         {musym_test <- TRUE} 
       else musym_test <- FALSE} 
     else musym_test <- NA
