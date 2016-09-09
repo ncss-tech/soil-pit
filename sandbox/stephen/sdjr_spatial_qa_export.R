@@ -24,15 +24,12 @@ qa_mu_R11 <- qa_mu[qa_mu$SurveyID %in% R11$AREASYMBOL, ]
 # Summmarize export list
 
 R11ATL <- cbind(read.dbf("M:/geodata/project_data/11ATL/mupolygon_edits_final_with_Region10.dbf", as.is = TRUE), sso = "11ATL")
-R11CAR <- cbind(read.dbf("M:/geodata/project_data/11CAR/mupolygon_edits.dbf", as.is = TRUE), sso = "11CAR")
+R11MAN <- cbind(read.dbf("M:/geodata/project_data/11CAR/mupolygon_edits.dbf", as.is = TRUE), sso = "11CAR")
 R11CLI <- cbind(read.dbf("M:/geodata/project_data/11CLI/mupolygon_edits.dbf", as.is = TRUE), sso = "11CLI")
 R11FIN <- cbind(read.dbf("M:/geodata/project_data/11FIN/mupolygon_edits_final.dbf", as.is = TRUE), sso = "11FIN")
 R11GAL <- cbind(read.dbf("M:/geodata/project_data/11GAL/mupolygon_edits.dbf", as.is = TRUE), sso = "11GAL")
 R11IND <- cbind(read.dbf("M:/geodata/project_data/11IND/mupolygon_edits.dbf", as.is = TRUE), sso = "11IND")
-R11JUE <- cbind(read.dbf("M:/geodata/project_data/11JUE/mupolygon_edits_with_Region10.dbf", as.is = TRUE), sso = "11JUE")
 R11SPR <- cbind(read.dbf("M:/geodata/project_data/11SPR/mupolygon_edits_with_Region10.dbf", as.is = TRUE), sso = "11SPR")
-R11UNI <- cbind(read.dbf("M:/geodata/project_data/11UNI/mupolygon_edits.dbf", as.is = TRUE), sso = "11UNI")
-R11WAV <- cbind(read.dbf("M:/geodata/project_data/11WAV/mupolygon_edits_with_Region10_and_Region11.dbf", as.is = TRUE), sso = "11WAV")
 
 edits <- rbind(R11ATL, R11CAR, R11CLI, R11FIN, R11GAL, R11IND, R11JUE, R11SPR, R11UNI, R11WAV)
 edits <- edits[edits$AREASYMBOL %in% R11$AREASYMBOL, ]

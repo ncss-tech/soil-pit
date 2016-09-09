@@ -143,7 +143,7 @@ sdjr_correlation <- function(asymbol, project_id, start_date, finish_date){
     
     if (!is.na(new)) {
       if (grepl("^[zxaZ]{1}", old) & old != new) {old_clean = begin1} else old_clean
-      if (grepl("[zxZS]${1}", old) & old != new) {old_clean = end1} else old_clean # Joe recommended using |\\+${1}, but appears to be legit in some cases
+      if (grepl("[zxcZS]${1}", old) & old != new) {old_clean = end1} else old_clean # Joe recommended using |\\+${1}, but appears to be legit in some cases
       if (grepl("_old${3}", old) & old != new) {old_clean = end4} else old_clean
     } else old_clean == NA
     
@@ -170,9 +170,9 @@ sdjr_correlation <- function(asymbol, project_id, start_date, finish_date){
       else musym_test <- FALSE} 
     else musym_test <- NA
     # n test
-    if (n_musym > 1) n_test <- TRUE 
-    else n_test <- FALSE
-    return(any(acre_test, n_test, musym_test))
+#     if (n_musym > 1) n_test <- TRUE 
+#     else n_test <- FALSE
+    return(any(acre_test, n_test)) #, musym_test))
   }
   
   corr$spatial_change <- with(corr, mapply(spatial, muacres, new_muacres, n_musym, musym, new_musym))
