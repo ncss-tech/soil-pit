@@ -99,7 +99,7 @@ sdjr_region11 <- group_by(test, office) %>% filter(region == "11" & projecttypen
   arrange(office)
 
 sdjr_region11
-ggplot(sdjr_region11, aes(x = pct_finished, y = correlated_acres, color = office)) + geom_point(cex = 5) + scale_colour_brewer(palette="Spectral")
+ggplot(sdjr_region11, aes(x = pct_finished, y = correlated_acres, color = office)) + geom_point(cex = 5) + scale_colour_brewer(palette="RdYlBu")
 
 sdjr_region11 <- as.data.frame(sdjr_region11)
 color <- brewer.pal(11, "RdYlBu")

@@ -172,7 +172,7 @@ sdjr_correlation <- function(asymbol, project_id, start_date, finish_date){
     # n test
 #     if (n_musym > 1) n_test <- TRUE 
 #     else n_test <- FALSE
-    return(any(acre_test, n_test)) #, musym_test))
+    return(any(acre_test, musym_test)) #, n_test))
   }
   
   corr$spatial_change <- with(corr, mapply(spatial, muacres, new_muacres, n_musym, musym, new_musym))

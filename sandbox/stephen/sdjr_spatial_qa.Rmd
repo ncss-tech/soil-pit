@@ -16,8 +16,8 @@ source("C:/workspace/github/soil-pit/trunk/queries/kssl_queries.R")
 
 fy <- 2016
 region <- 11
-office <- c("11-ATL")
-mupolygon <- read.dbf("M:/geodata/project_data/11ATL/11ATL_mupolygon_edits_fy16_v3.dbf", as.is = TRUE)
+office <- c("11-CLI")
+mupolygon <- read.dbf("M:/geodata/project_data/11CLI/11CLI_mupolygon_edits_fy16_v2.dbf", as.is = TRUE)
 names(mupolygon) <- tolower(names(mupolygon))
 owners <- read.csv("M:/geodata/soils/SSA_Regional_Ownership_MASTER_MLRA_OFFICE.csv")
 
@@ -31,7 +31,7 @@ st <- paste0(toupper(c("ia", "il", "in", "ks", "ky", "mi", "mn", "mo", "ne", "oh
 goals <- read.csv("C:/workspace/report_goals_fy16_2016_09_09.csv")
 
 # corr <- sdjr_correlation(asymbol, project_id, start_date, finish_date)
-corr <- read.csv("C:/workspace/report_correlation_fy2016_AK%25_WY%25_2016_09_09.csv")
+corr <- read.csv("C:/workspace/report_correlation_fy2016_AK%25_WY%25_2016_09_13.csv")
 
 # legend <- legends_report(st)
 legends <- read.csv("C:/workspace/report_legends_2016_09_09.csv")
