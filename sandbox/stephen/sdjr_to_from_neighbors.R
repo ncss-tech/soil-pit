@@ -1,10 +1,11 @@
-# Changes from neighbors
+options(stringsAsFactors = FALSE)
+
+library(dplyr)
 
 corr <- read.csv("C:/workspace/report_correlation_fy2016_AK%25_WY%25_2016_09_13.csv")
 owners <- read.csv("M:/geodata/soils/SSA_Regional_Ownership_MASTER_MLRA_OFFICE.csv")
 
-
-library(dplyr)
+# Changes from neighbors
 
 corr_sub_11n <- subset(corr, corr$region != 11 & spatial_change == TRUE & projecttypename != "ES" & !is.na(new_mukey))
 owners_sub_11 <- subset(owners, Region == 11)
