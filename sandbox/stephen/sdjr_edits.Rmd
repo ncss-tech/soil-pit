@@ -1,14 +1,14 @@
 # set options and load packages
 options(stringsAsFactors=F)
 
-library(plyr)
-library(dplyr)
-library(stringr)
-library(RCurl)
-library(XML)
+library(foreign)
 library(rgdal)
-library(ggplot2)
+library(XML)
+library(RCurl)
+library(dplyr)
 library(lattice)
+library(latticeExtra)
+library(ggplot2)
 library(RColorBrewer)
 
 source("C:/workspace/github/soil-pit/trunk/queries/kssl_queries.R")
@@ -65,7 +65,7 @@ ddply(corr11, .(Office), summarize, nProjects = length(unique(pname)))
 
 data(state)
 # st <- tolower(state.abb)
-ssa <- readOGR(dsn = "M:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs", encoding = "ESRI Shapefile")@data
+ssa <- read.dbf("M:/geodata/soils/soilsa_a_nrcs.dbf")
 st <- sort(unique(substr(ssa$areasymbol, 1, 2)))
 # st <- paste0(c("in", "oh")) # Region 11
 asymbol <- paste0(st, "%25")
@@ -75,6 +75,7 @@ project_id <- "%25"
 
 test <- sdjr_correlation(asymbol, project_id, start_date, finish_date)
 
+# Need to find a way to weight this on the size of the Region
 sdjr_us <- group_by(test, region) %>% filter(projecttypename == "SDJR" & fy == "2016") %>% summarize(
   n_projects       = length(unique(projectiid)),
   n_musym          = length(unique(musym)),
@@ -101,8 +102,13 @@ sdjr_region11 <- group_by(test, office) %>% filter(region == "11" & projecttypen
 sdjr_region11
 ggplot(sdjr_region11, aes(x = pct_finished, y = correlated_acres, color = office)) + geom_point(cex = 5) + scale_colour_brewer(palette="RdYlBu")
 
+
 sdjr_region11 <- as.data.frame(sdjr_region11)
-color <- brewer.pal(11, "RdYlBu")
+opar <- trellis.par.get()
+trellis.par.set(ggplot2like())
+oopt <- lattice.options(ggplot2like.opts())
+
+color <- brewer.pal(104, "RdYlBu")
 xyplot(correlated_acres ~ pct_finished, groups = office, data = sdjr_region11,
        type = c("p", "g"), cex = 2, pch = 16, col = color,  
        key = list(text = list(sdjr_region11$office), space = "right", 
@@ -110,17 +116,15 @@ xyplot(correlated_acres ~ pct_finished, groups = office, data = sdjr_region11,
        )
 
 
-r10_test <- group_by(test, region, projectname) %>% filter(projecttypename == "SDJR" & region == "10") %>% summarize(
-  projecttypename = unique(projecttypename),
-  goaled = sum(muacres, na.rm = T) * 0.2,
-  acres = sum(muacres, na.rm = T))
+r11_spatial <- group_by(test, region, office) %>%
+filter(projecttypename == "SDJR" & region == 11 & spatial_change == TRUE) %>% 
+summarize(
+  acres = sum(muacres, na.rm = T),
+  n_areasymbol = length(unique(areasymbol))
+  ) %>%
+arrange(desc(acres))
 
-
-test_idx <- grepl("^z|z$|^x|x$", test$new_musym) & test$musym != test$new_musym & test$new_musym != ""
-head(test[test_idx, ])
-
-
-
+ggplot(r11_spatial, aes(x = n_areasymbol, y = acres, color = office)) + geom_point(cex = 5) + scale_colour_brewer(palette="RdYlBu") + scale_y_continuous()
 
 
 st <- paste0(toupper(c("ia", "il", "in", "ks", "ky", "mi", "mn", "mo", "ne", "oh", "ok", "sd", "wi")), "%25")
