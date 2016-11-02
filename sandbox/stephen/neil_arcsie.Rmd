@@ -1,0 +1,150 @@
+---
+output: html_document
+---
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE)
+```
+
+## Setup
+
+```{r setup}
+library(aqp)
+library(lattice)
+library(ggplot2)
+library(reshape2)
+library(caret)
+library(party)
+library(vegan)
+library(RColorBrewer)
+library(gridExtra)
+```
+
+## Import Data and Transform
+
+```{r read and tranform}
+data <- read.csv("C:/workspace/neil_arcsie/Pedon_Data_DumpSIE.csv")
+
+names(data) <- gsub(" ", "", names(data))
+names(data) <- gsub("\\.", "", names(data))
+data <- transform(data,
+                  EroClassFD = as.factor(EroClassFD),
+                  EroClassSIE = as.factor(EroClassSIE),
+                  hzthk = hzdepb - hzdept,
+                  rgb = munsell2rgb(mxhue, mxvalue, mxchroma, return_triplets = TRUE)
+                  )
+```
+
+## Explore Data
+
+```{r analyze}
+
+confusionMatrix(data = data$EroClassSIE, reference = data$EroClassFD)
+
+vals <- c("hzthk", "SolumDp", "CaCO3Dp", "claytotest", "SurfFrags", "mxvalue", "mxchroma", "SlopeSIE", "ProfCrv", "PlanCrv")
+data_lo <- melt(data, id.vars = "EroClassFD", measure.vars = vals)
+
+# data_lo <- reshape(data,
+#                     idvar = "upedonid",
+#                     varying = vals,
+#                     timevar = "variable", # label given to wide column names
+#                     v.names = "value", # labels given to column  of wide column values 
+#                     times = vals, # labels given to timevar index values
+#                     direction = "long"
+#                     )
+
+ggplot(data_lo, aes(x = EroClassFD, y = value)) +
+  geom_boxplot() +
+  facet_wrap(~ variable, scales="free_y")
+
+# bwplot(EroClassFD ~ value | variable, data = data_lo, scales = list(x ="free"), as.table = TRUE)
+# bwplot(EroClassSIE ~ value | variable, data = data_lo, scales = list(x ="free"), as.table = TRUE)
+  
+```
+
+
+# Non-metric Multidimentional Non-metric Scaling (NMDS)
+
+```{r mda}
+library(cluster)
+soil_vals <- c("hzthk", "SolumDp", "CaCO3Dp", "claytotest", "SurfFrags") # excluded color, only observed a narrow range thus small differences swamp everthing else
+geo_vals <- c("SlopeSIE", "ProfCrv", "PlanCrv")
+vals <- c(soil_vals, geo_vals)
+
+test <- subset(data, select = vals)
+test_d <- daisy(scale(test), metric = "gower")
+test_mds <- metaMDS(test_d, distance = "gower", autotransform = FALSE)
+test_pts <- as.data.frame(test_mds$points)
+test_pts <- cbind(test_pts, EroClassFD = data$EroClassFD)
+
+p1 <- ggplot(data, aes(x = hzthk, y = SolumDp,  col = EroClassFD)) +
+  geom_point(cex = 3) +
+  ggtitle("Scatterplot of EroClassFD") +
+  theme(aspect.ratio = 1)
+p2 <- ggplot(test_pts, aes(x = MDS1, y = MDS2, col = EroClassFD)) +
+  geom_point(cex = 3) +
+  ggtitle("Scatterplot of EroClassFD") +
+  theme(aspect.ratio = 1)
+grid.arrange(p1, p2, ncol = 2)
+```
+
+
+# Hierarchical Cluster Analysis
+
+```{r ca}
+test_c <- hclust(test_d, method = "ward")
+plot(test_c, labels = data$upedonid)
+rect.hclust(test_c, k = 3)
+clusters <- cbind(data, test_pts, clusters = as.factor(cutree(test_c, k = 3)))
+
+with(clusters, table(EroClassFD, clusters))
+with(clusters, table(EroClassSIE, clusters))
+
+p1 <- ggplot(clusters, aes(x = MDS1, y = MDS2, col = EroClassFD)) +
+  geom_point(cex = 3) +
+  ggtitle("Scatterplot of EroClassFD") +
+  theme(aspect.ratio = 1)
+p2 <- ggplot(clusters, aes(x = MDS1, y = MDS2, col = clusters), main = "test") +
+  geom_point(cex = 3) + 
+  ggtitle("Scatterplot of Clusters") +
+  theme(aspect.ratio = 1)
+grid.arrange(p1, p2, ncol = 2)
+
+names(data_lo)[names(data_lo) == "EroClassFD"] <- "clusters"
+vals <- c("claytotest", "CaCO3Dp", "SurfFrags", "hzthk", "SolumDp", "PlanCrv", "ProfCrv", "SlopeSIE", "mxvalue", "mxchroma")
+data_lo2 <- melt(clusters, id.vars = "clusters", measure.vars = vals)
+
+data_lo_merge <- rbind(cbind(data_lo, test = "EroClassFD"), cbind(data_lo2, test = "clusters"))
+```
+
+```{r, fig.height=20}
+ggplot(data_lo_merge, aes(x = clusters, y = value)) +
+  geom_boxplot() +
+  facet_wrap(~ variable + test, scales="free_y", ncol = 2)
+```
+
+## Principal Component Analysis (PCA)
+
+```{r pca}
+data_na <- na.exclude(data)
+test <- subset(data_na, select = vals)
+test_pc <- princomp(test, cor = TRUE)
+```
+
+
+## Classification Tree
+
+```{r tree}
+clusters <- subset(clusters, !is.na(EroClassFD))
+
+test2 <- ctree(EroClassFD ~ ., data = clusters[, c("EroClassFD", soil_vals)])
+plot(test2)
+confusionMatrix(data = clusters$EroClassFD, reference = predict(test2, type = "response"))
+
+test <- ctree(EroClassFD ~ ., data = clusters[, c("EroClassFD", geo_vals)])
+plot(test)
+confusionMatrix(data = clusters$EroClassFD, reference = predict(test, type = "response"))
+
+test <- ctree(clusters ~ ., data = clusters[, c("clusters", geo_vals)])
+plot(test)
+confusionMatrix(data = clusters$clusters, reference = predict(test, type = "response"))
+```
