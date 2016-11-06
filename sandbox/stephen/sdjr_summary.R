@@ -8,8 +8,8 @@ library(foreign)
 library(raster)
 library(rgdal)
 
-fy <- c(2012, 2013, 2014, 2015)
-date <- "2015_09_24"
+fy <- c(2012, 2013, 2014, 2015, 2016)
+date <- "2015_10_01"
 date2 <- "2015_09_23"
 
 corr_reports <- "report_correlation_fy"
