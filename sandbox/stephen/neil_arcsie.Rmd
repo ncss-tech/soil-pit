@@ -1,13 +1,16 @@
 ---
+title: "Analysis of 11-FIN Erosion Classes"
+author: "Stephen Roecker"
+date: "November 7, 2016"
 output: html_document
 ---
-```{r global_options, include=FALSE}
-knitr::opts_chunk$set(warning=FALSE, message=FALSE)
-```
 
+
+```{r setup, include=FALSE}
 ## Setup
 
-```{r setup}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE)
+
 library(aqp)
 library(lattice)
 library(ggplot2)
@@ -22,6 +25,7 @@ library(gridExtra)
 ## Import Data and Transform
 
 ```{r read and tranform}
+
 data <- read.csv("C:/workspace/neil_arcsie/Pedon_Data_DumpSIE.csv")
 
 names(data) <- gsub(" ", "", names(data))
@@ -34,22 +38,33 @@ data <- transform(data,
                   )
 ```
 
-## Explore Data
+
+## Confusion Matrix of the Erosion Class vs the ArcSIE Predictions
 
 ```{r analyze}
 
-confusionMatrix(data = data$EroClassSIE, reference = data$EroClassFD)
+cm <- confusionMatrix(data = data$EroClassSIE, reference = data$EroClassFD)
 
+cm$table
+cm$overall
+```
+
+The overall accuracy of the ArcSIE predictions is `r cm$overall[1]`.
+
+
+## Boxplots of the Erosion Classes
+
+```{r EroClassFD boxplots}
 vals <- c("hzthk", "SolumDp", "CaCO3Dp", "claytotest", "SurfFrags", "mxvalue", "mxchroma", "SlopeSIE", "ProfCrv", "PlanCrv")
 data_lo <- melt(data, id.vars = "EroClassFD", measure.vars = vals)
 
 # data_lo <- reshape(data,
 #                     idvar = "upedonid",
 #                     varying = vals,
-#                     timevar = "variable", # label given to wide column names
-#                     v.names = "value", # labels given to column  of wide column values 
+#                     v.names = "value" # labels given to column  of wide column values
 #                     times = vals, # labels given to timevar index values
-#                     direction = "long"
+#                     timevar = "variable", # label given to wide column names
+#                     direction = "long",
 #                     )
 
 ggplot(data_lo, aes(x = EroClassFD, y = value)) +
@@ -58,11 +73,12 @@ ggplot(data_lo, aes(x = EroClassFD, y = value)) +
 
 # bwplot(EroClassFD ~ value | variable, data = data_lo, scales = list(x ="free"), as.table = TRUE)
 # bwplot(EroClassSIE ~ value | variable, data = data_lo, scales = list(x ="free"), as.table = TRUE)
-  
 ```
 
+The box plots show that the erosion classes have a linear trend for some variables, while others only show one class deviating from the others. In addition the variation within each classes overlap the others, such that their median values are indistinguishable from the other classes in many cases.
 
-# Non-metric Multidimentional Non-metric Scaling (NMDS)
+
+## Scatterplots of the Erosion Classes
 
 ```{r mda}
 library(cluster)
@@ -73,78 +89,127 @@ vals <- c(soil_vals, geo_vals)
 test <- subset(data, select = vals)
 test_d <- daisy(scale(test), metric = "gower")
 test_mds <- metaMDS(test_d, distance = "gower", autotransform = FALSE)
-test_pts <- as.data.frame(test_mds$points)
-test_pts <- cbind(test_pts, EroClassFD = data$EroClassFD)
+test_pts <- cbind(as.data.frame(test_mds$points), EroClassFD = data$EroClassFD)
 
 p1 <- ggplot(data, aes(x = hzthk, y = SolumDp,  col = EroClassFD)) +
   geom_point(cex = 3) +
-  ggtitle("Scatterplot of EroClassFD") +
   theme(aspect.ratio = 1)
 p2 <- ggplot(test_pts, aes(x = MDS1, y = MDS2, col = EroClassFD)) +
   geom_point(cex = 3) +
-  ggtitle("Scatterplot of EroClassFD") +
   theme(aspect.ratio = 1)
 grid.arrange(p1, p2, ncol = 2)
 ```
 
+The scatter plots of the erosion classes displayed over various dimensions, including using multidimensional (MD) scaling, again show their is overlap between the erosion classes. 
 
-# Hierarchical Cluster Analysis
+
+## Cluster Analysis
 
 ```{r ca}
 test_c <- hclust(test_d, method = "ward")
 plot(test_c, labels = data$upedonid)
 rect.hclust(test_c, k = 3)
+```
+
+Example of Centerburg data classified using a hierarchical cluster analysis, and aggregated into the 3 most distinct classes. The 3rd class appears to be an outlier.
+
+
+## Contingency Table of the Erosion Classes vs the Hierachical Clusters
+
+```{r}
 clusters <- cbind(data, test_pts, clusters = as.factor(cutree(test_c, k = 3)))
 
 with(clusters, table(EroClassFD, clusters))
 with(clusters, table(EroClassSIE, clusters))
+```
 
+The contingency table shows that the field determined erosion classes (EroClassFD) 1 and 2 overlap the most with the hierarchical clusters 2 and 3. The ArcSIE predictions don't appear to have as much correspondence with the hierarchical clusters.
+
+
+## Scatter Plots of the Erosion Classes vs the Hierachical Clusters
+
+```{r}
 p1 <- ggplot(clusters, aes(x = MDS1, y = MDS2, col = EroClassFD)) +
   geom_point(cex = 3) +
-  ggtitle("Scatterplot of EroClassFD") +
   theme(aspect.ratio = 1)
 p2 <- ggplot(clusters, aes(x = MDS1, y = MDS2, col = clusters), main = "test") +
   geom_point(cex = 3) + 
-  ggtitle("Scatterplot of Clusters") +
   theme(aspect.ratio = 1)
 grid.arrange(p1, p2, ncol = 2)
+```
 
+The hierarchical clusters seem to have less overlap when viewed along the multidimensional scaled axes.
+
+
+## Box Plots fo the Erosion Classes vs the Hierachical Clusters
+
+```{r, fig.height=20}
 names(data_lo)[names(data_lo) == "EroClassFD"] <- "clusters"
 vals <- c("claytotest", "CaCO3Dp", "SurfFrags", "hzthk", "SolumDp", "PlanCrv", "ProfCrv", "SlopeSIE", "mxvalue", "mxchroma")
 data_lo2 <- melt(clusters, id.vars = "clusters", measure.vars = vals)
 
 data_lo_merge <- rbind(cbind(data_lo, test = "EroClassFD"), cbind(data_lo2, test = "clusters"))
-```
 
-```{r, fig.height=20}
 ggplot(data_lo_merge, aes(x = clusters, y = value)) +
   geom_boxplot() +
   facet_wrap(~ variable + test, scales="free_y", ncol = 2)
 ```
 
-## Principal Component Analysis (PCA)
+Back to back the erosion classes and hierarchical clusters show a similarly degree of separability. As observed early cluster 3 seems be an outlier, which a deeper solum (SolumDP) and depth to carbonates (CaCO3Dp).
+
 
 ```{r pca}
+## Principal Component Analysis (PCA)
+
 data_na <- na.exclude(data)
 test <- subset(data_na, select = vals)
 test_pc <- princomp(test, cor = TRUE)
 ```
 
 
-## Classification Tree
+## Classification Trees
 
 ```{r tree}
 clusters <- subset(clusters, !is.na(EroClassFD))
 
-test2 <- ctree(EroClassFD ~ ., data = clusters[, c("EroClassFD", soil_vals)])
+test1 <- ctree(EroClassFD ~ ., data = clusters[, c("EroClassFD", soil_vals)])
 plot(test2)
-confusionMatrix(data = clusters$EroClassFD, reference = predict(test2, type = "response"))
+cm1 <- confusionMatrix(data = clusters$EroClassFD, reference = predict(test1, type = "response"))
+cm1$table
+cm1$overall
+```
 
+The classification tree of erosion classes using only soil variables as predictors shows that we can only separate the classes on horizon thickness (hzthk) using a break of 21-cm, which gives an overall accuracy of `r cm1$overall[1]`. The bar plots for node 2, shows that it more impure than node 3. 
+
+
+```{r}
+test2 <- ctree(clusters ~ ., data = clusters[, c("clusters", soil_vals)])
+plot(test2)
+cm2 <- confusionMatrix(data = clusters$clusters, reference = predict(test2, type = "response"))
+cm2$table
+round(cm2$overall, 2)
+```
+
+The classification tree for the hierachical clusters using only soil variables as predictors has an overall accuracy of `r cm2$overall[1]`, and is split on solum depth (SolumDp) and surface fragments (SurfFrags).
+
+
+```{r}
 test <- ctree(EroClassFD ~ ., data = clusters[, c("EroClassFD", geo_vals)])
 plot(test)
-confusionMatrix(data = clusters$EroClassFD, reference = predict(test, type = "response"))
+cm2 <- confusionMatrix(data = clusters$EroClassFD, reference = predict(test, type = "response"))
+cm2$table
+cm2$overall
+```
 
+The classification tree of the erosion classes using the 
+
+```
 test <- ctree(clusters ~ ., data = clusters[, c("clusters", geo_vals)])
 plot(test)
-confusionMatrix(data = clusters$clusters, reference = predict(test, type = "response"))
+cm3 <- confusionMatrix(data = clusters$clusters, reference = predict(test, type = "response"))
+cm3$table
+cm3$overall
 ```
+
+## Summary
+
