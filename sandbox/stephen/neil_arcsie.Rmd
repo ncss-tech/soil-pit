@@ -1,5 +1,5 @@
 ---
-title: "Analysis of 11-FIN Erosion Classes"
+title: "Analysis of 11-FIN ArcSIE Erosion Classes"
 author: "Stephen Roecker"
 date: "November 7, 2016"
 output: 
@@ -18,6 +18,7 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 ```{r setup}
 library(aqp)
 library(lattice)
+library(latticeExtra)
 library(ggplot2)
 library(reshape2)
 library(cluster)
@@ -26,6 +27,8 @@ library(party)
 library(vegan)
 library(RColorBrewer)
 library(gridExtra)
+
+options(stringsAsFactors = FALSE)
 ```
 
 ## Import Data and Transform
@@ -55,25 +58,33 @@ cm$table
 cm$overall
 ```
 
-The overall accuracy of the ArcSIE predictions is `r cm$overall[1]`.
+The overall accuracy of the ArcSIE predictions is `r round(cm$overall[1], 2)`. The confusion matrix above shows that the ArcSIE model wasn't able to discriminate EroClassFD class 2 well. However since the initial sampling, Tonie Endres has reviewed some of the misclassifications and determined the ArcSIE classes to be correct, thus the overall accuracy is somewhat higher.
 
 
 ## Boxplots of the Erosion Classes
 
 ```{r EroClassFD boxplots}
 vals <- c("hzthk", "SolumDp", "CaCO3Dp", "claytotest", "SurfFrags", "mxvalue", "mxchroma", "SlopeSIE", "ProfCrv", "PlanCrv")
-data_lo <- melt(data, id.vars = "EroClassFD", measure.vars = vals)
+data_lo1 <- melt(data, id.vars = "EroClassFD", measure.vars = vals)
 data_lo2 <- melt(data, id.vars = "EroClassSIE", measure.vars = vals)
 
-ggplot(data_lo, aes(x = EroClassFD, y = value)) +
-  geom_boxplot() +
-  facet_wrap(~ variable, scales="free_y")
+names(data_lo1)[1] <- "EroClass"
+data_lo1 <- transform(data_lo1, method = "FD")
+names(data_lo2)[1] <- "EroClass"
+data_lo2 <- transform(data_lo2, method = "SIE")
+data_lo <- rbind(data_lo1, data_lo2)
 
-# bwplot(EroClassFD ~ value | variable, data = data_lo, scales = list(x ="free"), as.table = TRUE)
-# bwplot(EroClassSIE ~ value | variable, data = data_lo, scales = list(x ="free"), as.table = TRUE)
+
+bwplot(EroClass ~ value | variable + method, data = data_lo, 
+       scales = list(x ="free"), as.table = TRUE, layout = c(5, 4)
+       )
+
+# ggplot(data_lo, aes(x = EroClass, y = value)) +
+#   geom_boxplot() +
+#   facet_wrap(~ variable + method, scales="free_y")
 ```
 
-The box plots show that the erosion classes have a linear trend for some variables, while others only show one class deviating from the others. In addition the variation within each classes overlap the others, such that their median values are indistinguishable from the other classes in many cases.
+The box plots show that the FD erosion classes have a linear trend for some variables, while others only show one class deviating from the others. In addition the variation within each classes overlap the others, such that their median values are indistinguishable from the other classes in many cases. The trends for the EroClassSIE classes appear to be less linear and have less separation. 
 
 
 ## Scatterplots of the Erosion Classes
@@ -88,13 +99,31 @@ test_d <- daisy(scale(test), metric = "gower")
 test_mds <- metaMDS(test_d, distance = "gower", autotransform = FALSE)
 test_pts <- cbind(as.data.frame(test_mds$points), EroClassFD = data$EroClassFD)
 
-p1 <- ggplot(data, aes(x = hzthk, y = SolumDp,  col = EroClassFD)) +
-  geom_point(cex = 3) +
-  theme(aspect.ratio = 1)
-p2 <- ggplot(test_pts, aes(x = MDS1, y = MDS2, col = EroClassFD)) +
-  geom_point(cex = 3) +
-  theme(aspect.ratio = 1)
-grid.arrange(p1, p2, ncol = 2)
+opar <- trellis.par.get()
+trellis.par.set(ggplot2like(n = 4, h.start = 180))
+tpg <- trellis.par.get("superpose.symbol")
+tpg$cex <-  1.5
+trellis.par.set("superpose.symbol", tpg)
+
+p1 <- xyplot(hzthk ~ SolumDp, groups = data$EroClassFD, data = data, 
+             type = c("g", "p"), aspect = 1,
+             auto.key = list(space = "right")
+             )
+p2 <- xyplot(MDS2 ~ MDS1, groups = test_pts$EroClassFD, data = test_pts,
+             type = c("g", "p"), aspect = 1,
+             auto.key = list(space = "right"),
+             )
+plot(p1, split = c(1, 1, 2, 1))
+plot(p2, split = c(2, 1, 2, 1), newpage = FALSE)
+
+
+# p1 <- ggplot(data, aes(x = hzthk, y = SolumDp,  col = EroClassFD)) +
+#   geom_point(cex = 3) +
+#   theme(aspect.ratio = 1)
+# p2 <- ggplot(test_pts, aes(x = MDS1, y = MDS2, col = EroClassFD)) +
+#   geom_point(cex = 3) +
+#   theme(aspect.ratio = 1)
+# grid.arrange(p1, p2, ncol = 2)
 ```
 
 The scatter plots of the erosion classes displayed over various dimensions, including using multidimensional (MD) scaling, again show their is overlap between the erosion classes. 
@@ -140,16 +169,28 @@ The hierarchical clusters seem to have less overlap when viewed along the multid
 
 ## Box Plots fo the Erosion Classes vs the Hierachical Clusters
 
-```{r, fig.height=20}
-names(data_lo)[names(data_lo) == "EroClassFD"] <- "clusters"
+```{r, fig.height=10}
 vals <- c("claytotest", "CaCO3Dp", "SurfFrags", "hzthk", "SolumDp", "PlanCrv", "ProfCrv", "SlopeSIE", "mxvalue", "mxchroma")
+
+data_lo1 <- melt(data, id.vars = "EroClassFD", measure.vars = vals)
+names(data_lo1)[1] <- "EroClass"
+data_lo1 <- transform(data_lo1, method = "FD")
+
 data_lo2 <- melt(clusters, id.vars = "clusters", measure.vars = vals)
+names(data_lo2)[1] <- "EroClass"
+data_lo2 <- transform(data_lo2, method = "clusters")
 
-data_lo_merge <- rbind(cbind(data_lo, test = "EroClassFD"), cbind(data_lo2, test = "clusters"))
+data_lo <- rbind(subset(data_lo1, as.character(variable) %in% vals), data_lo2)
 
-ggplot(data_lo_merge, aes(x = clusters, y = value)) +
-  geom_boxplot() +
-  facet_wrap(~ variable + test, scales="free_y", ncol = 2)
+trellis.par.set(opar)
+
+bwplot(EroClass ~ value | variable + method, data = data_lo, 
+       scales = list(x ="free"), as.table = TRUE, layout = c(5, 4)
+       )
+
+# ggplot(data_lo, aes(x = EroClass, y = value)) +
+#   geom_boxplot() +
+#   facet_wrap(~ variable + method, scales="free_y", ncol = 2)
 ```
 
 Back to back the erosion classes and hierarchical clusters show a similarly degree of separability. As observed early cluster 3 seems be an outlier, which a deeper solum (SolumDP) and depth to carbonates (CaCO3Dp).
