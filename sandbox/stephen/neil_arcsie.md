@@ -1,4 +1,4 @@
-# Analysis of 11-FIN Erosion Classes
+# Analysis of 11-FIN ArcSIE Erosion Classes
 Stephen Roecker  
 November 7, 2016  
 
@@ -6,21 +6,7 @@ November 7, 2016
 
 
 
-## Setup
 
-
-```r
-library(aqp)
-library(lattice)
-library(ggplot2)
-library(reshape2)
-library(cluster)
-library(caret)
-library(party)
-library(vegan)
-library(RColorBrewer)
-library(gridExtra)
-```
 
 ## Import Data and Transform
 
@@ -36,10 +22,6 @@ data <- transform(data,
                   hzthk = hzdepb - hzdept,
                   rgb = munsell2rgb(mxhue, mxvalue, mxchroma, return_triplets = TRUE)
                   )
-```
-
-```
-## Notice: converting hue to character
 ```
 
 
@@ -72,7 +54,7 @@ cm$overall
 ##     0.05450886            NaN
 ```
 
-The overall accuracy of the ArcSIE predictions is 0.5223881.
+The overall accuracy of the ArcSIE predictions is 0.52. The confusion matrix above shows that the ArcSIE model wasn't able to discriminate EroClassFD class 2 well. However since the initial sampling, Tonie Endres has reviewed some of the misclassifications and determined the ArcSIE classes to be correct, thus the overall accuracy is somewhat higher.
 
 
 ## Boxplots of the Erosion Classes
@@ -80,22 +62,29 @@ The overall accuracy of the ArcSIE predictions is 0.5223881.
 
 ```r
 vals <- c("hzthk", "SolumDp", "CaCO3Dp", "claytotest", "SurfFrags", "mxvalue", "mxchroma", "SlopeSIE", "ProfCrv", "PlanCrv")
-data_lo <- melt(data, id.vars = "EroClassFD", measure.vars = vals)
+data_lo1 <- melt(data, id.vars = "EroClassFD", measure.vars = vals)
 data_lo2 <- melt(data, id.vars = "EroClassSIE", measure.vars = vals)
 
-ggplot(data_lo, aes(x = EroClassFD, y = value)) +
-  geom_boxplot() +
-  facet_wrap(~ variable, scales="free_y")
+names(data_lo1)[1] <- "EroClass"
+data_lo1 <- transform(data_lo1, method = "FD")
+names(data_lo2)[1] <- "EroClass"
+data_lo2 <- transform(data_lo2, method = "SIE")
+data_lo <- rbind(data_lo1, data_lo2)
+
+bwplot(EroClass ~ value | variable + method, data = data_lo, 
+       scales = list(x ="free"), as.table = TRUE, layout = c(5, 4),
+       )
 ```
 
 ![](neil_arcsie_files/figure-html/EroClassFD boxplots-1.png)<!-- -->
 
 ```r
-# bwplot(EroClassFD ~ value | variable, data = data_lo, scales = list(x ="free"), as.table = TRUE)
-# bwplot(EroClassSIE ~ value | variable, data = data_lo, scales = list(x ="free"), as.table = TRUE)
+# ggplot(data_lo, aes(x = EroClass, y = value)) +
+#   geom_boxplot() +
+#   facet_wrap(~ variable + method, scales="free_y")
 ```
 
-The box plots show that the erosion classes have a linear trend for some variables, while others only show one class deviating from the others. In addition the variation within each classes overlap the others, such that their median values are indistinguishable from the other classes in many cases.
+The box plots show that the FD erosion classes have a linear trend for some variables, while others only show one class deviating from the others. In addition the variation within each classes overlap the others, such that their median values are indistinguishable from the other classes in many cases. The trends for the EroClassSIE classes appear to be less linear and have less separation. 
 
 
 ## Scatterplots of the Erosion Classes
@@ -113,27 +102,29 @@ test_mds <- metaMDS(test_d, distance = "gower", autotransform = FALSE)
 
 ```
 ## Run 0 stress 0.23203 
-## Run 1 stress 0.239688 
-## Run 2 stress 0.2404032 
-## Run 3 stress 0.2400696 
-## Run 4 stress 0.2338825 
-## Run 5 stress 0.2340638 
-## Run 6 stress 0.2338541 
-## Run 7 stress 0.237789 
-## Run 8 stress 0.2357983 
-## Run 9 stress 0.2393571 
-## Run 10 stress 0.2403582 
-## Run 11 stress 0.2403404 
-## Run 12 stress 0.2321023 
-## ... Procrustes: rmse 0.007823348  max resid 0.04405315 
-## Run 13 stress 0.2415355 
-## Run 14 stress 0.2350543 
-## Run 15 stress 0.2431735 
-## Run 16 stress 0.2325666 
-## Run 17 stress 0.2370467 
-## Run 18 stress 0.2356247 
-## Run 19 stress 0.2391978 
-## Run 20 stress 0.2391682 
+## Run 1 stress 0.2356795 
+## Run 2 stress 0.2337935 
+## Run 3 stress 0.2384665 
+## Run 4 stress 0.2350566 
+## Run 5 stress 0.2370503 
+## Run 6 stress 0.2324182 
+## ... Procrustes: rmse 0.03504822  max resid 0.1500852 
+## Run 7 stress 0.2318017 
+## ... New best solution
+## ... Procrustes: rmse 0.03204304  max resid 0.1499464 
+## Run 8 stress 0.2435124 
+## Run 9 stress 0.2399547 
+## Run 10 stress 0.2416733 
+## Run 11 stress 0.243753 
+## Run 12 stress 0.235786 
+## Run 13 stress 0.234043 
+## Run 14 stress 0.2368449 
+## Run 15 stress 0.2522834 
+## Run 16 stress 0.2357066 
+## Run 17 stress 0.2383107 
+## Run 18 stress 0.2404031 
+## Run 19 stress 0.2340567 
+## Run 20 stress 0.2337065 
 ## *** No convergence -- monoMDS stopping criteria:
 ##     20: stress ratio > sratmax
 ```
@@ -141,16 +132,29 @@ test_mds <- metaMDS(test_d, distance = "gower", autotransform = FALSE)
 ```r
 test_pts <- cbind(as.data.frame(test_mds$points), EroClassFD = data$EroClassFD)
 
-p1 <- ggplot(data, aes(x = hzthk, y = SolumDp,  col = EroClassFD)) +
-  geom_point(cex = 3) +
-  theme(aspect.ratio = 1)
-p2 <- ggplot(test_pts, aes(x = MDS1, y = MDS2, col = EroClassFD)) +
-  geom_point(cex = 3) +
-  theme(aspect.ratio = 1)
-grid.arrange(p1, p2, ncol = 2)
+p1 <- xyplot(hzthk ~ SolumDp, groups = data$EroClassFD, data = data, 
+             type = c("g", "p"), aspect = 1, alpha = 0.7,
+             auto.key = list(space = "right")
+             )
+p2 <- xyplot(MDS2 ~ MDS1, groups = test_pts$EroClassFD, data = test_pts,
+             type = c("g", "p"), aspect = 1, alpha = 0.7,
+             auto.key = list(space = "right"),
+             )
+plot(p1, split = c(1, 1, 2, 1))
+plot(p2, split = c(2, 1, 2, 1), newpage = FALSE)
 ```
 
 ![](neil_arcsie_files/figure-html/mda-1.png)<!-- -->
+
+```r
+# p1 <- ggplot(data, aes(x = hzthk, y = SolumDp,  col = EroClassFD)) +
+#   geom_point(cex = 3) +
+#   theme(aspect.ratio = 1)
+# p2 <- ggplot(test_pts, aes(x = MDS1, y = MDS2, col = EroClassFD)) +
+#   geom_point(cex = 3) +
+#   theme(aspect.ratio = 1)
+# grid.arrange(p1, p2, ncol = 2)
+```
 
 The scatter plots of the erosion classes displayed over various dimensions, including using multidimensional (MD) scaling, again show their is overlap between the erosion classes. 
 
@@ -173,18 +177,18 @@ Example of Centerburg data classified using a hierarchical cluster analysis, and
 
 
 ```r
-clusters <- cbind(data, test_pts, clusters = as.factor(cutree(test_c, k = 3)))
+clusters <- cbind(data, test_pts, clusters = factor(cutree(test_c, k = 3), levels = 0:3))
 
 with(clusters, table(EroClassFD, clusters))
 ```
 
 ```
 ##           clusters
-## EroClassFD  1  2  3
-##          0  0  0  1
-##          1  7 18  3
-##          2 15 10  0
-##          3 11  1  1
+## EroClassFD  0  1  2  3
+##          0  0  0  0  1
+##          1  0  7 18  3
+##          2  0 15 10  0
+##          3  0 11  1  1
 ```
 
 ```r
@@ -193,10 +197,10 @@ with(clusters, table(EroClassSIE, clusters))
 
 ```
 ##            clusters
-## EroClassSIE  1  2  3
-##           1 15 13  1
-##           2 13 16  2
-##           3  5  1  2
+## EroClassSIE  0  1  2  3
+##           1  0 15 13  1
+##           2  0 13 16  2
+##           3  0  5  1  2
 ```
 
 The contingency table shows that the field determined erosion classes (EroClassFD) 1 and 2 overlap the most with the hierarchical clusters 2 and 3. The ArcSIE predictions don't appear to have as much correspondence with the hierarchical clusters.
@@ -206,16 +210,29 @@ The contingency table shows that the field determined erosion classes (EroClassF
 
 
 ```r
-p1 <- ggplot(clusters, aes(x = MDS1, y = MDS2, col = EroClassFD)) +
-  geom_point(cex = 3) +
-  theme(aspect.ratio = 1)
-p2 <- ggplot(clusters, aes(x = MDS1, y = MDS2, col = clusters), main = "test") +
-  geom_point(cex = 3) + 
-  theme(aspect.ratio = 1)
-grid.arrange(p1, p2, ncol = 2)
+p1 <- xyplot(MDS2 ~ MDS1, groups = EroClassFD, data = clusters,
+             type = c("g", "p"), aspect = 1, alpha = 0.7,
+             auto.key = list(space = "right")
+             )
+p2 <- xyplot(MDS2 ~ MDS1, groups = clusters, data = clusters,
+             type = c("g", "p"), aspect = 1, alpha = 0.7,
+             auto.key = list(space = "right")
+             )
+plot(p1, split = c(1, 1, 2, 1))
+plot(p2, split = c(2, 1, 2, 1), newpage = FALSE)
 ```
 
 ![](neil_arcsie_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
+
+```r
+# p1 <- ggplot(clusters, aes(x = MDS1, y = MDS2, col = EroClassFD)) +
+#   geom_point(cex = 3) +
+#   theme(aspect.ratio = 1)
+# p2 <- ggplot(clusters, aes(x = MDS1, y = MDS2, col = clusters), main = "test") +
+#   geom_point(cex = 3) + 
+#   theme(aspect.ratio = 1)
+# grid.arrange(p1, p2, ncol = 2)
+```
 
 The hierarchical clusters seem to have less overlap when viewed along the multidimensional scaled axes.
 
@@ -224,18 +241,30 @@ The hierarchical clusters seem to have less overlap when viewed along the multid
 
 
 ```r
-names(data_lo)[names(data_lo) == "EroClassFD"] <- "clusters"
 vals <- c("claytotest", "CaCO3Dp", "SurfFrags", "hzthk", "SolumDp", "PlanCrv", "ProfCrv", "SlopeSIE", "mxvalue", "mxchroma")
+
+data_lo1 <- melt(data, id.vars = "EroClassFD", measure.vars = vals)
+names(data_lo1)[1] <- "EroClass"
+data_lo1 <- transform(data_lo1, method = "FD")
+
 data_lo2 <- melt(clusters, id.vars = "clusters", measure.vars = vals)
+names(data_lo2)[1] <- "EroClass"
+data_lo2 <- transform(data_lo2, method = "clusters")
 
-data_lo_merge <- rbind(cbind(data_lo, test = "EroClassFD"), cbind(data_lo2, test = "clusters"))
+data_lo <- rbind(subset(data_lo1, as.character(variable) %in% vals), data_lo2)
 
-ggplot(data_lo_merge, aes(x = clusters, y = value)) +
-  geom_boxplot() +
-  facet_wrap(~ variable + test, scales="free_y", ncol = 2)
+bwplot(EroClass ~ value | variable + method, data = data_lo, 
+       scales = list(x ="free"), as.table = TRUE, layout = c(5, 4)
+       )
 ```
 
 ![](neil_arcsie_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+
+```r
+# ggplot(data_lo, aes(x = EroClass, y = value)) +
+#   geom_boxplot() +
+#   facet_wrap(~ variable + method, scales="free_y", ncol = 2)
+```
 
 Back to back the erosion classes and hierarchical clusters show a similarly degree of separability. As observed early cluster 3 seems be an outlier, which a deeper solum (SolumDP) and depth to carbonates (CaCO3Dp).
 
@@ -305,10 +334,11 @@ cm2$table
 
 ```
 ##           Reference
-## Prediction  1  2  3
-##          1 29  3  0
-##          2  4 24  0
-##          3  0  2  5
+## Prediction  0  1  2  3
+##          0  0  0  0  0
+##          1  0 29  3  0
+##          2  0  4 24  0
+##          3  0  0  2  5
 ```
 
 ```r
@@ -375,10 +405,11 @@ cm3$table
 
 ```
 ##           Reference
-## Prediction  1  2  3
-##          1 23  3  2
-##          2 10 26  3
-##          3  0  0  0
+## Prediction  0  1  2  3
+##          0  0  0  0  0
+##          1  0 23  3  2
+##          2  0 10 26  3
+##          3  0  0  0  0
 ```
 
 ```r
@@ -389,7 +420,7 @@ cm3$overall
 ##       Accuracy          Kappa  AccuracyLower  AccuracyUpper   AccuracyNull 
 ##   7.313433e-01   5.045193e-01   6.090378e-01   8.323593e-01   4.925373e-01 
 ## AccuracyPValue  McnemarPValue 
-##   5.981897e-05   3.252177e-02
+##   5.981897e-05            NaN
 ```
 
 ## Summary

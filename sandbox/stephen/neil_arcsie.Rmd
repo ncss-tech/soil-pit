@@ -13,22 +13,29 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 ```
 
 
+```{r setup, echo=FALSE}
 ## Setup
 
-```{r setup}
 library(aqp)
 library(lattice)
 library(latticeExtra)
-library(ggplot2)
+# library(ggplot2)
+# library(gridExtra)
 library(reshape2)
 library(cluster)
 library(caret)
 library(party)
 library(vegan)
-library(RColorBrewer)
-library(gridExtra)
 
 options(stringsAsFactors = FALSE)
+
+opar <- trellis.par.get()
+trellis.par.set(theEconomist.theme())
+tpg <- trellis.par.get("superpose.symbol")
+tpg$cex <-  1.5
+tpg$pch <- 19
+tpg$col <- palette()[c(1:4)]
+trellis.par.set("superpose.symbol", tpg)
 ```
 
 ## Import Data and Transform
@@ -63,7 +70,7 @@ The overall accuracy of the ArcSIE predictions is `r round(cm$overall[1], 2)`. T
 
 ## Boxplots of the Erosion Classes
 
-```{r EroClassFD boxplots}
+```{r EroClassFD boxplots, fig.height=7}
 vals <- c("hzthk", "SolumDp", "CaCO3Dp", "claytotest", "SurfFrags", "mxvalue", "mxchroma", "SlopeSIE", "ProfCrv", "PlanCrv")
 data_lo1 <- melt(data, id.vars = "EroClassFD", measure.vars = vals)
 data_lo2 <- melt(data, id.vars = "EroClassSIE", measure.vars = vals)
@@ -73,7 +80,6 @@ data_lo1 <- transform(data_lo1, method = "FD")
 names(data_lo2)[1] <- "EroClass"
 data_lo2 <- transform(data_lo2, method = "SIE")
 data_lo <- rbind(data_lo1, data_lo2)
-
 
 bwplot(EroClass ~ value | variable + method, data = data_lo, 
        scales = list(x ="free"), as.table = TRUE, layout = c(5, 4)
@@ -99,23 +105,16 @@ test_d <- daisy(scale(test), metric = "gower")
 test_mds <- metaMDS(test_d, distance = "gower", autotransform = FALSE)
 test_pts <- cbind(as.data.frame(test_mds$points), EroClassFD = data$EroClassFD)
 
-opar <- trellis.par.get()
-trellis.par.set(ggplot2like(n = 4, h.start = 180))
-tpg <- trellis.par.get("superpose.symbol")
-tpg$cex <-  1.5
-trellis.par.set("superpose.symbol", tpg)
-
 p1 <- xyplot(hzthk ~ SolumDp, groups = data$EroClassFD, data = data, 
-             type = c("g", "p"), aspect = 1,
+             type = c("g", "p"), aspect = 1, alpha = 0.7,
              auto.key = list(space = "right")
              )
 p2 <- xyplot(MDS2 ~ MDS1, groups = test_pts$EroClassFD, data = test_pts,
-             type = c("g", "p"), aspect = 1,
+             type = c("g", "p"), aspect = 1, alpha = 0.7,
              auto.key = list(space = "right"),
              )
 plot(p1, split = c(1, 1, 2, 1))
 plot(p2, split = c(2, 1, 2, 1), newpage = FALSE)
-
 
 # p1 <- ggplot(data, aes(x = hzthk, y = SolumDp,  col = EroClassFD)) +
 #   geom_point(cex = 3) +
@@ -143,7 +142,7 @@ Example of Centerburg data classified using a hierarchical cluster analysis, and
 ## Contingency Table of the Erosion Classes vs the Hierachical Clusters
 
 ```{r}
-clusters <- cbind(data, test_pts, clusters = as.factor(cutree(test_c, k = 3)))
+clusters <- cbind(data, test_pts, clusters = factor(cutree(test_c, k = 3), levels = 0:3))
 
 with(clusters, table(EroClassFD, clusters))
 with(clusters, table(EroClassSIE, clusters))
@@ -155,13 +154,24 @@ The contingency table shows that the field determined erosion classes (EroClassF
 ## Scatter Plots of the Erosion Classes vs the Hierachical Clusters
 
 ```{r}
-p1 <- ggplot(clusters, aes(x = MDS1, y = MDS2, col = EroClassFD)) +
-  geom_point(cex = 3) +
-  theme(aspect.ratio = 1)
-p2 <- ggplot(clusters, aes(x = MDS1, y = MDS2, col = clusters), main = "test") +
-  geom_point(cex = 3) + 
-  theme(aspect.ratio = 1)
-grid.arrange(p1, p2, ncol = 2)
+p1 <- xyplot(MDS2 ~ MDS1, groups = EroClassFD, data = clusters,
+             type = c("g", "p"), aspect = 1, alpha = 0.7,
+             auto.key = list(space = "right")
+             )
+p2 <- xyplot(MDS2 ~ MDS1, groups = clusters, data = clusters,
+             type = c("g", "p"), aspect = 1, alpha = 0.7,
+             auto.key = list(space = "right")
+             )
+plot(p1, split = c(1, 1, 2, 1))
+plot(p2, split = c(2, 1, 2, 1), newpage = FALSE)
+
+# p1 <- ggplot(clusters, aes(x = MDS1, y = MDS2, col = EroClassFD)) +
+#   geom_point(cex = 3) +
+#   theme(aspect.ratio = 1)
+# p2 <- ggplot(clusters, aes(x = MDS1, y = MDS2, col = clusters), main = "test") +
+#   geom_point(cex = 3) + 
+#   theme(aspect.ratio = 1)
+# grid.arrange(p1, p2, ncol = 2)
 ```
 
 The hierarchical clusters seem to have less overlap when viewed along the multidimensional scaled axes.
@@ -169,7 +179,7 @@ The hierarchical clusters seem to have less overlap when viewed along the multid
 
 ## Box Plots fo the Erosion Classes vs the Hierachical Clusters
 
-```{r, fig.height=10}
+```{r, fig.height=7}
 vals <- c("claytotest", "CaCO3Dp", "SurfFrags", "hzthk", "SolumDp", "PlanCrv", "ProfCrv", "SlopeSIE", "mxvalue", "mxchroma")
 
 data_lo1 <- melt(data, id.vars = "EroClassFD", measure.vars = vals)
@@ -181,8 +191,6 @@ names(data_lo2)[1] <- "EroClass"
 data_lo2 <- transform(data_lo2, method = "clusters")
 
 data_lo <- rbind(subset(data_lo1, as.character(variable) %in% vals), data_lo2)
-
-trellis.par.set(opar)
 
 bwplot(EroClass ~ value | variable + method, data = data_lo, 
        scales = list(x ="free"), as.table = TRUE, layout = c(5, 4)
