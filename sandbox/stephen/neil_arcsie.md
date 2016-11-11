@@ -72,7 +72,7 @@ data_lo2 <- transform(data_lo2, method = "SIE")
 data_lo <- rbind(data_lo1, data_lo2)
 
 bwplot(EroClass ~ value | variable + method, data = data_lo, 
-       scales = list(x ="free"), as.table = TRUE, layout = c(5, 4),
+       scales = list(x ="free"), as.table = TRUE, layout = c(5, 4)
        )
 ```
 
@@ -102,29 +102,28 @@ test_mds <- metaMDS(test_d, distance = "gower", autotransform = FALSE)
 
 ```
 ## Run 0 stress 0.23203 
-## Run 1 stress 0.2356795 
-## Run 2 stress 0.2337935 
-## Run 3 stress 0.2384665 
-## Run 4 stress 0.2350566 
-## Run 5 stress 0.2370503 
-## Run 6 stress 0.2324182 
-## ... Procrustes: rmse 0.03504822  max resid 0.1500852 
-## Run 7 stress 0.2318017 
-## ... New best solution
-## ... Procrustes: rmse 0.03204304  max resid 0.1499464 
-## Run 8 stress 0.2435124 
-## Run 9 stress 0.2399547 
-## Run 10 stress 0.2416733 
-## Run 11 stress 0.243753 
-## Run 12 stress 0.235786 
-## Run 13 stress 0.234043 
-## Run 14 stress 0.2368449 
-## Run 15 stress 0.2522834 
-## Run 16 stress 0.2357066 
-## Run 17 stress 0.2383107 
-## Run 18 stress 0.2404031 
-## Run 19 stress 0.2340567 
-## Run 20 stress 0.2337065 
+## Run 1 stress 0.2324183 
+## ... Procrustes: rmse 0.03510834  max resid 0.1507323 
+## Run 2 stress 0.2416447 
+## Run 3 stress 0.2337057 
+## Run 4 stress 0.2681202 
+## Run 5 stress 0.2383004 
+## Run 6 stress 0.2335836 
+## Run 7 stress 0.2324182 
+## ... Procrustes: rmse 0.03508412  max resid 0.1504734 
+## Run 8 stress 0.2357699 
+## Run 9 stress 0.23571 
+## Run 10 stress 0.2337561 
+## Run 11 stress 0.2384496 
+## Run 12 stress 0.2431326 
+## Run 13 stress 0.2338738 
+## Run 14 stress 0.2402656 
+## Run 15 stress 0.239072 
+## Run 16 stress 0.2401833 
+## Run 17 stress 0.2377806 
+## Run 18 stress 0.2338012 
+## Run 19 stress 0.2380599 
+## Run 20 stress 0.2359827 
 ## *** No convergence -- monoMDS stopping criteria:
 ##     20: stress ratio > sratmax
 ```

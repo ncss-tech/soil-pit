@@ -30,7 +30,6 @@ library(vegan)
 options(stringsAsFactors = FALSE)
 
 opar <- trellis.par.get()
-trellis.par.set(theEconomist.theme())
 tpg <- trellis.par.get("superpose.symbol")
 tpg$cex <-  1.5
 tpg$pch <- 19
