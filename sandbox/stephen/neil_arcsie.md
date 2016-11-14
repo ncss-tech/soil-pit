@@ -112,28 +112,34 @@ test_mds <- metaMDS(test_d, distance = "gower", autotransform = FALSE)
 
 ```
 ## Run 0 stress 0.23203 
-## Run 1 stress 0.2358998 
-## Run 2 stress 0.4079556 
-## Run 3 stress 0.2374383 
-## Run 4 stress 0.2363296 
-## Run 5 stress 0.2409159 
-## Run 6 stress 0.2359764 
-## Run 7 stress 0.2337558 
-## Run 8 stress 0.2376534 
-## Run 9 stress 0.2392665 
-## Run 10 stress 0.233003 
-## Run 11 stress 0.2389979 
-## Run 12 stress 0.2349651 
-## Run 13 stress 0.2326177 
-## Run 14 stress 0.2368447 
-## Run 15 stress 0.2397993 
-## Run 16 stress 0.2396505 
-## Run 17 stress 0.243332 
-## Run 18 stress 0.2357742 
-## Run 19 stress 0.2320092 
+## Run 1 stress 0.2381325 
+## Run 2 stress 0.2523137 
+## Run 3 stress 0.2339119 
+## Run 4 stress 0.2354278 
+## Run 5 stress 0.2320827 
+## ... Procrustes: rmse 0.007297293  max resid 0.0437758 
+## Run 6 stress 0.2431322 
+## Run 7 stress 0.2405895 
+## Run 8 stress 0.2388658 
+## Run 9 stress 0.2350543 
+## Run 10 stress 0.2379159 
+## Run 11 stress 0.2324182 
+## ... Procrustes: rmse 0.03508736  max resid 0.1504875 
+## Run 12 stress 0.2375016 
+## Run 13 stress 0.2339204 
+## Run 14 stress 0.2320108 
 ## ... New best solution
-## ... Procrustes: rmse 0.03135498  max resid 0.1492585 
-## Run 20 stress 0.2361535 
+## ... Procrustes: rmse 0.001464097  max resid 0.008157829 
+## ... Similar to previous best
+## Run 15 stress 0.2363138 
+## Run 16 stress 0.2324185 
+## ... Procrustes: rmse 0.03460942  max resid 0.1481664 
+## Run 17 stress 0.2368446 
+## Run 18 stress 0.236559 
+## Run 19 stress 0.2318015 
+## ... New best solution
+## ... Procrustes: rmse 0.0316031  max resid 0.14833 
+## Run 20 stress 0.2340719 
 ## *** No convergence -- monoMDS stopping criteria:
 ##     20: stress ratio > sratmax
 ```
@@ -212,7 +218,7 @@ with(clusters, table(EroClassSIE, clusters))
 ##           3  0  5  1  2
 ```
 
-The contingency table shows that the FD classes (EroClassFD) 1  overlaps the most with cluster 2, while FD class 2 overlap the most with the cluster 3. The ArcSIE predictions don't appear to have any correspondence with the hierarchical clusters.
+The contingency table shows that the FD classes (EroClassFD) 1 overlaps the most with cluster 2, while FD class 2 overlap the most with the cluster 3. The ArcSIE predictions don't appear to have any correspondence with the hierarchical clusters.
 
 
 ## Scatter Plots of the Erosion Classes vs the Hierachical Clusters
@@ -437,3 +443,5 @@ cm3$overall
 It was discussed that in practice the definition of the erosion classes is somewhat subjective. This makes it difficult to separate the classes in the field consistently, which correspondingly make them difficult to model.
 
 Test additional DEM derivatives, such as the topographic wetness index (TWI) and relative elevation.
+
+Their are other applicable DSM models that could be evaluated. 
