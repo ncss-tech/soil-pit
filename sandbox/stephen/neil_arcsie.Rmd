@@ -3,9 +3,9 @@ title: "Analysis of 11-FIN ArcSIE Erosion Classes"
 author: "Stephen Roecker"
 date: "November 7, 2016"
 output:
-  word_document: default
   html_document:
     keep_md: yes
+  word_document: default
 ---
 
 
@@ -273,7 +273,7 @@ The classification tree of the FD classes using only the DEM derivates as predic
 
 ```{r, fig.width=7.5}
 test4 <- ctree(clusters ~ ., data = clusters[, c("clusters", geo_vals)])
-plot(test)
+plot(test4)
 cm4 <- confusionMatrix(data = predict(test4, type = "response"), reference = clusters$clusters)
 cm4$table
 round(cm4$overall, 2)

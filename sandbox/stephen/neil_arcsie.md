@@ -67,7 +67,7 @@ round(cm$overall, 2)
 The overall accuracy of the ArcSIE predictions is 0.52. The confusion matrix above shows that the ArcSIE model wasn't able to discriminate EroClassFD class 2 well. However since the initial sampling, Tonie Endres has reviewed some of the observations that were misclassified in the field and determined the ArcSIE classes to be correct, thus the overall accuracy is somewhat higher.
 
 
-## Boxplots of the Erosion Classes
+### Boxplots of the Erosion Classes
 
 
 ```r
@@ -97,7 +97,7 @@ bwplot(EroClass ~ value | variable + method, data = data_lo,
 The box plots show that the FD erosion classes have a linear trend for some variables, while other variables only show class 3 or 1 deviating from the other two classes. Overall the variation within each of classes overlap considerably, such that in many cases the median values of one class fall within the interquartile range of the other two classes. This overlap suggests that it is difficult/impractical to separate all the classes. In comparison, the trends between the SIE classes and variables appear to be less linear. In addition, the trends between the SIE classes and digital elevation model (DEM) derivatives (i.e. slope) don't match those observed for FD classes. This mismatch suggests that the membership functions for the SIE classes are poor fit, and should be redefined to more accurately represent the relationship between the FD classes and DEM derivatives.
 
 
-## Scatterplots of the Erosion Classes
+### Scatterplots of the Erosion Classes
 
 
 ```r
@@ -112,34 +112,29 @@ test_mds <- metaMDS(test_d, distance = "gower", autotransform = FALSE)
 
 ```
 ## Run 0 stress 0.23203 
-## Run 1 stress 0.2381325 
-## Run 2 stress 0.2523137 
-## Run 3 stress 0.2339119 
-## Run 4 stress 0.2354278 
-## Run 5 stress 0.2320827 
-## ... Procrustes: rmse 0.007297293  max resid 0.0437758 
-## Run 6 stress 0.2431322 
-## Run 7 stress 0.2405895 
-## Run 8 stress 0.2388658 
-## Run 9 stress 0.2350543 
-## Run 10 stress 0.2379159 
-## Run 11 stress 0.2324182 
-## ... Procrustes: rmse 0.03508736  max resid 0.1504875 
-## Run 12 stress 0.2375016 
-## Run 13 stress 0.2339204 
-## Run 14 stress 0.2320108 
+## Run 1 stress 0.2349196 
+## Run 2 stress 0.2439623 
+## Run 3 stress 0.2326249 
+## Run 4 stress 0.2351623 
+## Run 5 stress 0.2321023 
+## ... Procrustes: rmse 0.007839919  max resid 0.04404928 
+## Run 6 stress 0.2446368 
+## Run 7 stress 0.237126 
+## Run 8 stress 0.239715 
+## Run 9 stress 0.2318015 
 ## ... New best solution
-## ... Procrustes: rmse 0.001464097  max resid 0.008157829 
-## ... Similar to previous best
-## Run 15 stress 0.2363138 
-## Run 16 stress 0.2324185 
-## ... Procrustes: rmse 0.03460942  max resid 0.1481664 
-## Run 17 stress 0.2368446 
-## Run 18 stress 0.236559 
-## Run 19 stress 0.2318015 
-## ... New best solution
-## ... Procrustes: rmse 0.0316031  max resid 0.14833 
-## Run 20 stress 0.2340719 
+## ... Procrustes: rmse 0.03205832  max resid 0.150004 
+## Run 10 stress 0.2337066 
+## Run 11 stress 0.2605978 
+## Run 12 stress 0.234554 
+## Run 13 stress 0.2349203 
+## Run 14 stress 0.2326871 
+## Run 15 stress 0.233583 
+## Run 16 stress 0.2342458 
+## Run 17 stress 0.2347648 
+## Run 18 stress 0.2361121 
+## Run 19 stress 0.2356716 
+## Run 20 stress 0.2464842 
 ## *** No convergence -- monoMDS stopping criteria:
 ##     20: stress ratio > sratmax
 ```
@@ -174,7 +169,9 @@ plot(p2, split = c(2, 1, 2, 1), newpage = FALSE)
 Scatter plots of the erosion classes displayed over various dimensions, including using multidimensional (MD) scaling, again show their is considerable overlap between the erosion classes. 
 
 
-## Generate Hierarchical Clusters from the Field Data
+
+## Comparison of the Erosion Classes and Hierachical Clusters
+
 
 
 ```r
@@ -187,8 +184,6 @@ rect.hclust(test_c, k = 3)
 
 A hierarchical classification of the field data was generated in order to compare with the FD classes and determine if a more compact classification could be achieved. An threshold of 3 classes was selected. In examing the dendrogram it is apparent that the 1 class it much smaller than the other 2.
 
-
-## Comparison of the Erosion Classes and Hierachical Clusters
 
 
 ```r
@@ -221,7 +216,7 @@ with(clusters, table(EroClassSIE, clusters))
 The contingency table shows that the FD classes (EroClassFD) 1 overlaps the most with cluster 2, while FD class 2 overlap the most with the cluster 3. The ArcSIE predictions don't appear to have any correspondence with the hierarchical clusters.
 
 
-## Scatter Plots of the Erosion Classes vs the Hierachical Clusters
+### Scatter Plots of the Erosion Classes vs the Hierachical Clusters
 
 
 ```r
@@ -252,7 +247,7 @@ plot(p2, split = c(2, 1, 2, 1), newpage = FALSE)
 In comparison the hierarchical clusters have less considerably less overlap when viewed along the multidimensional scaled axes.
 
 
-## Box Plots fo the Erosion Classes vs the Hierachical Clusters
+### Box Plots fo the Erosion Classes vs the Hierachical Clusters
 
 
 ```r
@@ -281,20 +276,18 @@ bwplot(EroClass ~ value | variable + method, data = data_lo,
 #   facet_wrap(~ variable + method, scales="free_y", ncol = 2)
 ```
 
-Back to back the erosion classes and hierarchical clusters show a similarly degree of separability. As observed early cluster 3 seems be an outlier, which a deeper solum (SolumDP) and depth to carbonates (CaCO3Dp).
+In comparison the erosion classes and hierarchical clusters show a similarly degree of separability, but appear to be split on different variables. Amongst the clusters, the separation primarily appears to be based on the solum and carbonates depth. The FD classes appear to be based most on the surface soil properties of the Ap horizon (hzthk, claytotest, SurfFrags).
 
 
 
-```r
-## Principal Component Analysis (PCA)
-
-data_na <- na.exclude(data)
-test <- subset(data_na, select = vals)
-test_pc <- princomp(test, cor = TRUE)
-```
 
 
-## Classification Trees
+### Classification Trees
+
+In order to interpret the FD classes and clusters several classifications trees were constructed. Trees were constructed using both the soil properties and DEM derivatives separately, in order to determine what thresholds best defined the groups internally and externally (e.g. mapped). It is worth mentioning that classification trees only look for the single best split amongst individual nodes, while an SIE model are typically a weighted average of several variables. 
+
+
+#### FD Classes vs Soil Properties
 
 
 ```r
@@ -321,18 +314,20 @@ cm1$table
 ```
 
 ```r
-cm1$overall
+round(cm1$overall, 2)
 ```
 
 ```
 ##       Accuracy          Kappa  AccuracyLower  AccuracyUpper   AccuracyNull 
-##   0.6268656716   0.3810051737   0.5001047440   0.7420258373   0.4179104478 
+##           0.63           0.38           0.50           0.74           0.42 
 ## AccuracyPValue  McnemarPValue 
-##   0.0004537149            NaN
+##           0.00            NaN
 ```
 
-The classification tree of erosion classes using only soil variables as predictors shows that we can only separate the classes on horizon thickness (hzthk) using a break of 21-cm, which gives an overall accuracy of 0.6268657. The bar plots for node 2, shows that it more impure than node 3. 
+The classification tree of the FD classes using only the soil properties as predictors split the classes on horizon thickness (hzthk) using a break of 21-cm, and had an overall accuracy of 0.63. The breakdown the of individual nodes show that node 2 is more mixed than node 3. This result is similar to the SIE model with had difficulty separating class 2 and 3. The split at 21-cm corresponds with the typically depth associated with tillage.
 
+
+#### Clusters vs Soil Properties
 
 
 ```r
@@ -367,20 +362,22 @@ round(cm2$overall, 2)
 ##           0.00            NaN
 ```
 
-The classification tree for the hierachical clusters using only soil variables as predictors has an overall accuracy of 0.8656716, and is split on solum depth (SolumDp) and surface fragments (SurfFrags).
+The classification tree for the hierachical clusters using only soil properties as predictors, had several splits based on solum depth (SolumDp) and surface rock fragments (SurfFrags), and had an overall accuracy of 0.87.
 
+
+#### FD Classes vs DEM Derivatives
 
 
 ```r
-test <- ctree(EroClassFD ~ ., data = clusters[, c("EroClassFD", geo_vals)])
-plot(test)
+test3 <- ctree(EroClassFD ~ ., data = clusters[, c("EroClassFD", geo_vals)])
+plot(test3)
 ```
 
 ![](neil_arcsie_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
 ```r
-cm2 <- confusionMatrix(data = predict(test, type = "response"), reference = clusters$EroClassFD)
-cm2$table
+cm3 <- confusionMatrix(data = predict(test3, type = "response"), reference = clusters$EroClassFD)
+cm3$table
 ```
 
 ```
@@ -393,7 +390,7 @@ cm2$table
 ```
 
 ```r
-cm2$overall
+cm3$overall
 ```
 
 ```
@@ -403,19 +400,22 @@ cm2$overall
 ##      0.1925839            NaN
 ```
 
-The classification tree of the erosion classes using the 
+The classification tree of the FD classes using only the DEM derivates as predictors found the best split using a slope gradient of 6 percent, and had an overal accuracy of 0.48. This tree however was only able to map classes 1 and 3. The split at a slope of 6 percent matches the matches the original slope break used within Morrow (OH117) and Knox (OH083) Counties.  
+
+
+#### Clusters vs DEM Derivatives
 
 
 ```r
-test <- ctree(clusters ~ ., data = clusters[, c("clusters", geo_vals)])
-plot(test)
+test4 <- ctree(clusters ~ ., data = clusters[, c("clusters", geo_vals)])
+plot(test4)
 ```
 
 ![](neil_arcsie_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
 
 ```r
-cm3 <- confusionMatrix(data = predict(test, type = "response"), reference = clusters$clusters)
-cm3$table
+cm4 <- confusionMatrix(data = predict(test4, type = "response"), reference = clusters$clusters)
+cm4$table
 ```
 
 ```
@@ -428,15 +428,18 @@ cm3$table
 ```
 
 ```r
-cm3$overall
+round(cm4$overall, 2)
 ```
 
 ```
 ##       Accuracy          Kappa  AccuracyLower  AccuracyUpper   AccuracyNull 
-##   7.313433e-01   5.045193e-01   6.090378e-01   8.323593e-01   4.925373e-01 
+##           0.73           0.50           0.61           0.83           0.49 
 ## AccuracyPValue  McnemarPValue 
-##   5.981897e-05            NaN
+##           0.00            NaN
 ```
+
+The classification tree of the clusters using only the DEM derivates as predictors found the best split using across slope (PlanCrv) curvature, and had an overal accuracy of 0.73.
+
 
 ## Summary
 
