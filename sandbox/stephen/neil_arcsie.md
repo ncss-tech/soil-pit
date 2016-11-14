@@ -8,6 +8,16 @@ November 7, 2016
 
 
 
+
+## Introduction
+
+This analysis looks at the field data collected for the following 2016 MLRA projects:
+- MLRA 111E - Cardington and Centerburg silt loams, 2 to 6 percent slopes 
+- MLRA 111E - Cardington and Centerburg silt loams, 2 to 6 percent slopes, eroded
+
+One of the goals of these projects was to develop an ArcSIE model in order to differentiate erosion classes. The analysis below is intended to evaluate the field data and ArcSIE model.
+
+
 ## Import Data and Transform
 
 
@@ -25,7 +35,7 @@ data <- transform(data,
 ```
 
 
-## Confusion Matrix of the Erosion Class vs the ArcSIE Predictions
+## Evaluation of the Accuracy of the ArcSIE Predictions
 
 
 ```r
@@ -44,17 +54,17 @@ cm$table
 ```
 
 ```r
-cm$overall
+round(cm$overall, 2)
 ```
 
 ```
 ##       Accuracy          Kappa  AccuracyLower  AccuracyUpper   AccuracyNull 
-##     0.52238806     0.24052426     0.39674840     0.64598512     0.41791045 
+##           0.52           0.24           0.40           0.65           0.42 
 ## AccuracyPValue  McnemarPValue 
-##     0.05450886            NaN
+##           0.05            NaN
 ```
 
-The overall accuracy of the ArcSIE predictions is 0.52. The confusion matrix above shows that the ArcSIE model wasn't able to discriminate EroClassFD class 2 well. However since the initial sampling, Tonie Endres has reviewed some of the misclassifications and determined the ArcSIE classes to be correct, thus the overall accuracy is somewhat higher.
+The overall accuracy of the ArcSIE predictions is 0.52. The confusion matrix above shows that the ArcSIE model wasn't able to discriminate EroClassFD class 2 well. However since the initial sampling, Tonie Endres has reviewed some of the observations that were misclassified in the field and determined the ArcSIE classes to be correct, thus the overall accuracy is somewhat higher.
 
 
 ## Boxplots of the Erosion Classes
@@ -84,7 +94,7 @@ bwplot(EroClass ~ value | variable + method, data = data_lo,
 #   facet_wrap(~ variable + method, scales="free_y")
 ```
 
-The box plots show that the FD erosion classes have a linear trend for some variables, while others only show one class deviating from the others. In addition the variation within each classes overlap the others, such that their median values are indistinguishable from the other classes in many cases. The trends for the EroClassSIE classes appear to be less linear and have less separation. 
+The box plots show that the FD erosion classes have a linear trend for some variables, while other variables only show class 3 or 1 deviating from the other two classes. Overall the variation within each of classes overlap considerably, such that in many cases the median values of one class fall within the interquartile range of the other two classes. This overlap suggests that it is difficult/impractical to separate all the classes. In comparison, the trends between the SIE classes and variables appear to be less linear. In addition, the trends between the SIE classes and digital elevation model (DEM) derivatives (i.e. slope) don't match those observed for FD classes. This mismatch suggests that the membership functions for the SIE classes are poor fit, and should be redefined to more accurately represent the relationship between the FD classes and DEM derivatives.
 
 
 ## Scatterplots of the Erosion Classes
@@ -102,28 +112,28 @@ test_mds <- metaMDS(test_d, distance = "gower", autotransform = FALSE)
 
 ```
 ## Run 0 stress 0.23203 
-## Run 1 stress 0.2324183 
-## ... Procrustes: rmse 0.03510834  max resid 0.1507323 
-## Run 2 stress 0.2416447 
-## Run 3 stress 0.2337057 
-## Run 4 stress 0.2681202 
-## Run 5 stress 0.2383004 
-## Run 6 stress 0.2335836 
-## Run 7 stress 0.2324182 
-## ... Procrustes: rmse 0.03508412  max resid 0.1504734 
-## Run 8 stress 0.2357699 
-## Run 9 stress 0.23571 
-## Run 10 stress 0.2337561 
-## Run 11 stress 0.2384496 
-## Run 12 stress 0.2431326 
-## Run 13 stress 0.2338738 
-## Run 14 stress 0.2402656 
-## Run 15 stress 0.239072 
-## Run 16 stress 0.2401833 
-## Run 17 stress 0.2377806 
-## Run 18 stress 0.2338012 
-## Run 19 stress 0.2380599 
-## Run 20 stress 0.2359827 
+## Run 1 stress 0.2358998 
+## Run 2 stress 0.4079556 
+## Run 3 stress 0.2374383 
+## Run 4 stress 0.2363296 
+## Run 5 stress 0.2409159 
+## Run 6 stress 0.2359764 
+## Run 7 stress 0.2337558 
+## Run 8 stress 0.2376534 
+## Run 9 stress 0.2392665 
+## Run 10 stress 0.233003 
+## Run 11 stress 0.2389979 
+## Run 12 stress 0.2349651 
+## Run 13 stress 0.2326177 
+## Run 14 stress 0.2368447 
+## Run 15 stress 0.2397993 
+## Run 16 stress 0.2396505 
+## Run 17 stress 0.243332 
+## Run 18 stress 0.2357742 
+## Run 19 stress 0.2320092 
+## ... New best solution
+## ... Procrustes: rmse 0.03135498  max resid 0.1492585 
+## Run 20 stress 0.2361535 
 ## *** No convergence -- monoMDS stopping criteria:
 ##     20: stress ratio > sratmax
 ```
@@ -155,10 +165,10 @@ plot(p2, split = c(2, 1, 2, 1), newpage = FALSE)
 # grid.arrange(p1, p2, ncol = 2)
 ```
 
-The scatter plots of the erosion classes displayed over various dimensions, including using multidimensional (MD) scaling, again show their is overlap between the erosion classes. 
+Scatter plots of the erosion classes displayed over various dimensions, including using multidimensional (MD) scaling, again show their is considerable overlap between the erosion classes. 
 
 
-## Cluster Analysis
+## Generate Hierarchical Clusters from the Field Data
 
 
 ```r
@@ -169,10 +179,10 @@ rect.hclust(test_c, k = 3)
 
 ![](neil_arcsie_files/figure-html/ca-1.png)<!-- -->
 
-Example of Centerburg data classified using a hierarchical cluster analysis, and aggregated into the 3 most distinct classes. The 3rd class appears to be an outlier.
+A hierarchical classification of the field data was generated in order to compare with the FD classes and determine if a more compact classification could be achieved. An threshold of 3 classes was selected. In examing the dendrogram it is apparent that the 1 class it much smaller than the other 2.
 
 
-## Contingency Table of the Erosion Classes vs the Hierachical Clusters
+## Comparison of the Erosion Classes and Hierachical Clusters
 
 
 ```r
@@ -202,7 +212,7 @@ with(clusters, table(EroClassSIE, clusters))
 ##           3  0  5  1  2
 ```
 
-The contingency table shows that the field determined erosion classes (EroClassFD) 1 and 2 overlap the most with the hierarchical clusters 2 and 3. The ArcSIE predictions don't appear to have as much correspondence with the hierarchical clusters.
+The contingency table shows that the FD classes (EroClassFD) 1  overlaps the most with cluster 2, while FD class 2 overlap the most with the cluster 3. The ArcSIE predictions don't appear to have any correspondence with the hierarchical clusters.
 
 
 ## Scatter Plots of the Erosion Classes vs the Hierachical Clusters
@@ -233,7 +243,7 @@ plot(p2, split = c(2, 1, 2, 1), newpage = FALSE)
 # grid.arrange(p1, p2, ncol = 2)
 ```
 
-The hierarchical clusters seem to have less overlap when viewed along the multidimensional scaled axes.
+In comparison the hierarchical clusters have less considerably less overlap when viewed along the multidimensional scaled axes.
 
 
 ## Box Plots fo the Erosion Classes vs the Hierachical Clusters
@@ -424,3 +434,6 @@ cm3$overall
 
 ## Summary
 
+It was discussed that in practice the definition of the erosion classes is somewhat subjective. This makes it difficult to separate the classes in the field consistently, which correspondingly make them difficult to model.
+
+Test additional DEM derivatives, such as the topographic wetness index (TWI) and relative elevation.
