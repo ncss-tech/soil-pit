@@ -85,6 +85,7 @@ cm <- confusionMatrix(data = data$EroClassSIE, reference = data$EroClassFD)
 
 cm$table
 round(cm$overall, 2)
+round(cm$byClass, 2)
 
 barchart(prop.table(t(cm$table)), 
          main = "Percentage of Pedons per Erosion Class", xlab = "Percent Occurence (%)", ylab = "FD Class",
@@ -92,7 +93,7 @@ barchart(prop.table(t(cm$table)),
          )
 ```
 
-The overall accuracy of the ArcSIE predictions is `r round(cm$overall[1], 2)`. The confusion matrix above shows that the ArcSIE model wasn't able to discriminate EroClassFD class 2 well. However since the initial sampling, Tonie Endres has reviewed some of the observations that were misclassified in the field and determined the ArcSIE classes to be correct, thus the overall accuracy is somewhat higher.
+The overall accuracy of the ArcSIE predictions is `r round(cm$overall[1], 2)`. The confusion matrix above shows that the ArcSIE model was only able to able to discriminate EroClassFD class 1 and 2 approximately `r round(mean(cm$byClass[c(2, 3), 11]), 2)` of the time. The barchart shows this breakdown visually. Since the initial sampling, Tonie Endres has reviewed some of the observations that were misclassified in the field and determined the ArcSIE classes to be correct, thus the overall accuracy is somewhat higher.
 
 
 ### Boxplots of the Erosion Classes
@@ -107,7 +108,7 @@ bwplot(EroClass ~ value | variable + method, data = data_lo,
 #   facet_wrap(~ variable + method, scales="free_y")
 ```
 
-The box plots show that the FD erosion classes have a linear trend for some variables, while other variables only show class 3 or 1 deviating from the other two classes. Overall the variation within each of classes overlap considerably, such that in many cases the median values of one class falls within the interquartile range of the other two classes. This overlap suggests that it is difficult/impractical to separate all the classes. Another interpretation is that a complex exist, however in this instance Tonie Endres has determined that adjacent classes would qualify as similar soils. In comparison, the trends between the SIE classes and variables appear to be less linear. In addition, the trends between the SIE classes and digital elevation model (DEM) derivatives (i.e. slope) don't match those observed for FD classes. This mismatch suggests that the membership functions for the SIE classes are poor fit, and should be redefined to more accurately represent the relationship between the FD classes and DEM derivatives.
+The box plots show that the FD erosion classes have a linear trend for some variables, while other variables only show class 3 or 1 deviating from the other two classes. Overall the variation within each of the classes overlap considerably, such that in many cases the median values of one class falls within the interquartile range (e.g. 50%) of the other two classes. This overlap suggests that it is difficult/impractical to separate all the classes. Another interpretation is that a complex exist, however in this instance Tonie Endres has determined that adjacent classes would qualify as similar soils. In comparison, the trends between the SIE classes and variables appear to be less linear. The most important feature to highlight is that the trends between the SIE classes and digital elevation model (DEM) derivatives (i.e. slope) don't match those observed for the FD classes. This mismatch suggests that the membership functions for the SIE classes are a poor fit, and should be redefined to more accurately represent the relationship between the FD classes and DEM derivatives.
 
 
 ### Scatterplots of the Erosion Classes
@@ -132,7 +133,9 @@ p2 <- xyplot(MDS2 ~ MDS1, groups = test_pts$EroClassFD, data = test_pts,
              )
 plot(p1, split = c(1, 1, 2, 1))
 plot(p2, split = c(2, 1, 2, 1), newpage = FALSE)
+```
 
+```{r, echo=FALSE}
 # p1 <- ggplot(data, aes(x = hzthk, y = SolumDp,  col = EroClassFD)) +
 #   geom_point(cex = 3) +
 #   theme(aspect.ratio = 1)
@@ -142,7 +145,7 @@ plot(p2, split = c(2, 1, 2, 1), newpage = FALSE)
 # grid.arrange(p1, p2, ncol = 2)
 ```
 
-Scatter plots of the erosion classes displayed over various dimensions, including using multidimensional (MD) scaling, again show their is considerable overlap between the erosion classes. 
+The scatter plots of the erosion classes displayed over various dimensions, including using multidimensional (MD) scaling, again show their is considerable overlap between the erosion classes. 
 
 
 
@@ -155,7 +158,7 @@ plot(test_c, labels = data$upedonid)
 rect.hclust(test_c, k = 3)
 ```
 
-A hierarchical classification of the field data was generated in order to compare with the FD classes and determine if a more compact classification could be achieved. An threshold of 3 classes was selected. In examining the dendrogram it is apparent that the 1 class it much smaller than the other 2.
+A hierarchical classification of the field data was generated in order to compare with the FD classes and determine if a more compact classification could be achieved. An threshold of 3 classes was selected. In examining the dendrogram it is apparent that one class is it much smaller than the other two.
 
 
 ```{r}
@@ -165,7 +168,7 @@ with(clusters, table(EroClassFD, clusters))
 with(clusters, table(EroClassSIE, clusters))
 ```
 
-The contingency table shows that the FD classes (EroClassFD) 1 overlaps the most with cluster 2, while FD class 2 overlap the most with the cluster 3. The ArcSIE predictions don't appear to have any correspondence with the hierarchical clusters.
+The contingency table shows that the FD class (EroClassFD) 1 overlaps the most with cluster 2, while FD class 2 overlap the most with the cluster 3. The ArcSIE predictions don't appear to have any correspondence with the hierarchical clusters.
 
 
 ### Scatter Plots of the Erosion Classes vs the Hierachical Clusters
@@ -181,7 +184,9 @@ p2 <- xyplot(MDS2 ~ MDS1, groups = clusters, data = clusters,
              )
 plot(p1, split = c(1, 1, 2, 1))
 plot(p2, split = c(2, 1, 2, 1), newpage = FALSE)
+```
 
+```{r, echo=FALSE}
 # p1 <- ggplot(clusters, aes(x = MDS1, y = MDS2, col = EroClassFD)) +
 #   geom_point(cex = 3) +
 #   theme(aspect.ratio = 1)
@@ -191,7 +196,7 @@ plot(p2, split = c(2, 1, 2, 1), newpage = FALSE)
 # grid.arrange(p1, p2, ncol = 2)
 ```
 
-In comparison the hierarchical clusters have less considerably less overlap when viewed along the multidimensional scaled axes.
+In comparison the hierarchical clusters have considerably less overlap when viewed along the multidimensional scaled axes.
 
 
 ### Box Plots fo the Erosion Classes vs the Hierachical Clusters
@@ -218,7 +223,7 @@ bwplot(EroClass ~ value | variable + method, data = data_lo,
 #   facet_wrap(~ variable + method, scales="free_y", ncol = 2)
 ```
 
-In comparison the erosion classes and hierarchical clusters show a similarly degree of separability, but appear to be split on different variables. Amongst the clusters, the separation primarily appears to be based on the solum and carbonates depth. The FD classes appear to be based most on the surface soil properties of the Ap horizon (hzthk, claytotest, SurfFrags).
+In comparison the erosion classes and hierarchical clusters show a similarly degree of separability, but appear to be split on different variables. Amongst the clusters, the separation primarily appears to be based on the subsurface properties, such as solum and carbonates depth. In comparision the FD classes appear to be based most on the surface properties of the Ap horizon (hzthk, claytotest, SurfFrags). Because the clusters are differentiated based on subsurface soil properties, it suggests that they developed differently prior to human-induced erosion. It may be interesting to exclude the subsurface properties or downweight the subsurface properties and compute a new hierarchical classification.
 
 
 ```{r pca, echo=FALSE}
@@ -232,7 +237,7 @@ test_pc <- princomp(test, cor = TRUE)
 
 ### Classification Trees
 
-In order to interpret the FD classes and clusters several classifications trees were constructed. Trees were constructed using both the soil properties and DEM derivatives separately, in order to determine what thresholds best defined the groups internally and externally (e.g. mapped). It is worth mentioning that classification trees only look for the single best split amongst individual nodes, while an SIE model are typically a weighted average of several variables. 
+In order to interpret the FD classes and clusters several classifications trees were constructed. Trees were constructed using both the soil properties and DEM derivatives separately, in order to determine what thresholds best defined the groups internally (e.g. how they might be best classified) and externally (e.g. how they might be mapped). It is worth mentioning that classification trees only look for the single best split amongst individual nodes, while an SIE model is typically a weighted average of several variables. 
 
 
 #### FD Classes vs Soil Properties
@@ -247,7 +252,7 @@ cm1$table
 round(cm1$overall, 2)
 ```
 
-The classification tree of the FD classes using only the soil properties as predictors split the classes on horizon thickness (hzthk) using a break of 21-cm, and had an overall accuracy of `r round(cm1$overall[1], 2)`. The breakdown the of individual nodes show that node 2 is more mixed than node 3. This result is similar to the SIE model with had difficulty separating class 2 and 3. The split at 21-cm corresponds with the typically depth associated with tillage.
+The classification tree of the FD classes using only the soil properties as predictors split the classes on horizon thickness (hzthk) using a break of 21-cm, and had an overall accuracy of `r round(cm1$overall[1], 2)`. The breakdown the of individual nodes show that node 2 is more mixed than node 3. This result is similar to the SIE model which had difficulty separating class 2 and 3. The split at 21-cm approximately corresponds with the depth typically associated with tillage.
 
 
 #### Clusters vs Soil Properties
@@ -273,7 +278,7 @@ cm3$table
 cm3$overall
 ```
 
-The classification tree of the FD classes using only the DEM derivatives as predictors found the best split using a slope gradient of 6 percent, and had an overall accuracy of `r round(cm3$overall[1], 2)`. This tree however was only able to map classes 1 and 3. The split at a slope of 6 percent matches the matches the original slope break used within Morrow (OH117) and Knox (OH083) Counties.  
+The classification tree of the FD classes using only the DEM derivatives as predictors found the best split using a slope gradient of 6 percent, and had an overall accuracy of `r round(cm3$overall[1], 2)`. This tree however was only able to map classes 1 and 3. The split at a slope of 6 percent matches the original slope break used within Morrow (OH117) and Knox (OH083) Counties to separate B1 (non-eroded, class 1) and B2 (eroded, class 2) slopes. Perhaps B2 slopes need to be updated to class 3.
 
 
 #### Clusters vs DEM Derivatives
@@ -286,18 +291,23 @@ cm4$table
 round(cm4$overall, 2)
 ```
 
-The classification tree of the clusters using only the DEM derivatives as predictors found the best split using across slope (PlanCrv) curvature, and had an overall accuracy of `r round(cm4$overall[1], 2)`.
+The classification tree of the clusters using only the DEM derivatives as predictors found the best split using across slope (PlanCrv) curvature, and had an overall accuracy of `r round(cm4$overall[1], 2)`. This resulted in a separation of classes 1 and 2, with class 2 occuring on convex positions (e.g. nose slopes). Given the narrow range in slope it seems logical that slope was not the dominant factor. 
 
 
 ## Summary
 
-This was the first ArcSIE project that has been submitted for QA in Region 11. A large investment has been made in the research and development of ArcSIE and other digital soil mapping techniques, therefore Neil Martin and Jennifer Callaway are to be commended for putting this technology to use. At present, no guidelines exist in the NSSH for evaluating such projects. Therefore the above is  
+In summary the field determined (FD) erosion classes show a considerable amount of overlap in the soil properties evaluated. This overlap is likely reducing the accuracy of the ArcSIE, which is only ~ 50% overall. During the field assist the ambiguity of the erosion class definitions from the Soil Survey Manual and operator bias were discussed. Since the initial sampling, Tonie Endres has reviewed some of the observations that were misclassified in the field and determined the ArcSIE classes to be correct, thus the overall accuracy is maybe somewhat higher. Eitherway their appears to be confusion as to the proper field intrepretation of the erosion classes, their historic application, and whether the issue needs to be resolved nationally. The most simplistic approach would be to compare the epipedon thickness to some undisturbed reference (which was likely to vary pre-european settlement). A classification tree of the existing FD classes showed that a Ap depth of 21-cm would make the best split, which corresponds with the typically depth of tillage. When the FD classes were compared aganist hierarchical clusters it showed that a more compact classification could be achieved, but that the resulting clusters were predominately the result of the subsurface properties.
 
-It was discussed that in practice the definition of the erosion classes is somewhat subjective. This makes it difficult to separate the classes in the field consistently, which correspondingly make them difficult to model.
+An The evalution of the SIE classes and DEM derivatives showed they didn't match the FD class landscape patterns. This indicates the SIE membership functions should be adjusted, which may also increase the accuracy.
+ 
+In comparison with other DSM approaches, ArcSIE is referred to as knowledge-based, where the model or membership functions are manually defined. In comparison, data-driven approaches such , and thus rely on the local expertise of the , which  
 
-Test additional DEM derivatives, such as the topographic wetness index (TWI) and relative elevation.
+At this time the evaluation shows that several adjustments/iterations should be made to the ArcSIE Erosion Class model in quesiton. Below
 
-Their are other applicable DSM models that could be evaluated. 
+Recommendations:
+- Adjust the SIE membership functions to reflect the patterns in the FD classes and DEM derivatives
+- Evaluate other applicable DSM models
+- Evalute additional DEM derivatives, such as the topographic wetness index (TWI) and relative elevation, and perhaps other measures of curvature designed for low slopes, such as min or max curvature
+- Streamline the process to be more production oriented, such as converting the raster product to vector, using a 5 or 10-meter DEM
 
-Streamline the process to be more production oriented
-
+This was the first ArcSIE project that has been submitted for QA in Region 11. A large investment has been made in the research and development of ArcSIE and other digital soil mapping (DSM) techniques, therefore Neil Martin and Jennifer Callaway are to be commended for putting this technology to use. Region 11 encourages further use and refinement of ArcSIE and other DSM techniques.
