@@ -143,32 +143,29 @@ test_mds <- metaMDS(test_d, distance = "gower", autotransform = FALSE)
 
 ```
 ## Run 0 stress 0.23203 
-## Run 1 stress 0.2324316 
-## ... Procrustes: rmse 0.01217482  max resid 0.06044457 
-## Run 2 stress 0.235886 
-## Run 3 stress 0.2413749 
-## Run 4 stress 0.2324413 
-## ... Procrustes: rmse 0.03436475  max resid 0.1487761 
-## Run 5 stress 0.23977 
-## Run 6 stress 0.2340564 
-## Run 7 stress 0.2404556 
-## Run 8 stress 0.2349701 
-## Run 9 stress 0.2358027 
-## Run 10 stress 0.2359276 
-## Run 11 stress 0.2377388 
-## Run 12 stress 0.2320415 
-## ... Procrustes: rmse 0.00340476  max resid 0.01437517 
-## Run 13 stress 0.2389855 
-## Run 14 stress 0.2359875 
-## Run 15 stress 0.2339165 
-## Run 16 stress 0.2338603 
-## Run 17 stress 0.232549 
-## Run 18 stress 0.2380089 
-## Run 19 stress 0.2357109 
-## Run 20 stress 0.2327875 
+## Run 1 stress 0.2402671 
+## Run 2 stress 0.2386669 
+## Run 3 stress 0.2406629 
+## Run 4 stress 0.2375132 
+## Run 5 stress 0.236848 
+## Run 6 stress 0.2339127 
+## Run 7 stress 0.2407515 
+## Run 8 stress 0.2434884 
+## Run 9 stress 0.23392 
+## Run 10 stress 0.2360614 
+## Run 11 stress 0.2351266 
+## Run 12 stress 0.237694 
+## Run 13 stress 0.2425166 
+## Run 14 stress 0.2357019 
+## Run 15 stress 0.2409422 
+## Run 16 stress 0.2322774 
+## ... Procrustes: rmse 0.03233437  max resid 0.1474671 
+## Run 17 stress 0.2377095 
+## Run 18 stress 0.2411085 
+## Run 19 stress 0.2377842 
+## Run 20 stress 0.2339186 
 ## *** No convergence -- monoMDS stopping criteria:
-##      1: no. of iterations >= maxit
-##     19: stress ratio > sratmax
+##     20: stress ratio > sratmax
 ```
 
 ```r
@@ -459,18 +456,16 @@ The classification tree of the clusters using only the DEM derivatives as predic
 
 ## Summary
 
-In summary the field determined (FD) erosion classes show a considerable amount of overlap in the soil properties evaluated. This overlap is likely reducing the accuracy of the ArcSIE, which is only ~ 50% overall. During the field assist the ambiguity of the erosion class definitions from the Soil Survey Manual and operator bias were discussed. Since the initial sampling, Tonie Endres has reviewed some of the observations that were misclassified in the field and determined the ArcSIE classes to be correct, thus the overall accuracy is maybe somewhat higher. Eitherway their appears to be confusion as to the proper field intrepretation of the erosion classes, their historic application, and whether the issue needs to be resolved nationally. The most simplistic approach would be to compare the epipedon thickness to some undisturbed reference (which was likely to vary pre-european settlement). A classification tree of the existing FD classes showed that a Ap depth of 21-cm would make the best split, which corresponds with the typically depth of tillage. When the FD classes were compared aganist hierarchical clusters it showed that a more compact classification could be achieved, but that the resulting clusters were predominately the result of the subsurface properties.
+In summary the field determined (FD) erosion classes show a considerable amount of overlap in the soil properties evaluated. This overlap is likely reducing the accuracy of the ArcSIE, which is only ~ 50% overall. During the field assist the ambiguity of the erosion class definitions from the Soil Survey Manual and operator bias were discussed. Since the initial sampling, Tonie Endres has reviewed some of the observations that were misclassified in the field and determined the ArcSIE classes to be correct, thus the overall accuracy is maybe somewhat higher. Eitherway their appears to be confusion as to the proper field intrepretation of the erosion classes, their historic application, and whether the definition needs to be reassessed nationally. The most simplistic approach would be to compare the epipedon thickness to some undisturbed reference (which was likely to vary pre-european settlement). A classification tree of the existing FD classes showed that an Ap bottom depth of 21-cm would make the best split, which corresponds with the typically depth of tillage. When the FD classes were compared aganist hierarchical clusters it showed that a more compact classification could be achieved, but that the resulting clusters were predominately the result of the subsurface properties. In important point observed from an evalution of the SIE classes and DEM derivatives with box plots showed they didn't match the FD class landscape patterns. This mismatch indicates that the SIE membership functions should be adjusted, which may also increase the accuracy.
 
-An The evalution of the SIE classes and DEM derivatives showed they didn't match the FD class landscape patterns. This indicates the SIE membership functions should be adjusted, which may also increase the accuracy.
- 
-In comparison with other DSM approaches, ArcSIE is referred to as knowledge-based, where the model or membership functions are manually defined. In comparison, data-driven approaches such , and thus rely on the local expertise of the , which  
+The only digital soil mapping (DSM) approach evaluated in this project was ArcSIE. In comparison with other DSM approaches, ArcSIE is referred to as knowledge-based, where the model or membership functions are manually defined, as opposed to a data-driven approach (i.e. statistical) where the model is derived from the data. The ArcSIE approach is particularly advantageous where their exist limited field data, but abundance of expert knowledge. Alternatively ArcSIE can be used to generate a working hypothesis, prior to sampling. Given that 68 pedon observations exist for this project their is potential to use a data-driven technique. In addition, data from adjacent areas, similiar soils, or other projects could also be used.
 
-At this time the evaluation shows that several adjustments/iterations should be made to the ArcSIE Erosion Class model in quesiton. Below
+At this time the evaluation shows that several adjustments/iterations should be made to the ArcSIE Erosion Class model in quesiton. Below are several recommendations that should be investigated prior to finalizing the ArcSIE model. 
 
 Recommendations:
-- Adjust the SIE membership functions to reflect the patterns in the FD classes and DEM derivatives
+- Adjust the SIE membership functions to reflect the landscape patterns in the FD classes and DEM derivatives
 - Evaluate other applicable DSM models
 - Evalute additional DEM derivatives, such as the topographic wetness index (TWI) and relative elevation, and perhaps other measures of curvature designed for low slopes, such as min or max curvature
-- Streamline the process to be more production oriented, such as converting the raster product to vector, using a 5 or 10-meter DEM
+- Streamline the process to be more production oriented, such as converting the raster product to vector, using a 5 or 10-meter DEM.
 
 This was the first ArcSIE project that has been submitted for QA in Region 11. A large investment has been made in the research and development of ArcSIE and other digital soil mapping (DSM) techniques, therefore Neil Martin and Jennifer Callaway are to be commended for putting this technology to use. Region 11 encourages further use and refinement of ArcSIE and other DSM techniques.
