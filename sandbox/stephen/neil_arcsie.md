@@ -99,13 +99,14 @@ round(cm$byClass, 2)
 ```r
 barchart(prop.table(t(cm$table)), 
          main = "Percentage of Pedons per Erosion Class", xlab = "Percent Occurence (%)", ylab = "FD Class",
+         axis=axis.grid,
          auto.key = list(space = "right", title = "SIE \n Class")
          )
 ```
 
 ![](neil_arcsie_files/figure-html/analyze-1.png)<!-- -->
 
-The overall accuracy of the ArcSIE predictions is 0.52. The confusion matrix above shows that the ArcSIE model was only able to able to discriminate EroClassFD class 1 and 2 approximately 0.62 of the time. The barchart shows this breakdown visually. Since the initial sampling, Tonie Endres has reviewed some of the observations that were misclassified in the field and determined the ArcSIE classes to be correct, thus the overall accuracy is somewhat higher.
+The overall accuracy of the ArcSIE predictions is 0.52. The confusion matrix above shows that the ArcSIE model was only able to able to discriminate EroClassFD class 1 and 2 approximately 0.62 of the time. The barchart shows this breakdown visually. Since the initial sampling, Tonie Endres has reviewed some of the observations where the field determined class differed from the ArcSIE class and determined that the ArcSIE classes were reasonable although the soil properties were not significantly different, thus the overall accuracy is somewhat higher.
 
 
 ### Boxplots of the Erosion Classes
@@ -113,7 +114,8 @@ The overall accuracy of the ArcSIE predictions is 0.52. The confusion matrix abo
 
 ```r
 bwplot(EroClass ~ value | variable + method, data = data_lo, 
-       scales = list(x ="free"), as.table = TRUE, layout = c(5, 4)
+       scales = list(x ="free"), as.table = TRUE, layout = c(5, 4),
+       axis=axis.grid
        )
 ```
 
@@ -143,27 +145,31 @@ test_mds <- metaMDS(test_d, distance = "gower", autotransform = FALSE)
 
 ```
 ## Run 0 stress 0.23203 
-## Run 1 stress 0.2402671 
-## Run 2 stress 0.2386669 
-## Run 3 stress 0.2406629 
-## Run 4 stress 0.2375132 
-## Run 5 stress 0.236848 
-## Run 6 stress 0.2339127 
-## Run 7 stress 0.2407515 
-## Run 8 stress 0.2434884 
-## Run 9 stress 0.23392 
-## Run 10 stress 0.2360614 
-## Run 11 stress 0.2351266 
-## Run 12 stress 0.237694 
-## Run 13 stress 0.2425166 
-## Run 14 stress 0.2357019 
-## Run 15 stress 0.2409422 
-## Run 16 stress 0.2322774 
-## ... Procrustes: rmse 0.03233437  max resid 0.1474671 
-## Run 17 stress 0.2377095 
-## Run 18 stress 0.2411085 
-## Run 19 stress 0.2377842 
-## Run 20 stress 0.2339186 
+## Run 1 stress 0.2396795 
+## Run 2 stress 0.2340638 
+## Run 3 stress 0.2386973 
+## Run 4 stress 0.2324733 
+## ... Procrustes: rmse 0.01234293  max resid 0.06020321 
+## Run 5 stress 0.2349358 
+## Run 6 stress 0.2356409 
+## Run 7 stress 0.2385883 
+## Run 8 stress 0.2376886 
+## Run 9 stress 0.2765194 
+## Run 10 stress 0.2368447 
+## Run 11 stress 0.2368483 
+## Run 12 stress 0.2362079 
+## Run 13 stress 0.234456 
+## Run 14 stress 0.2380088 
+## Run 15 stress 0.2319558 
+## ... New best solution
+## ... Procrustes: rmse 0.03055762  max resid 0.1451282 
+## Run 16 stress 0.23492 
+## Run 17 stress 0.2319848 
+## ... Procrustes: rmse 0.008420676  max resid 0.04877741 
+## Run 18 stress 0.2366612 
+## Run 19 stress 0.2377865 
+## Run 20 stress 0.2324182 
+## ... Procrustes: rmse 0.01672617  max resid 0.1037012 
 ## *** No convergence -- monoMDS stopping criteria:
 ##     20: stress ratio > sratmax
 ```
@@ -277,7 +283,8 @@ data_lo2 <- transform(data_lo2, method = "clusters")
 data_lo <- rbind(subset(data_lo1, as.character(variable) %in% vals), data_lo2)
 
 bwplot(EroClass ~ value | variable + method, data = data_lo, 
-       scales = list(x ="free"), as.table = TRUE, layout = c(5, 4)
+       scales = list(x ="free"), as.table = TRUE, layout = c(5, 4),
+       axis=axis.grid
        )
 ```
 
@@ -456,13 +463,14 @@ The classification tree of the clusters using only the DEM derivatives as predic
 
 ## Summary
 
-In summary the field determined (FD) erosion classes show a considerable amount of overlap in the soil properties evaluated. This overlap is likely reducing the accuracy of the ArcSIE, which is only ~ 50% overall. During the field assist the ambiguity of the erosion class definitions from the Soil Survey Manual and operator bias were discussed. Since the initial sampling, Tonie Endres has reviewed some of the observations that were misclassified in the field and determined the ArcSIE classes to be correct, thus the overall accuracy is maybe somewhat higher. Eitherway their appears to be confusion as to the proper field intrepretation of the erosion classes, their historic application, and whether the definition needs to be reassessed nationally. The most simplistic approach would be to compare the epipedon thickness to some undisturbed reference (which was likely to vary pre-european settlement). A classification tree of the existing FD classes showed that an Ap bottom depth of 21-cm would make the best split, which corresponds with the typically depth of tillage. When the FD classes were compared aganist hierarchical clusters it showed that a more compact classification could be achieved, but that the resulting clusters were predominately the result of the subsurface properties. In important point observed from an evalution of the SIE classes and DEM derivatives with box plots showed they didn't match the FD class landscape patterns. This mismatch indicates that the SIE membership functions should be adjusted, which may also increase the accuracy.
+In summary the field determined (FD) erosion classes show a considerable amount of overlap in the soil properties evaluated. This overlap is likely reducing the accuracy of the ArcSIE, which is only ~ 50% overall. During the field assist the ambiguity of the erosion class definitions from the Soil Survey Manual and operator bias were discussed. Since the initial sampling, Tonie Endres has reviewed some of the observations where the field determined class differed from the ArcSIE class and determined that the ArcSIE classes were reasonable although the soil properties were not significantly different, thus the overall accuracy is maybe somewhat higher. Eitherway their appears to be confusion as to the proper field intrepretation of the erosion classes, their historic application, and whether the definition needs to be reassessed nationally. The most simplistic approach would be to compare the epipedon thickness to some undisturbed reference (which was likely to vary pre-european settlement). A classification tree of the existing FD classes showed that an Ap bottom depth of 21-cm would make the best split, which corresponds with the typically depth of tillage. When the FD classes were compared aganist hierarchical clusters it showed that a more compact classification could be achieved, but that the resulting clusters were predominately the result of the subsurface properties. In important point observed from an evalution of the SIE classes and DEM derivatives with box plots showed they didn't match the FD class landscape patterns. This mismatch indicates that the SIE membership functions should be adjusted, which may also increase the accuracy.
 
 The only digital soil mapping (DSM) approach evaluated in this project was ArcSIE. In comparison with other DSM approaches, ArcSIE is referred to as knowledge-based, where the model or membership functions are manually defined, as opposed to a data-driven approach (i.e. statistical) where the model is derived from the data. The ArcSIE approach is particularly advantageous where their exist limited field data, but abundance of expert knowledge. Alternatively ArcSIE can be used to generate a working hypothesis, prior to sampling. Given that 68 pedon observations exist for this project their is potential to use a data-driven technique. In addition, data from adjacent areas, similiar soils, or other projects could also be used.
 
 At this time the evaluation shows that several adjustments/iterations should be made to the ArcSIE Erosion Class model in quesiton. Below are several recommendations that should be investigated prior to finalizing the ArcSIE model. 
 
 Recommendations:
+
 - Adjust the SIE membership functions to reflect the landscape patterns in the FD classes and DEM derivatives
 - Evaluate other applicable DSM models
 - Evalute additional DEM derivatives, such as the topographic wetness index (TWI) and relative elevation, and perhaps other measures of curvature designed for low slopes, such as min or max curvature

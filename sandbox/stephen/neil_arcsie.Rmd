@@ -31,6 +31,7 @@ library(vegan)
 options(stringsAsFactors = FALSE)
 
 opar <- trellis.par.get()
+trellis.par.set(theme=ggplot2like())
 tpg <- trellis.par.get("superpose.symbol")
 tpg$cex <-  1.5
 tpg$pch <- 19
@@ -89,18 +90,20 @@ round(cm$byClass, 2)
 
 barchart(prop.table(t(cm$table)), 
          main = "Percentage of Pedons per Erosion Class", xlab = "Percent Occurence (%)", ylab = "FD Class",
+         axis=axis.grid,
          auto.key = list(space = "right", title = "SIE \n Class")
          )
 ```
 
-The overall accuracy of the ArcSIE predictions is `r round(cm$overall[1], 2)`. The confusion matrix above shows that the ArcSIE model was only able to able to discriminate EroClassFD class 1 and 2 approximately `r round(mean(cm$byClass[c(2, 3), 11]), 2)` of the time. The barchart shows this breakdown visually. Since the initial sampling, Tonie Endres has reviewed some of the observations that were misclassified in the field and determined the ArcSIE classes to be correct, thus the overall accuracy is somewhat higher.
+The overall accuracy of the ArcSIE predictions is `r round(cm$overall[1], 2)`. The confusion matrix above shows that the ArcSIE model was only able to able to discriminate EroClassFD class 1 and 2 approximately `r round(mean(cm$byClass[c(2, 3), 11]), 2)` of the time. The barchart shows this breakdown visually. Since the initial sampling, Tonie Endres has reviewed some of the observations where the field determined class differed from the ArcSIE class and determined that the ArcSIE classes were reasonable although the soil properties were not significantly different, thus the overall accuracy is somewhat higher.
 
 
 ### Boxplots of the Erosion Classes
 
 ```{r EroClassFD boxplots, fig.height=7, fig.width=7.5}
 bwplot(EroClass ~ value | variable + method, data = data_lo, 
-       scales = list(x ="free"), as.table = TRUE, layout = c(5, 4)
+       scales = list(x ="free"), as.table = TRUE, layout = c(5, 4),
+       axis=axis.grid
        )
 
 # ggplot(data_lo, aes(x = EroClass, y = value)) +
@@ -215,7 +218,8 @@ data_lo2 <- transform(data_lo2, method = "clusters")
 data_lo <- rbind(subset(data_lo1, as.character(variable) %in% vals), data_lo2)
 
 bwplot(EroClass ~ value | variable + method, data = data_lo, 
-       scales = list(x ="free"), as.table = TRUE, layout = c(5, 4)
+       scales = list(x ="free"), as.table = TRUE, layout = c(5, 4),
+       axis=axis.grid
        )
 
 # ggplot(data_lo, aes(x = EroClass, y = value)) +
@@ -296,13 +300,14 @@ The classification tree of the clusters using only the DEM derivatives as predic
 
 ## Summary
 
-In summary the field determined (FD) erosion classes show a considerable amount of overlap in the soil properties evaluated. This overlap is likely reducing the accuracy of the ArcSIE, which is only ~ 50% overall. During the field assist the ambiguity of the erosion class definitions from the Soil Survey Manual and operator bias were discussed. Since the initial sampling, Tonie Endres has reviewed some of the observations that were misclassified in the field and determined the ArcSIE classes to be correct, thus the overall accuracy is maybe somewhat higher. Eitherway their appears to be confusion as to the proper field intrepretation of the erosion classes, their historic application, and whether the definition needs to be reassessed nationally. The most simplistic approach would be to compare the epipedon thickness to some undisturbed reference (which was likely to vary pre-european settlement). A classification tree of the existing FD classes showed that an Ap bottom depth of 21-cm would make the best split, which corresponds with the typically depth of tillage. When the FD classes were compared aganist hierarchical clusters it showed that a more compact classification could be achieved, but that the resulting clusters were predominately the result of the subsurface properties. In important point observed from an evalution of the SIE classes and DEM derivatives with box plots showed they didn't match the FD class landscape patterns. This mismatch indicates that the SIE membership functions should be adjusted, which may also increase the accuracy.
+In summary the field determined (FD) erosion classes show a considerable amount of overlap in the soil properties evaluated. This overlap is likely reducing the accuracy of the ArcSIE, which is only ~ 50% overall. During the field assist the ambiguity of the erosion class definitions from the Soil Survey Manual and operator bias were discussed. Since the initial sampling, Tonie Endres has reviewed some of the observations where the field determined class differed from the ArcSIE class and determined that the ArcSIE classes were reasonable although the soil properties were not significantly different, thus the overall accuracy is maybe somewhat higher. Eitherway their appears to be confusion as to the proper field intrepretation of the erosion classes, their historic application, and whether the definition needs to be reassessed nationally. The most simplistic approach would be to compare the epipedon thickness to some undisturbed reference (which was likely to vary pre-european settlement). A classification tree of the existing FD classes showed that an Ap bottom depth of 21-cm would make the best split, which corresponds with the typically depth of tillage. When the FD classes were compared aganist hierarchical clusters it showed that a more compact classification could be achieved, but that the resulting clusters were predominately the result of the subsurface properties. In important point observed from an evalution of the SIE classes and DEM derivatives with box plots showed they didn't match the FD class landscape patterns. This mismatch indicates that the SIE membership functions should be adjusted, which may also increase the accuracy.
 
 The only digital soil mapping (DSM) approach evaluated in this project was ArcSIE. In comparison with other DSM approaches, ArcSIE is referred to as knowledge-based, where the model or membership functions are manually defined, as opposed to a data-driven approach (i.e. statistical) where the model is derived from the data. The ArcSIE approach is particularly advantageous where their exist limited field data, but abundance of expert knowledge. Alternatively ArcSIE can be used to generate a working hypothesis, prior to sampling. Given that `r nrow(data)` pedon observations exist for this project their is potential to use a data-driven technique. In addition, data from adjacent areas, similiar soils, or other projects could also be used.
 
 At this time the evaluation shows that several adjustments/iterations should be made to the ArcSIE Erosion Class model in quesiton. Below are several recommendations that should be investigated prior to finalizing the ArcSIE model. 
 
 Recommendations:
+
 - Adjust the SIE membership functions to reflect the landscape patterns in the FD classes and DEM derivatives
 - Evaluate other applicable DSM models
 - Evalute additional DEM derivatives, such as the topographic wetness index (TWI) and relative elevation, and perhaps other measures of curvature designed for low slopes, such as min or max curvature
