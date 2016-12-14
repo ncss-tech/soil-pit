@@ -104,7 +104,7 @@ sdjr_correlation <- function(asymbol, project_id, start_date, finish_date){
     l <- list()
     for (i in seq_along(x)){
       cat(paste("working on", x[i], "\n"))
-      cor_w <- RCurl::getURLContent(x[i], ssl.verifypeer = F)
+      cor_w <- RCurl::getURLContent(x[i], ssl.verifypeer = FALSE)
       cor_t <- XML::readHTMLTable(cor_w, stringsAsFactors = FALSE)
       if (length(cor_t) > 0) {
         l[[i]] <- cor_t[[1]]}
@@ -198,28 +198,19 @@ sdjr_correlation <- function(asymbol, project_id, start_date, finish_date){
 # WEB-MLRA_Goals_Progress
 
 goals_report <- function(fy, office){
-  
-  url <- paste0("https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-MLRA_Goals_Progress_Office_FY&fy=", fy, "&off=", office)
-  goals_w <- getURLContent(url, ssl.verifypeer = F)
+  url <- paste0("https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-PROJECT-MLRA_Goals_Progress&fy=", fy, "&off=", office)
+  goals_w <- RCurl::getURLContent(url, ssl.verifypeer = F)
   doc <- htmlParse(goals_w)
   tableNodes <- getNodeSet(doc, "//tr")
   
-  l <- list()
-  for (i in seq_along(tableNodes)){
-    l[[i]] <- rbind(readHTMLList(tableNodes[[i]]))
-  }
+  goals_l <- lapply(tableNodes, function(x) rbind(readHTMLList(x)))
+  goals <- as.data.frame(do.call("rbind", goals_l[-c(1, length(goals_l))]))
   
-  goals <- as.data.frame(do.call(
-    rbind, 
-    l[-c(1, length(l))]
-    ))
-  
-  names(goals) <-l[[1]][1, ]
-  names(goals) <- sapply(names(goals), function(x) paste(strsplit(x, " ")[[1]], collapse = "_"))
+  names(goals) <- goals_l[[1]][1, ]
+  names(goals) <- sub(" ", "", (names(goals)))
   names(goals) <- tolower(names(goals))
   
   goals <- transform(goals, 
-                     fy = fy, 
                      goaled = as.numeric(goaled),
                      reported = as.numeric(reported)
   )
@@ -230,10 +221,12 @@ goals_report <- function(fy, office){
     "_",
     format(Sys.time(), "%Y_%m_%d"),
     ".csv"),
-    row.names = FALSE)
+    row.names = FALSE
+    )
   
   return(goals)
 }
+
 
 legends_report <- function(areasymbol) {
   url <- paste0("https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-legends&off=", areasymbol)
