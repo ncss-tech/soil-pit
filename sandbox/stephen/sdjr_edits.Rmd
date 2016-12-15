@@ -1,5 +1,5 @@
 # set options and load packages
-options(stringsAsFactors=F)
+options(stringsAsFactors = FALSE)
 
 library(foreign)
 library(rgdal)
@@ -13,13 +13,10 @@ library(RColorBrewer)
 
 source("C:/workspace/github/soil-pit/trunk/queries/kssl_queries.R")
 
+years <- 2012:2016
 
+goals <- lapply(years, function(x) goals_report(x, "%25"))
 
-goals <- goals_report(2012, "%25")
-goals <- goals_report(2013, "%25")
-goals <- goals_report(2014, "%25")
-goals <- goals_report(2015, "%25")
-goals <- goals_report(2016, "%25")
 
 # WEB-PROJECT-Counties+with+approved+projects+DU
 fy <- 2015
@@ -47,10 +44,8 @@ ssa$st <- substr(ssa$areasymbol, 1, 2)
 st <- toupper(c("ia", "il", "in", "ks", "ky", "mi", "mn", "mo", "ne", "oh", "ok", "sd", "wi"))
 asymbol <-  sort(ssa[ssa$st %in% st, "areasymbol"])
 
-report2015 <- correlation_report(asymbol, 2015)
-report2014 <- correlation_report(asymbol, 2014)
-report2012 <- correlation_report(asymbol, 2012)
-report2013 <- correlation_report(asymbol, 2013)
+report <- lapply(years, function(x) sdjr_correlation(asymbol, x, "10/01/2015", "10/01/2016"))
+
 # corr <- read.csv("report_correlation_2015_09_02_spatial.csv")
 # corr$region <- unlist(lapply(corr$Office, function(x) strsplit(x, "-")[[1]][1]))
 
