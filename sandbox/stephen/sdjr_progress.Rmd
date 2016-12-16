@@ -8,22 +8,23 @@ For the past several years Soil Survey Offices in the East Central Glaciated Reg
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=3.75, fig.width=7.5}
 options(stringsAsFactors = FALSE)
 
-.libPaths(c("C:/R/win-library/3.2", "C:/Program Files/R/R-3.2.1/library"))
 library(rmarkdown)
 library(knitr)
-library(plyr)
-library(dplyr)
-library(stringr)
-library(lattice)
+library(tidyverse)
 library(foreign)
-library(raster)
 library(rgdal)
+library(raster)
+library(lattice)
 library(RColorBrewer)
 
-st <- c("IA", "IL", "IN", "MO", "WI", "MN", "KS", "NE", "KS", "OK", "OH", "MI")
+setwd("C:/Users/stephen.roecker/ownCloud/Documents/lims_data")
 
-load(file = "corrs_fy_summary.Rdata")
-load(file = "goals_fy_summary.Rdata")
+st <- c("WI")
+ro <- c(10, 11)
+pt <- "SDJR"
+
+load(file = "rcors_fy_summary_2015_09_24_2016_12_16.Rdata")
+load(file = "goals_fy_summary_2015_09_24_2016_12_16.Rdata")
 load(file = "ssa.Rdata")
 
 # fy13_r_new <- raster("C:/workspace/gSSURGO_fy13_progress.tif")
@@ -31,44 +32,71 @@ load(file = "ssa.Rdata")
 # fy15_r_new <- raster("C:/workspace/gSSURGO_fy15_progress.tif")
 
 
-corrs$state <- substr(corrs$areasymbol, 1, 2)
-corrs_sub <- subset(corrs, state %in% st & project_type == "SDJR" & region == 11)
+rcors_sub <- subset(rcors,
+                    state %in% st & 
+                      projecttypename == pt & 
+                      region %in% ro
+                    )
 
-corrs2<- group_by(corrs_sub, fy, state, projectname, new_muname) %>% summarize(n = length(unique(new_acres)), acres = paste0(unique(new_acres), collapse = ", "))
-corrs2 <- group_by(corrs2, fy, state, projectname, new_muname, n) %>% summarize(acres = sum(as.numeric(str_split(acres, ", ")[[1]])))
+rcors2<- group_by(rcors_sub, fy, state, projectname, new_muname) %>% 
+  summarize(
+    n = length(unique(new_muacres)), 
+    acres = paste0(unique(new_muacres), collapse = ", ")
+    ) %>%
+  group_by(fy, state, projectname, new_muname, n) %>% 
+  summarize(
+    acres = sum(as.numeric(strsplit(acres, ", ")[[1]]))
+    )
 
 
-test <- group_by(corrs2, fy) %>% summarize(acres = formatC(sum(acres), format = "fg", big.mark = ","))
+test <- group_by(rcors2, fy) %>% 
+  summarize(
+    acres = formatC(sum(acres), format = "fg", big.mark = ",")
+    )
 # test2 <- reshape(test, idvar = "state", v.names = "acres", timevar = "fy", direction = "wide")
 # fy <- c("FY2013", "FY2014", "FY2015")
 # names(test2)[2:4] <- fy
 
 
-test2 <- group_by(corrs2, fy, state, projectname, acres) %>% summarize(
-  comp = str_split(new_muname, ", ")[[1]][1],
-  comp = str_split(comp, " ")[[1]][1],
-  comp = str_split(comp, "-")[[1]][1]
+test2 <- group_by(rcors2, fy, state, projectname, acres) %>% summarize(
+  comp = strsplit(new_muname, ", ")[[1]][1],
+  comp = strsplit(comp, " ")[[1]][1],
+  comp = strsplit(comp, "-")[[1]][1]
   )
-test2 <- group_by(test2, fy, comp) %>% summarize(acres = sum(as.numeric(acres)))
-test3 <- group_by(test2, fy) %>%  summarize(soil_series = na.exclude(c(list(comp[order(acres, decreasing = T)][1:5]))))
+test2 <- group_by(test2, fy, comp) %>% 
+  summarize(acres = sum(as.numeric(acres))
+            )
+test3 <- group_by(test2, fy) %>%  
+  summarize(
+    soil_series = na.exclude(c(list(comp[order(acres, decreasing = T)][1:5])))
+    )
 
-test3 <- join(test, test3, by = "fy")
+test3 <- inner_join(test, test3, by = "fy")
 names(test3) <- c("Fiscal Year", "Updated Acres", "Top 5 Soil Series Updated in Region 11")
 kable(test3, align = "c")
 
 
 ### Summarize acres by areasymbol
 
-corrs2 <- group_by(corrs_sub, fy, region, projectname, project_type, sso, areasymbol) %>% summarize(n = length(unique(new_acres)), acres = paste0(unique(new_acres), collapse = ", "))
-corrs2 <- group_by(corrs2, fy, region, sso, projectname, project_type, areasymbol, n) %>% summarize(acres = sum(as.numeric(str_split(acres, ", ")[[1]])))
+rcors2 <- group_by(rcors_sub, fy, region, projectname, projecttypename, office, areasymbol) %>% 
+  summarize(
+    n = length(unique(new_muacres)), 
+    acres = paste0(unique(new_muacres), collapse = ", ")
+    ) %>%
+  group_by(fy, region, office, projectname, projecttypename, areasymbol, n) %>% 
+  summarize(
+    acres = sum(as.numeric(strsplit(acres, ", ")[[1]]))
+    )
 
-corrs_sub <- subset(corrs2, project_type == "SDJR")
-corrs_sub$st <- substr(corrs_sub$areasymbol, 1, 2)
-goals_sub <- subset(goals, project_type == "SDJR")
+rcors_sub <- subset(rcors2, projecttypename == pt)
+rcors_sub$st <- substr(rcors_sub$areasymbol, 1, 2)
+goals_sub <- subset(goals, projecttypename == pt)
 #test3 <- ddply(goals_sub, .(fy), summarize, acres = sum(Reported))
 
 
-test <- group_by(corrs_sub, fy, areasymbol) %>% summarize(acres = sum(acres))
+test <- group_by(rcors_sub, fy, areasymbol) %>% 
+  summarize(acres = sum(acres)
+            )
 test$acres <- cut(test$acres, breaks = c(0, 10000, 50000, 100000, 150000, 200000), labels = c("0 - 10,000", "10,000 - 50,000", "50,000 - 100,000", "100,000 - 150,000", "150,000 - 200,000"))
 test2 <- reshape(as.data.frame(test), idvar = "areasymbol", v.names = "acres", timevar = "fy", direction = "wide")
 fy <- paste0("FY", sort(unique(test$fy)))
@@ -77,13 +105,13 @@ names(test2)[2:(length(fy)+1)] <- fy
 
 
 # Map of progress by sapolygon
-test2 <- subset(test2, select = - FY2012)
+FY <- paste0("FY", sort(unique(test$fy)))
+
+# test2 <- subset(test2, select = - FY2012)
 ssa$state <- substr(ssa$areasymbol, 1, 2)
-test3 <- join(data.frame(ssa), test2, by = "areasymbol")
-ssa@data <- test3
-temp <- subset(ssa, state %in% st)
-temp2 <- temp[fy[-1]]
-#spplot(temp2, main = "Time Series of Updated Acres by County", col.regions = brewer.pal(5, "YlOrRd"), layout = c(length(fy[-1]), 1), colorkey = list(space = "bottom", height = 1))
+ssa2 <- merge(ssa, test2, by = "areasymbol")
+temp <- subset(ssa2, state %in% st, select = FY)
+spplot(temp, main = "Time Series of Updated Acres by County", col.regions = brewer.pal(5, "YlOrRd"), layout = c(length(FY), 1), colorkey = list(space = "bottom", height = 1))
 
 
 # Map of progress by mupolygon
