@@ -5,8 +5,9 @@ December 12, 2016
 
 
 
+
 ```r
-setwd("C:/Users/stephen.roecker/ownCloud/Documents/lims_data")
+setwd("C:/Users/stephen/ownCloud/Documents/lims_data")
 
 ### Set parameters
 ro <- 11
@@ -23,7 +24,7 @@ pt2 <- c("SDJR", "MLRA", "INITIAL", "ES")
 # years <- 2012:2016; start_date <- paste0("10/01/", years - 1); finish_date <- paste0("10/01/", years)
 # 
 # goals <- lapply(years, function(x){
-#   cat("fetching", x, "goals\n")
+#   cat("fetching", x, "goal\n")
 #   goals_report(x, "%25")
 #   }); goals <- do.call("rbind", goals)
 # 
@@ -37,15 +38,15 @@ pt2 <- c("SDJR", "MLRA", "INITIAL", "ES")
 
 corr_dates <- "2015_09_24"
 goal_dates <- "2016_12_13"
-corr_files <- paste0("report_correlation_fy", 2012:2015, "_", corr_dates, ".csv")
-goal_files <- paste0("report_goals_fy", substr(2012:2016, 3, 4), "_", goal_dates, ".csv")
+corr_files <- paste0("lims_correlation_fy", 2012:2015, "_", corr_dates, ".csv")
+goal_files <- paste0("lims_goals_fy", substr(2012:2016, 3, 4), "_", goal_dates, ".csv")
 
 rcors.. <- {lapply(corr_files, read.csv) ->.; do.call("rbind", .)}
-rcors16 <- read.csv("report_correlation_fy2016_AK%25_WY%25_2016_09_19.csv")
+rcors16 <- read.csv("lims_correlation_fy2016_AK%25_WY%25_2016_09_19.csv")
 goals <- {lapply(goal_files, read.csv) ->.; do.call("rbind", .)}
 load(file = "ssa.Rdata"); ssa -> ssa2
-ssa <- read.csv("M:/geodata/soils/SSA_Regional_Ownership_MASTER_MLRA_OFFICE.csv", stringsAsFactors = FALSE)
-ssa_r11 <- ssa[ssa$Region == 11, "AREASYMBOL"]
+# ssa <- read.csv("M:/geodata/soils/SSA_Regional_Ownership_MASTER_MLRA_OFFICE.csv", stringsAsFactors = FALSE)
+# ssa_r11 <- ssa[ssa$Region == 11, "AREASYMBOL"]
 
 ## House Cleaning
 
@@ -76,32 +77,99 @@ names(goals)[which(names(goals) %in% old_names)] <- new_names
 ### save copy
 
 save(rcors, file = paste0("rcors_fy_summary_", corr_dates, "_", format(Sys.time(), "%Y_%m_%d.Rdata")))
-save(goals, file = paste0("goals_fy_summary_", corr_dates, "_", format(Sys.time(), "%Y_%m_%d.Rdata")))
+save(goals, file = paste0("goals_fy_summary_", goal_dates, "_", format(Sys.time(), "%Y_%m_%d.Rdata")))
 ```
 
+
+## Estimate Workload
+
+
+```r
+fte <- c(2, 2.5, 3, 2.5, 3, 5, 3, 5, 4, 1, 3)
+wdays <- (52*5-10-3*5)*.75 # 52 weeks per year, 5 days per week, minus 10 holidays, minus 3 weeks vaction, at 75% an individuals time (i.e. minus 15% for TSS and 10% for miscellaneous)
+# projects per person = 69 projects/ 3.5 fte
+# days per project = workingdays/projects per person 
+
+days_p_person <- function(days, projects, fte){
+  days/(projects/fte)
+}
+
+goals_test <- mutate(goals,
+                     mapunit = ifelse(projectname %in% c("^SDJR"), projectname, NA),
+                     mapunit = sapply(projectname, function(x) unlist(strsplit(x, " - "))[3]),
+                     components = sapply(mapunit, function(x) unlist(strsplit(x, " "))[1])
+                     )
+
+test <- filter(goals_test, region %in% ro) %>%
+  group_by(office) %>%
+  summarize(
+    n_projects = length(unique(projectname)),
+    n_mapunits = length(unique(mapunit)),
+    n_majors = length(unique(sapply(components, function(x) unlist(strsplit(x, "-"))[1])))
+    ) %>%
+  as.data.frame()
+
+test <- mutate(test,
+               fte = round(fte, 1),
+               days = round(fte*wdays, 0),
+               days_project_fte = round(days / (n_projects / fte), 0), days_major_fte = round(days / (n_majors / fte), 0)
+               )
+test2 <- rbind(test, c("Average", 
+                       round(apply(test[2:8], 2, mean), 0))
+               )
+test2
+```
+
+```
+##     office n_projects n_mapunits n_majors fte days days_project_fte
+## 1   11-ATL        242        240       43   2  352                3
+## 2   11-AUR         94         94       42 2.5  441               12
+## 3   11-CLI        188        188       67   3  529                8
+## 4   11-FIN         64         58       15 2.5  441               17
+## 5   11-GAL        176        173       51   3  529                9
+## 6   11-IND        152        149       53   5  881               29
+## 7   11-JUE        259        257      132   3  529                6
+## 8   11-MAN        150        147       36   5  881               29
+## 9   11-SPR         81         70       23   4  705               35
+## 10  11-UNI         53         50       25   1  176                3
+## 11  11-WAV        322        316       36   3  529                5
+## 12 Average        162        158       48   3  545               14
+##    days_major_fte
+## 1              16
+## 2              26
+## 3              24
+## 4              74
+## 5              31
+## 6              83
+## 7              12
+## 8             122
+## 9             123
+## 10              7
+## 11             44
+## 12             51
+```
 
 ## Examine Reported Acres
 
 
 ```r
-temp <- filter(goals, region == ro) %>%
+temp <- goals %>%
+  filter(region == ro & projecttypename %in% pt2) %>%
   group_by(fy, office, projecttypename) %>%
   summarize(
     goaled = sum(goaled),
     reported = sum(reported)
     )
-temp <- subset(temp, projecttypename %in% pt2)
 rank <- sort(tapply(temp$reported, list(temp$office), sum))
 temp <- transform(temp,
-                  office = factor(temp$office, levels = names(rank)),
-                  fy = as.factor(fy),
-                  projecttypename = factor(projecttypename, levels = sort(unique(temp$projecttypename), decreasing = TRUE))
+                  office = factor(office, levels = sort(unique(temp$office), decreasing = TRUE)),
+                  projecttypename = factor(projecttypename, levels = pt2)
                   )
 
-dotplot(office ~ reported | projecttypename + fy, data = temp, 
-        ylab = "offices", xlab = "acres", main = "Time Series of Acres Reported",
-        scales = list(x = "free")
-        )
+ggplot(temp, aes(x = reported, y = office)) + 
+  geom_point() + 
+  facet_grid(~ projecttypename ~ fy, scales = "free_x") +
+  ggtitle("Time Series of Acres Reported")
 ```
 
 ![](sdjr_summary_files/figure-html/goals-1.png)<!-- -->
@@ -109,26 +177,17 @@ dotplot(office ~ reported | projecttypename + fy, data = temp,
 
 
 ```r
-n_office <- nlevels(temp$office)
-n_ptype <- nlevels(temp$projecttypename)
-
-xyplot(reported ~ fy | projecttypename, groups = office, data = temp,
-       ylab = "acres", xlab = "fiscal year", main = "Time Series of Reported Acres",
-       type = "o", pch = 1:n_office, lty = 1:n_office, lwd = 1.5, col = "darkgreen", cex = 1.2,
-       layout = c(1, n_ptype), as.table = TRUE, scales = list(y = "free", alternating = 1),
-       key = list(title = "office",
-                  space = "right",
-                  points = list(pch = 1:n_office, col = "darkgreen"),
-                  lines = list(lty = 1:n_office, lwd = 1.5, col = "darkgreen"),
-                  text = list(levels(temp$office))
-                  )
-       )
+ggplot(temp, aes(x = fy, y = reported, group = office, linetype = office, shape = office)) + 
+  geom_line(size = 0.7) + 
+  geom_point(size = 2.5) +
+  scale_shape_manual(values=1:nlevels(temp$office)) +
+  facet_grid(projecttypename ~ ., scales = "free_y")
 ```
 
 ![](sdjr_summary_files/figure-html/goals2-1.png)<!-- -->
 
 
-## Compare Project Acres to Goal Acres
+## Compare Project Acres to Goaled Acres
 
 
 ```r
@@ -148,7 +207,8 @@ rcors_acres <- group_by(rcors, fy, region, office, projectname, projectiid, area
 
 temp <- merge(goals, rcors_acres, by = "projectname", all.x = TRUE)
 
-progress <- group_by(temp, region.x, fy.x, projecttypename) %>% 
+progress <- temp %>%
+  group_by(region.x, fy.x, projecttypename) %>% 
   summarize(reported = sum(reported) / 0.2,
             new_acres = sum(new_acres, na.rm = TRUE),
             dif_acres = sum(reported - new_acres, na.rm = TRUE),
@@ -157,10 +217,8 @@ progress <- group_by(temp, region.x, fy.x, projecttypename) %>%
   as.data.frame()
 
 rank <- sort(tapply(progress$reported, list(progress$region.x), sum))
-progress <- transform(progress,
-                      region = factor(progress$region.x, levels = names(rank))
-                      )
-subset(progress, region == ro & projecttypename %in% pt)
+
+subset(progress, region.x == ro & projecttypename %in% pt)
 ```
 
 ```
@@ -169,11 +227,6 @@ subset(progress, region == ro & projecttypename %in% pt)
 ## 218       11 2014            SDJR 24150585  24332646   -182061       1
 ## 221       11 2015            SDJR 21141050  21182385    -41335       0
 ## 225       11 2016            SDJR 13828070  13786315     41755       0
-##     region
-## 216     11
-## 218     11
-## 221     11
-## 225     11
 ```
 
 ```r
