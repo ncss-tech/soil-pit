@@ -21,12 +21,12 @@ library(XML)
 library(reshape2)
 library(tidyverse)
 
-source("C:/workspace/github/soil-pit/queries/kssl_queries.R")
+source("C:/workspace/github/soil-pit/trunk/queries/kssl_queries.R")
 ```
 
 
 ```{r load}
-setwd("C:/Users/stephen/ownCloud/Documents/lims_data")
+setwd("C:/Users/stephen.roecker/ownCloud/Documents/lims_data")
 
 ### Set parameters
 ro <- 11
@@ -72,23 +72,24 @@ load(file = "ssa.Rdata"); ssa -> ssa2
 ### rcors
 old_names <- c("sso", "old_musym", "old_natsym", "new_natsym", "old_mukey", "old_acres", "new_acres", "old_muname", "old_musym2", "spatial")
 new_names <- c("office", "musym", "nationalmusym", "new_nationalmusym", "mukey", "muacres", "new_muacres", "muname", "musym_orig", "spatial_change")
-names(rcors..)                              <- tolower(names(rcors..))
+names(rcors..) <- tolower(names(rcors..))
 names(rcors..)[which(names(rcors..) %in% old_names)] <- new_names
-rcors.. <- transform(rcors..,
-                     projecttypename = substr(projectname, 1, 4),
-                     state = substr(areasymbol, 1, 2)
-                     )
-rcors16 <- subset(rcors16, !is.na(new_mukey))
-rcors16 <- transform(rcors16, 
-                     state = substr(areasymbol, 1, 2)
-                     )
+rcors.. <- mutate(rcors..,
+                  projecttypename = substr(projectname, 1, 4),
+                  state = substr(areasymbol, 1, 2)
+                  )
+rcors16 <- filter(rcors16, !is.na(new_mukey))
+rcors16 <- mutate(rcors16,
+                  state = substr(areasymbol, 1, 2)
+                  )
 
 match_names <- names(rcors..)[names(rcors..) %in% names(rcors16)]
-rcors <- merge(rcors.., rcors16, all = TRUE)
-rcors <- subset(rcors, select = match_names)
+rcors <- full_join(rcors.., rcors16)
+rcors <- rcors[, match_names]
 
 
 ### goals
+
 old_names <- c("ssoffice", "projecttype")
 new_names <- c("office", "projecttypename")
 names(goals)[which(names(goals) %in% old_names)] <- new_names
@@ -150,6 +151,7 @@ kable(test2)
 #   facet_wrap(fy ~ ., scales = "free_y")
 ```
 
+
 ## Examine Reported Acres
 
 ```{r goals, fig.height=8, fig.width=8}
@@ -159,21 +161,22 @@ temp <- goals %>%
   summarize(
     goaled = sum(goaled),
     reported = sum(reported)
-    )
-rank <- sort(tapply(temp$reported, list(temp$office), sum))
-temp <- transform(temp,
-                  office = factor(office, levels = sort(unique(temp$office), decreasing = TRUE)),
-                  projecttypename = factor(projecttypename, levels = pt2)
-                  )
+    ) %>%
+  as.data.frame()
+
+tapply(temp$reported, list(temp$office), sum) ->.; sort(., decreasing = TRUE) ->.; format(., format = "E", digits = 1) # rank based on sum of acres
+tapply(temp$reported, list(temp$office), mean) ->.; sort(., decreasing = TRUE) ->.; format(., format = "E", digits = 1) # rank based on mean of acres
+
+temp <- mutate(temp,
+               office = factor(office, levels = sort(unique(temp$office), decreasing = TRUE)),
+               projecttypename = factor(projecttypename, levels = pt2)
+               )
 
 ggplot(temp, aes(x = reported, y = office)) + 
   geom_point() + 
   facet_grid(~ projecttypename ~ fy, scales = "free_x") +
   ggtitle("Time Series of Acres Reported")
-```
 
-
-```{r goals2, fig.height=8, fig.width=8}
 ggplot(temp, aes(x = fy, y = reported, group = office, linetype = office, shape = office)) + 
   geom_line(size = 0.7) + 
   geom_point(size = 2.5) +
@@ -185,7 +188,10 @@ ggplot(temp, aes(x = fy, y = reported, group = office, linetype = office, shape 
 ## Compare Project Acres to Goaled Acres
 
 ```{r compare}
-rcors_acres <- group_by(rcors, fy, region, office, projectname, projectiid, areasymbol) %>%
+
+rcors_acres <- rcors %>% 
+  filter(region == ro & projecttypename %in% pt) %>%
+  group_by(fy, region, office, projectname, projectiid, areasymbol) %>%
   summarize(
     n = length(unique(musym_orig)), 
     old_acres = sum(unique(muacres)), 
@@ -196,24 +202,20 @@ rcors_acres <- group_by(rcors, fy, region, office, projectname, projectiid, area
     n = sum(n),
     old_acres = sum(old_acres),
     new_acres = sum(new_acres)
-    ) %>%
-  as.data.frame()
+    )
 
-temp <- merge(goals, rcors_acres, by = "projectname", all.x = TRUE)
+temp <- left_join(goals, rcors_acres, by = "projectname")
 
 progress <- temp %>%
+  filter(region.x == ro & projecttypename %in% pt) %>%
   group_by(region.x, fy.x, projecttypename) %>% 
   summarize(reported = sum(reported) / 0.2,
             new_acres = sum(new_acres, na.rm = TRUE),
             dif_acres = sum(reported - new_acres, na.rm = TRUE),
             dif_pct = 100 - round(reported / new_acres * 100)
-            ) %>%
-  as.data.frame()
+            ) 
 
-rank <- sort(tapply(progress$reported, list(progress$region.x), sum))
-
-subset(progress, region.x == ro & projecttypename %in% pt)
-# dotplot(region ~ r_goaled | , data = progress, as.table = TRUE)
+kable(progress)
 ```
 
 
@@ -225,21 +227,23 @@ r11_spatial <- rcors %>%
   group_by(fy, region, office) %>%
   summarize(
     acres = sum(muacres, na.rm = T),
-    n_areasymbol = length(unique(areasymbol))
+    n_areasymbol = length(unique(areasymbol)),
+    n_musym = length(unique(musym_orig))
     ) %>%
   arrange(desc(acres))
 
-ggplot(r11_spatial, aes(x = n_areasymbol, y = acres, group = fy, color = office)) + 
+ggplot(r11_spatial, aes(x = n_musym, y = n_areasymbol, group = fy, color = office)) + 
   geom_point(cex = 5) + 
   scale_colour_brewer(palette="RdYlBu") +
-  facet_grid(~ fy, scales = "free_y")
+  facet_grid(~ fy)
 ```
 
 
 ## Map Progress by AREASYMBOL
 
 ```{r map_as, fig.height=10, fig.width=8}
-rcors_as <- filter(rcors, region == ro & projecttypename %in% pt) %>%
+rcors_as <- rcors %>%
+  filter(region == ro & projecttypename %in% pt) %>%
   group_by(fy, region, projectiid, projecttypename, areasymbol) %>%
   summarize(
     n = length(unique(new_mukey)), 
@@ -256,8 +260,8 @@ rcors_as <- filter(rcors, region == ro & projecttypename %in% pt) %>%
 rcors_as$acres <- cut(rcors_as$new_muacres, breaks = c(0, 10000, 50000, 100000, 150000, 200000), labels = c("0 - 10,000", "10,000 - 50,000", "50,000 - 100,000", "100,000 - 150,000", "150,000 - 200,000"))
 
 rcors_as_w <- reshape(rcors_as, idvar = "areasymbol", v.names = "acres", timevar = "fy", direction = "wide")
-# rcors_as_w1 <- dcast(rcors_as, region + areasymbol ~ fy, value.var = "new_muacres", sum) # inserts 0 instead of NA
-# rcors_as_w2 <- spread(rcors_as, fy, muacres) # this doesn't aggregate, would need to be followed
+# rcors_as_w1 <- dcast(rcors_as, region + areasymbol ~ fy, value.var = "acres") # converts acres to characters instead of factors
+# rcors_as_w2 <- spread(rcors_as, fy, acres, convert = TRUE) # this recycling non-grouping variables, reshape() silently drops them
 
 fy <- paste0("acres.", sort(unique(rcors_as$fy)))
 FY <- paste0("FY", sort(unique(rcors_as$fy)))
