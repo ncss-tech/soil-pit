@@ -51,8 +51,8 @@ load(file = "ssa.Rdata"); ssa -> ssa2
 ## House Cleaning
 
 ### rcors
-old_names <- c("sso", "old_musym", "old_natsym", "new_natsym", "old_mukey", "old_acres", "new_acres", "old_muname", "spatial", "old_musym2")
-new_names <- c("office", "musym", "nationalmusym", "new_nationalmusym", "mukey", "muacres", "new_muacres", "muname", "spatial_change", "musym_orig")
+old_names <- c("sso", "old_musym", "old_natsym", "new_natsym", "old_mukey", "old_acres", "new_acres", "old_muname", "old_musym2", "spatial")
+new_names <- c("office", "musym", "nationalmusym", "new_nationalmusym", "mukey", "muacres", "new_muacres", "muname", "musym_orig", "spatial_change")
 names(rcors..)                              <- tolower(names(rcors..))
 names(rcors..)[which(names(rcors..) %in% old_names)] <- new_names
 rcors.. <- transform(rcors..,
@@ -85,7 +85,10 @@ save(goals, file = paste0("goals_fy_summary_", goal_dates, "_", format(Sys.time(
 
 
 ```r
-fte <- c(2, 2.5, 3, 2.5, 3, 5, 3, 5, 4, 1, 3)
+fte <- data.frame(
+  fte = c(2, 2.5, 3, 2.5, 3, 5, 3, 5, 4, 1, 3),
+  office = c("11-ATL", "11-AUR", "11-CLI", "11-FIN", "11-GAL", "11-IND", "11-JUE", "11-MAN", "11-SPR", "11-UNI", "11-WAV")
+  ) # these numbers need to be updated to reflect retirements
 wdays <- (52*5-10-3*5)*.75 # 52 weeks per year, 5 days per week, minus 10 holidays, minus 3 weeks vaction, at 75% an individuals time (i.e. minus 15% for TSS and 10% for miscellaneous)
 # projects per person = 69 projects/ 3.5 fte
 # days per project = workingdays/projects per person 
@@ -100,53 +103,32 @@ goals_test <- mutate(goals,
                      components = sapply(mapunit, function(x) unlist(strsplit(x, " "))[1])
                      )
 
-test <- filter(goals_test, region %in% ro) %>%
-  group_by(office) %>%
+test <- goals_test %>%
+  filter(region %in% ro) %>%
+  group_by(fy = as.character(fy), office) %>%
   summarize(
+    acres = sum(reported),
     n_projects = length(unique(projectname)),
     n_mapunits = length(unique(mapunit)),
     n_majors = length(unique(sapply(components, function(x) unlist(strsplit(x, "-"))[1])))
-    ) %>%
-  as.data.frame()
+    ) %>% 
+  inner_join(fte, by = "office")
 
 test <- mutate(test,
                fte = round(fte, 1),
                days = round(fte*wdays, 0),
                days_project_fte = round(days / (n_projects / fte), 0), days_major_fte = round(days / (n_majors / fte), 0)
+               ) %>%
+  as.data.frame()
+test2 <- rbind(test, c("2012:2016", "Average",
+                       round(apply(test[3:9], 2, mean), 0))
                )
-test2 <- rbind(test, c("Average", 
-                       round(apply(test[2:8], 2, mean), 0))
-               )
-test2
-```
 
-```
-##     office n_projects n_mapunits n_majors fte days days_project_fte
-## 1   11-ATL        242        240       43   2  352                3
-## 2   11-AUR         94         94       42 2.5  441               12
-## 3   11-CLI        188        188       67   3  529                8
-## 4   11-FIN         64         58       15 2.5  441               17
-## 5   11-GAL        176        173       51   3  529                9
-## 6   11-IND        152        149       53   5  881               29
-## 7   11-JUE        259        257      132   3  529                6
-## 8   11-MAN        150        147       36   5  881               29
-## 9   11-SPR         81         70       23   4  705               35
-## 10  11-UNI         53         50       25   1  176                3
-## 11  11-WAV        322        316       36   3  529                5
-## 12 Average        162        158       48   3  545               14
-##    days_major_fte
-## 1              16
-## 2              26
-## 3              24
-## 4              74
-## 5              31
-## 6              83
-## 7              12
-## 8             122
-## 9             123
-## 10              7
-## 11             44
-## 12             51
+kable(test2)
+
+# ggplot(test, aes(x = days_project_fte, y = acres, group = office)) +
+#   geom_point() +
+#   facet_wrap(fy ~ ., scales = "free_y")
 ```
 
 ## Examine Reported Acres
@@ -232,6 +214,28 @@ subset(progress, region.x == ro & projecttypename %in% pt)
 ```r
 # dotplot(region ~ r_goaled | , data = progress, as.table = TRUE)
 ```
+
+
+## Summarize Spatial Changes
+
+
+```r
+r11_spatial <- rcors %>%
+  filter(region %in% ro & spatial_change == TRUE & projecttypename %in% pt) %>%
+  group_by(fy, region, office) %>%
+  summarize(
+    acres = sum(muacres, na.rm = T),
+    n_areasymbol = length(unique(areasymbol))
+    ) %>%
+  arrange(desc(acres))
+
+ggplot(r11_spatial, aes(x = n_areasymbol, y = acres, group = fy, color = office)) + 
+  geom_point(cex = 5) + 
+  scale_colour_brewer(palette="RdYlBu") +
+  facet_grid(~ fy, scales = "free_y")
+```
+
+![](sdjr_summary_files/figure-html/spatial-1.png)<!-- -->
 
 
 ## Map Progress by AREASYMBOL
