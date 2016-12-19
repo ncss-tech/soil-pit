@@ -172,30 +172,29 @@ ggplot(temp, aes(x = fy, y = reported, group = office, linetype = office, shape 
 
 ```r
 temp <- filter(temp, projecttypename %in% pt3)
-tapply(temp$reported, list(temp$office), sum) ->.; 
+rank_sum <- {tapply(temp$reported, list(temp$office), sum) ->.; 
   sort(., decreasing = TRUE) ->.; 
-  formatC(., format = "E", digits = 1) # rank based on sum of acres
+  formatC(., format = "E", digits = 1)
+  } # rank based on sum of acres
+rank_avg <- {tapply(temp$reported, list(temp$office), mean) ->.; 
+  sort(., decreasing = TRUE) ->.; 
+  formatC(., format = "e", digits = 1)
+  } # rank based on mean of acres
+
+kable(t(as.data.frame(rank_sum)))
 ```
 
-```
-##    11-CLI    11-SPR    11-ATL    11-FIN    11-JUE    11-WAV    11-MAN 
-## "2.2E+06" "2.1E+06" "1.9E+06" "1.9E+06" "1.8E+06" "1.7E+06" "1.5E+06" 
-##    11-IND    11-GAL    11-AUR    11-UNI 
-## "1.5E+06" "1.5E+06" "1.3E+06" "9.9E+05"
-```
+           11-CLI    11-SPR    11-ATL    11-FIN    11-JUE    11-WAV    11-MAN    11-IND    11-GAL    11-AUR    11-UNI  
+---------  --------  --------  --------  --------  --------  --------  --------  --------  --------  --------  --------
+rank_sum   2.2E+06   2.1E+06   1.9E+06   1.9E+06   1.8E+06   1.7E+06   1.5E+06   1.5E+06   1.5E+06   1.3E+06   9.9E+05 
 
 ```r
-tapply(temp$reported, list(temp$office), mean) ->.; 
-  sort(., decreasing = TRUE) ->.; 
-  formatC(., format = "e", digits = 1) # rank based on mean of acres
+kable(t(as.data.frame(rank_avg)))
 ```
 
-```
-##    11-CLI    11-SPR    11-IND    11-JUE    11-WAV    11-ATL    11-FIN 
-## "4.4e+05" "4.2e+05" "3.7e+05" "3.5e+05" "3.4e+05" "3.2e+05" "3.1e+05" 
-##    11-AUR    11-GAL    11-MAN    11-UNI 
-## "2.7e+05" "2.4e+05" "2.1e+05" "2.0e+05"
-```
+           11-CLI    11-SPR    11-IND    11-JUE    11-WAV    11-ATL    11-FIN    11-AUR    11-GAL    11-MAN    11-UNI  
+---------  --------  --------  --------  --------  --------  --------  --------  --------  --------  --------  --------
+rank_avg   4.4e+05   4.2e+05   3.7e+05   3.5e+05   3.4e+05   3.2e+05   3.1e+05   2.7e+05   2.4e+05   2.1e+05   2.0e+05 
 
 
 ## Compare Project Acres to Goaled Acres
@@ -293,13 +292,15 @@ fy <- paste0("acres.", sort(unique(rcors_as$fy)))
 FY <- paste0("FY", sort(unique(rcors_as$fy)))
 names(rcors_as_w)[which(names(rcors_as_w) %in% fy)] <- FY
 
-ssa2$state <- substr(ssa2$areasymbol, 1, 2)
-st <- toupper(c("ia", "il", "in", "ks", "ky", "mi", "mn", "mo", "ne", "oh", "ok", "sd", "wi"))
 
 ssa3 <- merge(ssa2, rcors_as_w, by = "areasymbol", all.x = TRUE)
 temp_sub1 <- subset(ssa3, region == ro, select = FY)
-#temp_sub2 <- subset(ssa3, state %in% st, select = FY)
-bb <- bbox(temp_sub1)
+
+# # Use the following code to plot all the county boundaries for states that intersect Region 11
+# bb <- bbox(temp_sub1)
+# ssa2$state <- substr(ssa2$areasymbol, 1, 2)
+# st <- toupper(c("ia", "il", "in", "ks", "ky", "mi", "mn", "mo", "ne", "oh", "ok", "sd", "wi"))
+# temp_sub2 <- subset(ssa3, state %in% st, select = FY)
 
 spplot(temp_sub1,
        main = paste0("Time Series of Updated ", paste0(pt, collapse = " & "), " Acres by County"),

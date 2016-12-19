@@ -183,12 +183,17 @@ ggplot(temp, aes(x = fy, y = reported, group = office, linetype = office, shape 
 
 
 temp <- filter(temp, projecttypename %in% pt3)
-tapply(temp$reported, list(temp$office), sum) ->.; 
+rank_sum <- {tapply(temp$reported, list(temp$office), sum) ->.; 
   sort(., decreasing = TRUE) ->.; 
-  formatC(., format = "E", digits = 1) # rank based on sum of acres
-tapply(temp$reported, list(temp$office), mean) ->.; 
+  formatC(., format = "E", digits = 1)
+  } # rank based on sum of acres
+rank_avg <- {tapply(temp$reported, list(temp$office), mean) ->.; 
   sort(., decreasing = TRUE) ->.; 
-  formatC(., format = "e", digits = 1) # rank based on mean of acres
+  formatC(., format = "e", digits = 1)
+  } # rank based on mean of acres
+
+kable(t(as.data.frame(rank_sum)))
+kable(t(as.data.frame(rank_avg)))
 ```
 
 
@@ -274,13 +279,15 @@ fy <- paste0("acres.", sort(unique(rcors_as$fy)))
 FY <- paste0("FY", sort(unique(rcors_as$fy)))
 names(rcors_as_w)[which(names(rcors_as_w) %in% fy)] <- FY
 
-ssa2$state <- substr(ssa2$areasymbol, 1, 2)
-st <- toupper(c("ia", "il", "in", "ks", "ky", "mi", "mn", "mo", "ne", "oh", "ok", "sd", "wi"))
 
 ssa3 <- merge(ssa2, rcors_as_w, by = "areasymbol", all.x = TRUE)
 temp_sub1 <- subset(ssa3, region == ro, select = FY)
-#temp_sub2 <- subset(ssa3, state %in% st, select = FY)
-bb <- bbox(temp_sub1)
+
+# # Use the following code to plot all the county boundaries for states that intersect Region 11
+# bb <- bbox(temp_sub1)
+# ssa2$state <- substr(ssa2$areasymbol, 1, 2)
+# st <- toupper(c("ia", "il", "in", "ks", "ky", "mi", "mn", "mo", "ne", "oh", "ok", "sd", "wi"))
+# temp_sub2 <- subset(ssa3, state %in% st, select = FY)
 
 spplot(temp_sub1,
        main = paste0("Time Series of Updated ", paste0(pt, collapse = " & "), " Acres by County"),
