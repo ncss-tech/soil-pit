@@ -181,20 +181,40 @@ rank_avg <- {tapply(temp$reported, list(temp$office), mean) ->.;
   formatC(., format = "e", digits = 1)
   } # rank based on mean of acres
 
-kable(t(as.data.frame(rank_sum)))
+kable(as.data.frame(rank_sum))
 ```
 
-           11-CLI    11-SPR    11-ATL    11-FIN    11-JUE    11-WAV    11-MAN    11-IND    11-GAL    11-AUR    11-UNI  
----------  --------  --------  --------  --------  --------  --------  --------  --------  --------  --------  --------
-rank_sum   2.2E+06   2.1E+06   1.9E+06   1.9E+06   1.8E+06   1.7E+06   1.5E+06   1.5E+06   1.5E+06   1.3E+06   9.9E+05 
+         rank_sum 
+-------  ---------
+11-CLI   2.2E+06  
+11-SPR   2.1E+06  
+11-ATL   1.9E+06  
+11-FIN   1.9E+06  
+11-JUE   1.8E+06  
+11-WAV   1.7E+06  
+11-MAN   1.5E+06  
+11-IND   1.5E+06  
+11-GAL   1.5E+06  
+11-AUR   1.3E+06  
+11-UNI   9.9E+05  
 
 ```r
-kable(t(as.data.frame(rank_avg)))
+kable(as.data.frame(rank_avg))
 ```
 
-           11-CLI    11-SPR    11-IND    11-JUE    11-WAV    11-ATL    11-FIN    11-AUR    11-GAL    11-MAN    11-UNI  
----------  --------  --------  --------  --------  --------  --------  --------  --------  --------  --------  --------
-rank_avg   4.4e+05   4.2e+05   3.7e+05   3.5e+05   3.4e+05   3.2e+05   3.1e+05   2.7e+05   2.4e+05   2.1e+05   2.0e+05 
+         rank_avg 
+-------  ---------
+11-CLI   4.4e+05  
+11-SPR   4.2e+05  
+11-IND   3.7e+05  
+11-JUE   3.5e+05  
+11-WAV   3.4e+05  
+11-ATL   3.2e+05  
+11-FIN   3.1e+05  
+11-AUR   2.7e+05  
+11-GAL   2.4e+05  
+11-MAN   2.1e+05  
+11-UNI   2.0e+05  
 
 
 ## Compare Project Acres to Goaled Acres

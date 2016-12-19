@@ -184,7 +184,7 @@ ggplot(temp, aes(x = fy, y = reported, group = office, linetype = office, shape 
 
 temp <- filter(temp, projecttypename %in% pt3)
 rank_sum <- {tapply(temp$reported, list(temp$office), sum) ->.; 
-  sort(., decreasing = TRUE) ->.; 
+  sort(.[2], decreasing = TRUE) ->.; 
   formatC(., format = "E", digits = 1)
   } # rank based on sum of acres
 rank_avg <- {tapply(temp$reported, list(temp$office), mean) ->.; 
@@ -192,8 +192,8 @@ rank_avg <- {tapply(temp$reported, list(temp$office), mean) ->.;
   formatC(., format = "e", digits = 1)
   } # rank based on mean of acres
 
-kable(t(as.data.frame(rank_sum)))
-kable(t(as.data.frame(rank_avg)))
+print(rank_sum)
+print(rank_avg)
 ```
 
 
