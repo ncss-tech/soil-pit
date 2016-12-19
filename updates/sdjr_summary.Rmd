@@ -32,6 +32,7 @@ setwd("C:/Users/stephen.roecker/ownCloud/Documents/lims_data")
 ro <- 11
 pt <- c("SDJR")
 pt2 <- c("SDJR", "MLRA", "INITIAL", "ES")
+pt3 <- c("SDJR", "MLRA")
 
 # ## Fetch data from the server
 # 
@@ -164,9 +165,6 @@ temp <- goals %>%
     ) %>%
   as.data.frame()
 
-tapply(temp$reported, list(temp$office), sum) ->.; sort(., decreasing = TRUE) ->.; format(., format = "E", digits = 1) # rank based on sum of acres
-tapply(temp$reported, list(temp$office), mean) ->.; sort(., decreasing = TRUE) ->.; format(., format = "E", digits = 1) # rank based on mean of acres
-
 temp <- mutate(temp,
                office = factor(office, levels = sort(unique(temp$office), decreasing = TRUE)),
                projecttypename = factor(projecttypename, levels = pt2)
@@ -182,6 +180,15 @@ ggplot(temp, aes(x = fy, y = reported, group = office, linetype = office, shape 
   geom_point(size = 2.5) +
   scale_shape_manual(values=1:nlevels(temp$office)) +
   facet_grid(projecttypename ~ ., scales = "free_y")
+
+
+temp <- filter(temp, projecttypename %in% pt3)
+tapply(temp$reported, list(temp$office), sum) ->.; 
+  sort(., decreasing = TRUE) ->.; 
+  formatC(., format = "E", digits = 1) # rank based on sum of acres
+tapply(temp$reported, list(temp$office), mean) ->.; 
+  sort(., decreasing = TRUE) ->.; 
+  formatC(., format = "e", digits = 1) # rank based on mean of acres
 ```
 
 

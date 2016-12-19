@@ -13,6 +13,7 @@ setwd("C:/Users/stephen.roecker/ownCloud/Documents/lims_data")
 ro <- 11
 pt <- c("SDJR")
 pt2 <- c("SDJR", "MLRA", "INITIAL", "ES")
+pt3 <- c("SDJR", "MLRA")
 
 # ## Fetch data from the server
 # 
@@ -146,28 +147,6 @@ temp <- goals %>%
     ) %>%
   as.data.frame()
 
-tapply(temp$reported, list(temp$office), sum) ->.; sort(., decreasing = TRUE) ->.; format(., format = "E", digits = 1) # rank based on sum of acres
-```
-
-```
-##  11-GAL  11-UNI  11-CLI  11-FIN  11-SPR  11-ATL  11-JUE  11-WAV  11-MAN 
-## "3e+06" "2e+06" "2e+06" "2e+06" "2e+06" "2e+06" "2e+06" "2e+06" "2e+06" 
-##  11-IND  11-AUR 
-## "1e+06" "1e+06"
-```
-
-```r
-tapply(temp$reported, list(temp$office), mean) ->.; sort(., decreasing = TRUE) ->.; format(., format = "E", digits = 1) # rank based on mean of acres
-```
-
-```
-##  11-GAL  11-CLI  11-SPR  11-JUE  11-WAV  11-UNI  11-IND  11-ATL  11-FIN 
-## "5e+05" "4e+05" "4e+05" "4e+05" "3e+05" "3e+05" "3e+05" "3e+05" "3e+05" 
-##  11-AUR  11-MAN 
-## "3e+05" "2e+05"
-```
-
-```r
 temp <- mutate(temp,
                office = factor(office, levels = sort(unique(temp$office), decreasing = TRUE)),
                projecttypename = factor(projecttypename, levels = pt2)
@@ -190,6 +169,33 @@ ggplot(temp, aes(x = fy, y = reported, group = office, linetype = office, shape 
 ```
 
 ![](sdjr_summary_files/figure-html/goals-2.png)<!-- -->
+
+```r
+temp <- filter(temp, projecttypename %in% pt3)
+tapply(temp$reported, list(temp$office), sum) ->.; 
+  sort(., decreasing = TRUE) ->.; 
+  formatC(., format = "E", digits = 1) # rank based on sum of acres
+```
+
+```
+##    11-CLI    11-SPR    11-ATL    11-FIN    11-JUE    11-WAV    11-MAN 
+## "2.2E+06" "2.1E+06" "1.9E+06" "1.9E+06" "1.8E+06" "1.7E+06" "1.5E+06" 
+##    11-IND    11-GAL    11-AUR    11-UNI 
+## "1.5E+06" "1.5E+06" "1.3E+06" "9.9E+05"
+```
+
+```r
+tapply(temp$reported, list(temp$office), mean) ->.; 
+  sort(., decreasing = TRUE) ->.; 
+  formatC(., format = "e", digits = 1) # rank based on mean of acres
+```
+
+```
+##    11-CLI    11-SPR    11-IND    11-JUE    11-WAV    11-ATL    11-FIN 
+## "4.4e+05" "4.2e+05" "3.7e+05" "3.5e+05" "3.4e+05" "3.2e+05" "3.1e+05" 
+##    11-AUR    11-GAL    11-MAN    11-UNI 
+## "2.7e+05" "2.4e+05" "2.1e+05" "2.0e+05"
+```
 
 
 ## Compare Project Acres to Goaled Acres
