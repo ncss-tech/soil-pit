@@ -173,7 +173,7 @@ ggplot(temp, aes(x = fy, y = reported, group = office, linetype = office, shape 
 ```r
 temp <- filter(temp, projecttypename %in% pt3)
 rank_sum <- {tapply(temp$reported, list(temp$office), sum) ->.; 
-  sort(., decreasing = TRUE) ->.; 
+  sort(.[2], decreasing = TRUE) ->.; 
   formatC(., format = "E", digits = 1)
   } # rank based on sum of acres
 rank_avg <- {tapply(temp$reported, list(temp$office), mean) ->.; 
@@ -181,40 +181,24 @@ rank_avg <- {tapply(temp$reported, list(temp$office), mean) ->.;
   formatC(., format = "e", digits = 1)
   } # rank based on mean of acres
 
-kable(as.data.frame(rank_sum))
+print(rank_sum)
 ```
 
-         rank_sum 
--------  ---------
-11-CLI   2.2E+06  
-11-SPR   2.1E+06  
-11-ATL   1.9E+06  
-11-FIN   1.9E+06  
-11-JUE   1.8E+06  
-11-WAV   1.7E+06  
-11-MAN   1.5E+06  
-11-IND   1.5E+06  
-11-GAL   1.5E+06  
-11-AUR   1.3E+06  
-11-UNI   9.9E+05  
+```
+##    11-UNI 
+## "9.9E+05"
+```
 
 ```r
-kable(as.data.frame(rank_avg))
+print(rank_avg)
 ```
 
-         rank_avg 
--------  ---------
-11-CLI   4.4e+05  
-11-SPR   4.2e+05  
-11-IND   3.7e+05  
-11-JUE   3.5e+05  
-11-WAV   3.4e+05  
-11-ATL   3.2e+05  
-11-FIN   3.1e+05  
-11-AUR   2.7e+05  
-11-GAL   2.4e+05  
-11-MAN   2.1e+05  
-11-UNI   2.0e+05  
+```
+##    11-CLI    11-SPR    11-IND    11-JUE    11-WAV    11-ATL    11-FIN 
+## "4.4e+05" "4.2e+05" "3.7e+05" "3.5e+05" "3.4e+05" "3.2e+05" "3.1e+05" 
+##    11-AUR    11-GAL    11-MAN    11-UNI 
+## "2.7e+05" "2.4e+05" "2.1e+05" "2.0e+05"
+```
 
 
 ## Compare Project Acres to Goaled Acres
@@ -304,14 +288,14 @@ rcors_as <- rcors %>%
 
 rcors_as$acres <- cut(rcors_as$new_muacres, breaks = c(0, 10000, 50000, 100000, 150000, 200000), labels = c("0 - 10,000", "10,000 - 50,000", "50,000 - 100,000", "100,000 - 150,000", "150,000 - 200,000"))
 
-rcors_as_w <- reshape(rcors_as, idvar = "areasymbol", v.names = "acres", timevar = "fy", direction = "wide")
-# rcors_as_w1 <- dcast(rcors_as, region + areasymbol ~ fy, value.var = "acres") # converts acres to characters instead of factors
-# rcors_as_w2 <- spread(rcors_as, fy, acres, convert = TRUE) # this recycling non-grouping variables, reshape() silently drops them
+rcors_as_w <- select(rcors_as, fy, region, areasymbol, acres) %>% 
+  spread(fy, acres) # spread recycles non-grouping variables, so it needs to be combined with select, reshape() silently drops them but gives a warning if they vary
+rcors_as_w1 <- reshape(rcors_as, idvar = "areasymbol", v.names = "acres", timevar = "fy", direction = "wide")
+# rcors_as_w2 <- dcast(rcors_as, region + areasymbol ~ fy, value.var = "acres") # converts acres to characters instead of factors
 
-fy <- paste0("acres.", sort(unique(rcors_as$fy)))
+fy <- paste0(sort(unique(rcors_as$fy)))
 FY <- paste0("FY", sort(unique(rcors_as$fy)))
 names(rcors_as_w)[which(names(rcors_as_w) %in% fy)] <- FY
-
 
 ssa3 <- merge(ssa2, rcors_as_w, by = "areasymbol", all.x = TRUE)
 temp_sub1 <- subset(ssa3, region == ro, select = FY)

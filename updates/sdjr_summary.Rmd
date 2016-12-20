@@ -12,8 +12,6 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 options(stringsAsFactors = FALSE)
 
 library(knitr)
-library(lattice)
-library(latticeExtra)
 library(RColorBrewer)
 library(rgdal)
 library(RCurl)
@@ -271,14 +269,14 @@ rcors_as <- rcors %>%
 
 rcors_as$acres <- cut(rcors_as$new_muacres, breaks = c(0, 10000, 50000, 100000, 150000, 200000), labels = c("0 - 10,000", "10,000 - 50,000", "50,000 - 100,000", "100,000 - 150,000", "150,000 - 200,000"))
 
-rcors_as_w <- reshape(rcors_as, idvar = "areasymbol", v.names = "acres", timevar = "fy", direction = "wide")
-# rcors_as_w1 <- dcast(rcors_as, region + areasymbol ~ fy, value.var = "acres") # converts acres to characters instead of factors
-# rcors_as_w2 <- spread(rcors_as, fy, acres, convert = TRUE) # this recycling non-grouping variables, reshape() silently drops them
+rcors_as_w <- select(rcors_as, fy, region, areasymbol, acres) %>% 
+  spread(fy, acres) # spread recycles non-grouping variables, so it needs to be combined with select, reshape() silently drops them but gives a warning if they vary
+rcors_as_w1 <- reshape(rcors_as, idvar = "areasymbol", v.names = "acres", timevar = "fy", direction = "wide")
+# rcors_as_w2 <- dcast(rcors_as, region + areasymbol ~ fy, value.var = "acres") # converts acres to characters instead of factors
 
-fy <- paste0("acres.", sort(unique(rcors_as$fy)))
+fy <- paste0(sort(unique(rcors_as$fy)))
 FY <- paste0("FY", sort(unique(rcors_as$fy)))
 names(rcors_as_w)[which(names(rcors_as_w) %in% fy)] <- FY
-
 
 ssa3 <- merge(ssa2, rcors_as_w, by = "areasymbol", all.x = TRUE)
 temp_sub1 <- subset(ssa3, region == ro, select = FY)
