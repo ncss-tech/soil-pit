@@ -19,24 +19,31 @@ get_new <- function(q = q) {
 }
 
 pindex <- function(x, interval){
-  if (class(x)[1] == "data.frame") {x1 <- dim(x)[2]; x2 <- 1}
+  if (class(x)[1] == "data.frame") {x1 <- ncol(x); x2 <- 1}
   if (class(x)[1] == "SoilProfileCollection") {x1 <- length(x); x2 <-0}
-  if (class(x)[1] == "table") {x1 <- dim(x)[2]; x2 <- 0}
+  if (class(x)[1] == "table") {x1 <- ncol(x); x2 <- 0}
   n <- x1 - x2
-  times <- ceiling(n/interval)
+  times <- ceiling(n / interval)
   x <- rep(1:(times + x2), each = interval, length.out = n)
-}
+  }
 
 na_replace <- function(x){
-  if(class(x)[1] == "character" | class(x)[1] == "logical") {x <- replace(x, is.na(x) | x == "NA", "missing")} 
+  if(class(x)[1] == "character" | class(x)[1] == "logical") 
+    {x <- replace(x, is.na(x) | x == "NA", "missing")} 
   else (x <-  x)
-}
+  }
 
+na_remove <- function(df, by = 2){
+  df[, which(apply(df, by, function(x) !all(is.na(x))))]
+  }
 
 precision.f <- function(x){
-  if (!all(is.na(x))) {y = str_length(str_split(format(max(x, na.rm = T), scientific=F), "\\.")[[1]][2])} else y = 0
+  if (!all(is.na(x))) 
+    {y = format(max(x, na.rm = TRUE), scientific=FALSE) ->.;
+      nchar(strsplit(., "\\.")[[1]][2])} 
+  else y = 0
   if (is.na(y)) y = 0 else y = y
-}
+  }
 
 
 sum5n <- function(x, n = NULL) {
@@ -84,7 +91,7 @@ raster_extract <- function(x){
     ppt       = paste0(region_folder, "prism800m_11R_ppt_1981_2010_annual_mm.tif"),
     temp      = paste0(region_folder, "prism800m_11R_tmean_1981_2010_annual_C.tif"),
     ffp       = paste0(region_folder, "rmrs1000m_11R_ffp_1961_1990_annual_days.tif")
-  )
+    )
   
   # test for missing files
   test <- sapply(files, function(x) file.exists(x))
@@ -94,21 +101,27 @@ raster_extract <- function(x){
   geodata_r <- lapply(files, function(x) raster(x))
   
   # stack rasters with matching extent, resolution and projection
-stack_info <- do.call("rbind", lapply(geodata_r, function(x) data.frame( 
+  stack_info <- {lapply(geodata_r, function(x) data.frame(
     bb = paste(bbox(extent(x)), collapse = ", "),
     res= paste(res(x), collapse = ", "),
-    proj = proj4string(x))))
-  stack_info <- transform(stack_info, group = paste(bb, res, proj))
+    proj = proj4string(x)
+    )) ->.; do.call("rbind", .)
+    }
+
+  stack_info <- transform(stack_info,
+                          group = paste(bb, res, proj)
+                          )
   test2 <- unique(stack_info$group)
   
   geodata_l <- list()
   for (i in seq_along(test2)) {
-    geodata_l[i] <- stack(unlist(geodata_r[stack_info$group %in% test2[i]]))
-  }
-  
+    geodata_l[[i]] <- {geodata_r[stack_info$group %in% test2[i]] ->.;
+                             stack(unlist(.))
+                             }}
   # extract data
-  geodata <- lapply(geodata_l, function(y) extract(y, x))
-  geodata <- as.data.frame(do.call("cbind", geodata))
+  geodata <- {lapply(geodata_l, function(y) extract(y, x)) ->.;
+    as.data.frame(do.call("cbind", .))
+    }
   
   # Prep data
   if ("slope" %in% names(geodata)) {
@@ -131,17 +144,20 @@ stack_info <- do.call("rbind", lapply(geodata_r, function(x) data.frame(
   }
   
   if ("lulc" %in% names(geodata)) {
-    lulc <- 1:256-1
-    geodata$lulc_classes <- cut(geodata$lulc, breaks = lulc, right=FALSE)
-    levels(geodata$lulc_classes) <- c('Unclassified','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','Open Water','Perennial Snow/Ice','NA','NA','NA','NA','NA','NA','NA','NA','Developed, Open Space','Developed, Low Intensity','Developed, Medium Intensity','Developed, High Intensity','NA','NA','NA','NA','NA','NA','Barren Land','NA','NA','NA','NA','NA','NA','NA','NA','NA','Deciduous Forest','Evergreen Forest','Mixed Forest','NA','NA','NA','NA','NA','NA','NA','NA','Shrub/Scrub','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','Herbaceuous','NA','NA','NA','NA','NA','NA','NA','NA','NA','Hay/Pasture','Cultivated Crops','NA','NA','NA','NA','NA','NA','NA','Woody Wetlands','NA','NA','NA','NA','Emergent Herbaceuous Wetlands','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA')
+    geodata$lulc_classes <- factor(geodata$lulc, 
+                                   levels = c(11, 12, 21, 22, 23, 24, 31, 41, 42, 43, 51, 52, 71, 74, 81,
+                                              82, 90, 95),
+                                   labels = c("Open Water","Perennial Snow/Ice", "Developed, Open Space",
+                                              "Developed, Low Intensity","Developed, Medium Intensity",
+                                              "Developed, High Intensity", "Barren Land", 
+                                              "Deciduous Forest", "Evergreen Forest", "Mixed Forest",
+                                              "Shrub/Scrub", "Herbaceuous", "Hay/Pasture", 
+                                              "Sedge/Herbaceous", "Moss", "Cultivated Crops",
+                                              "Woody Wetlands", "Emergent Herbaceuous Wetlands")
+                                   )
   }
   
   return(geodata = geodata)
-}
-
-na_remove <- function(df, by = "col"){
-  if (by == "col"){df[, which(apply(df, 2, function(x) !all(is.na(x))))]
-    }
 }
 
 
