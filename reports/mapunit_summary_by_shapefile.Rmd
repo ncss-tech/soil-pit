@@ -20,6 +20,7 @@ office <- "11IND"
 ```{r LoadPackages, include=FALSE}
 library(knitr)
 library(lattice)
+library(latticeExtra)
 library(circular)
 library(maps)
 library(maptools)
@@ -34,9 +35,13 @@ source("../soilDB_x/utils.R")
 
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 options(stringsAsFactors = FALSE)
-mysettings <- trellis.par.get()
-mysettings$strip.background$col <- c("lightgrey", "lightgreen")
-trellis.par.set(mysettings)
+
+opar <- trellis.par.get()
+trellis.par.set(theme = ggplot2like())
+tpg <- trellis.par.get()
+tpg$axis.line <-  list(alpha = 1, col = "#000000", lty = rep(1, 7), lwd = rep(0.2, 7))
+tpg$strip.border <- list(alpha = 1, col = "#000000", lty = rep(1, 7), lwd = rep(0.2, 7))
+trellis.par.set(tpg)
 ```
 
 ```{r map unit summary function}
