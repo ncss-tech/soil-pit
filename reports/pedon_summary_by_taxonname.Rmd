@@ -18,17 +18,22 @@ library(aqp)
 library(soilDB)
 library(circular)
 library(lattice)
+library(latticeExtra)
 library(RColorBrewer)
 library(plyr)
-library(ggplot2)
 library(reshape2)
-library(stringr)
 library(knitr)
 library(maps)
 
 source("../soilDB_x/utils.R")
 source(paste0("./genhz_rules/", series, "_rules.R"))
 
+opar <- trellis.par.get()
+trellis.par.set(theme = ggplot2like())
+tpg <- trellis.par.get()
+tpg$axis.line <-  list(alpha = 1, col = "#000000", lty = rep(1, 7), lwd = rep(0.2, 7))
+tpg$strip.border <- list(alpha = 1, col = "#000000", lty = rep(1, 7), lwd = rep(0.2, 7))
+trellis.par.set(tpg)
 ```
 
 
@@ -53,7 +58,6 @@ h <- data.frame(lapply(h, na_replace), stringsAsFactors = FALSE)
 s <- data.frame(lapply(s, na_replace), stringsAsFactors = FALSE)
 
 l <- length(unique(h$peiid))
-
 ```
 
 
