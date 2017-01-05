@@ -148,15 +148,15 @@ raster_extract <- function(x){
   
   if ("lulc" %in% names(geodata)) {
     geodata$lulc_classes <- factor(geodata$lulc, 
-                                   levels = c(11, 12, 21, 22, 23, 24, 31, 41, 42, 43, 51, 52, 71, 74, 81,
-                                              82, 90, 95),
-                                   labels = c("Open Water","Perennial Snow/Ice", "Developed, Open Space",
-                                              "Developed, Low Intensity","Developed, Medium Intensity",
-                                              "Developed, High Intensity", "Barren Land", 
-                                              "Deciduous Forest", "Evergreen Forest", "Mixed Forest",
-                                              "Shrub/Scrub", "Herbaceuous", "Hay/Pasture", 
-                                              "Sedge/Herbaceous", "Moss", "Cultivated Crops",
-                                              "Woody Wetlands", "Emergent Herbaceuous Wetlands")
+                                   levels = c(95, 90, 82, 81, 74, 71, 52, 51, 43, 42, 41, 31, 24, 23, 22, 
+                                              21, 12, 11),
+                                   labels = c("Emergent Herbaceuous Wetlands", "Woody Wetlands", 
+                                              "Cultivated Crops", "Moss", "Sedge/Herbaceous", 
+                                              "Hay/Pasture", "Herbaceuous", "Shrub/Scrub", "Mixed Forest", 
+                                              "Evergreen Forest", "Deciduous Forest", "Barren Land", 
+                                              "Developed, High Intensity", "Developed, Medium Intensity", 
+                                              "Developed, Low Intensity", "Developed, Open Space", 
+                                              "Perennial Snow/Ice", "Open Water")
                                    )
   }
   
