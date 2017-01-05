@@ -38,14 +38,13 @@ na_remove <- function(df, by = 2){
   }
 
 precision.f <- function(x){
-  if (all(!is.na(x)))
-    y = {format(
-               max(x, na.rm = TRUE), 
-               scientific = FALSE) ->.;
-         nchar(strsplit(., "\\.")[[1]][2])
-         } 
-  else y = 0
+  if (!all(is.na(x))) {
+    y = {format(max(x, na.rm = TRUE), 
+                scientific = FALSE) ->.;
+         nchar(strsplit(., "\\.")[[1]][2])}
+    } else y = 0
   if (is.na(y)) y = 0 else y = y
+  return(y)
   }
 
 
