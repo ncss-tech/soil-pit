@@ -25,23 +25,34 @@ region_folder <- paste0(dir, "11REGION/")
 ```{r LoadPackages, include=F}
 library(knitr)
 library(lattice)
+library(latticeExtra)
 library(circular)
 library(maps)
+library(maptools)
 library(sp)
 library(raster)
 library(rgdal)
 library(rgeos)
 library(gdalUtils)
 library(plyr)
-library(ggplot2)
 library(reshape2)
 
 source("../soilDB_x/utils.R")
 
-gdal_setInstallation(search_path=gdalpath, rescan=T)
+gdal_setInstallation(search_path = gdalpath, rescan=TRUE)
+
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+options(stringsAsFactors = FALSE)
+
+opar <- trellis.par.get()
+trellis.par.set(theme = ggplot2like())
+tpg <- trellis.par.get()
+tpg$axis.line <-  list(alpha = 1, col = "#000000", lty = rep(1, 7), lwd = rep(0.2, 7))
+tpg$strip.border <- list(alpha = 1, col = "#000000", lty = rep(1, 7), lwd = rep(0.2, 7))
+trellis.par.set(tpg)
 ```
 
-```{r map unit summary function, echo=FALSE}
+```{r map unit summary function}
 shp <- paste0(mukey[c(1, length(mukey))], collapse=".")
 dsn <- paste0(office_folder, "cache/", shp, ".shp")
 cache_shp <- paste0(office_folder, "cache/", shp, ".shp")
@@ -62,15 +73,27 @@ if (!file.exists(cache)){
     )
   sapolygon <- readOGR(dsn = geodatabase, layer = "SAPOLYGON", encoding = "OpenFileGDB")
   mupolygon <- readOGR(dsn = dsn, layer = shp, encoding = "ESRI Shapefile")
-  mupolygon@data$Acres <- mupolygon@data[, grepl("_area", tolower(names(mupolygon)))] * 0.000247105
-  mupolygon@data$Circularity <- mupolygon@data[, grepl("_leng", tolower(names(mupolygon)))] / (2 * sqrt(mupolygon@data[, grepl("_area", tolower(names(mupolygon)))] / pi) * pi)
-  n <- ceiling(sum(mupolygon@data[, grepl("_area", tolower(names(mupolygon)))]) / 900 * samplePercent / 100)
+
+  names(mupolygon) <- tolower(names(mupolygon))
+  
+  mupolygon@data <- transform(mupolygon,
+                              Acres = mupolygon@data[, grepl("_area", names(mupolygon))] * 0.000247105,
+                              Circularity = mupolygon@data[, grepl("_leng", names(mupolygon))] / 
+                                (2 * sqrt(mupolygon@data[, grepl("_area", names(mupolygon))] / pi) * pi)
+                              )
+  n <- ceiling(sum(mupolygon@data[, grepl("_area", names(mupolygon))]) / 900 * samplePercent / 100)
   
   # Sample soil map unit
-  mupolygon.s <- spsample(mupolygon, n = n, "stratified")
+  mupolygon.s <- {sapply(slot(mupolygon, 'polygons'), function(x) as.data.frame(spsample(x,
+                                     n = ceiling(x@area / 900 * samplePercent / 100),
+                                     type = "random"))
+               ) ->.; do.call("rbind", .)}
+  coordinates(mupolygon.s) <- ~ x + y
+  proj4string(mupolygon.s) <- proj4string(mupolygon)
+  # mupolygon.s <- spsample(mupolygon, n = n, "stratified") # this is incredibly slow
   geodata <- raster_extract(mupolygon.s)
   mapunit.df <- over(mupolygon.s, mupolygon)
-  data <- cbind(mapunit.df[c("AREASYMBOL", "MUSYM")], geodata)
+  data <- cbind(mapunit.df[c("areasymbol", "musym")], geodata)
   
 #   mlra <- readOGR(dsn = "M:/geodata/project_data/11REGION/mlra_a_r11.shp", layer = "mlra_a_r11", encoding = "ESRI Shapefile")
 #   mlra_i <- over(mupolygon.s, mlra)
@@ -81,22 +104,17 @@ if (!file.exists(cache)){
   save(data.l, file = cache)
 } else load(file = cache) #load cache file
 
+attach(data.l)
 
-data <- data.l$data
-mupolygon <- data.l$mupolygon
-sapolygon <- data.l$sapolygon
-# mlra_acres <- data.l$mlra_acres
-
-
-data$SSA_MUSYM <- as.character(paste(data$AREASYMBOL, data$MUSYM))
+data$ssa_musym <- with(data, paste(areasymbol, musym))
 data2 <- data
-data2$SSA_MUSYM <- "*mlra_mapnit"
+data2$ssa_musym <- "*mlra_mapnit"
 data <- rbind(data2, data)
 ```
 
 
 ### MUKEY list
-```{r project name, echo=FALSE}
+```{r project name}
 mukey
 ```
 
@@ -118,12 +136,15 @@ kable(variables)
 ## Map of soil polygons
 Don't be concerned if the soil map units don't line up with the counties. The county layer being used is an internal R layer that is highly generalized.
 
-```{r plot soil map units, echo=FALSE}
-temp <- spTransform(mupolygon, CRS("+init=epsg:4326"))
-plot(temp)
-map("county", add=T)
-map("state",lwd=3,add=T)
-map.axes()
+```{r plot soil map units}
+st <- map("state", plot = FALSE)
+st_sp <- {map2SpatialLines(st, proj4string = CRS("+init=epsg:4326")) ->.;
+  spTransform(., CRS("+init=epsg:5070"))
+  }
+
+plot(mupolygon, axes = TRUE)
+plot(sapolygon, add = TRUE)
+plot(st_sp,lwd=3, add = TRUE)
 ```
 
 ## Soil polygon metrics
@@ -132,67 +153,70 @@ Circularity is an estimate of SHAPE complexity (Hole and Campbell, 1975), comput
 
 ```{r soil polygon metrics, echo=FALSE, results='asis'}
 pol <- data.frame(mupolygon)
-pol$SSA_MUSYM <- as.character(paste0(pol$AREASYMBOL, "_", pol$MUSYM))
+pol$ssa_musym <- as.character(paste(pol$areasymbol, pol$musym))
 pol2 <- pol
-pol2$SSA_MUSYM <- "*mlra_mapnit"
+pol2$ssa_musym <- "*mlra_mapnit"
 pol <- rbind(pol2, pol)
 
-pol.lo1 <- melt(pol, id.vars="SSA_MUSYM", measure.vars=c("Acres", "Circularity"))
-pol.lo2 <- melt(pol, id.vars="SSA_MUSYM", measure.vars=c("Acres"))
-pol.5n1 <- ddply(pol.lo2, .(SSA_MUSYM, variable), .fun=sum5n2)
-pol.5n2 <- ddply(pol, .(SSA_MUSYM), summarize, nArces=round(sum(Acres), 0), nPolygons=length(MUSYM))
-pol.5n <- join(pol.5n1, pol.5n2, by = "SSA_MUSYM")
+pol.lo1 <- melt(pol, id.vars="ssa_musym", measure.vars=c("Acres", "Circularity"))
+pol.lo2 <- melt(pol, id.vars="ssa_musym", measure.vars=c("Acres"))
+pol.5n1 <- ddply(pol.lo2, .(ssa_musym, variable), .fun=sum5n2)
+pol.5n2 <- ddply(pol, .(ssa_musym), summarize, nArces=round(sum(Acres), 0), nPolygons=length(musym))
+pol.5n <- join(pol.5n1, pol.5n2, by = "ssa_musym")
 
 kable(pol.5n, digits = 0, align = "c", caption = "Summary of MUSYM by AREASYMBOL")
 
 # kable(mlra_acres, digits = 0, align = "c", caption = "Summary of Acres by MLRA")
 
-# pol.lo1$SSA_MUSYM <- as.factor(pol.lo1$SSA_MUSYM)
-pol.lo1$SSA_MUSYM <- factor(pol.lo1$SSA_MUSYM, levels = rev(unique(pol.lo1$SSA_MUSYM)))
+# pol.lo1$ssa_musym <- as.factor(pol.lo1$ssa_musym)
+pol.lo1$ssa_musym <- factor(pol.lo1$ssa_musym, levels = rev(unique(pol.lo1$ssa_musym)))
                                                           
-bwplot(SSA_MUSYM ~ value | variable, data = pol.lo1, scales = list(x="free"), main = "Boxplots of polygon metrics", as.table = TRUE)
-
-# qplot(SSA_MUSYM, value, data = pol.lo1, geom = "boxplot", main = "Boxplots of polygon metrics") + facet_wrap(~variable, scales = "free") + theme(axis.text.x = element_text(angle=45, hjust = 1, vjust = 1))
+bwplot(ssa_musym ~ value | variable, data = pol.lo1, 
+       main = "Boxplots of polygon metrics", 
+       scales = list(x="free"), axis = axis.grid,
+       as.table = TRUE
+       )
 ```
 
 ## Contingency tables (percent) 
 
-```{r percentage by musym, echo=FALSE, results='asis'}
+```{r percentage by musym, results='asis'}
 ## Create descriptive and graphical summary of map unit
-kable(prop.table(xtabs(~ SSA_MUSYM + slope_classes, data = data), margin = 1) * 100, align = "c", digits=0, caption="Slope classes")
-kable(prop.table(xtabs(~ SSA_MUSYM + aspect_classes, data = data), margin = 1) * 100, align = "c", digits = 0, caption = "Aspect classes")
-kable(prop.table(xtabs(~ SSA_MUSYM + valley_classes, data = data), margin = 1) * 100, align = "c", digits = 0, caption = "Upland vs. lowland")
+kable(prop.table(xtabs(~ ssa_musym + slope_classes, data = data, drop.unused.levels = TRUE), margin = 1) * 100, align = "c", digits=0, caption="Slope classes")
+kable(prop.table(xtabs(~ ssa_musym + aspect_classes, data = data), margin = 1) * 100, align = "c", digits = 0, caption = "Aspect classes")
+kable(prop.table(xtabs(~ ssa_musym + valley_classes, data = data), margin = 1) * 100, align = "c", digits = 0, caption = "Upland vs. lowland")
 
-lulc_t <- addmargins(prop.table(xtabs(~ SSA_MUSYM + lulc_classes, data = data), margin = 1)) * 100
+lulc_t <- addmargins(prop.table(xtabs(~ ssa_musym + lulc_classes, data = data, drop.unused.levels = TRUE), margin = 1)) * 100
 
 idx <- pindex(lulc_t, 10)
 
 for (i in unique(idx)){
   print(kable(lulc_t[, c(idx == i)], digits = 0, align = "c", caption = "Landuse and Landcover"))
   }
-
 ```
 
 ## Quantile breaks
 Five number summary (min, 25th, median, 75th, max)(percentiles) and number of random samples (n)
 
 ```{r quantiles by musym, echo=FALSE, results="asis", warning=FALSE, fig.height=10}
-data.lo <- melt(data, id.vars="SSA_MUSYM", measure.vars = c("elev", "slope", "valley", "wetness", "relief", "ppt", "temp", "ffp"))
-data.5n <- ddply(data.lo, .(variable, SSA_MUSYM), .fun = sum5n2)
-data.c <- dcast(data.5n, SSA_MUSYM ~ variable, value.var = 'range')
-data.n <- ddply(data, .(SSA_MUSYM), .drop=T, summarize, n = length(SSA_MUSYM))
+data.lo <- melt(data, id.vars="ssa_musym", measure.vars = c("elev", "slope", "valley", "wetness", "relief", "ppt", "temp", "ffp"))
+data.5n <- ddply(data.lo, .(variable, ssa_musym), .fun = sum5n2)
+data.c <- dcast(data.5n, ssa_musym ~ variable, value.var = 'range')
+data.n <- ddply(data, .(ssa_musym), .drop=T, summarize, n = length(ssa_musym))
 
-aspect.lo <- melt(data, id.vars="SSA_MUSYM", measure.vars = c("aspect"))
+aspect.lo <- melt(data, id.vars="ssa_musym", measure.vars = c("aspect"))
 aspect.lo$value <- circular(aspect.lo$value, template = "geographic", units="degrees", modulo="2pi")
-aspect.5n <- ddply(aspect.lo, .(variable, SSA_MUSYM), .fun = sum5n2)
-aspect.c <- dcast(aspect.5n, SSA_MUSYM ~ variable, value.var = 'range')
+aspect.5n <- ddply(aspect.lo, .(variable, ssa_musym), .fun = sum5n2)
+aspect.c <- dcast(aspect.5n, ssa_musym ~ variable, value.var = 'range')
 
 kable(cbind(data.c[c(1:6)], data.n["n"]), align = "c")
 kable(cbind(data.c[c(1, 7:9)], aspect.c["aspect"], data.n["n"]), align = "c")
 
-data.lo$SSA_MUSYM <- factor(data.lo$SSA_MUSYM, levels = rev(unique(data.lo$SSA_MUSYM)))
+data.lo$ssa_musym <- factor(data.lo$ssa_musym, levels = rev(unique(data.lo$ssa_musym)))
 
-bwplot(SSA_MUSYM ~ value|variable, data=data.lo, scales=list(x="free"), main = "Boxplots of map unit properties", as.table = TRUE, layout = c(2, 4))
-
-# qplot(SSA_MUSYM, value, data = data.lo, geom = "boxplot", main = "Boxplots of map unit properties") + facet_wrap(~variable, scales = "free", ncol = 2) + theme(axis.text.x = element_text(angle=45, hjust=1, vjust=1))
+bwplot(ssa_musym ~ value|variable, data=data.lo, 
+       main = "Boxplots of map unit properties", 
+       scales=list(x="free"), axis = axis.grid,
+       as.table = TRUE, layout = c(2, 4)
+       )
 ```
