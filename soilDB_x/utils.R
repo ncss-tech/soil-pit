@@ -39,9 +39,9 @@ na_remove <- function(df, by = 2){
 
 precision.f <- function(x){
   if (!all(is.na(x))) {
-    y = {format(max(x, na.rm = TRUE), 
-                scientific = FALSE) ->.;
-         nchar(strsplit(., "\\.")[[1]][2])}
+    y = {format(x, scientific = FALSE, trim = TRUE) ->.;
+      unlist(as.data.frame(strsplit(., "\\."))[2, ]) ->.;
+      max(nchar(.))}
     } else y = 0
   if (is.na(y)) y = 0 else y = y
   return(y)
@@ -53,7 +53,7 @@ sum5n <- function(x, n = NULL) {
   precision <- precision.f(x$value)
   n <- length(na.omit(x$value))
   ci <- data.frame(rbind(quantile(x$value, na.rm = TRUE, probs = p)))
-  ci$range <- with(ci, paste0("(", paste0(round(ci, precision), collapse=", "), ")", "(", n, ")")) # add 'range' column for pretty-printing
+  ci$range <- paste0("(", paste0(round(ci, precision), collapse=", "), ")", "(", n, ")") # add 'range' column for pretty-printing
   return(ci["range"])
 }
 
