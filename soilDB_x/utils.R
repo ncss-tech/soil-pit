@@ -41,6 +41,7 @@ precision.f <- function(x){
   if (!all(is.na(x))) {
     y = {format(x, scientific = FALSE, trim = TRUE) ->.;
       unlist(as.data.frame(strsplit(., "\\."))[2, ]) ->.;
+      as.character(.) ->.;
       max(nchar(.))}
     } else y = 0
   if (is.na(y)) y = 0 else y = y

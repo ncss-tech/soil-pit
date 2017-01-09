@@ -103,7 +103,7 @@ for (i in unique(idx)){
 
 ```{r surface rock fragments, echo=FALSE, results='asis'}
 srf <- subset(s, select=c("surface_fgravel", "surface_gravel", "surface_cobbles", "surface_stones", "surface_boulders", "surface_flagstones", "surface_channers"))
-names(srf) <- unlist(lapply(strsplit(names(srf), "surface_"), paste0, collapse = ""))
+names(srf) <- gsub("surface_", "", names(srf))
 srf$total_srf <- srf$gravel + srf$cobbles + srf$stones + srf$boulders + srf$flagstones + srf$channers
 srf$gravel <- srf$gravel - srf$fgravel
 
@@ -115,7 +115,11 @@ kable(srf.5n, align = "c", caption =  "Surface rock fragments (min, 25th, median
  
 
 if (sum(srf$total_srf, na.rm = T) != 0) {
-  bwplot(variable ~ variable, data = srf.lo, ylab = "percent", main = "Boxplots of surface rock fragments")
+  bwplot(variable ~ variable, data = srf.lo, 
+         main = "Boxplots of surface rock fragments",
+         ylab = "percent",
+         axis = axis.grid
+         )
   
   # qplot(variable, value, data = srf.lo, geom = "boxplot", ylab = "%", main = "Boxplots of surface rock fragments") + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
   }         
@@ -149,10 +153,12 @@ kable(diag.wi, align = "c", caption = "Depths and thickness of diagnostic horizo
 
 
 if (!all(is.na(diag.lo$value))) {
-  bwplot(diag_kind ~ value | variable, data = diag.lo, scales =list(x="free"), main = "Boxplots of diagnostic horizon and feature depths", as.table = TRUE)
-  
-  # qplot(diag_kind, value, data = diag.lo, geom = "boxplot", ylab = "cm", main = "Boxplots of diagnostic horizon and feature depths") + facet_wrap(~variable, scales = "free") + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
-}
+  bwplot(diag_kind ~ value | variable, data = diag.lo, 
+         main = "Boxplots of diagnostic horizon and feature depths", 
+         scales =list(x="free"), axis = axis.grid, 
+         as.table = TRUE
+         )
+  }
 ```
 
 
@@ -177,9 +183,11 @@ kable(dcast(genhz.5n, genhz ~ variable, value.var = 'range'), align = "c", capti
 
 genhz.lo$genhz <- factor(genhz.lo$genhz, levels = rev(levels(genhz.lo$genhz)))
 
-bwplot(genhz ~ value | variable, data = genhz.lo, scales =list(x="free"), main = "Boxplots of horizon generic horizon depths and thickness", as.table = TRUE)
-
-# qplot(genhz, value, data = genhz.lo, geom = "boxplot", ylab = "cm", main = "Boxplots of horizon generic horizon depths and thickness") + facet_wrap(~variable, scales = "free") + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+bwplot(genhz ~ value | variable, data = genhz.lo, 
+       main = "Boxplots of horizon generic horizon depths and thickness",
+       scales =list(x="free"), axis = axis.grid,
+       as.table = TRUE
+       )
 ```
 
 ```{r genhz numeric variables, echo=FALSE, results='asis', warning=FALSE, fig.height=8, fig.width=8}
@@ -200,9 +208,11 @@ kable(h.wi[c(1, 10:13)], align = "c")
 h.lo$genhz <- factor(h.lo$genhz, levels = rev(levels(h.lo$genhz)))
 n <- ceiling(length(levels(h.lo$variable))/4)
 
-bwplot(genhz ~ value | variable, data = h.lo, scales=list(x="free"), main = "Box plots of numeric variables by generic horizon", as.table = TRUE, layout = c(4, n))
-
-# qplot(genhz, value, data = h.lo, geom = "boxplot", ylab = "cm", main = "Boxplots of numeric variable by generic horizon") + facet_wrap(~variable, scales = "free") + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+bwplot(genhz ~ value | variable, data = h.lo,
+       main = "Box plots of numeric variables by generic horizon",
+       scales=list(x="free"), axis = axis.grid,
+       as.table = TRUE, layout = c(4, n)
+       )
 ```
 </p>
 
@@ -257,7 +267,11 @@ if (!all(is.na(s$aspect_field))) {
 } else(kable(morf.5n, caption="Elevation and slope gradient (min, 25th, median, 75th, max)(n)", align = "c")
 )         
 
-bwplot(~ value | variable, data = morf.lo, scales=list(x="free"), main = "Boxplots of elevation and slope gradient", as.table = TRUE)
+bwplot(~ value | variable, data = morf.lo, 
+       main = "Boxplots of elevation and slope gradient",
+       scales=list(x="free"), axis = axis.grid,
+       as.table = TRUE
+       )
 
 # qplot("variable", value, data = morf.lo, geom = "boxplot", main = "Boxplots of elevation and slope gradient") + facet_wrap(~variable, scales = "free")
 
