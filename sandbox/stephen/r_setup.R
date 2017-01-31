@@ -20,7 +20,10 @@ download.file("https://raw.githubusercontent.com/ncss-tech/soil-pit/master/repor
 unzip(zipfile="C:/workspace/soil-pit/reports/genhz_rules/genhz_rules.zip", exdir="C:/workspace/soil-pit/reports/genhz_rules")
 
 # Install packages
-packages <- c("aqp", "soilDB", "RODBC", "RCurl", "XML", "circular", "colorspace", "RColorBrewer", "plyr", "reshape2", "knitr", "rmarkdown", "lattice", "latticeExtra", "maps", "maptools", "sp", "gdalUtils", "raster", "rgdal")
+packages <- c("RODBC", "RCurl", "XML", "circular", "colorspace", "RColorBrewer", "plyr", "reshape2", "knitr", "rmarkdown", "lattice", "latticeExtra", "maps", "maptools", "sp", "gdalUtils", "raster", "rgdal")
+
+devtools::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade_dependencies=FALSE)
+devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
 
 local({
   r <- getOption("repos")
