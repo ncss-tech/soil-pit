@@ -2,7 +2,7 @@
 
 ```{r enter soil series name}
 # Set soil series
-series <- "Celina"
+series <- "Ross"
 
 # Set percentiles
 p <- c(0, 0.25, 0.5, 0.75, 1)
@@ -47,13 +47,20 @@ s <- site(f)
 
 names(lh) <- gsub("measured", "", names(lh))
 
+vars <- c("labsampnum", "hzdept", "hzdepb", "total_frags_pct", "total_frags_pct_cal")
+lh <- merge(lh, h[vars], by = c("labsampnum", "hzdept", "hzdepb"), all.x = TRUE)
+lh$total_frags_pct <- ifelse(is.na(lh$total_frags_pct), lh$total_frags_pct_cal, lh$total_frags_pct)
+lh$total_frags_pct_cal <- NULL
+
 lh$hzname <- ifelse(is.na(lh$hzname), lh$hznameoriginal, lh$hzname)
 lh <- transform(lh,
                 hzname = ifelse(is.na(hzname), "missing", hzname),
                 genhz = generalize.hz(hzname, ghr$n, ghr$p),
                 hzdepm = (hzdept + hzdepb) / 2,
                 cec7clay = round(cec7 / (claytot - claycarb), 2),
-                organicmatpct = carbonorganicpct * 1.724
+                organicmatpct = round(carbonorganicpct * 1.724, 2),
+                awc = round((wthirdbarclod - wfifteenbar) * dbthirdbar * 
+                              (1 - total_frags_pct / 100) / 100, 2)
                 )
 genhz_med <- sort(with(lh, tapply(hzdepm, genhz, median)))
 lh$genhz <- factor(lh$genhz, levels = names(genhz_med), ordered = TRUE)
@@ -83,7 +90,7 @@ lh_i <- c('peiid', 'labpeiid', 'labsampnum', 'layerseqnum', 'hzdept', 'hzdepb', 
 
 lh_s <- c('lab_texcl', 'stratextsflag', 'sandvc', 'sandco', 'sandmed', 'sandfine', 'sandvf', 'sandtot', 'siltco', 'siltfine', 'silttot', 'claycarb', 'clayfine', 'claytot', 'ompctest', 'fiberrubbedpct', 'fiberunrubbedpct', 'fragwt25', 'fragwt520', 'fragwt2075', 'fragwt275', 'wtpct0175', 'wtpctgt2ws')
 
-lh_d <- c('organicmatpct', 'carbonorganicpct', 'carbontotalpct', 'ph1to1h2o', 'ph01mcacl2', 'phnaf', 'phoxidized', 'resistivity', 'ec', 'esp', 'sar', 'cecsumcations', 'cec7', 'ecec', 'sumbases', 'basesatsumcations', 'basesatnh4oac', 'caco3equiv', 'caco3lt20', 'gypsumequiv', 'feoxalate', 'feextractable', 'fetotal', 'sioxalate', 'extracid', 'extral', 'aloxalate', 'altotal', 'pmehlich3', 'ph2osoluble', 'poxalate', 'polsen', 'ptotal', 'nzpretention', 'dbthirdbar', 'dbovendry', 'aggstabpct', 'wtenthbarclod', 'wtenthbarsieve', 'wthirdbarclod', 'wthirdbarsieve', 'wfifteenbar', 'wretentiondiffws', 'wfifteenbartoclay', 'adod', 'lep', 'cole', 'liquidlimit', 'pi', 'cec7clay')
+lh_d <- c('organicmatpct', 'carbonorganicpct', 'carbontotalpct', 'ph1to1h2o', 'ph01mcacl2', 'phnaf', 'phoxidized', 'resistivity', 'ec', 'esp', 'sar', 'cecsumcations', 'cec7', 'ecec', 'sumbases', 'basesatsumcations', 'basesatnh4oac', 'caco3equiv', 'caco3lt20', 'gypsumequiv', 'feoxalate', 'feextractable', 'fetotal', 'sioxalate', 'extracid', 'extral', 'aloxalate', 'altotal', 'pmehlich3', 'ph2osoluble', 'poxalate', 'polsen', 'ptotal', 'nzpretention', 'dbthirdbar', 'dbovendry', 'aggstabpct', 'wtenthbarclod', 'wtenthbarsieve', 'wthirdbarclod', 'wthirdbarsieve', 'wfifteenbar', 'wretentiondiffws', 'wfifteenbartoclay', 'awc', 'adod', 'lep', 'cole', 'liquidlimit', 'pi', 'cec7clay')
 ```
 
 
@@ -224,7 +231,8 @@ lh$genhz_nlcd <- with(lh, ifelse(grepl("A", genhz),
                                  paste(genhz, abbreviate(coverkind_1, 10), sep = " - "), 
                                  as.character(genhz)
                                  ))
-lh$genhz_nlcd <- as.factor(lh$genhz_nlcd)
+genhz_med <- sort(with(lh, tapply(hzdepm, genhz_nlcd, median)))
+lh$genhz_nlcd <- factor(lh$genhz_nlcd, labels = names(genhz_med))
 lh.num <- lh[c("genhz_nlcd", lh_d)]
 lh.num <- Filter(f = function(x) !all(is.na(x)), x = lh.num)
 lh.lo <- melt(lh.num, id.vars = "genhz_nlcd")
