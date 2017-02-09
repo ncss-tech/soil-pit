@@ -2,6 +2,7 @@
 
 ```{r enter soil series name}
 # Set soil series
+series <- "Treaty"
 
 # Set percentiles
 p <- c(0, 0.25, 0.5, 0.75, 1)
@@ -21,7 +22,7 @@ library(maps)
 
 source("../soilDB_x/utils.R")
 source(paste0("./genhz_rules/", series, "_rules.R"))
-
+source("C:/workspace/github/aqp/trunk/R/SoilProfileCollection-methods.R")
 
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, results = 'asis')
 options(stringsAsFactors = FALSE)
@@ -115,7 +116,7 @@ l$genhz.soil_color <- cols[match(l$genhz, hz.names)] # assign a color to each ge
 idx <- pindex(l, 15)
   
 for (i in unique(idx)){
-  plot(l[idx == i], name = 'hzname', color = 'genhz.soil_color', label = 'upedonid')
+  plot(l[which(idx == i)], name = 'hzname', color = 'genhz.soil_color', label = 'upedonid')
   title("Soil profile plots")
   legend('bottomleft', legend = hz.names, pt.bg = cols, pch = 22, horiz = TRUE, pt.cex = 2, text.width = 1)
   }
