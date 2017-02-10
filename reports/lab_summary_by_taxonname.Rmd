@@ -22,7 +22,6 @@ library(maps)
 
 source("../soilDB_x/utils.R")
 source(paste0("./genhz_rules/", series, "_rules.R"))
-source("C:/workspace/github/aqp/trunk/R/SoilProfileCollection-methods.R")
 
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, results = 'asis')
 options(stringsAsFactors = FALSE)
@@ -48,13 +47,20 @@ s <- site(f)
 names(lh) <- gsub("measured", "", names(lh))
 
 vars <- c("labsampnum", "hzdept", "hzdepb", "total_frags_pct", "total_frags_pct_cal")
-lh <- merge(lh, h[vars], by = c("labsampnum", "hzdept", "hzdepb"), all.x = TRUE)
-lh$total_frags_pct <- ifelse(is.na(lh$total_frags_pct), lh$total_frags_pct_cal, lh$total_frags_pct)
-lh$total_frags_pct_cal <- NULL
+lh <- merge(lh, h[vars], by = c("labsampnum", "hzdept", "hzdepb"), all.x = TRUE, sort = FALSE)
 
-lh$hzname <- ifelse(is.na(lh$hzname), lh$hznameoriginal, lh$hzname)
 lh <- transform(lh,
-                hzname = ifelse(is.na(hzname), "missing", hzname),
+                total_frags_pct = ifelse(is.na(total_frags_pct),
+                                         total_frags_pct_cal,
+                                         total_frags_pct
+                                         ),
+                hzname = ifelse(is.na(hzname),
+                                hznameoriginal, 
+                                hzname
+                                )
+                )
+lh$hzname <- ifelse(is.na(lh$hzname), "missing", lh$hzname)
+lh <- transform(lh,
                 genhz = generalize.hz(hzname, ghr$n, ghr$p),
                 hzdepm = (hzdept + hzdepb) / 2,
                 cec7clay = round(cec7 / (claytot - claycarb), 2),
@@ -62,40 +68,45 @@ lh <- transform(lh,
                 awc = round((wthirdbarclod - wfifteenbar) * dbthirdbar * 
                               (1 - total_frags_pct / 100) / 100, 2)
                 )
-genhz_med <- sort(with(lh, tapply(hzdepm, genhz, median)))
-lh$genhz <- factor(lh$genhz, levels = names(genhz_med), ordered = TRUE)
+genhz_med <- names(sort(with(lh, tapply(hzdepm, genhz, median))))
+lh$genhz <- factor(lh$genhz, levels = genhz_med, ordered = TRUE)
+
 horizons(l) <- lh
 
 lp$cec7clayratiowtavg <- lp$cec7clayratiowtavg * 100
 
+h$hzname <- ifelse(is.na(h$hzname), "missing", h$hzname)
 h <- transform(h,
-               hzname = ifelse(is.na(hzname), "missing", hzname),
                genhz = generalize.hz(hzname, ghr$n, ghr$p),
                hzdepm = (hzdept + hzdepb) / 2
                )
 
-genhz_med <- sort(with(h, tapply(hzdepm, genhz, median)))
-h$genhz <- factor(h$genhz, levels = names(genhz_med), ordered = TRUE)
+genhz_med <- names(sort(with(h, tapply(hzdepm, genhz, median))))
+h$genhz <- factor(h$genhz, levels = genhz_med, ordered = TRUE)
+
 horizons(f) <- h
 
 h <- data.frame(lapply(h, na_replace))
 s$coverkind_1 <- as.character(s$coverkind_1)
 
-lh <- merge(lh, lp[, c("peiid", "labpeiid")], by = "labpeiid", all.x = TRUE)
-lh <- merge(lh, s[, c("peiid", "coverkind_1")], by = "peiid", all.y = TRUE)
+lh <- merge(lh, lp[, c("peiid", "labpeiid")], by = "labpeiid", all.x = TRUE, sort = FALSE)
+lh <- merge(lh, s[, c("peiid", "coverkind_1")], by = "peiid", all.y = TRUE, sort = FALSE)
 
 lh[!grepl("A", lh$genhz), "coverkind_1"] <- ""
 
+# indexing info
 lh_i <- c('peiid', 'labpeiid', 'labsampnum', 'layerseqnum', 'hzdept', 'hzdepb', 'hzdepm', 'layertype', 'hzname', 'hznameoriginal', 'genhz', 'moist_prepstate', 'coverkind_1', 'recwlupdated', 'ncsslayerlabdataiid')
 
+# static soil properties
 lh_s <- c('lab_texcl', 'stratextsflag', 'sandvc', 'sandco', 'sandmed', 'sandfine', 'sandvf', 'sandtot', 'siltco', 'siltfine', 'silttot', 'claycarb', 'clayfine', 'claytot', 'ompctest', 'fiberrubbedpct', 'fiberunrubbedpct', 'fragwt25', 'fragwt520', 'fragwt2075', 'fragwt275', 'wtpct0175', 'wtpctgt2ws')
 
+# dynamic soil properties
 lh_d <- c('organicmatpct', 'carbonorganicpct', 'carbontotalpct', 'ph1to1h2o', 'ph01mcacl2', 'phnaf', 'phoxidized', 'resistivity', 'ec', 'esp', 'sar', 'cecsumcations', 'cec7', 'ecec', 'sumbases', 'basesatsumcations', 'basesatnh4oac', 'caco3equiv', 'caco3lt20', 'gypsumequiv', 'feoxalate', 'feextractable', 'fetotal', 'sioxalate', 'extracid', 'extral', 'aloxalate', 'altotal', 'pmehlich3', 'ph2osoluble', 'poxalate', 'polsen', 'ptotal', 'nzpretention', 'dbthirdbar', 'dbovendry', 'aggstabpct', 'wtenthbarclod', 'wtenthbarsieve', 'wthirdbarclod', 'wthirdbarsieve', 'wfifteenbar', 'wretentiondiffws', 'wfifteenbartoclay', 'awc', 'adod', 'lep', 'cole', 'liquidlimit', 'pi', 'cec7clay')
 ```
 
 
 ## Brief summary of NCSS lab pedon data
-```{r plot of pedons and locations}
+```{r plot of pedon locations}
 if (dim(s)[1] != 0) {
   s.sub <- s[complete.cases(s[c('x_std', 'y_std')]),]
   coordinates(s.sub) <- ~ x_std + y_std
@@ -114,7 +125,8 @@ hz.names <- levels(l$genhz)
 l$genhz.soil_color <- cols[match(l$genhz, hz.names)] # assign a color to each generalized horizon label
 
 idx <- pindex(l, 15)
-  
+
+# plot no more than 15 soil profiles on each row
 for (i in unique(idx)){
   plot(l[which(idx == i)], name = 'hzname', color = 'genhz.soil_color', label = 'upedonid')
   title("Soil profile plots")
@@ -128,8 +140,9 @@ for (i in unique(idx)){
 Five number summary (min, 25th, median, 75th, max)(percentiles)
 ```{r, fig.width=8}
 # Summarize site data
-lp.sub <- lp[, c("noncarbclaywtavg", "claytotwtavg", "le0to100", "wf0175wtavgpsc", "volfractgt2wtavg", "cec7clayratiowtavg")]
-lp.lo <- melt(lp.sub, measure.vars = c("noncarbclaywtavg", "claytotwtavg", "le0to100", "wf0175wtavgpsc", "volfractgt2wtavg", "cec7clayratiowtavg"))
+vars <- c("noncarbclaywtavg", "claytotwtavg", "le0to100", "wf0175wtavgpsc", "volfractgt2wtavg", "cec7clayratiowtavg")
+lp.sub <- lp[, vars]
+lp.lo <- melt(lp.sub, measure.vars = vars)
 lp.5n <- ddply(lp.lo, .(variable), .fun = sum5n)
 
 kable(lp.5n, caption = "Summary of aggregate profile attributes", align = "c")
