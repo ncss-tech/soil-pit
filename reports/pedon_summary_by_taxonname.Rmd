@@ -283,15 +283,10 @@ if (!all(is.na(s[c("pmorigin", "pmkind", "landform.string")]))){
   }
 
 if (!all(is.na(s[c("shapedown", "shapeacross")]))) {
-  s$shapedown <- factor(s$shapedown, levels=c("Convex", "Linear", "Concave", "missing"))
-  s$shapeacross <- factor(s$shapeacross, levels=c("Convex", "Linear", "Concave", "missing"))
   kable(addmargins(table(s$shapedown, s$shapeacross)), caption = "Down slope (y-axis) vs across slope (x-axis) (counts)")
 } 
 
 if (!all(is.na(s[c("hillslope_pos", "drainagecl")]))) {
-  s$hillslope_pos <- factor(s$hillslope_pos, levels=c("Summit", "Shoulder", "Backslope", "Footslope", "Toeslope", "missing"))
-  s$drainagecl <- factor(s$drainagecl, levels= c("Excessivelly drained", "Well drained", "Somewhat excessively well drained", "Moderately well drained", "Somewhat poorly drained", "Poorly drained", "Very poorly drained", "Subaqueous drainage", "missing"))
-  
   kable(addmargins(table(s$drainagecl, s$hillslope_pos)), digits = 0, caption = "Drainage class vs hillslope position (counts)")
 }
 ```
