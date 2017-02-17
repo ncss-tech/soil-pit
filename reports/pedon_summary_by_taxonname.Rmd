@@ -42,13 +42,12 @@ trellis.par.set(tpg)
 pedons <- fetchNASIS(nullFragsAreZero = TRUE)
 
 h <- horizons(pedons)
-h$hzname[is.na(h$hzname)] <- "missing"
-na_idx <- is.na(pedons$genhz)
-h[na_idx, "genhz"] <- as.character(sapply(h[na_idx, "hzname"], function(x) generalize.hz(x, ghr$n, ghr$p)))
+h <- mutate(h,
+            hzname = ifelse(is.na(hzname), "missing", hzname),
+            genhz = generalize.hz(hzname, ghr$n, ghr$p)
+            )
+
 horizons(pedons) <- h
-pedons$hzdepm <- (pedons$hzdept + pedons$hzdepb)/2
-genhz_med <- sort(tapply(pedons$hzdepm, pedons$genhz, median))
-pedons$genhz <- factor(pedons$genhz, levels = names(genhz_med), ordered = TRUE)                                                                                                       
 
 h <- horizons(pedons)
 s <- site(pedons)
@@ -102,13 +101,15 @@ for (i in unique(idx)){
 ### Summary of the soil surface
 
 ```{r surface rock fragments, echo=FALSE, results='asis'}
-srf <- subset(s, select=c("surface_fgravel", "surface_gravel", "surface_cobbles", "surface_stones", "surface_boulders", "surface_flagstones", "surface_channers"))
+srf <- s[, grepl("surface_", names(s))]
 names(srf) <- gsub("surface_", "", names(srf))
-srf$total_srf <- srf$gravel + srf$cobbles + srf$stones + srf$boulders + srf$flagstones + srf$channers
-srf$gravel <- srf$gravel - srf$fgravel
+srf <- mutate(srf, 
+              total_srf = gravel + cobbles + stones + 
+                boulders + flagstones + channers,
+              gravel = gravel - fgravel
+              )
 
-
-srf.lo <- melt(srf, measure.vars=c("total_srf", "fgravel", "gravel", "cobbles", "stones", "boulders", "channers", "flagstones"))
+srf.lo <- melt(srf, measure.vars = c("total_srf", "fgravel", "gravel", "cobbles", "stones", "boulders", "channers", "flagstones"))
 srf.5n <- ddply(srf.lo, .(variable), .fun = sum5n)
 
 kable(srf.5n, align = "c", caption =  "Surface rock fragments (min, 25th, median, 75th, max)(n)")
@@ -120,8 +121,6 @@ if (sum(srf$total_srf, na.rm = T) != 0) {
          ylab = "percent",
          axis = axis.grid
          )
-  
-  # qplot(variable, value, data = srf.lo, geom = "boxplot", ylab = "%", main = "Boxplots of surface rock fragments") + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
   }         
 ```
 

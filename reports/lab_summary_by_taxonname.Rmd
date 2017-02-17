@@ -44,10 +44,8 @@ lp <- site(l)
 h <- horizons(f)
 s <- site(f)
 
-names(lh) <- gsub("measured", "", names(lh))
-
 vars <- c("labsampnum", "hzdept", "hzdepb", "total_frags_pct", "total_frags_pct_cal")
-lh <- merge(lh, h[vars], by = c("labsampnum", "hzdept", "hzdepb"), all.x = TRUE, sort = FALSE)
+lh <- join(lh, h[vars], by = c("labsampnum", "hzdept", "hzdepb"), type = "left")
 
 lh <- transform(lh,
                 total_frags_pct = ifelse(is.na(total_frags_pct),
@@ -60,29 +58,23 @@ lh <- transform(lh,
                                 )
                 )
 lh$hzname <- ifelse(is.na(lh$hzname), "missing", lh$hzname)
-lh <- transform(lh,
-                genhz = generalize.hz(hzname, ghr$n, ghr$p),
-                hzdepm = (hzdept + hzdepb) / 2,
-                cec7clay = round(cec7 / (claytot - claycarb), 2),
-                organicmatpct = round(carbonorganicpct * 1.724, 2),
-                awc = round((wthirdbarclod - wfifteenbar) * dbthirdbar * 
-                              (1 - total_frags_pct / 100) / 100, 2)
-                )
-genhz_med <- names(sort(with(lh, tapply(hzdepm, genhz, median))))
-lh$genhz <- factor(lh$genhz, levels = genhz_med, ordered = TRUE)
+lh <- mutate(lh,
+             hzdepm = (hzdept + hzdepb) / 2,
+             genhz = generalize.hz(hzname, ghr$n, ghr$p, hzdepm = hzdepm),
+             awc = round((wthirdbarclod - wfifteenbar) * 
+                           dbthirdbar * 
+                           (1 - total_frags_pct / 100) / 100, 2)
+             )
 
 horizons(l) <- lh
 
 lp$cec7clayratiowtavg <- lp$cec7clayratiowtavg * 100
 
 h$hzname <- ifelse(is.na(h$hzname), "missing", h$hzname)
-h <- transform(h,
-               genhz = generalize.hz(hzname, ghr$n, ghr$p),
-               hzdepm = (hzdept + hzdepb) / 2
-               )
-
-genhz_med <- names(sort(with(h, tapply(hzdepm, genhz, median))))
-h$genhz <- factor(h$genhz, levels = genhz_med, ordered = TRUE)
+h <- mutate(h,
+            hzdepm = (hzdept + hzdepb) / 2,
+            genhz = generalize.hz(hzname, ghr$n, ghr$p, hzdepm = hzdepm)
+            )
 
 horizons(f) <- h
 
@@ -244,8 +236,8 @@ lh$genhz_nlcd <- with(lh, ifelse(grepl("A", genhz),
                                  paste(genhz, abbreviate(coverkind_1, 10), sep = " - "), 
                                  as.character(genhz)
                                  ))
-genhz_med <- sort(with(lh, tapply(hzdepm, genhz_nlcd, median)))
-lh$genhz_nlcd <- factor(lh$genhz_nlcd, labels = names(genhz_med))
+genhz_med <- names(sort(with(lh, tapply(hzdepm, genhz_nlcd, median))))
+lh$genhz_nlcd <- factor(lh$genhz_nlcd, labels = genhz_med)
 lh.num <- lh[c("genhz_nlcd", lh_d)]
 lh.num <- Filter(f = function(x) !all(is.na(x)), x = lh.num)
 lh.lo <- melt(lh.num, id.vars = "genhz_nlcd")
