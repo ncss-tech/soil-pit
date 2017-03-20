@@ -153,29 +153,35 @@ sdjr_correlation <- function(asymbol, project_id, start_date, finish_date){
   corr$musym_orig <- corr$musym
   corr$musym <- mapply(z_clean, corr$musym, corr$new_musym)
   
-  spatial <- function(muacres, new_muacres, n_musym, musym, new_musym) {
-    acre_test <- NA
-    n_test <- NA
-    musym_test <- NA
+  spatial <- function(muacres, new_muacres, n_musym, musym, new_musym, pmu_seqnum, fy) {
+    seqnum_test = NA
+    acre_test = NA
+    musym_test = NA
+    n_test = NA
     
+    # seqnum test
+    if(!is.na(pmu_seqnum)) {
+      if (pmu_seqnum == fy) seqnum_test = TRUE
+      }
     # acre test
     if (!is.na(muacres) & !is.na(new_muacres)) {
-      if (muacres != new_muacres) acre_test <- TRUE 
-      else acre_test <- FALSE} 
-    else acre_test <- NA
+      if (muacres != new_muacres) {
+        acre_test = TRUE
+        } else acre_test = FALSE
+      } else acre_test = NA
     # musym test
     if (!is.na(new_musym)) {
-      if (musym != new_musym) 
-        {musym_test <- TRUE} 
-      else musym_test <- FALSE} 
-    else musym_test <- NA
+      if (musym != new_musym) {
+        musym_test = TRUE
+        } else musym_test = FALSE
+      } else musym_test = NA
     # n test
 #     if (n_musym > 1) n_test <- TRUE 
 #     else n_test <- FALSE
-    return(any(acre_test, musym_test)) #, n_test))
+    return(any(seqnum_test, acre_test, musym_test)) #, n_test))
   }
   
-  corr$spatial_change <- with(corr, mapply(spatial, muacres, new_muacres, n_musym, musym, new_musym))
+  corr$spatial_change <- with(corr, mapply(spatial, muacres, new_muacres, n_musym, musym, new_musym, pmu_seqnum, fy))
   
 #   (lmu.musym NOT LIKE '[zx]%' OR lmu.musym NOT LIKE '%[ZS]' OR lmu.musym NOT LIKE '%[zx]' OR lmu.musym NOT LIKE '%[Z]' OR # Region 11 rules for legend constraint error
 #   lmu.musym NOT LIKE '[a]%' OR lmu.musym NOT LIKE '%[a]' OR lmu.musym NOT LIKE '%[+]' OR lmu.musym NOT LIKE '%[_old]')) OR # Other Region rules for legend constraint error
@@ -183,7 +189,7 @@ sdjr_correlation <- function(asymbol, project_id, start_date, finish_date){
   asym <-paste0(asymbol[1], "_", asymbol[length(asymbol)], "_", format(Sys.time(), "%Y_%m_%d"))
   write.csv(corr, 
             file = paste0(
-              "report_correlation_fy", 
+              "lims_correlation_fy", 
               format(as.Date(finish_date, "%m/%d/%Y"), "%Y"), 
               "_", 
               asym,
@@ -216,7 +222,7 @@ goals_report <- function(fy, office){
   )
   
   write.csv(goals, file = paste0(
-    "report_goals_fy", 
+    "lims_goals_fy", 
     substr(fy, 3, 4),
     "_",
     format(Sys.time(), "%Y_%m_%d"),

@@ -23,7 +23,7 @@ st <- c("WI")
 ro <- c(10, 11)
 pt <- "SDJR"
 
-load(file = "rcors_fy_summary_2015_09_24_2016_12_16.Rdata")
+load(file = "rcors_fy_summary_2015_09_24_2016_12_20.Rdata")
 load(file = "goals_fy_summary_2015_09_24_2016_12_16.Rdata")
 load(file = "ssa.Rdata")
 
@@ -34,8 +34,8 @@ load(file = "ssa.Rdata")
 
 rcors_sub <- subset(rcors,
                     state %in% st & 
-                      projecttypename == pt & 
-                      region %in% ro
+                    projecttypename == pt & 
+                    region %in% ro
                     )
 
 rcors2<- group_by(rcors_sub, fy, state, projectname, new_muname) %>% 

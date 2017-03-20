@@ -13,10 +13,12 @@ options(stringsAsFactors = FALSE)
 
 library(knitr)
 library(RColorBrewer)
-library(rgdal)
+library(sf)
 library(RCurl)
 library(XML)
+library(foreign)
 library(reshape2)
+library(plyr)
 library(tidyverse)
 
 source("C:/workspace/github/soil-pit/trunk/queries/kssl_queries.R")
@@ -32,21 +34,20 @@ pt <- c("SDJR")
 pt2 <- c("SDJR", "MLRA", "INITIAL", "ES")
 pt3 <- c("SDJR", "MLRA")
 
-# ## Fetch data from the server
-# 
-# data(state); st <- tolower(state.abb)
-# # ssa <- read.dbf("M:/geodata/soils/soilsa_a_nrcs.dbf")
-# # st <- sort(unique(substr(ssa$areasymbol, 1, 2)))
+## Fetch data from the server
+
+data(state); st <- tolower(state.abb)
+ssa <- read.dbf("M:/geodata/soils/soilsa_a_nrcs.dbf")
+st <- sort(unique(substr(ssa$areasymbol, 1, 2)))
 # asymbol <- paste0(st, "%25")
 # project_id <- "%25"
-# years <- 2012:2016; start_date <- paste0("10/01/", years - 1); finish_date <- paste0("10/01/", years)
+# years <- 2012:2017; start_date <- paste0("10/01/", years - 1); finish_date <- paste0("10/01/", years)
 # 
-# goals <- lapply(years, function(x){
+# goals <- ldply(years, function(x){
 #   cat("fetching", x, "goal\n")
 #   goals_report(x, "%25")
-#   }); goals <- do.call("rbind", goals)
-# 
-# # rcors <- mapply(function(years, start_date, finish_date){
+#   })
+# rcors <- mapply(function(years, start_date, finish_date){
 #   cat("fetching", years, "reverse correlation\n")
 #   sdjr_correlation(asymbol, project_id, start_date, finish_date)
 #   }, years, start_date, finish_date, SIMPLIFY = FALSE); rcors <- do.call("rbind", rcors)
@@ -55,16 +56,20 @@ pt3 <- c("SDJR", "MLRA")
 ## Load data from files
 
 corr_dates <- "2015_09_24"
-goal_dates <- "2016_12_13"
+goal_dates <- "2017_03_20"
 corr_files <- paste0("lims_correlation_fy", 2012:2015, "_", corr_dates, ".csv")
-goal_files <- paste0("lims_goals_fy", substr(2012:2016, 3, 4), "_", goal_dates, ".csv")
+goal_files <- paste0("lims_goals_fy", substr(2012:2017, 3, 4), "_", goal_dates, ".csv")
 
-rcors.. <- {lapply(corr_files, read.csv) ->.; do.call("rbind", .)}
+rcors.. <- ldply(corr_files, read.csv)
 rcors16 <- read.csv("lims_correlation_fy2016_AK%25_WY%25_2016_09_19.csv")
-goals <- {lapply(goal_files, read.csv) ->.; do.call("rbind", .)}
-load(file = "ssa.Rdata"); ssa -> ssa2
-# ssa <- read.csv("M:/geodata/soils/SSA_Regional_Ownership_MASTER_MLRA_OFFICE.csv", stringsAsFactors = FALSE)
-# ssa_r11 <- ssa[ssa$Region == 11, "AREASYMBOL"]
+rcors17 <- read.csv("lims_correlation_fy2017_al%25_wy%25_2017_03_20.csv")
+rcors16 <- rbind(rcors16, rcors17[!names(rcors17) %in% c("pmu_seqnum", "state")])
+
+goals <- ldply(goal_files, read.csv)
+
+ssa_sf <- read_sf(dsn = "M:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs")
+ssa <- read.csv("M:/geodata/soils/SSA_Regional_Ownership_MASTER_MLRA_OFFICE.csv", stringsAsFactors = FALSE)
+ssa_r11 <- ssa[ssa$Region == 11, "AREASYMBOL"]
 
 ## House Cleaning
 
@@ -77,14 +82,13 @@ rcors.. <- mutate(rcors..,
                   projecttypename = substr(projectname, 1, 4),
                   state = substr(areasymbol, 1, 2)
                   )
-rcors16 <- filter(rcors16, !is.na(new_mukey))
-rcors16 <- mutate(rcors16,
+rcors17 <- filter(rcors17, !is.na(new_mukey))
+rcors17 <- mutate(rcors17,
                   state = substr(areasymbol, 1, 2)
                   )
 
-match_names <- names(rcors..)[names(rcors..) %in% names(rcors16)]
-rcors <- full_join(rcors.., rcors16)
-rcors <- rcors[, match_names]
+idx <- names(rcors..)[names(rcors..) %in% names(rcors16)]
+rcors <- rbind(rcors..[idx], rcors16[idx])
 
 
 ### goals
@@ -158,6 +162,8 @@ temp <- goals %>%
   filter(region == ro & projecttypename %in% pt2) %>%
   group_by(fy, office, projecttypename) %>%
   summarize(
+    n_projects = length(unique(projectname)),
+    n_projects_completed = sum(goaled == reported),
     goaled = sum(goaled),
     reported = sum(reported)
     ) %>%
@@ -168,30 +174,57 @@ temp <- mutate(temp,
                projecttypename = factor(projecttypename, levels = pt2)
                )
 
+# Dotplot of Office vs Acres by Project Type
 ggplot(temp, aes(x = reported, y = office)) + 
   geom_point() + 
   facet_grid(~ projecttypename ~ fy, scales = "free_x") +
-  ggtitle("Time Series of Acres Reported")
+  ggtitle("Dotplot of Acres Reported by Fiscal Year and Project Type")
 
+# Scatterplot of n_projects vs n_projects_completed by Office and Project Type
+# filter(temp, fy %in% 2012:2016) %>%
+# ggplot(aes(x = n_projects, y = n_projects_completed, color = office)) +
+#   geom_point(cex = 5) +
+#   scale_colour_brewer(palette="RdYlBu") +
+#   facet_grid(projecttypename ~ fy) +
+#   coord_fixed()
+#   ggtitle("Scatterplot of Projects Reported by Fiscal Year and Project Type")
+
+filter(temp, fy == 2017) %>%
+ggplot(aes(x = n_projects, y = n_projects_completed, color = office)) +
+  geom_point(cex = 5) +
+  scale_colour_brewer(palette="RdYlBu") +
+  facet_grid(projecttypename ~ fy) +
+  coord_fixed()
+  ggtitle("Scatterplot of Projects Reported by Fiscal Year and Project Type")
+
+# Time Series of Acres Reported by Office and Project Type
 ggplot(temp, aes(x = fy, y = reported, group = office, linetype = office, shape = office)) + 
   geom_line(size = 0.7) + 
   geom_point(size = 2.5) +
   scale_shape_manual(values=1:nlevels(temp$office)) +
   facet_grid(projecttypename ~ ., scales = "free_y")
+  ggtitle("Time Series of Acres Reported by Fiscal Year and Project Type")
 
+# Time Series of n_projects_completed Reported by Office and Project Type
+ggplot(temp, aes(x = fy, y = n_projects_completed, group = office, linetype = office, shape = office)) + 
+  geom_line(size = 0.7) + 
+  geom_point(size = 2.5) +
+  scale_shape_manual(values=1:nlevels(temp$office)) +
+  facet_grid(projecttypename ~ ., scales = "free_y") +
+  ggtitle("Time Series of n_projects_completed Reported by Fiscal Year and Project Type")
 
 temp <- filter(temp, projecttypename %in% pt3)
-rank_sum <- {tapply(temp$reported, list(temp$office), sum) ->.; 
-  sort(.[2], decreasing = TRUE) ->.; 
-  formatC(., format = "E", digits = 1)
-  } # rank based on sum of acres
-rank_avg <- {tapply(temp$reported, list(temp$office), mean) ->.; 
-  sort(., decreasing = TRUE) ->.; 
-  formatC(., format = "e", digits = 1)
-  } # rank based on mean of acres
-
-print(rank_sum)
-print(rank_avg)
+rank_acres <- group_by(temp, office) %>%
+  summarize(acres = sum(reported)) %>%
+  arrange(- acres) %>%
+  mutate(acres = formatC(acres, format = "E", digits = 1)) %>%
+  t() %>% as.data.frame()
+rank_projects <- group_by(temp, office) %>%
+  summarize(projects = sum(n_projects_completed)) %>%
+  arrange(- projects) %>%
+  t() %>% as.data.frame()
+print(rank_acres)
+print(rank_projects)
 ```
 
 
@@ -245,7 +278,7 @@ r11_spatial <- rcors %>%
 ggplot(r11_spatial, aes(x = n_musym, y = n_areasymbol, group = fy, color = office)) + 
   geom_point(cex = 5) + 
   scale_colour_brewer(palette="RdYlBu") +
-  facet_grid(~ fy)
+  facet_grid(~ fy, scales = "free_x")
 ```
 
 
@@ -267,7 +300,10 @@ rcors_as <- rcors %>%
   ) %>%
   as.data.frame()
 
-rcors_as$acres <- cut(rcors_as$new_muacres, breaks = c(0, 10000, 50000, 100000, 150000, 200000), labels = c("0 - 10,000", "10,000 - 50,000", "50,000 - 100,000", "100,000 - 150,000", "150,000 - 200,000"))
+rcors_as$acres <- cut(rcors_as$new_muacres, 
+                      breaks = c(0, 10000, 50000, 100000, 150000, 200000), 
+                      labels = c("0 - 10,000", "10,000 - 50,000", "50,000 - 100,000", "100,000 - 150,000", "150,000 - 200,000")
+                      )
 
 rcors_as_w <- select(rcors_as, fy, region, areasymbol, acres) %>% 
   spread(fy, acres) # spread recycles non-grouping variables, so it needs to be combined with select, reshape() silently drops them but gives a warning if they vary
@@ -278,19 +314,19 @@ fy <- paste0(sort(unique(rcors_as$fy)))
 FY <- paste0("FY", sort(unique(rcors_as$fy)))
 names(rcors_as_w)[which(names(rcors_as_w) %in% fy)] <- FY
 
-ssa3 <- merge(ssa2, rcors_as_w, by = "areasymbol", all.x = TRUE)
+ssa3 <- merge(ssa_sf, rcors_as_w, by = "areasymbol", all.x = TRUE)
 temp_sub1 <- subset(ssa3, region == ro, select = FY)
 
-# # Use the following code to plot all the county boundaries for states that intersect Region 11
-# bb <- bbox(temp_sub1)
-# ssa2$state <- substr(ssa2$areasymbol, 1, 2)
-# st <- toupper(c("ia", "il", "in", "ks", "ky", "mi", "mn", "mo", "ne", "oh", "ok", "sd", "wi"))
-# temp_sub2 <- subset(ssa3, state %in% st, select = FY)
+# Use the following code to plot all the county boundaries for states that intersect Region 11
+bb <- st_bbox(temp_sub1)
+ssa3$state <- substr(ssa_sf$areasymbol, 1, 2)
+st <- toupper(c("ia", "il", "in", "ks", "ky", "mi", "mn", "mo", "ne", "oh", "ok", "sd", "wi"))
+temp_sub2 <- filter(ssa3, state %in% st) %>% select(FY2013, FY2014, FY2015, FY2016, FY2017))
 
-spplot(temp_sub1,
+spplot(temp_sub2,
        main = paste0("Time Series of Updated ", paste0(pt, collapse = " & "), " Acres by County"),
-       #xlim = bb[1, ], ylim = bb[2, ],
-       as.table = TRUE,
+       xlim = bb[1, ], ylim = bb[2, ],
+       as.table = TRUE, layout = c(2, 2),
        col.regions = brewer.pal(5, "YlOrRd"),
        colorkey = list(space = "bottom", height = 1)
        )
