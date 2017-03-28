@@ -1,16 +1,14 @@
 ---
-title: "Analysis of 11-FIN ArcSIE Erosion Classes"
-author: "Stephen Roecker"
+title: "MLRA 111B - Glynwood B-slope Erosion; Northeastern IN"
+author: "Stephen Roecker and Neil Martin"
 date: '"Sys.time"'
 output:
-  html_document:
-    keep_md: yes
-  word_document: default
+  html_document:default
 ---
 
 
 ```{r, echo = FALSE}
-knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE)
 ```
 
 
@@ -39,22 +37,20 @@ options(stringsAsFactors = FALSE)
 
 ## Introduction
 
-This analysis looks at the field data collected for the following 2017 MLRA projects:
+This analysis looks at the field data collected for the following 2017 MLRA project:
 - MLRA 111B - Glynwood B-slope Erosion; Northeastern IN 
 
-One of the goals of these projects was to develop an ArcSIE model in order to differentiate erosion classes. The analysis below is intended to evaluate the field data and ArcSIE model.
+The primary objective is to resolve county joins between several Glynwood B-slope map units with different erosion phases. In order to achieve this objective, two approaches were evaluated. The first looked at the purpose of this project are to evaluate the One of the goals of this projects was to develop an ArcSIE model in order to differentiate erosion classes. The analysis below is intended to evaluate the field data and ArcSIE model.
 
 
 ## Import Data and Transform
 
 ```{r read and tranform}
 project <- get_sdjr_NASIS_db()
-project <- project[!duplicated(project$nationalmusym), ]
+project_mu <- project[!duplicated(project$nationalmusym), c("nationalmusym", "muname")]
 gw_se <- seriesExtent("Glynwood")
 gw_pol <- readOGR("C:/workspace/glynwood.shp", layer = "glynwood")
 ssa <- readOGR(dsn = "M:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs")
-ssa_sub <- subset(ssa, areasymbol %in% project$areasymbol)
-ssa_sub <- spTransform(ssa_sub, CRS("+init=epsg:4326"))
 
 data <- read.csv("C:/Users/stephen.roecker/ownCloud/projects/neil_arcsie/Pts_gnbero_27Jan17.csv")
 ero_labels <- c("undisturbed", "slight", "moderate", "severe")
@@ -64,16 +60,13 @@ data <- transform(data,
                   rgb = munsell2rgb(mxhue, mxvalue, mxchroma, return_triplets = TRUE)
                   )
 
-soil_vals <- c("hzthk", "SolumDp", "CaCO3Dp", "claytotest", "firstbtclay", "mxvalue", "mxchroma")
-geo_vals <- c("SlopeSIE", "ProfCrv", "PlanCrv", "relpos", "wetness")
-vals <- c(soil_vals, geo_vals)
-
 data_sp <- data
 coordinates(data_sp) <- ~ long + lat
 proj4string(data_sp) <- CRS("+init=epsg:4326")
 data_sp2 <- spTransform(data_sp, CRS(proj4string(gw_pol)))
+writeOGR(data_sp2, dsn = "C:/Users/stephen.roecker/ownCloud/projects", layer = "201711FIN001", driver = "ESRI Shapefile")
 data <- cbind(data, over(data_sp2, gw_pol))
-data <- merge(data, project, by.x = "nationalmu", by.y = "nationalmusym", all.x = TRUE, sort = FALSE)
+data <- merge(data, project_mu, by.x = "nationalmu", by.y = "nationalmusym", all.x = TRUE, sort = FALSE)
 data <- within(data, {
   EroClassNASIS = NA
   EroClassNASIS[grepl("eroded", muname)] = "eroded"
@@ -86,10 +79,13 @@ data <- within(data, {
 # Evaluate the Project by AREASYMBOL
 
 ```{r}
+ssa_sub <- subset(ssa, areasymbol %in% unique(data$AREASYMBOL))
+ssa_sub <- spTransform(ssa_sub, CRS("+init=epsg:4326"))
+
 mapView(gw_se) + ssa_sub + data_sp
 
-vals <- c("EroClassFD", "EroClassNASIS", "nationalmu", "AREASYMBOL", "natmuAS")
-data_sub <- data[, vals]
+vals2 <- c("EroClassFD", "EroClassNASIS", "nationalmu", "AREASYMBOL")
+data_sub <- data[, vals2]
 data_sub2 <- by(data_sub, data_sub$nationalmu, function(x) {
   x[, vals]
   x[, 4] <- "MLRA"
@@ -97,9 +93,9 @@ data_sub2 <- by(data_sub, data_sub$nationalmu, function(x) {
   })
 data_sub2 <- do.call("rbind", data_sub2)
 data_sub <- rbind(data_sub, data_sub2)
-data_sub$natmuAS <-  with(data_sub, paste0(nationalmu, "-", AREASYMBOL, "-", EroClassNASIS))
+data_sub$natmuSsaEro <-  with(data_sub, paste0(nationalmu, "-", AREASYMBOL, "-", EroClassNASIS))
 
-test <- with(data_sub, table(natmuAS, EroClassFD))
+test <- with(data_sub, table(natmuSsaEro, EroClassFD))
 test
 round(prop.table(test, 1) * 100)
 ```
@@ -128,6 +124,10 @@ The overall accuracy of the ArcSIE predictions is `r round(cm$overall[1], 2)`. T
 ### Boxplots of the Erosion Classes
 
 ```{r EroClassFD boxplots, fig.height=7, fig.width=7.5}
+soil_vals <- c("hzthk", "SolumDp", "CaCO3Dp", "claytotest", "firstbtclay", "mxvalue", "mxchroma")
+geo_vals <- c("SlopeSIE", "ProfCrv", "PlanCrv", "relpos", "wetness")
+vals <- c(soil_vals, geo_vals)
+
 data_lo1 <- melt(data, id.vars = "EroClassFD", measure.vars = vals)
 data_lo2 <- melt(data, id.vars = "EroClassSIE", measure.vars = vals)
 
