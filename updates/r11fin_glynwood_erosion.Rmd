@@ -1,14 +1,13 @@
 ---
 title: "MLRA 111B - Glynwood B-slope Erosion; Northeastern IN"
 author: "Stephen Roecker and Neil Martin"
-date: '"Sys.time"'
-output:
-  html_document:default
+date: '"Sys.time()"'
+output: html_document
 ---
 
 
 ```{r, echo = FALSE}
-knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE)
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 ```
 
 
@@ -21,6 +20,7 @@ library(soilDB)
 library(reshape2)
 library(ggplot2)
 library(gridExtra)
+library(knitr)
 
 library(cluster)
 library(caret)
@@ -31,6 +31,8 @@ library(rgdal)
 library(sp)
 library(mapview)
 
+source("../queries/test.R")
+
 options(stringsAsFactors = FALSE)
 ```
 
@@ -39,8 +41,6 @@ options(stringsAsFactors = FALSE)
 
 This analysis looks at the field data collected for the following 2017 MLRA project:
 - MLRA 111B - Glynwood B-slope Erosion; Northeastern IN 
-
-The primary objective is to resolve county joins between several Glynwood B-slope map units with different erosion phases. In order to achieve this objective, two approaches were evaluated. The first looked at the purpose of this project are to evaluate the One of the goals of this projects was to develop an ArcSIE model in order to differentiate erosion classes. The analysis below is intended to evaluate the field data and ArcSIE model.
 
 
 ## Import Data and Transform
@@ -64,7 +64,7 @@ data_sp <- data
 coordinates(data_sp) <- ~ long + lat
 proj4string(data_sp) <- CRS("+init=epsg:4326")
 data_sp2 <- spTransform(data_sp, CRS(proj4string(gw_pol)))
-writeOGR(data_sp2, dsn = "C:/Users/stephen.roecker/ownCloud/projects", layer = "201711FIN001", driver = "ESRI Shapefile")
+# writeOGR(data_sp2, dsn = "C:/Users/stephen.roecker/ownCloud/projects", layer = "201711FIN001", driver = "ESRI Shapefile")
 data <- cbind(data, over(data_sp2, gw_pol))
 data <- merge(data, project_mu, by.x = "nationalmu", by.y = "nationalmusym", all.x = TRUE, sort = FALSE)
 data <- within(data, {
@@ -72,7 +72,7 @@ data <- within(data, {
   EroClassNASIS[grepl("eroded", muname)] = "eroded"
   EroClassNASIS[grepl("sev.|severely", muname)] = "sev.eroded"
   EroClassNASIS[!grepl("eroded", muname)] = "non.eroded"
-})
+  })
 ```
 
 
@@ -87,38 +87,34 @@ mapView(gw_se) + ssa_sub + data_sp
 vals2 <- c("EroClassFD", "EroClassNASIS", "nationalmu", "AREASYMBOL")
 data_sub <- data[, vals2]
 data_sub2 <- by(data_sub, data_sub$nationalmu, function(x) {
-  x[, vals]
+  x[, vals2]
   x[, 4] <- "MLRA"
   return(x)
   })
 data_sub2 <- do.call("rbind", data_sub2)
 data_sub <- rbind(data_sub, data_sub2)
-data_sub$natmuSsaEro <-  with(data_sub, paste0(nationalmu, "-", AREASYMBOL, "-", EroClassNASIS))
-
-test <- with(data_sub, table(natmuSsaEro, EroClassFD))
-test
-round(prop.table(test, 1) * 100)
+data_sub$natmuSsaEro <-  with(data_sub, 
+                              paste0(nationalmu, "-", AREASYMBOL, "-", EroClassNASIS)
+                              )
+test <- with(data_sub, 
+             table(natmuSsaEro, EroClassFD)
+             )
+kable(test, caption = "Frequence by MUSYM-SSA-EROSION")
+kable(round(prop.table(test, 1) * 100), caption = "Percent by MUSYM-SSA-EROSION")
 ```
-
-
 
 
 ## Evaluation of the Accuracy of the ArcSIE Predictions
 
 ```{r analyze}
-confusionMatrix(data = data$EroClassSIE, reference = data$EroClassFD)
-
-cm$table
-round(cm$overall, 2)
-round(cm$byClass, 2)
+cm <- confusionMatrix(data = data$EroClassSIE, reference = data$EroClassFD)
+print(cm)
 
 test <- as.data.frame(cm$table)
 
 ggplot(test, aes(x = Reference, y = Freq, fill = Prediction)) +
   geom_bar(stat = "identity")
 ```
-
-The overall accuracy of the ArcSIE predictions is `r round(cm$overall[1], 2)`. The confusion matrix above shows that the ArcSIE model was only able to able to discriminate EroClassFD class 1 and 2 approximately `r round(mean(cm$byClass[c(2, 3), 11]), 2)` of the time. The barchart shows this breakdown visually. Since the initial sampling, Tonie Endres has reviewed some of the observations where the field determined class differed from the ArcSIE class and determined that the ArcSIE classes were reasonable although the soil properties were not significantly different, thus the overall accuracy is somewhat higher.
 
 
 ### Boxplots of the Erosion Classes
@@ -155,10 +151,9 @@ data_lo <- rbind(data_lo1, data_lo2)
 
 ggplot(data_lo, aes(x = EroClass, y = value)) +
   geom_boxplot() +
-  facet_wrap(~ paste(variable, method), scales="free_y", ncol = 4)
+  facet_wrap(~ paste(variable, method), scales="free") +
+  coord_flip()
 ```
-
-The box plots show that the FD erosion classes have a linear trend for some variables, while other variables only show class 3 or 1 deviating from the other two classes. Overall the variation within each of the classes overlap considerably, such that in many cases the median values of one class falls within the interquartile range (e.g. 50%) of the other two classes. This overlap suggests that it is difficult/impractical to separate all the classes. Another interpretation is that a complex exist, however in this instance Tonie Endres has determined that adjacent classes would qualify as similar soils. In comparison, the trends between the SIE classes and variables appear to be less linear. The most important feature to highlight is that the trends between the SIE classes and digital elevation model (DEM) derivatives (i.e. slope) don't match those observed for the FD classes. This mismatch suggests that the membership functions for the SIE classes are a poor fit, and should be redefined to more accurately represent the relationship between the FD classes and DEM derivatives.
 
 
 ### Scatterplots of the Erosion Classes
@@ -182,10 +177,6 @@ grid.arrange(g1, g2, ncol = 2)
 ```
 
 
-The scatter plots of the erosion classes displayed over various dimensions, including using multidimensional (MD) scaling, again show their is considerable overlap between the erosion classes. 
-
-
-
 ## Comparison of the Erosion Classes and Hierachical Clusters
 
 
@@ -195,19 +186,19 @@ plot(test_c, labels = data$upedonid)
 rect.hclust(test_c, k = 3)
 ```
 
-A hierarchical classification of the field data was generated in order to compare with the FD classes and determine if a more compact classification could be achieved. An threshold of 3 classes was selected. In examining the dendrogram it is apparent that one class is it much smaller than the other two.
-
 
 ```{r}
 clusters <- cbind(data, 
                   test_pts[, 1:2], 
-                  clusters = factor(cutree(test_c, k = 4), levels = 0:4))
+                  clusters = factor(cutree(test_c, k = 4),
+                                    levels = 4:1,
+                                    labels = ero_labels
+                                    )
+                  )
 
 with(clusters, table(EroClassFD, clusters))
 with(clusters, table(EroClassSIE, clusters))
 ```
-
-The contingency table shows that the FD class (EroClassFD) 1 overlaps the most with cluster 2, while FD class 2 overlap the most with the cluster 3. The ArcSIE predictions don't appear to have any correspondence with the hierarchical clusters.
 
 
 ### Scatter Plots of the Erosion Classes vs the Hierachical Clusters
@@ -236,15 +227,12 @@ data_lo <- rbind(data_lo1, data_lo3)
 
 ggplot(data_lo, aes(x = EroClass, y = value)) +
   geom_boxplot() +
-  facet_wrap(~ paste(variable, method), scales="free_y", ncol = 4)
+  facet_wrap(~ paste(variable, method), scales="free", ncol = 4) + 
+  coord_flip()
 ```
-
-In comparison the erosion classes and hierarchical clusters show a similarly degree of separability, but appear to be split on different variables. Amongst the clusters, the separation primarily appears to be based on the subsurface properties, such as solum and carbonates depth. In comparision the FD classes appear to be based most on the surface properties of the Ap horizon (hzthk, claytotest, SurfFrags). Because the clusters are differentiated based on subsurface soil properties, it suggests that they developed differently prior to human-induced erosion. It may be interesting to exclude the subsurface properties or downweight the subsurface properties and compute a new hierarchical classification.
 
 
 ### Classification Trees
-
-In order to interpret the FD classes and clusters several classifications trees were constructed. Trees were constructed using both the soil properties and DEM derivatives separately, in order to determine what thresholds best defined the groups internally (e.g. how they might be best classified) and externally (e.g. how they might be mapped). It is worth mentioning that classification trees only look for the single best split amongst individual nodes, while an SIE model is typically a weighted average of several variables. 
 
 
 #### FD Classes vs Soil Properties
@@ -254,12 +242,8 @@ clusters <- subset(clusters, !is.na(EroClassFD))
 
 test1 <- ctree(EroClassFD ~ ., data = clusters[, c("EroClassFD", soil_vals)])
 plot(test1)
-cm1 <- confusionMatrix(data = predict(test1, type = "response"), reference = clusters$EroClassFD)
-cm1$table
-round(cm1$overall, 2)
+confusionMatrix(data = predict(test1, type = "response"), reference = clusters$EroClassFD)
 ```
-
-The classification tree of the FD classes using only the soil properties as predictors split the classes on horizon thickness (hzthk) using a break of 21-cm, and had an overall accuracy of `r round(cm1$overall[1], 2)`. The breakdown the of individual nodes show that node 2 is more mixed than node 3. This result is similar to the SIE model which had difficulty separating class 2 and 3. The split at 21-cm approximately corresponds with the depth typically associated with tillage.
 
 
 #### Clusters vs Soil Properties
@@ -267,12 +251,8 @@ The classification tree of the FD classes using only the soil properties as pred
 ```{r, fig.width=7.5}
 test2 <- ctree(clusters ~ ., data = clusters[, c("clusters", soil_vals)])
 plot(test2)
-cm2 <- confusionMatrix(data = predict(test2, type = "response"), reference = clusters$clusters)
-cm2$table
-round(cm2$overall, 2)
+confusionMatrix(data = predict(test2, type = "response"), reference = clusters$clusters)
 ```
-
-The classification tree for the hierarchical clusters using only soil properties as predictors, had several splits based on solum depth (SolumDp) and surface rock fragments (SurfFrags), and had an overall accuracy of `r round(cm2$overall[1], 2)`.
 
 
 #### FD Classes vs DEM Derivatives
@@ -280,12 +260,12 @@ The classification tree for the hierarchical clusters using only soil properties
 ```{r, fig.width=7.5}
 test3 <- ctree(EroClassFD ~ ., data = clusters[, c("EroClassFD", geo_vals)])
 plot(test3)
-cm3 <- confusionMatrix(data = predict(test3, type = "response"), reference = clusters$EroClassFD)
-cm3$table
-round(cm3$overall, 2)
-```
+confusionMatrix(data = predict(test3, type = "response"), reference = clusters$EroClassFD)
 
-The classification tree of the FD classes using only the DEM derivatives as predictors found the best split using a slope gradient of 6 percent, and had an overall accuracy of `r round(cm3$overall[1], 2)`. This tree however was only able to map classes 1 and 3. The split at a slope of 6 percent matches the original slope break used within Morrow (OH117) and Knox (OH083) Counties to separate B1 (non-eroded, class 1) and B2 (eroded, class 2) slopes. Perhaps B2 slopes need to be updated to class 3.
+test3 <- cforest(EroClassFD ~ ., data = clusters[, c("EroClassFD", geo_vals)])
+varimp(test3)
+confusionMatrix(data = predict(test3, type = "response"), reference = clusters$EroClassFD)
+```
 
 
 #### Clusters vs DEM Derivatives
@@ -293,27 +273,13 @@ The classification tree of the FD classes using only the DEM derivatives as pred
 ```{r, fig.width=7.5}
 test4 <- ctree(clusters ~ ., data = clusters[, c("clusters", geo_vals)])
 plot(test4)
-cm4 <- confusionMatrix(data = predict(test4, type = "response"), reference = clusters$clusters)
-cm4$table
-round(cm4$overall, 2)
-```
+confusionMatrix(data = predict(test4, type = "response"), reference = clusters$clusters)
 
-The classification tree of the clusters using only the DEM derivatives as predictors found the best split using across slope (PlanCrv) curvature, and had an overall accuracy of `r round(cm4$overall[1], 2)`. This resulted in a separation of classes 1 and 2, with class 2 occuring on convex positions (e.g. nose slopes). Given the narrow range in slope it seems logical that slope was not the dominant factor. 
+test4 <- cforest(clusters ~ ., data = clusters[, c("clusters", geo_vals)])
+varimp(test4)
+confusionMatrix(data = predict(test4, type = "response"), reference = clusters$clusters)
+```
 
 
 ## Summary
 
-In summary the field determined (FD) erosion classes show a considerable amount of overlap in the soil properties evaluated. This overlap is likely reducing the accuracy of the ArcSIE, which is only ~ 50% overall. During the field assist the ambiguity of the erosion class definitions from the Soil Survey Manual and operator bias were discussed. Since the initial sampling, Tonie Endres has reviewed some of the observations where the field determined class differed from the ArcSIE class and determined that the ArcSIE classes were reasonable although the soil properties were not significantly different, thus the overall accuracy is maybe somewhat higher. Eitherway their appears to be confusion as to the proper field intrepretation of the erosion classes, their historic application, and whether the definition needs to be reassessed nationally. The most simplistic approach would be to compare the epipedon thickness to some undisturbed reference (which was likely to vary pre-european settlement). A classification tree of the existing FD classes showed that an Ap bottom depth of 21-cm would make the best split, which corresponds with the typically depth of tillage. When the FD classes were compared aganist hierarchical clusters it showed that a more compact classification could be achieved, but that the resulting clusters were predominately the result of the subsurface properties. In important point observed from an evalution of the SIE classes and DEM derivatives with box plots showed they didn't match the FD class landscape patterns. This mismatch indicates that the SIE membership functions should be adjusted, which may also increase the accuracy.
-
-The only digital soil mapping (DSM) approach evaluated in this project was ArcSIE. In comparison with other DSM approaches, ArcSIE is referred to as knowledge-based, where the model or membership functions are manually defined, as opposed to a data-driven approach (i.e. statistical) where the model is derived from the data. The ArcSIE approach is particularly advantageous where their exist limited field data, but abundance of expert knowledge. Alternatively ArcSIE can be used to generate a working hypothesis, prior to sampling. Given that `r nrow(data)` pedon observations exist for this project their is potential to use a data-driven technique. In addition, data from adjacent areas, similiar soils, or other projects could also be used.
-
-At this time the evaluation shows that several adjustments/iterations should be made to the ArcSIE Erosion Class model in quesiton. Below are several recommendations that should be investigated prior to finalizing the ArcSIE model. 
-
-Recommendations:
-
-- Adjust the SIE membership functions to reflect the landscape patterns in the FD classes and DEM derivatives
-- Evaluate other applicable DSM models
-- Evalute additional DEM derivatives, such as the topographic wetness index (TWI) and relative elevation, and perhaps other measures of curvature designed for low slopes, such as min or max curvature
-- Streamline the process to be more production oriented, such as converting the raster product to vector, using a 5 or 10-meter DEM.
-
-This was the first ArcSIE project that has been submitted for QA in Region 11. A large investment has been made in the research and development of ArcSIE and other digital soil mapping (DSM) techniques, therefore Neil Martin and Jennifer Callaway are to be commended for putting this technology to use. Region 11 encourages further use and refinement of ArcSIE and other DSM techniques.
