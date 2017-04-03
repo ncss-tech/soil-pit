@@ -39,7 +39,7 @@ trellis.par.set(tpg)
 
 ```{r fetch and format, load-data, echo=FALSE, warning=FALSE}
 # load NASIS data
-pedons <- fetchNASIS(nullFragsAreZero = TRUE)
+pedons <- fetchNASIS(nullFragsAreZero = TRUE, lab = TRUE)
 
 h <- horizons(pedons)
 h <- mutate(h,
@@ -194,9 +194,12 @@ idx <- names(h) == "total_frags_pct_cal" | names(h) == "total_frags_pct"
 names(h)[idx] <- c("fragvoltotc", "fragvoltot")
 var <- c("fine_gravel", "gravel", "cobbles", "stones", "boulders", "paragravel", "paracobbles", "channers", "flagstones")
 h[, var] <- lapply(h[var], as.integer)
-h$gravel <- h$gravel-h$fine_gravel
+h$gravel <- h$gravel - h$fine_gravel
 
-h.lo <- melt(h, id.vars="genhz", measure.vars = c('clay', 'sand', 'fine_gravel', 'gravel', 'cobbles', 'stones', 'fragvoltot', 'phfield', 'd_value', 'd_chroma', 'm_value', 'm_chroma'))
+num_vars <- names(h)[! names(h) %in% c('peiid', 'phiid', 'hzname', 'genhz', 'hzdept', 'hzdepb', 'labsampnum', 'd_r', 'd_g', 'd_b', 'm_r', 'm_g', 'm_b', 'parafine_gravel', 'paragravel', 'paracobbles', 'parastones', 'paraboulders', 'parachanners', 'paraflagstones', 'unspecified') &
+                       sapply(h, is.numeric) & 
+                       sapply(h, function(x) !all(is.na(x)))]
+h.lo <- melt(h, id.vars="genhz", measure.vars = num_vars)
 h.5n <- ddply(h.lo, .(variable, genhz), .fun = sum5n)
 h.wi <- dcast(h.5n, genhz ~ variable, value.var = 'range')
 
@@ -216,10 +219,6 @@ bwplot(genhz ~ value | variable, data = h.lo,
 </p>
 
 ```{r, echo=FALSE, results='asis'}
-tc <- c("cos", "s", "fs", "vfs", "lcos", "ls", "lfs", "lvfs", "cosl", "sl", "fsl", "vfsl", "l", "sil", "si", "scl", "cl", "sicl", "sc", "sic", "c", "NA")
-tc <- tc[tc %in% unique(h$texture_class)]
-h$texture_class <- factor(h$texture_class, levels = tc)
-
 kable(addmargins(table(h$genhz, h$texture_class, exclude = NULL)), digits = 0, caption = "Texture by generic horizon (counts)")
 
 hz_tex <- addmargins(table(h$genhz, h$texture))
@@ -245,7 +244,7 @@ eff <- c(violent = "violent", strong = "strong", slight = "slight", very.slight 
 h$effervescence <- eff[h$effervescence]
 h$effervescence <- factor(h$effervescence, levels = eff)
 
-kable(addmargins(table(h$genhz, h$effervescence)), digits = 0, caption = "Effervescence by generic horizon (counts)")
+kable(addmargins(xtabs(~ genhz + effervescence, data = h, drop.unused.levels = TRUE)), digits = 0, caption = "Effervescence by generic horizon (counts)")
 ```
 
 
@@ -282,10 +281,10 @@ if (!all(is.na(s[c("pmorigin", "pmkind", "landform.string")]))){
   }
 
 if (!all(is.na(s[c("shapedown", "shapeacross")]))) {
-  kable(addmargins(table(s$shapedown, s$shapeacross)), caption = "Down slope (y-axis) vs across slope (x-axis) (counts)")
+  kable(addmargins(xtabs(~ shapedown + shapeacross, data = s)), caption = "Down slope (y-axis) vs across slope (x-axis) (counts)")
 } 
 
 if (!all(is.na(s[c("hillslope_pos", "drainagecl")]))) {
-  kable(addmargins(table(s$drainagecl, s$hillslope_pos)), digits = 0, caption = "Drainage class vs hillslope position (counts)")
+  kable(addmargins(xtabs(~ drainagecl + hillslope_pos, data = s, drop.unused.levels = TRUE)), digits = 0, caption = "Drainage class vs hillslope position (counts)")
 }
 ```
