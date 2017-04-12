@@ -9,6 +9,10 @@ output: html_document
 knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 ```
 
+# Introduction
+
+Most of these series from this analysis, are poorly drained alluvial soils.  What we are trying to determine is what the particle size is by watershed. The pattern we see form this edge analysis and our field data is the alluvial soils in our northern watersheds (MLRA104) are more fine loamy with a mix of fine silty poorly drained ponded soils on the flood plain and low stream terraces.  As we look at the Alluvial soils in 108, they become more fine silty and fine poorly drained alluvial soils. The most common edge soils such as Nodaway, Lawson, Vesser, Spillville are the better drained frequently flooded aluvial soils that should be next to these Aquol depressions.
+
 
 # Import and Prep Data
 ```{r}
@@ -18,7 +22,7 @@ library(ggplot2)
 
 
 # import data
-aquolls <- read.csv("Aquolls_edges.csv")
+aquolls <- read.csv("C:/workspace/Aquolls_edges.csv")
 
 
 # modify column headers
@@ -80,4 +84,3 @@ ggplot(aquolls_sb_top5, aes(x = meters, y = series)) +
   ggtitle("Top 5 Series by Top 1 Series and Subbasin")
 ```
 
-Most of these series from this analysis, are poorly drained alluvial soils.  What we are trying to determine is what the particle size is by watershed. The pattern we see form this edge analysis and our field data is the alluvial soils in our northern watersheds (MLRA104) are more fine loamy with a mix of fine silty poorly drained ponded soils on the flood plain and low stream terraces.  As we look at the Alluvial soils in 108, they become more fine silty and fine poorly drained alluvial soils. The most common edge soils such as Nodaway, Lawson, Vesser, Spillville are the better drained frequently flooded aluvial soils that should be next to these Aquol depressions.
