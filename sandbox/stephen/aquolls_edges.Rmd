@@ -1,0 +1,83 @@
+---
+title: "Aquolls Edges"
+author: "Stephen Roecker"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```
+
+
+# Import and Prep Data
+```{r}
+# load packages
+library(plyr)
+library(ggplot2)
+
+
+# import data
+aquolls <- read.csv("Aquolls_edges.csv")
+
+
+# modify column headers
+names(aquolls) <- tolower(names(aquolls))
+names(aquolls)[names(aquolls) %in% c("shape_length_meters", "boundry_miles")] <- c("meters", "miles")
+
+
+# extract serie names from muname
+aquolls$series <- sapply(aquolls$muname, function(x) 
+    strsplit(as.character(x), " ")[[1]][1]
+    )
+
+
+# extract the dominant component from the muname
+aquolls$series <- sapply(aquolls$series, function(x) 
+  strsplit(as.character(x), "-")[[1]][1]
+  )
+
+
+# remove water
+aquolls <- subset(aquolls, ! series %in% c("Water", "Alluvial"))
+```
+
+# Group by Series
+```{r}
+aquolls_s <- ddply(aquolls, .(series), summarize, meters = sum(meters))
+aquolls_s <- arrange(aquolls_s, desc(meters), series)
+aquolls_s_sub <- aquolls_s[1:10, ]
+
+print(aquolls_s_sub)
+
+ggplot(aquolls_s_sub, aes(x = meters, y = reorder(series, meters))) + 
+  geom_point() +
+  ggtitle("Series for the Project")
+```
+
+# Group by Series and Subbasin
+```{r, fig.height=11, fig.width=8.5}  
+aquolls_sb <- ddply(aquolls, .(subbasin, series), summarize, meters = sum(meters))
+aquolls_sb <- arrange(aquolls_sb, subbasin, desc(meters), series)
+
+# Top 1 Series by Subbasin
+aquolls_sb_top1 <- ddply(aquolls_sb, .(subbasin), function(x) x[1, ])
+aquolls_sb_top1 <- arrange(aquolls_sb_top1, series, subbasin, desc(meters))
+aquolls_sb_top1 <- with(aquolls_sb_top1, data.frame(series, subbasin, meters))
+
+print(aquolls_sb_top1)
+
+# Top 5 Series by Subbasin
+aquolls_sb_top5 <- ddply(aquolls_sb, .(subbasin), function(x) x[1:5, ])
+
+aquolls_sb_top5$subbasin <- factor(aquolls_sb_top5$subbasin, levels = aquolls_sb_top1$subbasin)
+sub <- with(aquolls_sb_top1, data.frame(subbasin, "top_series" = series))
+aquolls_sb_top5 <- join(aquolls_sb_top5, sub, by = "subbasin")
+
+ggplot(aquolls_sb_top5, aes(x = meters, y = series)) + 
+  geom_point() + 
+  facet_wrap(~ paste0(top_series, "-", subbasin), scales = "free", ncol = 4) +
+  ggtitle("Top 5 Series by Top 1 Series and Subbasin")
+```
+
+Most of these series from this analysis, are poorly drained alluvial soils.  What we are trying to determine is what the particle size is by watershed. The pattern we see form this edge analysis and our field data is the alluvial soils in our northern watersheds (MLRA104) are more fine loamy with a mix of fine silty poorly drained ponded soils on the flood plain and low stream terraces.  As we look at the Alluvial soils in 108, they become more fine silty and fine poorly drained alluvial soils. The most common edge soils such as Nodaway, Lawson, Vesser, Spillville are the better drained frequently flooded aluvial soils that should be next to these Aquol depressions.
