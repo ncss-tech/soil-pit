@@ -13,7 +13,7 @@ options(stringsAsFactors = FALSE)
 
 library(knitr)
 library(RColorBrewer)
-library(sf)
+library(rgdal)
 library(RCurl)
 library(XML)
 library(foreign)
@@ -34,19 +34,29 @@ pt <- c("SDJR")
 pt2 <- c("SDJR", "MLRA", "INITIAL", "ES")
 pt3 <- c("SDJR", "MLRA")
 
-## Fetch data from the server
-
 data(state); st <- tolower(state.abb)
+project_id <- "%25"
+
 ssa <- read.dbf("M:/geodata/soils/soilsa_a_nrcs.dbf")
-st <- sort(unique(substr(ssa$areasymbol, 1, 2)))
-# asymbol <- paste0(st, "%25")
-# project_id <- "%25"
-# years <- 2012:2017; start_date <- paste0("10/01/", years - 1); finish_date <- paste0("10/01/", years)
-# 
+ownership <- read.csv("M:/geodata/soils/SSA_Regional_Ownership_MASTER_MLRA_OFFICE.csv")
+
+ownership[ownership$Region_Download == 11, "AREASYMBOL"] ->.;
+sort(unique(.)) ->
+  asymbol
+
+# # fetch goals
+# years <- 2012:2017
 # goals <- ldply(years, function(x){
 #   cat("fetching", x, "goal\n")
 #   goals_report(x, "%25")
 #   })
+# 
+# 
+# # reverse correlation
+# years <- 2016:2017
+# start_date <- paste0("10/01/", years - 1)
+# finish_date <- paste0("10/01/", years)
+# 
 # rcors <- mapply(function(years, start_date, finish_date){
 #   cat("fetching", years, "reverse correlation\n")
 #   sdjr_correlation(asymbol, project_id, start_date, finish_date)
@@ -54,22 +64,19 @@ st <- sort(unique(substr(ssa$areasymbol, 1, 2)))
 
 
 ## Load data from files
-
+goal_dates <- "2017_04_17"
 corr_dates <- "2015_09_24"
-goal_dates <- "2017_03_20"
-corr_files <- paste0("lims_correlation_fy", 2012:2015, "_", corr_dates, ".csv")
-goal_files <- paste0("lims_goals_fy", substr(2012:2017, 3, 4), "_", goal_dates, ".csv")
 
-rcors.. <- ldply(corr_files, read.csv)
-rcors16 <- read.csv("lims_correlation_fy2016_AK%25_WY%25_2016_09_19.csv")
-rcors17 <- read.csv("lims_correlation_fy2017_al%25_wy%25_2017_03_20.csv")
-rcors16 <- rbind(rcors16, rcors17[!names(rcors17) %in% c("pmu_seqnum", "state")])
+goal_files <- paste0("lims_goals_fy", substr(2012:2017, 3, 4), "_", goal_dates, ".csv")
+corr_files <- paste0("lims_correlation_fy", 2012:2015, "_", corr_dates, ".csv")
 
 goals <- ldply(goal_files, read.csv)
 
-ssa_sf <- read_sf(dsn = "M:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs")
-ssa <- read.csv("M:/geodata/soils/SSA_Regional_Ownership_MASTER_MLRA_OFFICE.csv", stringsAsFactors = FALSE)
-ssa_r11 <- ssa[ssa$Region == 11, "AREASYMBOL"]
+rcors.. <- ldply(corr_files, read.csv)
+rcors16 <- read.csv("lims_correlation_fy2016_AK%25_WY%25_2016_09_19.csv")
+rcors17 <- read.csv("lims_correlation_fy2017_IA%25_WI%25_2017_04_17.csv")
+rcors16 <- rbind(rcors16, rcors17[!names(rcors17) %in% c("pmu_seqnum", "state")])
+
 
 ## House Cleaning
 
@@ -92,13 +99,11 @@ rcors <- rbind(rcors..[idx], rcors16[idx])
 
 
 ### goals
-
 old_names <- c("ssoffice", "projecttype")
 new_names <- c("office", "projecttypename")
 names(goals)[which(names(goals) %in% old_names)] <- new_names
 
 ### save copy
-
 save(rcors, file = paste0("rcors_fy_summary_", corr_dates, "_", format(Sys.time(), "%Y_%m_%d.Rdata")))
 save(goals, file = paste0("goals_fy_summary_", goal_dates, "_", format(Sys.time(), "%Y_%m_%d.Rdata")))
 ```
@@ -164,6 +169,7 @@ temp <- goals %>%
   summarize(
     n_projects = length(unique(projectname)),
     n_projects_completed = sum(goaled == reported),
+    pct_n_completed = (n_projects_completed / n_projects) * 100,
     goaled = sum(goaled),
     reported = sum(reported)
     ) %>%
@@ -190,10 +196,11 @@ ggplot(temp, aes(x = reported, y = office)) +
 #   ggtitle("Scatterplot of Projects Reported by Fiscal Year and Project Type")
 
 filter(temp, fy == 2017) %>%
-ggplot(aes(x = n_projects, y = n_projects_completed, color = office)) +
+ggplot(aes(x = pct_n_completed, y = n_projects, color = office)) +
   geom_point(cex = 5) +
   scale_colour_brewer(palette="RdYlBu") +
-  facet_grid(projecttypename ~ fy) +
+  xlim(0, 100) +
+  facet_grid(projecttypename ~ fy, scales = "free_y") +
   coord_fixed()
   ggtitle("Scatterplot of Projects Reported by Fiscal Year and Project Type")
 
@@ -223,8 +230,8 @@ rank_projects <- group_by(temp, office) %>%
   summarize(projects = sum(n_projects_completed)) %>%
   arrange(- projects) %>%
   t() %>% as.data.frame()
-print(rank_acres)
-print(rank_projects)
+kable(rank_acres)
+kable(rank_projects)
 ```
 
 
@@ -266,8 +273,8 @@ kable(progress)
 
 ```{r spatial}
 r11_spatial <- rcors %>%
-  filter(region %in% ro & spatial_change == TRUE & projecttypename %in% pt) %>%
-  group_by(fy, region, office) %>%
+  filter(region %in% ro & spatial_change == TRUE & projecttypename %in% pt3) %>%
+  group_by(fy, projecttypename, region, office) %>%
   summarize(
     acres = sum(muacres, na.rm = T),
     n_areasymbol = length(unique(areasymbol)),
@@ -275,10 +282,11 @@ r11_spatial <- rcors %>%
     ) %>%
   arrange(desc(acres))
 
-ggplot(r11_spatial, aes(x = n_musym, y = n_areasymbol, group = fy, color = office)) + 
+filter(r11_spatial, fy == 2017) %>%
+ggplot(aes(x = n_musym, y = n_areasymbol, group = fy, color = office)) + 
   geom_point(cex = 5) + 
   scale_colour_brewer(palette="RdYlBu") +
-  facet_grid(~ fy, scales = "free_x")
+  facet_grid(projecttypename ~ fy, scales = "free_y")
 ```
 
 
