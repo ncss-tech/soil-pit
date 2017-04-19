@@ -1,11 +1,11 @@
-get_cosoilmoist_data_from_NASIS_db <- function() {
+get_cosoilmoist_data_from_NASIS_db <- function(na = "None") {
   # must have RODBC installed
   if (!requireNamespace('RODBC')) stop('please install the `RODBC` package', call.=FALSE)
   
   q.cosoilmoist <- "SELECT dmuiidref AS dmuiid, coiid, compname, comppct_r, month, flodfreqcl, pondfreqcl, cosoilmoistiid, soimoistdept_l, soimoistdept_r, soimoistdept_h, soimoistdepb_l, soimoistdepb_r, soimoistdepb_h, soimoiststat
   
-  FROM component_View_1 co INNER JOIN
-       comonth com ON com.coiidref = co.coiid INNER JOIN
+  FROM component_View_1 co LEFT OUTER JOIN
+       comonth com ON com.coiidref = co.coiid LEFT OUTER JOIN
        cosoilmoist cosm ON cosm.comonthiidref = com.comonthiid
   
   ORDER BY dmuiid, compname, comppct_r, month, soimoistdept_r
@@ -27,8 +27,8 @@ get_cosoilmoist_data_from_NASIS_db <- function() {
   # replace NA values with None
   vars <- c("flodfreqcl", "pondfreqcl")
   d.cosoilmoist <- within(d.cosoilmoist, {
-    flodfreqcl[is.na(flodfreqcl)] <- "None"
-    pondfreqcl[is.na(pondfreqcl)] <- "None"
+    flodfreqcl[is.na(flodfreqcl)] <- na
+    pondfreqcl[is.na(pondfreqcl)] <- na
     })
   
   
