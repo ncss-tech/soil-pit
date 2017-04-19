@@ -21,16 +21,8 @@ ggplot() +
                 ymin = 0, ymax = max(test$depb_r),
                 fill = pondfreqcl)) +
   geom_line(aes(x = as.integer(month), y = dept_r, lty = stat)) +
+  geom_linerange(aes(x = as.integer(month), ymin = dept_l, ymax = dept_h)) +
   ylim(max(test$depb_r), 0) +
   facet_wrap(~ paste(compname, comppct_r, "%")) +
   ggtitle("Component Soil Moisture Month")
 
-
-test %>%
-  ggplot() +
-  geom_rect(aes(xmin = as.integer(month), xmax = as.integer(month) + 1,
-                ymin = 0, ymax = max(test$depb_r),
-                fill = pondfreqcl)) +
-  ylim(max(test$depb_r), 0) +
-  facet_wrap(~ paste(compname, comppct_r, "%")) +
-  ggtitle("Component Soil Moisture Month")
