@@ -12,17 +12,23 @@ test <- within(pm, {
   pm_new[grepl("outwash", pm)] <- "outwash"
 })
 
+library(ggplot2)
+library(gridExtra)
 
 test <- get_cosoilmoist_data_from_NASIS_db()
+test <- subset(test, !is.na(dept_r))
 
-test %>%
-ggplot() +
+# test <- split(test, test$dmuiid)
+
+ggplot(test) +
   geom_rect(aes(xmin = as.integer(month), xmax = as.integer(month) + 1,
                 ymin = 0, ymax = max(test$depb_r),
                 fill = pondfreqcl)) +
-  geom_line(aes(x = as.integer(month), y = dept_r, lty = stat)) +
-  geom_linerange(aes(x = as.integer(month), ymin = dept_l, ymax = dept_h)) +
+  geom_line(aes(x = as.integer(month), y = dept_r, 
+                lty = stat)) +
+  geom_linerange(aes(x = as.integer(month), 
+                     ymin = dept_l, ymax = dept_h)) +
   ylim(max(test$depb_r), 0) +
-  facet_wrap(~ paste(compname, comppct_r, "%")) +
+  facet_wrap(~ paste(compname, comppct_r, "%", dmuiid, sep = "-")) +
   ggtitle("Component Soil Moisture Month")
 
