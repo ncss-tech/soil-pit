@@ -4,7 +4,8 @@ ui <- fluidPage(titlePanel("Water Table Plots", windowTitle = "Water Table Plots
               label="Enter mukey to plot", 406339
               ),
   radioButtons(inputId="filltype", "Choose fill:", c("flooding","ponding")),
-  plotOutput("result")
+  plotOutput("result"),
+  p("This application was developed by John Hammerly and Stephen Roecker.")
 
 )
 
