@@ -1,5 +1,5 @@
 library(shiny)
-ui <- fluidPage(titlePanel("Water Table Plots", windowTitle = "Water Table Plots"),
+ui <- fluidPage(titlePanel("Water Table Plots", windowTitle = "Water Table Plots"), p("This is a web application which uses R to query component month soil moisture data from Soil Data Access and plots it graphically.  You will need to determine the mapunit key (mukey) of the mapunit of interest to view the data.  You also have the option of viewing either flooding frequency or ponding frequency in the plot by clicking the radio buttons below."),
   numericInput(inputId="inmukey",
               label="Enter mukey to plot", 406339
               ),
