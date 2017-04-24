@@ -32,7 +32,7 @@ server <- function(input, output){
       geom_pointrange(aes(x = as.integer(month), 
                           ymin = dept_l, y = dept_r, ymax = dept_h)) +
       ylim(max(test$depb_r), 0) +
-      xlab("month") + ylab("depth (cm)") +
+      ylab("depth (cm)") + scale_x_continuous(breaks = 1:12, labels = c("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"), name="Month") +
       facet_wrap(~ paste(compname, comppct_r, "pct", mukey, sep = "-"))}
     else if (input$filltype=="ponding") {ggplot(test) +
           geom_rect(aes(xmin = as.integer(month), xmax = as.integer(month) + 1,
@@ -43,7 +43,7 @@ server <- function(input, output){
           geom_pointrange(aes(x = as.integer(month), 
                               ymin = dept_l, y = dept_r, ymax = dept_h)) +
           ylim(max(test$depb_r), 0) +
-          xlab("month") + ylab("depth (cm)")  +
+          ylab("depth (cm)")  +  scale_x_continuous(breaks = 1:12, labels = c("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"), name="Month") +
           facet_wrap(~ paste(compname, comppct_r, "pct", mukey, sep = "-"))}
 
     })
