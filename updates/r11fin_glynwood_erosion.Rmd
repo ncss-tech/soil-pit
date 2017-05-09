@@ -14,6 +14,9 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 ```{r setup, echo=FALSE}
 ## Setup
 
+options(stringsAsFactors = FALSE)
+ownCloud <-"C:/Users/stephen.roecker/ownCloud/projects/neil_arcsie/"
+  
 library(aqp)
 library(soilDB)
 
@@ -30,10 +33,6 @@ library(vegan)
 library(rgdal)
 library(sp)
 library(mapview)
-
-source("../queries/test.R")
-
-options(stringsAsFactors = FALSE)
 ```
 
 
@@ -50,22 +49,23 @@ Spatially disaggregate the existing SSURGO polygons for Glynwood B-slope map uni
 project <- get_sdjr_NASIS_db()
 project_mu <- project[!duplicated(project$nationalmusym), c("nationalmusym", "muname")]
 gw_se <- seriesExtent("Glynwood")
-gw_pol <- readOGR("C:/workspace/glynwood.shp", layer = "glynwood")
-ssa <- readOGR(dsn = "M:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs")
+gw_pol <- readOGR(dsn = paste0(ownCloud, "glynwood.shp"), layer = "glynwood")
+ssa <- readOGR(dsn = "E:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs")
 
-data <- read.csv("C:/Users/stephen.roecker/ownCloud/projects/neil_arcsie/Pts_gnbero_27Jan17.csv")
+data <- read.csv(paste0(ownCloud, "Pts_gnbero_27Jan17.csv"))
 ero_labels <- c("undisturbed", "slight", "moderate", "severe")
 data <- transform(data,
                   EroClassFD = factor(EroClassFD, levels = 0:3, labels = ero_labels),
                   EroClassSIE = factor(EroClassSIE, levels = 0:3, labels = ero_labels),
                   rgb = munsell2rgb(mxhue, mxvalue, mxchroma, return_triplets = TRUE)
                   )
+data$soilname2 <- with(data, paste0(soilname, ifelse(soilname == "Glynwood", paste0("-", as.character(EroClassFD)), "")))
 
 data_sp <- data
 coordinates(data_sp) <- ~ long + lat
 proj4string(data_sp) <- CRS("+init=epsg:4326")
 data_sp2 <- spTransform(data_sp, CRS(proj4string(gw_pol)))
-writeOGR(data_sp2, dsn = "C:/Users/stephen.roecker/ownCloud/projects", layer = "glynwood_bslopes", driver = "ESRI Shapefile")
+# writeOGR(data_sp2, dsn = ownCloud, layer = "glynwood_bslopes", driver = "ESRI Shapefile")
 data <- cbind(data, over(data_sp2, gw_pol))
 data <- merge(data, project_mu, by.x = "nationalmu", by.y = "nationalmusym", all.x = TRUE, sort = FALSE)
 data <- within(data, {
@@ -76,14 +76,14 @@ data <- within(data, {
   })
 ```
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, eval=FALSE}
 # Prap geodata for "MLRA 111B - Glynwood B-slope Erosion; Northeastern IN"
 
 library(raster)
 
 # NW files
 
-fd <- "M:/geodata/project_data/11FIN/PointDataEval/"
+fd <- "D:/geodata/project_data/11FIN/PointDataEval/"
 dd <- c("slope10",
         "procrv10",
         "plncrv10",
@@ -96,41 +96,51 @@ fp <- paste0(fd, "Mosaic_NW_pts/Derivatives/", dd, "/", "w001001.adf")
 rs <- stack(fp)
 names(rs) <- dd
 proj4string(rs) <- CRS("+init=epsg:2965")
-data_nw <- as.data.frame(extract(rs, data_sp, df = TRUE, sp = TRUE))
-data_nw <- subset(data_nw, !is.na(slope10))
+gd_nw <- as.data.frame(extract(rs, data_sp, df = TRUE, sp = TRUE))
+gd_nw <- subset(gd_nw, !is.na(slope10))
 
 fp <- paste0(fd, "Mosaic_SE_pts/Derivatives/", dd, "/", "w001001.adf")
 rs <- stack(fp)
 names(rs) <- dd
 proj4string(rs) <- CRS("+init=epsg:2965")
-data_se <- as.data.frame(extract(rs, data_sp, df = TRUE, sp = TRUE))
-data_se <- subset(data_se, !is.na(slope10))
+gd_se <- as.data.frame(extract(rs, data_sp, df = TRUE, sp = TRUE))
+gd_se <- subset(gd_se, !is.na(slope10))
 
-data_pts <- rbind(data_nw, data_se)
+gd15ft <- rbind(gd_nw, gd_se)
+rm(gd_nw, gd_se)
+write.csv(gd15ft, file = paste0(ownCloud, "geodata_15ft_extract.csv"))
 
 # geodata files
 
-fd <- "M:/geodata/project_data/11FIN/"
+fd <- "D:/geodata/project_data/11IND/"
 
-dd <- c("ned10m_11FIN.tif",
-        "ned10m_11FIN_aspect5.tif",
-        "ned10m_11FIN_slope5.tif",
-        "ned10m_11FIN_slopeshape.tif",
-        "ned30m_11FIN_mvalleys.tif",
-        "ned30m_11FIN_wetness.tif",
-        "ned30m_11FIN_z2stream.tif",
-        "nlcd30m_11FIN_lulc2011.tif"
+dd <- c("ned10m_11IND.tif",
+        "ned10m_11IND_aspect5.tif",
+        "ned10m_11IND_slopeshape.tif",
+        "ned30m_11IND_mvalleys.tif",
+        "ned30m_11IND_wetness.tif",
+        "ned30m_11IND_z2stream.tif",
+        "nlcd30m_11IND_lulc2011.tif"
         )
+dd_names <- c("elev", "aspect5", "kp5", "kt5", "slope5", "mvalley", "wetness2", "z2streams", "lulc")
+dd <- paste0(fd, dd)
+rs10m <- stack(dd[grepl("10m", dd)])
+names(rs10m) <- dd_names[1:5]
+rs30m <- stack(dd[grepl("30m", dd)])
+names(rs30m) <- dd_names[6:9]
 
-rs <- stack(paste0(fd, dd[grepl("10m", dd)]))
-geodata_10m
+gd10m <- as.data.frame(extract(rs10m, data_sp, df = TRUE, sp = TRUE))
+gd30m <- extract(rs30m, data_sp, df = TRUE)
+data <- cbind(gd10m, gd30m[, -1])
+rm(gd10m, gd30m)
 
-rs30m_11FIN <- stack(paste0(fd, dd[grepl("30m", dd)]))
+write.csv(data, file = paste0(ownCloud, "Pts_gnbero_27Jan17_geodata.csv"))
 ```
 
 # Evaluate the Project by AREASYMBOL
 
 ```{r}
+data <- read.csv("Pts_gnbero_27Jan17_geodata.csv")
 ssa_sub <- subset(ssa, areasymbol %in% unique(data$AREASYMBOL))
 ssa_sub <- spTransform(ssa_sub, CRS("+init=epsg:4326"))
 
@@ -176,8 +186,10 @@ The accuracy of the current ArcSIE model appears to be low, according to several
 
 ```{r EroClassFD boxplots, fig.height=7, fig.width=7.5}
 soil_vals <- c("hzthk", "SolumDp", "CaCO3Dp", "claytotest", "firstbtclay", "mxvalue", "mxchroma")
-geo_vals <- c("SlopeSIE", "ProfCrv", "PlanCrv", "relpos", "wetness")
-vals <- c(soil_vals, geo_vals)
+geo_vals1 <- c("SlopeSIE", "ProfCrv", "PlanCrv", "relpos", "wetness")
+geo_vals2 <- c("slope5", "kt5", "kp5", "z2streams", "wetness2", "mvalley")
+
+vals <- c(soil_vals, geo_vals1, geo_vals2)
 
 data_lo1 <- melt(data, id.vars = "EroClassFD", measure.vars = vals)
 data_lo2 <- melt(data, id.vars = "EroClassSIE", measure.vars = vals)
@@ -217,7 +229,7 @@ An exploratory analysis illustrated a considerable amount of overlap exists betw
 
 ```{r mda, fig.height=4, fig.width=7.5}
 soil_vals2 <- c("hzthk", "SolumDp", "CaCO3Dp", "claytotest", "firstbtclay") # excluded color, only observed a narrow range thus small differences swamp everthing else
-vals <- c(soil_vals2, geo_vals)
+vals <- c(soil_vals2, geo_vals2)
 
 test <- data[, vals]
 test_d <- daisy(scale(test), metric = "gower")
@@ -232,6 +244,8 @@ g2 <- ggplot(test_pts, aes(x = MDS1, y = MDS2, color = EroClassFD)) +
   theme(aspect.ratio = 1)
 grid.arrange(g1, g2, ncol = 2)
 ```
+
+Regardless of whatever geodata is used it appears that only it appears that only severe and slight are separatable. Moderate seems to overlap the most with slight.
 
 
 ## Comparison of the Erosion Classes and Hierachical Clusters
@@ -248,13 +262,16 @@ rect.hclust(test_c, k = 3)
 clusters <- cbind(data, 
                   test_pts[, 1:2], 
                   clusters = factor(cutree(test_c, k = 4),
-                                    levels = 4:1,
+                                    levels = c(4, 2, 3, 1),
                                     labels = ero_labels
                                     )
                   )
 
 xtabs(~ EroClassFD + clusters, data = clusters)
 xtabs(~ EroClassSIE + clusters, data = clusters)
+
+cm <- confusionMatrix(data = clusters$clusters, reference = clusters$EroClassFD)
+round(cm$ov, 2)
 ```
 
 
@@ -315,29 +332,40 @@ confusionMatrix(data = predict(test2, type = "response"), reference = clusters$c
 #### FD Classes vs DEM Derivatives
 
 ```{r, fig.width=7.5}
-test3 <- ctree(EroClassFD ~ ., data = clusters[, c("EroClassFD", geo_vals)])
+test3 <- ctree(EroClassFD ~ ., data = clusters[, c("EroClassFD", geo_vals2)])
 plot(test3)
 confusionMatrix(data = predict(test3, type = "response"), reference = clusters$EroClassFD)
 
-test3 <- cforest(EroClassFD ~ ., data = clusters[, c("EroClassFD", geo_vals)])
+test3 <- cforest(EroClassFD ~ ., data = clusters[, c("EroClassFD", geo_vals2)])
 varimp(test3)
-confusionMatrix(data = predict(test3, type = "response"), reference = clusters$EroClassFD)
+confusionMatrix(data = predict(test3, type = "response", OOB=TRUE), reference = clusters$EroClassFD)
 ```
 
 
 #### Clusters vs DEM Derivatives
 
 ```{r, fig.width=7.5}
-test4 <- ctree(clusters ~ ., data = clusters[, c("clusters", geo_vals)])
+test4 <- ctree(clusters ~ ., data = clusters[, c("clusters", geo_vals2)])
 plot(test4)
 confusionMatrix(data = predict(test4, type = "response"), reference = clusters$clusters)
 
-test4 <- cforest(clusters ~ ., data = clusters[, c("clusters", geo_vals)])
+test4 <- cforest(clusters ~ ., data = clusters[, c("clusters", geo_vals2)])
 varimp(test4)
-confusionMatrix(data = predict(test4, type = "response"), reference = clusters$clusters)
+confusionMatrix(data = predict(test4, type = "response", OOB=TRUE), reference = clusters$clusters)
 ```
 
 
+### Soil series and phase
+
+```{r}
+data$weights <- ifelse(data$soilname == "Glynwood", 0.1, 1)
+
+test = cforest(as.factor(soilname2) ~ elev + slope5 + kt5 + kp5 + wetness2 + mvalley + z2streams + as.factor(lulc), data = data, weights = data$weights)
+
+cm <- confusionMatrix(data = predict(test, type = "response", OOB=TRUE), reference = data$soilname2)
+
+round(cm$byClass["Pos Pred Value"], 2)
+```
 
 
 ## Summary
