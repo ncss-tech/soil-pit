@@ -6,17 +6,16 @@ output: html_document
 ---
 
 
-```{r, echo = FALSE}
-knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```{r setup, echo = FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE)
+
+options(stringsAsFactors = FALSE)
+
+ownCloud <-"C:/Users/stephen.roecker/ownCloud/projects/neil_arcsie/"
 ```
 
 
-```{r setup, echo=FALSE}
-## Setup
-
-options(stringsAsFactors = FALSE)
-ownCloud <-"C:/Users/stephen.roecker/ownCloud/projects/neil_arcsie/"
-  
+```{r load packages}
 library(aqp)
 library(soilDB)
 
@@ -45,44 +44,64 @@ Spatially disaggregate the existing SSURGO polygons for Glynwood B-slope map uni
 
 ## Import Data and Transform
 
-```{r read and tranform, echo=FALSE}
-project <- get_sdjr_NASIS_db()
-project_mu <- project[!duplicated(project$nationalmusym), c("nationalmusym", "muname")]
+```{r import data and tranform}
+# projectmapunit data from NASIS
+project <- get_projectmapunit_from_NASIS()
+p
+project_nodups <- project[!duplicated(project$nationalmusym), c("nationalmusym", "muname")]
+
+# Series Extent of Glynwood from SoilWeb
 gw_se <- seriesExtent("Glynwood")
+
+# MUPOLYGONs for the Project
 gw_pol <- readOGR(dsn = paste0(ownCloud, "glynwood.shp"), layer = "glynwood")
+
+# Soil Survey Areas
 ssa <- readOGR(dsn = "E:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs")
 
+# Field Data
 data <- read.csv(paste0(ownCloud, "Pts_gnbero_27Jan17.csv"))
+
 ero_labels <- c("undisturbed", "slight", "moderate", "severe")
+
 data <- transform(data,
                   EroClassFD = factor(EroClassFD, levels = 0:3, labels = ero_labels),
                   EroClassSIE = factor(EroClassSIE, levels = 0:3, labels = ero_labels),
                   rgb = munsell2rgb(mxhue, mxvalue, mxchroma, return_triplets = TRUE)
                   )
-data$soilname2 <- with(data, paste0(soilname, ifelse(soilname == "Glynwood", paste0("-", as.character(EroClassFD)), "")))
+data$soilname2 <- with(data, 
+                       paste0(soilname, ifelse(soilname == "Glynwood", paste0("-", as.character(EroClassFD)), ""))
+                       )
+```
 
+```{r geodata, echo=FALSE, eval=FALSE}
+
+# Make data to spatial object
 data_sp <- data
 coordinates(data_sp) <- ~ long + lat
 proj4string(data_sp) <- CRS("+init=epsg:4326")
-data_sp2 <- spTransform(data_sp, CRS(proj4string(gw_pol)))
-# writeOGR(data_sp2, dsn = ownCloud, layer = "glynwood_bslopes", driver = "ESRI Shapefile")
-data <- cbind(data, over(data_sp2, gw_pol))
-data <- merge(data, project_mu, by.x = "nationalmu", by.y = "nationalmusym", all.x = TRUE, sort = FALSE)
+data_sp <- spTransform(data_sp, CRS(proj4string(gw_pol)))
+writeOGR(data_sp, dsn = ownCloud, layer = "glynwood_data", driver = "ESRI Shapefile")
+
+
+# Merge data and spatial overlay
+data <- cbind(data, over(data_sp, gw_pol))
+data <- merge(data, project_nodups, by.x = "nationalmu", by.y = "nationalmusym", all.x = TRUE, sort = FALSE)
+
+
+# Extract erosion phases from NASIS and combine component and phase
 data <- within(data, {
   EroClassNASIS = NA
   EroClassNASIS[grepl("eroded", muname)] = "eroded"
   EroClassNASIS[grepl("sev.|severely", muname)] = "sev.eroded"
   EroClassNASIS[!grepl("eroded", muname)] = "non.eroded"
   })
-```
 
-```{r, echo=FALSE, eval=FALSE}
-# Prap geodata for "MLRA 111B - Glynwood B-slope Erosion; Northeastern IN"
 
+# Extract data from rasters
 library(raster)
 
 # NW files
-
 fd <- "D:/geodata/project_data/11FIN/PointDataEval/"
 dd <- c("slope10",
         "procrv10",
@@ -99,6 +118,7 @@ proj4string(rs) <- CRS("+init=epsg:2965")
 gd_nw <- as.data.frame(extract(rs, data_sp, df = TRUE, sp = TRUE))
 gd_nw <- subset(gd_nw, !is.na(slope10))
 
+# SE files
 fp <- paste0(fd, "Mosaic_SE_pts/Derivatives/", dd, "/", "w001001.adf")
 rs <- stack(fp)
 names(rs) <- dd
@@ -110,10 +130,9 @@ gd15ft <- rbind(gd_nw, gd_se)
 rm(gd_nw, gd_se)
 write.csv(gd15ft, file = paste0(ownCloud, "geodata_15ft_extract.csv"))
 
-# geodata files
 
+# Region 11 files
 fd <- "D:/geodata/project_data/11IND/"
-
 dd <- c("ned10m_11IND.tif",
         "ned10m_11IND_aspect5.tif",
         "ned10m_11IND_slopeshape.tif",
@@ -134,13 +153,16 @@ gd30m <- extract(rs30m, data_sp, df = TRUE)
 data <- cbind(gd10m, gd30m[, -1])
 rm(gd10m, gd30m)
 
-write.csv(data, file = paste0(ownCloud, "Pts_gnbero_27Jan17_geodata.csv"))
+
+# Save data
+save(data, file = paste0(ownCloud, "Pts_gnbero_27Jan17_geodata.RData"))
 ```
+
 
 # Evaluate the Project by AREASYMBOL
 
 ```{r}
-data <- read.csv("Pts_gnbero_27Jan17_geodata.csv")
+data <- load(paste0(ownCloud, "Pts_gnbero_27Jan17_geodata.RData"))
 ssa_sub <- subset(ssa, areasymbol %in% unique(data$AREASYMBOL))
 ssa_sub <- spTransform(ssa_sub, CRS("+init=epsg:4326"))
 
@@ -356,6 +378,8 @@ confusionMatrix(data = predict(test4, type = "response", OOB=TRUE), reference = 
 
 
 ### Soil series and phase
+
+Try and model the soil components and phases separately. The data is highly unbalanced. Create separate logistic regression models for similar minor components.
 
 ```{r}
 data$weights <- ifelse(data$soilname == "Glynwood", 0.1, 1)
