@@ -17,25 +17,27 @@ library(raster)
 library(lattice)
 library(RColorBrewer)
 
-setwd("C:/Users/stephen.roecker/ownCloud/Documents/lims_data")
+setwd("C:/Users/stephen.roecker/ownCloud/data/lims_data")
 
-st <- c("WI")
-ro <- c(10, 11)
+st <- c("IL")
+ro <- c(11)
 pt <- "SDJR"
 
-load(file = "rcors_fy_summary_2015_09_24_2016_12_20.Rdata")
-load(file = "goals_fy_summary_2015_09_24_2016_12_16.Rdata")
+load(file = "rcors_fy_summary_2015_09_24_2017_05_10.Rdata")
+load(file = "goals_fy_summary_2017_04_17_2017_05_10.Rdata")
 load(file = "ssa.Rdata")
 
 # fy13_r_new <- raster("C:/workspace/gSSURGO_fy13_progress.tif")
 # fy14_r_new <- raster("C:/workspace/gSSURGO_fy14_progress.tif")
 # fy15_r_new <- raster("C:/workspace/gSSURGO_fy15_progress.tif")
 
+rcors$state <- substr(rcors$areasymbol, 1, 2)
 
 rcors_sub <- subset(rcors,
                     state %in% st & 
                     projecttypename == pt & 
-                    region %in% ro
+                    region %in% ro &
+                    fy != 2017
                     )
 
 rcors2<- group_by(rcors_sub, fy, state, projectname, new_muname) %>% 
@@ -47,7 +49,7 @@ rcors2<- group_by(rcors_sub, fy, state, projectname, new_muname) %>%
   summarize(
     acres = sum(as.numeric(strsplit(acres, ", ")[[1]]))
     )
-
+rcors2 <- subset(rcors2, !is.na(acres))
 
 test <- group_by(rcors2, fy) %>% 
   summarize(

@@ -26,7 +26,7 @@ source("C:/workspace/github/soil-pit/trunk/queries/kssl_queries.R")
 
 
 ```{r load}
-setwd("C:/Users/stephen.roecker/ownCloud/Documents/lims_data")
+setwd("C:/Users/stephen.roecker/ownCloud/data/lims_data")
 
 ### Set parameters
 ro <- 11
@@ -294,7 +294,7 @@ ggplot(aes(x = n_musym, y = n_areasymbol, group = fy, color = office)) +
 
 ```{r map_as, fig.height=10, fig.width=8}
 rcors_as <- rcors %>%
-  filter(region == ro & projecttypename %in% pt) %>%
+  filter(region == ro & projecttypename %in% pt & substr(areasymbol, 1, 2) == "IL") %>%
   group_by(fy, region, projectiid, projecttypename, areasymbol) %>%
   summarize(
     n = length(unique(new_mukey)), 
@@ -328,7 +328,7 @@ temp_sub1 <- subset(ssa3, region == ro, select = FY)
 # Use the following code to plot all the county boundaries for states that intersect Region 11
 bb <- st_bbox(temp_sub1)
 ssa3$state <- substr(ssa_sf$areasymbol, 1, 2)
-st <- toupper(c("ia", "il", "in", "ks", "ky", "mi", "mn", "mo", "ne", "oh", "ok", "sd", "wi"))
+st <- toupper(c("il"))
 temp_sub2 <- filter(ssa3, state %in% st) %>% select(FY2013, FY2014, FY2015, FY2016, FY2017))
 
 spplot(temp_sub2,
