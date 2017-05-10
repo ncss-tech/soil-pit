@@ -2,7 +2,7 @@
 
 ```{r enter soil series name}
 # Set soil series
-series <- "Treaty"
+series <- "Ockley"
 
 # Set percentiles
 p <- c(0, 0.25, 0.5, 0.75, 1)
@@ -46,19 +46,18 @@ s <- site(f)
 
 vars <- c("labsampnum", "hzdept", "hzdepb", "total_frags_pct", "total_frags_pct_cal")
 lh <- join(lh, h[vars], by = c("labsampnum", "hzdept", "hzdepb"), type = "left")
+lh <- lh[, c(4, 1, 5, 2:3, 6:length(lh))]
 
-lh <- transform(lh,
-                total_frags_pct = ifelse(is.na(total_frags_pct),
-                                         total_frags_pct_cal,
-                                         total_frags_pct
-                                         ),
-                hzname = ifelse(is.na(hzname),
-                                hznameoriginal, 
-                                hzname
-                                )
-                )
-lh$hzname <- ifelse(is.na(lh$hzname), "missing", lh$hzname)
 lh <- mutate(lh,
+             total_frags_pct = ifelse(is.na(total_frags_pct),
+                                      total_frags_pct_cal,
+                                      total_frags_pct
+                                      ),
+             hzname = ifelse(is.na(hzname),
+                             hznameoriginal, 
+                             hzname
+                             ),
+             hzname = ifelse(is.na(lh$hzname), "missing", lh$hzname),
              hzdepm = (hzdept + hzdepb) / 2,
              genhz = generalize.hz(hzname, ghr$n, ghr$p, hzdepm = hzdepm),
              awc = round((wthirdbarclod - wfifteenbar) * 
@@ -120,7 +119,7 @@ idx <- pindex(l, 15)
 
 # plot no more than 15 soil profiles on each row
 for (i in unique(idx)){
-  plot(l[which(idx == i)], name = 'hzname', color = 'genhz.soil_color', label = 'upedonid')
+  plot(l[idx == i], name = 'hzname', color = "genhz.soil_color", label = 'upedonid')
   title("Soil profile plots")
   legend('bottomleft', legend = hz.names, pt.bg = cols, pch = 22, horiz = TRUE, pt.cex = 2, text.width = 1)
   }
