@@ -2,51 +2,41 @@ ui <- fluidPage(
   titlePanel("Water Table Plots", windowTitle = "Water Table Plots"),
   p("This is a web application which uses R to query component month soil moisture data
     from Soil Data Access and plots it graphically.  You will need to determine the mapunit key
-    (mukey) of the mapunit of interest to view the data.  You also have the option of viewing either
-    flooding frequency or ponding frequency in the plot by clicking the radio buttons below."),
+    (mukey) of the mapunit of interest to view the data on the plot tab.  You also have the option of viewing either
+    flooding frequency or ponding frequency in the plot by clicking the radio buttons below.  
+    To view the data table used to create the graphic, select the data tab."),
   sidebarLayout(
-    sidebarPanel(
+    sidebarPanel(width=2,
+    
       textInput(
         inputId="inmukey",
-        label="Enter mukey to plot",
-        406339),
-      uiOutput("choicelist"),
-      p("This application was developed by John Hammerly and Stephen Roecker.")
-    ),
-    mainPanel(
-      tabsetPanel(
-        type="tabs",
+        label="Enter mukey to plot -",
+        406339), actionButton("submukey", "Submit"), br(), p(), tags$b("CURRENT SELECTION:"), br(), p(), tags$b("Mapunit Name - "), br(), uiOutput("muname", container= tags$span), br(), p(), radioButtons(inputId="filltype", "Choose fill:", c("flooding","ponding"))),
+
+      mainPanel(tabsetPanel(
+        type="pills",
         tabPanel("Plot",
                  fluidRow(
-                   tags$b("Mapunit Name:"),uiOutput("muname", container= tags$span)),
-                 fluidRow(tags$p()),
-                 fluidRow(
-                   column(width=1, radioButtons(inputId="filltype", "Choose fill:", c("flooding","ponding"))),
-                   column(width=11, offset=0, plotOutput("result")))
+                   plotOutput("result")),      p("This application was developed by John Hammerly and Stephen Roecker.")
+                   
         ),
-        tabPanel("Interactive Plot",
-                 fluidRow(
-                   tags$b("Mapunit Name:"),uiOutput("muname2", container= tags$span)),
-                 fluidRow(tags$p()),
-                 fluidRow(
-                   column(width=1, radioButtons(inputId="statustype", "Choose status:", c("Dry","Moist","Wet"), "Wet")),
-                   column(width=11, offset=0, htmlOutput("gviswt")))
-        ),
-        tabPanel("Data", dataTableOutput("shdatatab"))
+        tabPanel("Data", dataTableOutput("shdatatab"),p("This application was developed by John Hammerly and Stephen Roecker."))
       )
-    )
+      )
   )
   )
 
 server <- function(input, output){
   
-  output$result <- renderPlot({ 
-    library(soilDB)
-    library(dplyr)
-    library(ggplot2)
-    library(googleVis)
+  library(soilDB)
+  library(dplyr)
+  library(ggplot2)
+  library(googleVis)
+  
+  output$result <- renderPlot({ input$submukey
+
     
-    wtlevels <- get_cosoilmoist_from_SDA_db(WHERE = paste0("mukey = '", input$inmukey, "'"), duplicates = TRUE)
+    wtlevels <- get_cosoilmoist_from_SDA_db(WHERE = paste0("mukey = '", isolate(input$inmukey), "'"), duplicates = TRUE)
     
     if (input$filltype=="flooding") {ggplot(wtlevels, aes(x = as.integer(month), y = dept_r, lty = status))+
         geom_rect(aes(xmin = as.integer(month), xmax = as.integer(month)+
@@ -70,52 +60,25 @@ server <- function(input, output){
         facet_wrap(~ paste(compname, comppct_r, "pct", nationalmusym, sep = "-")) +
         ggtitle("Water Table Levels from Component Soil Moisture Month Data")}})
   
-  output$muname<-renderText({    
-    wtlevels <- get_cosoilmoist_from_SDA_db(WHERE = paste0("mukey = '", input$inmukey, "'"), duplicates = TRUE)
+  output$muname<-renderText({    input$submukey
+    wtlevels <- get_cosoilmoist_from_SDA_db(WHERE = paste0("mukey = '", isolate(input$inmukey), "'"), duplicates = TRUE)
     
     wtlevels$muname[1]})
   
-  output$muname2<-renderText({    
-    wtlevels <- get_cosoilmoist_from_SDA_db(WHERE = paste0("mukey = '", input$inmukey, "'"), duplicates = TRUE)
+  output$muname2<-renderText({   input$submukey 
+    wtlevels <- get_cosoilmoist_from_SDA_db(WHERE = paste0("mukey = '", isolate(input$inmukey), "'"), duplicates = TRUE)
     
     wtlevels$muname[1]})
   
-  output$shdatatab<- renderDataTable({
-    wtlevels <- get_cosoilmoist_from_SDA_db(WHERE = paste0("mukey = '", input$inmukey, "'"), duplicates = TRUE)})
+  output$shdatatab<- renderDataTable({input$submukey
+    wtlevels <- get_cosoilmoist_from_SDA_db(WHERE = paste0("mukey = '", isolate(input$inmukey), "'"), duplicates = TRUE)}, options = list(pageLength=50))
   
-  output$choicelist<- renderUI(
-    selectInput("comp","Choose component for interactive plot", {
-      wtlevels <- get_cosoilmoist_from_SDA_db(WHERE = paste0("mukey = '", input$inmukey, "'"), duplicates = TRUE); as.list(unique(wtlevels$compname))}))
+  output$choicelist<- renderUI( 
+    selectInput("comp","Choose component for interactive plot", {input$submukey
+      wtlevels <- get_cosoilmoist_from_SDA_db(WHERE = paste0("mukey = '", isolate(input$inmukey), "'"), duplicates = TRUE)
+      as.list(unique(wtlevels$compname))}))
+
+ 
   
-  output$gviswt <- renderGvis({
-    wtlevels <- get_cosoilmoist_from_SDA_db(WHERE = paste0("mukey = '", input$inmukey, "'"), duplicates = TRUE)
-    gvisComboChart(
-      wtlevelsdf<-wtlevels %>%
-        filter(status==input$statustype, compname==input$comp) %>%
-        select(month,
-               top_depth.interval.1=dept_l,
-               top_depth=dept_r,
-               top_depth.interval.2=dept_h,
-               bottom_depth.interval.1=depb_l,
-               bottom_depth=depb_r,
-               bottom_depth.interval.2=depb_h),
-      xvar='month',
-      yvar=c('top_depth',
-             'top_depth.interval.1',
-             'top_depth.interval.2',
-             'bottom_depth',
-             'bottom_depth.interval.1',
-             'bottom_depth.interval.2'),
-      options=list(
-        title='Water Table Levels from Component Soil Moisture Month Data',
-        width="100%",
-        height="500px",
-        series="[{color:'blue'}]",
-        seriesType="line",
-        curveType="function",
-        intervals="{ 'style':'area' }",
-        vAxis="{title:'Depth (cm)', direction: '-1', maxValue:200}",
-        hAxis="{title:'Month', slantedText:1}"))
-  })
 }
 shinyApp(ui = ui, server = server)
