@@ -31,7 +31,8 @@ server <- function(input, output){
   library(soilDB)
   library(dplyr)
   library(ggplot2)
-  library(googleVis)
+  library(httr)
+  library(jsonlite)
   
   output$result <- renderPlot({ input$submukey
 
