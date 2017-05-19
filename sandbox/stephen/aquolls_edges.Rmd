@@ -22,7 +22,7 @@ library(ggplot2)
 
 
 # import data
-aquolls <- read.csv("C:/workspace/Aquolls_edges.csv")
+aquolls <- read.csv("C:/Users/stephen.roecker/ownCloud/projects/Aquolls_edges.csv")
 
 
 # modify column headers

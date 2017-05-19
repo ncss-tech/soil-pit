@@ -1,3 +1,7 @@
-[glynwood project](http://ncss-tech.github.io/soil-pit/updates/r11fin_glynwood_erosion.html)
-
-[data loggers](http://ncss-tech.github.io/soil-pit/sandbox/alena/data_logger/Kokomo71_fp.html)
+# Links to Projects
+- [madison2015_prez](http://ncss-tech.github.io/soil-pit/updates/madison2015_prez.html)
+- [Cardington and Centerburg project](http://ncss-tech.github.io/soil-pit/updates/neil_arcsie.html)
+- [glynwood project](http://ncss-tech.github.io/soil-pit/updates/r11fin_glynwood_erosion.html)
+- [data loggers](http://ncss-tech.github.io/soil-pit/sandbox/alena/data_logger/Kokomo71_fp.html)
+- [fetchSDA_component()](http://ncss-tech.github.io/soil-pit/sandbox/stephen/cuneiform_article_20170519.html)
+- [Aquoll Edges](http://ncss-tech.github.io/soil-pit/sandbox/stephen/aquolls_edges.html)

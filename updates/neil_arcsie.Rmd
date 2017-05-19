@@ -56,7 +56,7 @@ One of the goals of these projects was to develop an ArcSIE model in order to di
 
 ```{r read and tranform}
 
-data <- read.csv("C:/workspace/neil_arcsie/Pedon_Data_DumpSIE.csv")
+data <- read.csv("C:/Users/stephen.roecker/ownCloud/projects/neil_arcsie/Pedon_Data_DumpSIE.csv")
 
 names(data) <- gsub(" ", "", names(data))
 names(data) <- gsub("\\.", "", names(data))
