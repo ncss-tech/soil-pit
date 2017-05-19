@@ -1,30 +1,50 @@
-ui <- fluidPage(
-  titlePanel("Water Table Plots", windowTitle = "Water Table Plots"),
-  p("This is a web application which uses R to query component month soil moisture data
-    from Soil Data Access and plots it graphically.  You will need to determine the mapunit key
-    (mukey) of the mapunit of interest to view the data on the plot tab.  You also have the option of viewing either
-    flooding frequency or ponding frequency in the plot by clicking the radio buttons below.  
-    To view the data table used to create the graphic, select the data tab."),
-  sidebarLayout(
-    sidebarPanel(width=2,
-    
-      textInput(
-        inputId="inmukey",
-        label="Enter mukey to plot -",
-        406339), actionButton("submukey", "Submit"), br(), p(), tags$b("CURRENT SELECTION:"), br(), p(), tags$b("Mapunit Name - "), br(), uiOutput("muname", container= tags$span), br(), p(), radioButtons(inputId="filltype", "Choose fill:", c("flooding","ponding"))),
+library(shinydashboard)
 
-      mainPanel(tabsetPanel(
-        type="pills",
-        tabPanel("Plot",
-                 fluidRow(
-                   plotOutput("result")),      p("This application was developed by John Hammerly and Stephen Roecker.")
-                   
-        ),
-        tabPanel("Data", dataTableOutput("shdatatab"),p("This application was developed by John Hammerly and Stephen Roecker."))
-      )
-      )
+header<-dashboardHeader(
+  title="Region 11 SDA Web Application", titleWidth= 450)
+
+sidebar<-dashboardSidebar(
+  sidebarMenu(
+    menuItem("Water Table Plots", tabName="WTPlots", selected=TRUE, icon=icon("area-chart")),
+    menuItem("Organic Matter Plots", tabName="OMPlots", icon=icon("line-chart"))))
+
+body<-dashboardBody(
+  tabItems(
+    tabItem(tabName="WTPlots", class="active",
+            titlePanel("Water Table Plots", windowTitle = "Water Table Plots"),
+            p("This is a web application which uses R to query component month soil moisture data
+              from Soil Data Access and plots it graphically.  You will need to determine the mapunit key
+              (mukey) of the mapunit of interest to view the data on the plot tab.  You also have the option of viewing either
+              flooding frequency or ponding frequency in the plot by clicking the radio buttons below.  
+              To view the data table used to create the graphic, select the data tab."),
+            sidebarLayout(
+              sidebarPanel(width=2,
+                           
+                           textInput(
+                             inputId="inmukey",
+                             label="Enter mukey to plot -",
+                             406339), actionButton("submukey", "Submit"), br(), p(), tags$b("CURRENT SELECTION:"), br(), p(), tags$b("Mapunit Name - "), br(), uiOutput("muname", container= tags$span), br(), p(), radioButtons(inputId="filltype", "Choose fill:", c("flooding","ponding"))),
+              
+              mainPanel(tabsetPanel(
+                type="pills",
+                tabPanel("Plot",
+                         fluidRow(
+                           plotOutput("result")),      p("This application was developed by John Hammerly and Stephen Roecker.")
+                         
+                ),
+                tabPanel("Data", dataTableOutput("shdatatab"),p("This application was developed by John Hammerly and Stephen Roecker."))
+              )
+              )
+            )
+            ),
+    tabItem(tabName="OMPlots", titlePanel("Organic Matter Plots", windowTitle = "Organic Matter Plots"), p("This Plot is currently under development.")
+    )
   )
   )
+
+
+ui <- dashboardPage(header, sidebar, body)
+
 
 server <- function(input, output){
   
@@ -35,7 +55,7 @@ server <- function(input, output){
   library(jsonlite)
   
   output$result <- renderPlot({ input$submukey
-
+    
     
     wtlevels <- get_cosoilmoist_from_SDA_db(WHERE = paste0("mukey = '", isolate(input$inmukey), "'"), duplicates = TRUE)
     
@@ -78,8 +98,8 @@ server <- function(input, output){
     selectInput("comp","Choose component for interactive plot", {input$submukey
       wtlevels <- get_cosoilmoist_from_SDA_db(WHERE = paste0("mukey = '", isolate(input$inmukey), "'"), duplicates = TRUE)
       as.list(unique(wtlevels$compname))}))
-
- 
+  
+  
   
 }
 shinyApp(ui = ui, server = server)
