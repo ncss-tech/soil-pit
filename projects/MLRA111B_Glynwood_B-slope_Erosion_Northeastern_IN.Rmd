@@ -1,0 +1,478 @@
+---
+title: "MLRA 111B - Glynwood B-slope Erosion; Northeastern IN"
+author: "Stephen Roecker and Neil Martin"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+
+```{r setup, echo = FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE)
+
+options(stringsAsFactors = FALSE)
+
+ownCloud <- "C:/Users/stephen/ownCloud/projects/neil_arcsie/"
+geodata <- "M:/geodata/"
+```
+
+
+```{r load packages}
+library(aqp)
+library(soilDB)
+
+library(reshape2)
+library(ggplot2)
+library(gridExtra)
+library(knitr)
+
+library(cluster)
+library(caret)
+library(party)
+library(vegan)
+
+library(rgdal)
+library(sp)
+library(mapview)
+```
+
+
+## Introduction
+
+This analysis looks at the field data collected for the following 2017 MLRA project:
+- MLRA 111B - Glynwood B-slope Erosion; Northeastern IN 
+
+Spatially disaggregate the existing SSURGO polygons for Glynwood B-slope map units using ArcSIE, in order to separate different soil erosion phases. The current SSURGO maps indicate only 1 erosion phase per soil survey area (SSA), which has resulted in join issues at the SSA boundaries. This project is deemed relevant due to the current interest in Soil Health. Distinguishing the difference in erosion phases may have minimal impact on the majority of soil interpretations, but is believed to be significant in distinguishing crop yields.
+
+## Import Data and Transform
+
+```{r import data and tranform, eval=FALSE}
+
+# projectmapunit data from NASIS
+project <- get_projectmapunit_from_NASIS()
+project_nodups <- project[!duplicated(project$nationalmusym), c("nationalmusym", "muname")]
+
+# MUPOLYGONs for the Project
+gw_pol <- readOGR(dsn = paste0(ownCloud, "glynwood.shp"), layer = "glynwood")
+
+# Soil Survey Areas
+ssa <- readOGR(dsn = paste0(geodata, "soils/soilsa_a_nrcs.shp"), layer = "soilsa_a_nrcs")
+
+# Series Extent of Glynwood from SoilWeb
+gw_series <- seriesExtent("Glynwood")
+
+# field Data
+gw <- read.csv(paste0(ownCloud, "Pts_gnbero_27Jan17.csv"))
+
+gw_sp <- gw
+coordinates(gw_sp) <- ~ long + lat
+proj4string(gw_sp) <- CRS("+init=epsg:4326")
+gw_sp <- spTransform(gw_sp, CRS(proj4string(gw_pol)))
+
+# spatial overlay field data with mupolygons and merge with nasis mapunits
+vars <- c("AREASYMBOL", "nationalmu")
+gw <- cbind(gw, over(gw_sp, gw_pol)[vars])
+gw <- merge(gw, project_nodups, by.x = "nationalmu", by.y = "nationalmusym", all.x = TRUE, sort = FALSE)
+
+
+# Extract erosion phases from NASIS and combine component and phase
+ero_labels <- c("undisturbed", "slight", "moderate", "severe")
+
+gw <- within(gw, {
+  EroClassFD  = factor(EroClassFD, levels = 0:3, labels = ero_labels)
+  EroClassSIE = factor(EroClassSIE, levels = 0:3, labels = ero_labels)
+  EroClassFD2 = ifelse(EroClassFD == "severe", "severe", "slight")
+
+  EroClassNASIS = NA
+  EroClassNASIS[grepl("eroded", muname)] = "eroded"
+  EroClassNASIS[grepl("sev.|severely", muname)] = "sev.eroded"
+  EroClassNASIS[!grepl("eroded", muname)] = "non.eroded"
+  
+  soilname2 = soilname
+  soilname2 = ifelse(soilname2 %in% c("Glynwood", "Morley", "Shinrock", "Rawson", "Mississinewa"), "Glynwood", soilname2)
+  soilname2 = ifelse(soilname2 %in% c("Blount", "Elliott"), "Blount", soilname2)
+  soilname2 = ifelse(soilname2 %in% c("Pewamo", "Pandora", "Mermill"), "Pewamo", soilname2)
+  soilname3 = paste0(soilname2, ifelse(soilname2 == "Glynwood", paste0("-", EroClassFD2), ""))
+  })
+gw <- transform(gw,
+                rgb = munsell2rgb(mxhue, mxvalue, mxchroma, return_triplets = TRUE)
+                )
+gw_sp <- gw
+coordinates(gw_sp) <- ~ long + lat
+proj4string(gw_sp) <- CRS("+init=epsg:4326")
+gw_sp <- spTransform(gw_sp, CRS(proj4string(gw_pol)))
+```
+
+```{r geodata, eval=FALSE}
+
+# Extract data from rasters
+library(raster)
+
+# NW files
+fd <- paste0(geodata, "project_data/11FIN/PointDataEval/")
+dd <- c("slope10",
+        "procrv10",
+        "plncrv10",
+        "maxcrv10",
+        "mincrv10",
+        "relpos_r5",
+        "wetness_mp"
+        )
+fp <- paste0(fd, "Mosaic_NW_pts/Derivatives/", dd, "/", "w001001.adf")
+rs <- stack(fp)
+names(rs) <- dd
+proj4string(rs) <- CRS("+init=epsg:2965")
+gd_nw <- extract(rs, gw_sp, df = TRUE, sp = TRUE)@data
+gd_nw <- subset(gd_nw, !is.na(slope10))
+
+# SE files
+fp <- paste0(fd, "Mosaic_SE_pts/Derivatives/", dd, "/", "w001001.adf")
+rs <- stack(fp)
+names(rs) <- dd
+proj4string(rs) <- CRS("+init=epsg:2965")
+gd_se <- extract(rs, gw_sp, df = TRUE, sp = TRUE)@data
+gd_se <- subset(gd_se, !is.na(slope10))
+
+gd15ft <- rbind(gd_nw, gd_se)
+rm(gd_nw, gd_se)
+write.csv(gd15ft, file = paste0(ownCloud, "geodata_15ft_extract.csv"))
+
+
+# Region 11 files
+
+subset_rasters <- function(input, output) {
+  cat(paste0(input, "\n"))
+  gdal_translate(
+    src_dataset = input,
+    dst_dataset = output,
+    projwin = c(bb[1,1], bb[2,2], bb[1,2], bb[2,1]),
+    of = "GTiff",
+    a_nodata = -99999,
+    overwrite = TRUE,
+    verbose = TRUE
+    )
+  }
+
+warp_rasters <- function(input, output){
+  cat(paste0(input,"\n"))
+  gdalwarp(
+    srcfile = input,
+    dstfile = output,
+    te = bb,
+    s_srs = CRSargs(CRS("+init=epsg:5070")),
+    t_srs = CRSargs(CRS("+init=epsg:5070")),
+    r = "bilinear",
+    tr = c(10, 10),
+    of = "GTiff",
+    overwrite = TRUE,
+    verbose = TRUE 
+    )
+  }
+
+fd <- paste0(geodata, "project_data/11FIN/sdat/")
+dd2 <- c("ned10m_11FIN.sdat",
+        "ned10m_11FIN_aspect5.sdat",
+        "ned10m_11FIN_slope5.sdat",
+        "ned10m_11FIN_cupro5.sdat",
+        "ned10m_11FIN_cutan5.sdat",
+        "ned30m_11FIN_mvalleys.sdat",
+        "ned30m_11FIN_wetness.sdat",
+        "ned30m_11FIN_z2stream.sdat",
+        "nlcd30m_11FIN_lulc2011.sdat"
+        )
+dd_names <- c("elev", "aspect5", "slope5", "kp5", "kt5", "mvalley", "wetness2", "z2streams", "lulc")
+dd <- paste0(fd, dd2)
+
+input <- dd
+output <- paste0(geodata, "project_data/11FIN/glynwood/", gsub(".sdat", ".tif", dd2))
+bb <- bbox(gw_sp <- spTransform(gw_sp, CRS("+init=epsg:5070")))
+
+mapply(subset_rasters, input, output)
+mapply(subset_rasters, input = paste0(geodata, "project_data/11FIN/nlcd30m_11FIN_lulc2011.tif"), output = paste0(geodata, "project_data/11FIN/glynwood/nlcd30m_11FIN_lulc2011.tif"))
+
+mapply(warp_rasters, input = output, output = gsub(".tif", "2.tif", gsub("30m", "10m", output)))
+
+dd <- output
+ 
+rs10m <- stack(dd[grepl("10m", dd)])
+names(rs10m) <- dd_names[1:5]
+rs30m <- stack(dd[grepl("30m", dd)])
+names(rs30m) <- dd_names[6:9]
+
+rs10m <- stack(gsub(".tif", "2.tif", gsub("30m", "10m", output)))
+names(rs10m) <- dd_names
+
+gw <- as.data.frame(extract(rs10m, gw_sp, df = TRUE, sp = TRUE))
+gd30m <- as.data.frame(extract(rs30m, gw_sp, df = TRUE))
+gw <- cbind(gd10m, gd30m[, -1])
+rm(gd10m, gd30m)
+
+
+# Save data
+save(gw, gw_sp, gw_pol, gw_series, ssa, ero_labels, file = paste0(ownCloud, "Pts_gnbero_27Jan17_geodata.RData"))
+```
+
+
+# Evaluate the Project by AREASYMBOL
+
+```{r}
+load(paste0(ownCloud, "Pts_gnbero_27Jan17_geodata.RData"))
+
+ssa <- subset(ssa, areasymbol %in% unique(gw$AREASYMBOL))
+ssa <- spTransform(ssa, CRS("+init=epsg:4326"))
+
+mapView(gw_series) + gw_sp + ssa
+
+vals2 <- c("EroClassFD", "EroClassNASIS", "nationalmu", "AREASYMBOL")
+gw_sub <- gw[vals2]
+gw_sub2 <- by(gw_sub, gw_sub$nationalmu, function(x) {
+  x[vals2][1]
+  x[, 4] <- "MLRA"
+  return(x)
+  })
+gw_sub2 <- do.call("rbind", gw_sub2)
+gw_sub <- rbind(gw_sub, gw_sub2)
+gw_sub$natmuSsaEro <-  with(gw_sub,
+                            paste0(nationalmu, "-", AREASYMBOL, "-", EroClassNASIS)
+                            )
+test <- xtabs(~ natmuSsaEro + EroClassFD, data = gw_sub)
+kable(test, caption = "Frequence by MUSYM-SSA-EROSION")
+kable(round(prop.table(test, 1) * 100), caption = "Percent by MUSYM-SSA-EROSION")
+```
+
+The field data does not confirm the map units phased severely eroded.
+
+
+## Evaluation of the Accuracy of the ArcSIE Predictions
+
+```{r analyze}
+cm <- confusionMatrix(data = gw$EroClassSIE, reference = gw$EroClassFD)
+print(cm)
+
+test <- as.data.frame(cm$table)
+
+ggplot(test, aes(x = Reference, y = Freq, fill = Prediction)) +
+  geom_bar(stat = "identity") +
+  coord_flip()
+```
+
+The accuracy of the current ArcSIE model appears to be low, according to several metrics.
+
+
+### Boxplots of the Erosion Classes
+
+```{r EroClassFD boxplots, fig.height=11, fig.width=8.5}
+soil_vals <- c("hzthk", "SolumDp", "CaCO3Dp", "claytotest", "firstbtclay", "mxvalue", "mxchroma")
+geo_vals1 <- c("SlopeSIE", "ProfCrv", "PlanCrv", "relpos", "wetness")
+geo_vals2 <- c("slope5", "kt5", "kp5", "z2streams", "wetness2", "mvalley")
+
+vals <- c(soil_vals, geo_vals1, geo_vals2)
+
+gw_lo1 <- melt(gw, id.vars = "EroClassFD", measure.vars = vals)
+gw_lo2 <- melt(gw, id.vars = "EroClassSIE", measure.vars = vals)
+
+names(gw_lo1)[1] <- "EroClass"
+gw_lo1$method <- "FD"
+names(gw_lo2)[1] <- "EroClass"
+gw_lo2$method <- "SIE"
+gw_lo <- rbind(gw_lo1, gw_lo2)
+
+# # reshape with base
+# gw_lo1 <- reshape(gw, 
+#                      times = vals, timevar = "variable",
+#                      varying = vals, v.names = "value",
+#                      direction = "long",
+#                      drop = which(!names(gw) %in% c("EroClassFD", vals))
+#                      )
+# 
+# # reshape with tidyr
+# idx <- which(names(gw) %in% vals)
+# gw_lo1 <- select(gw, EroClassFD, idx) %>%
+#   gather(key = variable, value = value, - EroClassFD)
+# gw_lo2 <- select(gw, EroClassSIE, idx) %>%
+#   gather(key = variable, value = value, - EroClassSIE)
+
+
+ggplot(gw_lo, aes(x = EroClass, y = value)) +
+  geom_boxplot() +
+  facet_wrap(~ paste(variable, method), scales="free", ncol = 4) +
+  coord_flip()
+```
+
+An exploratory analysis illustrated a considerable amount of overlap exists between the field determined (FD) erosion classes and measurable soil properties. However, the FD erosion classes were similarly predictive as the results of a cluster analysis. The classes derived by cluster analysis appeared to overlap slightly and moderately eroded, and were best separated by depth to CaCO3, while the FD erosion classes were best split on A horizon thickness.
+
+
+### Scatterplots of the Erosion Classes
+
+```{r mda, fig.height=4, fig.width=7.5}
+soil_vals2 <- c("hzthk", "SolumDp", "CaCO3Dp", "claytotest", "firstbtclay") # excluded color, only observed a narrow range thus small differences swamp everthing else
+vals <- c(soil_vals2, geo_vals2)
+
+test <- gw[, vals]
+test_d <- daisy(scale(test), metric = "gower")
+test_mds <- metaMDS(test_d, distance = "gower", autotransform = FALSE, trace = FALSE)
+test_pts <- cbind(as.data.frame(test_mds$points), EroClassFD = gw$EroClassFD)
+
+g1 <- ggplot(gw, aes(x = hzthk, y = SolumDp, color = EroClassFD)) +
+  geom_point(cex = 2, alpha = 0.75) +
+  theme(aspect.ratio = 1)
+g2 <- ggplot(test_pts, aes(x = MDS1, y = MDS2, color = EroClassFD)) +
+  geom_point(cex = 2, alpha = 0.75) +
+  theme(aspect.ratio = 1)
+grid.arrange(g1, g2, ncol = 2)
+```
+
+Regardless of whatever geodata is used it appears that only it appears that only severe and slight are separatable. Moderate seems to overlap the most with slight.
+
+
+## Comparison of the Erosion Classes and Hierachical Clusters
+
+
+```{r generate clusters, fig.height=4, fig.width=7.5}
+test_c <- hclust(test_d, method = "ward")
+plot(test_c, labels = gw$upedonid)
+rect.hclust(test_c, k = 4)
+```
+
+
+```{r compare clusters to EroClass}
+clusters <- cbind(gw, 
+                  test_pts[, 1:2], 
+                  clusters = factor(cutree(test_c, k = 4),
+                                    levels = c(2, 3, 1, 4),
+                                    labels = ero_labels
+                                    )
+                  )
+
+xtabs(~ EroClassFD + clusters, data = clusters)
+```
+
+
+### Scatter Plots of the Erosion Classes vs the Hierachical Clusters
+
+```{r}
+g1 <- ggplot(clusters, aes(x = MDS1, y = MDS2, col = EroClassFD)) +
+  geom_point(cex = 2, alpha = 0.75) +
+  theme(aspect.ratio = 1)
+g2 <- ggplot(clusters, aes(x = MDS1, y = MDS2, col = clusters), main = "test") +
+  geom_point(cex = 2, alpha = 0.75) +
+  theme(aspect.ratio = 1)
+grid.arrange(g1, g2, ncol = 2)
+```
+
+In comparison the hierarchical clusters have less overlap when viewed along the multidimensional scaled axes.
+
+
+### Box Plots fo the Erosion Classes vs the Hierachical Clusters
+
+```{r, fig.height=11, fig.width=8.5}
+gw_lo3 <- melt(clusters, id.vars = "clusters", measure.vars = c(soil_vals, geo_vals2))
+
+names(gw_lo3)[1] <- "EroClass"
+gw_lo3$method <- "clusters"
+gw_lo1 <- subset(gw_lo1, ! variable %in%  c("relpos", "wetness", "SlopeSIE"))
+gw_lo <- rbind(gw_lo1, gw_lo3)
+
+ggplot(gw_lo, aes(x = EroClass, y = value)) +
+  geom_boxplot() +
+  facet_wrap(~ paste(variable, method), scales="free", ncol = 4) + 
+  coord_flip()
+```
+
+
+### Classification Trees
+
+
+#### FD Classes vs Soil Properties
+
+```{r tree, fig.width=7.5}
+clusters <- subset(clusters, !is.na(EroClassFD))
+
+test1 <- ctree(EroClassFD ~ ., data = clusters[, c("EroClassFD", soil_vals)])
+plot(test1)
+confusionMatrix(data = predict(test1, type = "response"), reference = clusters$EroClassFD)
+```
+
+
+#### Clusters vs Soil Properties
+
+```{r, fig.width=7.5}
+test2 <- ctree(clusters ~ ., data = clusters[, c("clusters", soil_vals)])
+plot(test2)
+confusionMatrix(data = predict(test2, type = "response"), reference = clusters$clusters)
+```
+
+
+#### FD Classes vs DEM Derivatives
+
+```{r, fig.width=7.5}
+test3 <- ctree(EroClassFD ~ ., data = clusters[, c("EroClassFD", geo_vals2)])
+plot(test3)
+confusionMatrix(data = predict(test3, type = "response"), reference = clusters$EroClassFD)
+
+test3 <- cforest(as.factor(EroClassFD) ~ ., data = gw[, c("EroClassFD", geo_vals2)])
+varimp(test3)
+confusionMatrix(data = predict(test3, type = "response", OOB = TRUE), reference = gw$EroClassFD)
+```
+
+
+#### Clusters vs DEM Derivatives
+
+```{r, fig.width=7.5}
+test4 <- ctree(clusters ~ ., data = clusters[, c("clusters", geo_vals2)])
+plot(test4)
+confusionMatrix(data = predict(test4, type = "response"), reference = clusters$clusters)
+
+test4 <- cforest(clusters ~ ., data = clusters[, c("clusters", geo_vals2)])
+varimp(test4)
+confusionMatrix(data = predict(test4, type = "response", OOB=TRUE), reference = clusters$clusters)
+```
+
+
+### Soil series and phase
+
+Try and model the soil components and phases separately. The data is highly unbalanced. Create separate logistic regression models for similar minor components.
+
+```{r}
+#gw$weights <- ifelse(gw$soilname == "Glynwood", 0.1, 1)
+gw$gw_severe <- ifelse(gw$soilname3 == "Glynwood-severe", TRUE, FALSE)
+
+test4 <- cforest(as.factor(gw_severe) ~ elev + slope5 + kt5 + kp5 + wetness2 + mvalley + z2streams, data = gw)
+sort(varimp(test4), decreasing = TRUE)
+confusionMatrix(data = predict(test4, type = "response", OOB = TRUE), reference = gw$gw_severe, positive = "TRUE")
+
+test3 <- glm(as.factor(gw_severe) ~ elev + slope5 + kt5, data = gw, family = "binomial", na.action = na.exclude)
+confusionMatrix(data = predict(test3, type = "response") > 0.4, reference = gw$gw_severe, positive = "TRUE")
+summary(test3)
+```
+
+```{r, eval = FALSE}
+predfun <- function(model, data) {
+  v <- predict(model, data, type = "response")
+  cbind(
+    p = as.vector(v$fit)
+    )
+}
+r <- predict(rs10m, test3, fun = predfun, index = 1:2, progress = "text")
+writeRaster(r[[1]], "C:/workspace/severe_erosion.tif", overwrite = TRUE, progress = "text")
+
+r <-predict(rs10m, test4, type='response', progress='text')
+writeRaster(r[[1]], "C:/workspace/severe_erosion_cf.tif", overwrite = TRUE, progress = "text")
+```
+
+
+## Summary
+
+### Issues
+- The field data does not confirm the map units phased severely eroded.
+- The previous analysis did not exclude the minor components.
+- An exploratory analysis illustrated a considerable amount of overlap exists between the field determined (FD) erosion classes and measurable soil properties. However, the FD erosion classes were similarly predictive as the results of a cluster analysis. The classes derived by cluster analysis appeared to overlap slightly and moderately eroded, and were best separated by depth to CaCO3, while the FD erosion classes were best split on A horizon thickness.
+- The accuracy of the current ArcSIE model appears to be low, according to several metrics.
+- A preliminary analysis found a random forest model to be 20% more accurate than the ArcSIE model. 
+- Re-delineating the SSURGO map units will most likely result in numerous small delineations.
+
+### Recommendations
+- If disaggregating the SSURGO polygons is deemed impractical or inaccurate, re-label the Glynwood B-slope map units (e.g. severely eroded) to the appropriate map unit concept (e.g moderately eroded).
+- Evaluate ways to improve the accuracy of the ArcSIE model, or test alternative models such as random forests.
+- Conduct a field review May 15th (?) to evaluate the erosion phase concepts and spatial model.
+- Evaluate the effect of lumping erosion classes (e.g. slightly and moderately).
+- Access yield data from a producer in order to validate the hypothesis that the erosion phases help explain yield variability.
