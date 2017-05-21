@@ -1,7 +1,16 @@
-# Links to Projects
-- [madison2015_prez](http://ncss-tech.github.io/soil-pit/updates/madison2015_prez.html)
-- [Cardington and Centerburg project](http://ncss-tech.github.io/soil-pit/updates/neil_arcsie.html)
-- [glynwood project](http://ncss-tech.github.io/soil-pit/updates/r11fin_glynwood_erosion.html)
-- [data loggers](http://ncss-tech.github.io/soil-pit/sandbox/alena/data_logger/Kokomo71_fp.html)
+# MLRA Soil Survey Projects
+- [2016 MLRA 111E - Cardington and Centerburg silt loams](http://ncss-tech.github.io/soil-pit/projects/MLRA111E_Cardington_and_Centerburg_silt_loams.html)
+- [2017 MLRA 111B - Glynwood B-slope Erosion; Northeastern IN](http://ncss-tech.github.io/soil-pit/projects/MLRA111B_Glynwood_B-slope_Erosion_Northeastern_IN.html)
+- [2017 MLRA 104 - Aquolls, Aquents, Intermittent Water, Wetlands Recorrelation](http://ncss-tech.github.io/soil-pit/projects/stephen/MLRA104_Aquolls_Aquents_Intermittent_Water_Wetlands_Recorrelation.html)
+- [11-IND Kokomo Water Table Monitoring](http://ncss-tech.github.io/soil-pit/sandbox/alena/data_logger/Kokomo71_fp.html)
+
+
+# Presentations
+- [2015 Digital Soil Morphometrics - Digital summaries of legacy pedon descriptions](http://ncss-tech.github.io/soil-pit/sandbox/stephen/updates/madison2015_prez.html)
+- [2016 North Central Regional Cooperative Soil Survey Conference - The Future of Soil Survey Information and Interpretation](https://www.nrcs.usda.gov/wps/PA_NRCSConsumption/download?cid=nrcseprd1273812&ext=pdf)
+- [2017 Indiana Association of Professional Soil Classifiers Winter Meeting - GIS Resources: soil datasets & software](https://docs.google.com/presentation/d/1qGaRHG1y0zQxniJSwZgAO4SJW6J77ZQDvV1ngNpv7bw/edit?usp=sharing)
+
+# R Tutorials and Web Apps
+- [Statistics for Soil Scientists](http://ncss-tech.github.io/stats_for_soil_survey/chapters/)
 - [fetchSDA_component()](http://ncss-tech.github.io/soil-pit/sandbox/stephen/cuneiform_article_20170519.html)
-- [Aquoll Edges](http://ncss-tech.github.io/soil-pit/sandbox/stephen/aquolls_edges.html)
+- [Water Tables Plots](https://hammerly.shinyapps.io/test_application/)
