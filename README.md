@@ -1,5 +1,5 @@
 soil-pit
 ======
-This repository contains R functions and workflows for processing soil and spatial data.
+This repository is a workspace for projects and code under active development.
 
-Help files can be found in the wiki tab.
+[Website](http://ncss-tech.github.io/soil-pit/)

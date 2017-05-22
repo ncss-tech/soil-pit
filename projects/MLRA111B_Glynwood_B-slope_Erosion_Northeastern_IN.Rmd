@@ -12,7 +12,7 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE)
 options(stringsAsFactors = FALSE)
 
 ownCloud <- "C:/Users/stephen/ownCloud/projects/neil_arcsie/"
-geodata <- "M:/geodata/"
+geodata <- "D:/geodata/"
 ```
 
 
