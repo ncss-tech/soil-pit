@@ -1,0 +1,43 @@
+---
+title: "examples"
+author: "Stephen Roecker"
+date: "May 22, 2017"
+output: html_document
+---
+
+```{r resampling data}
+ownCloud <- "C:/Users/stephen.roecker/ownCloud/projects/neil_arcsie/"
+geodata <- "M:/geodata/"
+
+gw <- read.csv(paste0(ownCloud, "Pts_gnbero_27Jan17.csv"))
+
+library(reshape2)
+library(tidyr)
+
+soil_vals <- c("hzthk", "SolumDp", "CaCO3Dp", "claytotest", "firstbtclay", "mxvalue", "mxchroma")
+geo_vals1 <- c("SlopeSIE", "ProfCrv", "PlanCrv", "relpos", "wetness")
+geo_vals2 <- c("slope5", "kt5", "kp5", "z2streams", "wetness2", "mvalley")
+vals <- c(soil_vals, geo_vals1, geo_vals2)
+
+
+# reshape with reshape2
+gw_lo1 <- melt(gw, id.vars = "EroClassFD", measure.vars = vals)
+gw_lo2 <- melt(gw, id.vars = "EroClassSIE", measure.vars = vals)
+
+
+# reshape with base
+gw_lo1 <- reshape(gw,
+                     times = vals, timevar = "variable",
+                     varying = vals, v.names = "value",
+                     direction = "long",
+                     drop = which(!names(gw) %in% c("EroClassFD", vals))
+                     )
+
+
+# reshape with tidyr
+idx <- which(names(gw) %in% vals)
+gw_lo1 <- select(gw, EroClassFD, idx) %>%
+  gather(key = variable, value = value, - EroClassFD)
+gw_lo2 <- select(gw, EroClassSIE, idx) %>%
+  gather(key = variable, value = value, - EroClassSIE)
+```
