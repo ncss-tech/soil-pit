@@ -25,7 +25,7 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 
 options(stringsAsFactors = FALSE)
 
-ownCloud <- "C:/Users/stephen.roecker/ownCloud/projects/neil_arcsie/"
+ownCloud <- "C:/Users/stephen/ownCloud/projects/neil_arcsie/"
 geodata <- "M:/geodata/"
 ```
 
@@ -110,7 +110,7 @@ proj4string(gw_sp) <- CRS("+init=epsg:4326")
 gw_sp <- spTransform(gw_sp, CRS(proj4string(gw_pol)))
 ```
 
-# Spatial Data
+## Spatial Data
 
 The geodata from the Glynwood points was extracted from several rasters at various resolutions. The data using to generate the ArcSIE model came from a DEM with a resolution of 15-feet. The other used came from the 10-meter USGS NED, which was primarily resampled from LiDAR.
 
@@ -224,7 +224,7 @@ save(gw, gw_sp, gw_pol, gw_series, ssa, ero_labels, file = paste0(ownCloud, "Pts
 ```
 
 
-# Exploratory Analysis of the Project Data
+# Map Units vs Field Observations
 
 ```{r}
 # Load cached dataset
@@ -239,6 +239,7 @@ mapView(gw_series) + ssa + gw_sp
 vals2 <- c("EroClassFD", "EroClassNASIS", "nationalmu", "AREASYMBOL")
 gw_sub <- gw[vals2]
 
+# Frequency of field observation vs map unit
 # Duplicate the data for each REASYMBOL and relabel MLRA
 gw_sub2 <- by(gw_sub, gw_sub$nationalmu, function(x) {
   x[vals2][1, ]
@@ -324,6 +325,18 @@ grid.arrange(g1, g2, ncol = 2)
 According to the scatterplot above it appears that only the severe and slight classes are separatable. The moderate erosion class seems to overlap the most with slight. Both the 15-feet and 10-meter DEM derivatives were evaluated, but the results are similar. The overlap in the FD classes is likely due to bias amongst the soil scientists who collected the data.
 
 
+## Classification Trees
+
+```{r tree, fig.width=7.5}
+test <- subset(gw, !is.na(EroClassFD))
+
+test_ct <- ctree(EroClassFD ~ ., data = test[, c("EroClassFD", soil_vals)])
+plot(test_ct)
+confusionMatrix(data = predict(test_ct, type = "response"), reference = test$EroClassFD)
+```
+
+
+
 # Hierachical Clusters
 
 In order to see if more separation can be achieved amongst the erosion classes a hierachical classifition was peformed. Four unsupervised classes were chosen and manually matched to the FD classes. 
@@ -379,25 +392,8 @@ ggplot(gw_lo, aes(x = EroClass, y = value)) +
   coord_flip()
 ```
 
-# Statistical Modeling
 
-Below several statistical models are evaluated to see if a more accurate model can be developed.
-
-## Classification Trees
-
-
-### FD Classes vs Soil Properties
-
-```{r tree, fig.width=7.5}
-clusters <- subset(clusters, !is.na(EroClassFD))
-
-test1 <- ctree(EroClassFD ~ ., data = clusters[, c("EroClassFD", soil_vals)])
-plot(test1)
-confusionMatrix(data = predict(test1, type = "response"), reference = clusters$EroClassFD)
-```
-
-
-### Clusters vs Soil Properties
+## Classification Tree
 
 ```{r, fig.width=7.5}
 test2 <- ctree(clusters ~ ., data = clusters[, c("clusters", soil_vals)])
@@ -406,7 +402,13 @@ confusionMatrix(data = predict(test2, type = "response"), reference = clusters$c
 ```
 
 
-### FD Classes vs DEM Derivatives
+
+# Statistical Modeling
+
+Below several statistical models are evaluated to see if a more accurate model can be developed.
+
+
+## FD Classes vs DEM Derivatives
 
 ```{r, fig.width=7.5}
 test3 <- ctree(EroClassFD ~ ., data = clusters[, c("EroClassFD", geo_vals2)])
@@ -419,7 +421,7 @@ confusionMatrix(data = predict(test3, type = "response", OOB = TRUE), reference 
 ```
 
 
-### Clusters vs DEM Derivatives
+## Clusters vs DEM Derivatives
 
 ```{r, fig.width=7.5}
 test4 <- ctree(clusters ~ ., data = clusters[, c("clusters", geo_vals2)])
@@ -432,7 +434,7 @@ confusionMatrix(data = predict(test4, type = "response", OOB=TRUE), reference = 
 ```
 
 
-## Soil series and phase
+## Soil series and phases
 
 Try and model the soil components and phases separately. The data is highly unbalanced. Create separate logistic regression models for similar minor components.
 
