@@ -15,6 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 # Presentations
+- [2015 Future Directions in Soil Survey: Ecological Sites and Dynamic Soil Properties to Assess and Predict Soil Condition and Change](https://docs.google.com/presentation/d/1b0CyDpy4Km7ZCgBHrUiS4MkMQB15ezvFegLmTyzVZeg/edit?usp=sharing)
 - [2015 Digital Soil Morphometrics - Digital summaries of legacy pedon descriptions](http://ncss-tech.github.io/soil-pit/sandbox/stephen/madison2015_prez.html)
 - [2016 North Central Regional Cooperative Soil Survey Conference - The Future of Soil Survey Information and Interpretation](https://www.nrcs.usda.gov/wps/PA_NRCSConsumption/download?cid=nrcseprd1273812&ext=pdf)
 - [2017 Indiana Association of Professional Soil Classifiers Winter Meeting - GIS Resources: soil datasets & software](https://docs.google.com/presentation/d/1qGaRHG1y0zQxniJSwZgAO4SJW6J77ZQDvV1ngNpv7bw/edit?usp=sharing)
