@@ -2,7 +2,13 @@
 title: "MLRA 104 - Aquolls, Aquents, Intermittent Water, Wetlands Recorrelation"
 author: "Stephen Roecker and Ryan Dermody"
 date: "`r Sys.Date()`"
-output: html_document
+output: 
+  html_document: 
+    number_sections: yes
+    toc: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: no
 ---
 
 ```{r setup, include=FALSE}
@@ -14,7 +20,8 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 Most of these series from this analysis, are poorly drained alluvial soils.  What we are trying to determine is what the particle size is by watershed. The pattern we see form this edge analysis and our field data is the alluvial soils in our northern watersheds (MLRA104) are more fine loamy with a mix of fine silty poorly drained ponded soils on the flood plain and low stream terraces.  As we look at the Alluvial soils in 108, they become more fine silty and fine poorly drained alluvial soils. The most common edge soils such as Nodaway, Lawson, Vesser, Spillville are the better drained frequently flooded aluvial soils that should be next to these Aquol depressions.
 
 
-# Import and Prep Data
+# Data Preparation
+
 ```{r}
 # load packages
 library(plyr)
@@ -46,6 +53,8 @@ aquolls$series <- sapply(aquolls$series, function(x)
 aquolls <- subset(aquolls, ! series %in% c("Water", "Alluvial"))
 ```
 
+
+
 # Group by Series
 ```{r}
 aquolls_s <- ddply(aquolls, .(series), summarize, meters = sum(meters))
@@ -59,7 +68,10 @@ ggplot(aquolls_s_sub, aes(x = meters, y = reorder(series, meters))) +
   ggtitle("Series for the Project")
 ```
 
+
+
 # Group by Series and Subbasin
+
 ```{r, fig.height=11, fig.width=8.5}  
 aquolls_sb <- ddply(aquolls, .(subbasin, series), summarize, meters = sum(meters))
 aquolls_sb <- arrange(aquolls_sb, subbasin, desc(meters), series)
