@@ -25,8 +25,8 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 
 options(stringsAsFactors = FALSE)
 
-ownCloud <- "C:/Users/stephen/ownCloud/projects/neil_arcsie/"
-geodata <- "M:/geodata/"
+ownCloud <- "C:/Users/stephen.roecker/ownCloud/projects/201711FIN001_Glynwood/"
+geodata <- "D:/geodata/"
 ```
 
 
@@ -53,6 +53,36 @@ library(mapview)
 
 ## Point Data
 
+```{r nasis pedons, eval=FALSE}
+gp <- fetchNASIS()
+s <- site(gp)[c("peiid", "pedon_id", "taxonname", "x", "y", "describer", "erocl")]
+h <- horizons(gp)
+
+vars <- c("peiid")
+A_vars <- c("hzname", "hzdept", "clay", "texture", "m_hue", "m_value", "m_chroma")
+Bt_vars <- c("hzdept", "clay", "texture", "m_value", "m_chroma")
+carb_vars <- c("hzdept", "effervescence")
+solum_vars <- c("hzdept")
+
+h2 <- by(h, h[vars], function(x) data.frame(
+  x[vars][1, ],
+  x[A_vars][1, ],
+  x[grepl("Bt", x$hzname), Bt_vars, ][1, ],
+  x[x$effervescence %in% c("strong", "violent"), carb_vars][1,],
+  x[grepl("^C|^2C|^3C", x$hzname), solum_vars][1]
+  ))
+h2 <- do.call("rbind", h2)
+names(h2) <- c(vars, "hzname", "A_hzthk", "claytotest", "texture", "mxhue", "mxvalue", "mxchroma", "hzthk", "firstbtclay", "firstbttexture", "firstbtmxvalue", "firstbtmxchroma", "CaCO3Dp", "effervescence", "SolumDp")
+names(s)[c(2:5, 7)]  <- c("upedonid", "soilname", "long", "lat", "EroClassFD")
+
+gw <- merge(s, h2, by = "peiid", all.x = TRUE)
+gw <- gw[order(gw$upedonid), ]
+gw <- within(gw,{
+             CaCO3Dp[is.na(CaCO3Dp)] <- 200
+             SolumDp[is.na(SolumDp)] <- 200
+             })
+```
+
 ```{r import data and tranform, eval=FALSE}
 
 # projectmapunit data from NASIS
@@ -69,7 +99,10 @@ ssa <- readOGR(dsn = paste0(geodata, "soils/soilsa_a_nrcs.shp"), layer = "soilsa
 gw_series <- seriesExtent("Glynwood")
 
 # field Data
-gw <- read.csv(paste0(ownCloud, "Pts_gnbero_27Jan17.csv"))
+gw2 <- read.csv(paste0(ownCloud, "Pts_gnbero_27Jan17.csv"))
+vars <- c("upedonid", "EroClassSIE", "relpos", "SlopeSIE", "wetness", "PlanCrv", "ProfCrv", "maxcrv", "mincrv")
+gw <- merge(gw, gw2[vars], by = "upedonid", all.x = TRUE)
+gw <- gw[complete.cases(gw[c("lat", "long")]), ]
 
 gw_sp <- gw
 coordinates(gw_sp) <- ~ long + lat
@@ -213,14 +246,14 @@ names(rs30m) <- dd_names[6:9]
 rs10m <- stack(gsub(".tif", "2.tif", gsub("30m", "10m", output)))
 names(rs10m) <- dd_names
 
-gw <- as.data.frame(extract(rs10m, gw_sp, df = TRUE, sp = TRUE))
+gd10m <- as.data.frame(extract(rs10m, gw_sp, df = TRUE, sp = TRUE))
 gd30m <- as.data.frame(extract(rs30m, gw_sp, df = TRUE))
 gw <- cbind(gd10m, gd30m[, -1])
 rm(gd10m, gd30m)
 
 
 # Save data
-save(gw, gw_sp, gw_pol, gw_series, ssa, ero_labels, file = paste0(ownCloud, "Pts_gnbero_27Jan17_geodata.RData"))
+save(gw, gw_sp, gw_pol, gw_series, ssa, ero_labels, file = paste0(ownCloud, "Pts_gnbero_27Jan17_geodata2.RData"))
 ```
 
 
@@ -228,7 +261,7 @@ save(gw, gw_sp, gw_pol, gw_series, ssa, ero_labels, file = paste0(ownCloud, "Pts
 
 ```{r}
 # Load cached dataset
-load(paste0(ownCloud, "Pts_gnbero_27Jan17_geodata.RData"))
+load(paste0(ownCloud, "Pts_gnbero_27Jan17_geodata2.RData"))
 
 ssa <- subset(ssa, areasymbol %in% unique(gw$AREASYMBOL))
 ssa <- spTransform(ssa, CRS("+init=epsg:4326"))
@@ -272,7 +305,7 @@ ggplot(test, aes(x = Reference, y = Freq, fill = Prediction)) +
   coord_flip()
 ```
 
-The accuracy of the current ArcSIE model appears to be low, according to several metrics. None of the classes achieve a positive predictive value of > 50% for the reference data.
+The accuracy of the current ArcSIE model appears to be low, according to several metrics. The positive predictive value for the severe class is < 50%.
 
 
 ## Boxplots
@@ -283,6 +316,7 @@ geo_vals1 <- c("SlopeSIE", "ProfCrv", "PlanCrv", "relpos", "wetness")
 geo_vals2 <- c("slope5", "kt5", "kp5", "z2streams", "wetness2", "mvalley")
 
 vals <- c(soil_vals, geo_vals1, geo_vals2)
+gw <- gw[complete.cases(gw[c("EroClassFD", soil_vals)]), ]
 
 gw_lo1 <- melt(gw, id.vars = "EroClassFD", measure.vars = vals)
 gw_lo2 <- melt(gw, id.vars = "EroClassSIE", measure.vars = vals)
@@ -292,21 +326,23 @@ gw_lo1$method <- "FD"
 names(gw_lo2)[1] <- "EroClass"
 gw_lo2$method <- "SIE"
 gw_lo <- rbind(gw_lo1, gw_lo2)
+gw_lo <- subset(gw_lo, !is.na(EroClass))
 
+gw_lo <- na.exclude(gw_lo)
 ggplot(gw_lo, aes(x = EroClass, y = value)) +
   geom_boxplot() +
   facet_wrap(~ paste(variable, method), scales="free", ncol = 4) +
   coord_flip()
 ```
 
-An exploratory analysis shows a considerable amount of overlap exists between the field determined (FD) erosion classes and measurable soil properties. In comparison the FD and SIE (Soil Inference Engine) erosion classes show different patterns within the boxplots, further suggesting that the SIE classes aren't capturing the field observations accurately.
+An exploratory analysis shows a considerable amount of overlap exists between the field determined (FD) erosion classes and measurable soil properties. In comparison the FD and SIE (Soil Inference Engine) erosion classes show different patterns within the boxplots, further suggesting that the SIE classes aren't capturing the field observations accurately. The most important feature to highlight is that the trends between the SIE classes and digital elevation model (DEM) derivatives (i.e. slope) don't match those observed for the FD classes. This mismatch suggests that the membership functions for the SIE classes are a poor fit, and should be redefined to more accurately represent the relationship between the FD classes and DEM derivatives.
 
 
 ## Scatterplots
 
 ```{r mda, fig.height=4, fig.width=7.5}
 soil_vals2 <- c("hzthk", "SolumDp", "CaCO3Dp", "claytotest", "firstbtclay") # excluded color, only observed a narrow range thus small differences swamp everthing else
-vals <- c(soil_vals2, geo_vals2)
+vals <- c(soil_vals2)
 
 test <- gw[, vals]
 test_d <- daisy(scale(test), metric = "gower")
@@ -322,18 +358,21 @@ g2 <- ggplot(test_pts, aes(x = MDS1, y = MDS2, color = EroClassFD)) +
 grid.arrange(g1, g2, ncol = 2)
 ```
 
-According to the scatterplot above it appears that only the severe and slight classes are separatable. The moderate erosion class seems to overlap the most with slight. Both the 15-feet and 10-meter DEM derivatives were evaluated, but the results are similar. The overlap in the FD classes is likely due to bias amongst the soil scientists who collected the data.
+According to the scatterplot above it appears that only the severe and slight classes are separatable. The moderate erosion class seems to overlap the most with slight. The overlap in the FD classes is likely due to bias within and between the soil scientists who collected the data. Both the 15-feet and 10-meter DEM derivatives were evaluated, but the results are similar. 
 
 
-## Classification Trees
+## Classification Tree
 
 ```{r tree, fig.width=7.5}
 test <- subset(gw, !is.na(EroClassFD))
 
 test_ct <- ctree(EroClassFD ~ ., data = test[, c("EroClassFD", soil_vals)])
 plot(test_ct)
-confusionMatrix(data = predict(test_ct, type = "response"), reference = test$EroClassFD)
+cm <- confusionMatrix(data = predict(test_ct, type = "response"), reference = test$EroClassFD)
+print(cm)
 ```
+
+An analysis of the EroClassFD above with a classification tree is an attempt to discern the hierachical structuce within the data. The results show Ap thickness (hzthk) and clay content (claytotest) are the first splits. The trees structure follows the logic described in the erosion indicators guide developed for this project. The overall accuracy for the tree is `r round(cm$overall[1], 2)`.
 
 
 
@@ -353,6 +392,13 @@ clusters <- cbind(gw,
                   test_pts[, 1:2], 
                   clusters = factor(cutree(test_c, k = 4),
                                     levels = c(2, 3, 1, 4),
+                                    labels = ero_labels
+                                    )
+                  )
+clusters <- cbind(gw, 
+                  test_pts[, 1:2], 
+                  clusters = factor(cutree(test_c, k = 4),
+                                    levels = c(4, 1, 2, 3),
                                     labels = ero_labels
                                     )
                   )
@@ -392,6 +438,8 @@ ggplot(gw_lo, aes(x = EroClass, y = value)) +
   coord_flip()
 ```
 
+A comparison of the FD and cluster classes shows that the clusters do a good job replicating the patterns found in the boxplots.
+
 
 ## Classification Tree
 
@@ -401,51 +449,63 @@ plot(test2)
 confusionMatrix(data = predict(test2, type = "response"), reference = clusters$clusters)
 ```
 
+In comparision, the classification tree for the clusters splits primarily on the CaCO3 and solum depths, presumable due to the narrow range in Ap thickness.
 
 
 # Statistical Modeling
 
-Below several statistical models are evaluated to see if a more accurate model can be developed.
+Below several statistical models were evaluated to see if a more accurate model could be developed.
 
 
 ## FD Classes vs DEM Derivatives
 
 ```{r, fig.width=7.5}
-test3 <- ctree(EroClassFD ~ ., data = clusters[, c("EroClassFD", geo_vals2)])
+test3 <- ctree(EroClassFD ~ ., data = gw[, c("EroClassFD", geo_vals2)])
 plot(test3)
-confusionMatrix(data = predict(test3, type = "response"), reference = clusters$EroClassFD)
+cm_ct <- confusionMatrix(data = predict(test3, type = "response"), reference = gw$EroClassFD)
+round(cm_ct$overall, 2)
+
 
 test3 <- cforest(as.factor(EroClassFD) ~ ., data = gw[, c("EroClassFD", geo_vals2)])
 varimp(test3)
-confusionMatrix(data = predict(test3, type = "response", OOB = TRUE), reference = gw$EroClassFD)
+cm_cf <-confusionMatrix(data = predict(test3, type = "response", OOB = TRUE), reference = gw$EroClassFD)
+round(cm_cf$overall, 2)
 ```
+
+Neither a classification tree or forest were capiable of achieving a higher accuracy than the SIE model.
 
 
 ## Clusters vs DEM Derivatives
 
-```{r, fig.width=7.5}
+```{r cluster trees, fig.width=7.5}
 test4 <- ctree(clusters ~ ., data = clusters[, c("clusters", geo_vals2)])
 plot(test4)
-confusionMatrix(data = predict(test4, type = "response"), reference = clusters$clusters)
+cm_ct <- confusionMatrix(data = predict(test4, type = "response"), reference = clusters$clusters)
+round(cm_ct$overall, 2)
 
 test4 <- cforest(clusters ~ ., data = clusters[, c("clusters", geo_vals2)])
 varimp(test4)
-confusionMatrix(data = predict(test4, type = "response", OOB=TRUE), reference = clusters$clusters)
+cm_cf <- confusionMatrix(data = predict(test4, type = "response", OOB=TRUE), reference = clusters$clusters)
+round(cm_cf$overall, 2)
 ```
+
+Neither a classification tree or forest were capiable of achieving a higher accuracy than the SIE model.
 
 
 ## Soil series and phases
 
-Try and model the soil components and phases separately. The data is highly unbalanced. Create separate logistic regression models for similar minor components.
+Thus far efforts to model the erosion classes has been lackluster. This appears to be largely due to the overlap in the erosion classes and subtle relief. Given these challenges it is probably more realistic to focus on distinguishing the severely eroded class separately, and develop individual models for the minor components. ry and model the soil components and phases separately.
 
 ```{r}
-#gw$weights <- ifelse(gw$soilname == "Glynwood", 0.1, 1)
+# create a logical variable for the soilname3 == "Glynwood-severe"
 gw$gw_severe <- ifelse(gw$soilname3 == "Glynwood-severe", TRUE, FALSE)
 
+# Random Forest
 test4 <- cforest(as.factor(gw_severe) ~ elev + slope5 + kt5 + kp5 + wetness2 + mvalley + z2streams, data = gw)
 sort(varimp(test4), decreasing = TRUE)
 confusionMatrix(data = predict(test4, type = "response", OOB = TRUE), reference = gw$gw_severe, positive = "TRUE")
 
+# Logisitic Regression
 test3 <- glm(as.factor(gw_severe) ~ elev + slope5 + kt5, data = gw, family = "binomial", na.action = na.exclude)
 confusionMatrix(data = predict(test3, type = "response") > 0.4, reference = gw$gw_severe, positive = "TRUE")
 summary(test3)
@@ -498,3 +558,6 @@ writeRaster(r[[1]], "C:/workspace/severe_erosion_cf.tif", overwrite = TRUE, prog
 - Conduct a field review May 15th (?) to evaluate the erosion phase concepts and spatial model.
 - Evaluate the effect of lumping erosion classes (e.g. slightly and moderately).
 - Access yield data from a producer in order to validate the hypothesis that the erosion phases help explain yield variability.
+- Load the pedons directly from NASIS. Make sure the user project id is populated in the site observation table for easy querying.
+- Validate the model with other pedons from NASIS.
+- Reclassify the points using the erosion indicators guide.
