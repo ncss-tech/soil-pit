@@ -26,7 +26,7 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 options(stringsAsFactors = FALSE)
 
 ownCloud <- "C:/Users/stephen.roecker/ownCloud/projects/201711FIN001_Glynwood/"
-geodata <- "D:/geodata/"
+geodata <- "M:/geodata/"
 ```
 
 
@@ -46,18 +46,25 @@ library(caret)
 library(party)
 library(vegan)
 
-library(rgdal)
 library(sp)
+library(raster)
 library(mapview)
 ```
 
 ## Point Data
 
 ```{r nasis pedons, eval=FALSE}
+# load project from NASIS
+project <- get_projectmapunit_from_NASIS()
+project_nodups <- project[!duplicated(project$nationalmusym), c("nationalmusym", "muname")]
+
+# load pedons from NASIS
 gp <- fetchNASIS()
 s <- site(gp)[c("peiid", "pedon_id", "taxonname", "x", "y", "describer", "erocl")]
 h <- horizons(gp)
 
+
+# duplicate field data from the original spreadsheet, originally came from "PEDON - ArcSIE Data Dump 11-FIN v2.0" report, diagnostic data was populated in the pedon field measured property table
 vars <- c("peiid")
 A_vars <- c("hzname", "hzdept", "clay", "texture", "m_hue", "m_value", "m_chroma")
 Bt_vars <- c("hzdept", "clay", "texture", "m_value", "m_chroma")
@@ -65,78 +72,88 @@ carb_vars <- c("hzdept", "effervescence")
 solum_vars <- c("hzdept")
 
 h2 <- by(h, h[vars], function(x) data.frame(
-  x[vars][1, ],
-  x[A_vars][1, ],
-  x[grepl("Bt", x$hzname), Bt_vars, ][1, ],
-  x[x$effervescence %in% c("strong", "violent"), carb_vars][1,],
-  x[grepl("^C|^2C|^3C", x$hzname), solum_vars][1]
+  x[vars][1, ], # grouping variable
+  x[A_vars][1, ], # A horizon data
+  x[grepl("Bt", x$hzname), Bt_vars, ][1, ], # Bt horizon data
+  x[x$effervescence %in% c("strong", "violent"), carb_vars][1,], # CaCO3 data
+  x[grepl("^C|^2C|^3C", x$hzname), solum_vars][1] # solum depth
   ))
 h2 <- do.call("rbind", h2)
+
 names(h2) <- c(vars, "hzname", "A_hzthk", "claytotest", "texture", "mxhue", "mxvalue", "mxchroma", "hzthk", "firstbtclay", "firstbttexture", "firstbtmxvalue", "firstbtmxchroma", "CaCO3Dp", "effervescence", "SolumDp")
 names(s)[c(2:5, 7)]  <- c("upedonid", "soilname", "long", "lat", "EroClassFD")
 
-gw <- merge(s, h2, by = "peiid", all.x = TRUE)
-gw <- gw[order(gw$upedonid), ]
-gw <- within(gw,{
+h2 <- within(h2,{
              CaCO3Dp[is.na(CaCO3Dp)] <- 200
              SolumDp[is.na(SolumDp)] <- 200
              })
+
+gw1 <- merge(s, h2, by = "peiid", all.x = TRUE)
+gw1 <- gw1[order(gw1$upedonid), ]
 ```
 
+
 ```{r import data and tranform, eval=FALSE}
-
-# projectmapunit data from NASIS
-project <- get_projectmapunit_from_NASIS()
-project_nodups <- project[!duplicated(project$nationalmusym), c("nationalmusym", "muname")]
-
-# MUPOLYGONs for the Project
+# load mupolygons exported from geodatabse
 gw_pol <- readOGR(dsn = paste0(ownCloud, "glynwood.shp"), layer = "glynwood")
 
-# Soil Survey Areas
+# load soil survey areas
 ssa <- readOGR(dsn = paste0(geodata, "soils/soilsa_a_nrcs.shp"), layer = "soilsa_a_nrcs")
+ssa <- subset(ssa, areasymbol %in% project$areasymbol)
+ssa <- spTransform(ssa, CRS("+init=epsg:4326"))
 
-# Series Extent of Glynwood from SoilWeb
+# load soil series extent of Glynwood from SoilWeb
 gw_series <- seriesExtent("Glynwood")
 
-# field Data
+
+
+# load field data
 gw2 <- read.csv(paste0(ownCloud, "Pts_gnbero_27Jan17.csv"))
 vars <- c("upedonid", "EroClassSIE", "relpos", "SlopeSIE", "wetness", "PlanCrv", "ProfCrv", "maxcrv", "mincrv")
-gw <- merge(gw, gw2[vars], by = "upedonid", all.x = TRUE)
+gw <- merge(gw1, gw2[vars], by = "upedonid", all.x = TRUE)
 gw <- gw[complete.cases(gw[c("lat", "long")]), ]
 
+# convert field dataset to a spatial object
 gw_sp <- gw
 coordinates(gw_sp) <- ~ long + lat
 proj4string(gw_sp) <- CRS("+init=epsg:4326")
 gw_sp <- spTransform(gw_sp, CRS(proj4string(gw_pol)))
 
-# spatial overlay field data with mupolygons and merge with nasis mapunits
+# extract mupolygon data from field coordinates and merge with mapunit data from NASIS
 vars <- c("AREASYMBOL", "nationalmu")
 gw <- cbind(gw, over(gw_sp, gw_pol)[vars])
 gw <- merge(gw, project_nodups, by.x = "nationalmu", by.y = "nationalmusym", all.x = TRUE, sort = FALSE)
 
-
-# Extract erosion phases from NASIS and combine component and phase
+# erosion labels
 ero_labels <- c("undisturbed", "slight", "moderate", "severe")
 
+# tranform the original dataset
 gw <- within(gw, {
+  # convert erosion codes to labels
   EroClassFD  = factor(EroClassFD, levels = 0:3, labels = ero_labels)
   EroClassSIE = factor(EroClassSIE, levels = 0:3, labels = ero_labels)
   EroClassFD2 = ifelse(EroClassFD == "severe", "severe", "slight")
-
+  
+  # extract erosion phases from mapunit names
   EroClassNASIS = NA
   EroClassNASIS[grepl("eroded", muname)] = "eroded"
   EroClassNASIS[grepl("sev.|severely", muname)] = "sev.eroded"
   EroClassNASIS[!grepl("eroded", muname)] = "non.eroded"
   
+  # extract landform from mapunit names
+  landform = NA
+  landform[grepl("ground moraine", muname)] = "ground"
+  landform[grepl("end moraine", muname)] =  "end"
+  
+  # correlate field taxonnames to mapunit components
   soilname2 = soilname
   soilname2 = ifelse(soilname2 %in% c("Glynwood", "Morley", "Shinrock", "Rawson", "Mississinewa"), "Glynwood", soilname2)
   soilname2 = ifelse(soilname2 %in% c("Blount", "Elliott"), "Blount", soilname2)
   soilname2 = ifelse(soilname2 %in% c("Pewamo", "Pandora", "Mermill"), "Pewamo", soilname2)
   soilname3 = paste0(soilname2, ifelse(soilname2 == "Glynwood", paste0("-", EroClassFD2), ""))
   })
-gw <- transform(gw,
-                rgb = munsell2rgb(mxhue, mxvalue, mxchroma, return_triplets = TRUE)
-                )
+
+# convert transformed field dataset to a spatial object
 gw_sp <- gw
 coordinates(gw_sp) <- ~ long + lat
 proj4string(gw_sp) <- CRS("+init=epsg:4326")
@@ -148,10 +165,7 @@ gw_sp <- spTransform(gw_sp, CRS(proj4string(gw_pol)))
 The geodata from the Glynwood points was extracted from several rasters at various resolutions. The data using to generate the ArcSIE model came from a DEM with a resolution of 15-feet. The other used came from the 10-meter USGS NED, which was primarily resampled from LiDAR.
 
 ```{r geodata, eval=FALSE}
-
 # Extract data from rasters
-library(raster)
-
 # NW files
 fd <- paste0(geodata, "project_data/11FIN/PointDataEval/")
 dd <- c("slope10",
@@ -228,12 +242,14 @@ dd_names <- c("elev", "aspect5", "slope5", "kp5", "kt5", "mvalley", "wetness2", 
 dd <- paste0(fd, dd2)
 
 input <- dd
-output <- paste0(geodata, "project_data/11FIN/glynwood/", gsub(".sdat", ".tif", dd2))
+output <- paste0(geodata, "project_data/11FIN/201711FIN001_Glynwood/", gsub(".sdat", ".tif", dd2))
 bb <- bbox(gw_sp <- spTransform(gw_sp, CRS("+init=epsg:5070")))
 
 mapply(subset_rasters, input, output)
-mapply(subset_rasters, input = paste0(geodata, "project_data/11FIN/nlcd30m_11FIN_lulc2011.tif"), output = paste0(geodata, "project_data/11FIN/glynwood/nlcd30m_11FIN_lulc2011.tif"))
-
+mapply(subset_rasters, 
+       input = paste0(geodata, "project_data/11FIN/nlcd30m_11FIN_lulc2011.tif"), 
+       output = paste0(geodata, "project_data/11FIN/201711FIN001_Glynwood/nlcd30m_11FIN_lulc2011.tif")
+       )
 mapply(warp_rasters, input = output, output = gsub(".tif", "2.tif", gsub("30m", "10m", output)))
 
 dd <- output
@@ -253,22 +269,23 @@ rm(gd10m, gd30m)
 
 
 # Save data
-save(gw, gw_sp, gw_pol, gw_series, ssa, ero_labels, file = paste0(ownCloud, "Pts_gnbero_27Jan17_geodata2.RData"))
+save(gw, gw_sp, gw_pol, gw_series, ssa, ero_labels, file = paste0(ownCloud, "Pts_gnbero_27Jan17_geodata3.RData"))
+```
+
+
+# Plot Pedon Coordinates, SSA, and Series Extent
+```{r create map}
+# Load cached dataset
+load(paste0(ownCloud, "Pts_gnbero_27Jan17_geodata3.RData"))
+
+# Create interactive map
+mapView(gw_series) + ssa + gw_sp
 ```
 
 
 # Map Units vs Field Observations
 
-```{r}
-# Load cached dataset
-load(paste0(ownCloud, "Pts_gnbero_27Jan17_geodata2.RData"))
-
-ssa <- subset(ssa, areasymbol %in% unique(gw$AREASYMBOL))
-ssa <- spTransform(ssa, CRS("+init=epsg:4326"))
-
-# Create interactive map
-mapView(gw_series) + ssa + gw_sp
-
+```{r mapunit eval}
 vals2 <- c("EroClassFD", "EroClassNASIS", "nationalmu", "AREASYMBOL")
 gw_sub <- gw[vals2]
 
@@ -331,7 +348,7 @@ gw_lo <- subset(gw_lo, !is.na(EroClass))
 gw_lo <- na.exclude(gw_lo)
 ggplot(gw_lo, aes(x = EroClass, y = value)) +
   geom_boxplot() +
-  facet_wrap(~ paste(variable, method), scales="free", ncol = 4) +
+  facet_wrap(~ paste(variable, method, landform), scales="free", ncol = 4) +
   coord_flip()
 ```
 
