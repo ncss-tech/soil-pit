@@ -12,45 +12,62 @@ sidebar<-dashboardSidebar(
       textInput(
         inputId="inmukey",
         label="Enter mukey to plot -",
-        406339),actionButton("submukey", "Submit"), radioButtons(inputId="filltype", "Choose fill:", c("flooding","ponding")), br()
+        406339),
+        actionButton("submukey", "Submit"),
+        radioButtons(inputId="filltype", "Choose fill:", c("flooding","ponding")), br()
 ),
     menuItem("Organic Matter", tabName="OMPlots", icon=icon("leaf")),
     menuItem("Source Code", icon=icon("file-code-o"), href="https://github.com/ncss-tech/soil-pit/blob/master/sandbox/john/water_table_report_app/app.R"),
-    menuItem("Help", tabName="help", icon=icon("question"))))
+    menuItem("Help", tabName="help", icon=icon("question"))
+ )
+)
 
 body<-dashboardBody(
   tabItems(
     tabItem(tabName="WTPlots", class="active",
             titlePanel("Water Table Plots"),
             verticalLayout(
-              mainPanel(infoBox("Mapunit Name:", uiOutput("muname", inline= TRUE, container=span), width=12, icon=icon("map"), color="blue"),
-                         fluidRow(
-                           box(plotOutput("result"), width=12)),      box("This application was developed by John Hammerly and Stephen Roecker.", width=12)
-                         
-                ))),
-
-              
-              
-            
-            
-    tabItem(tabName="Data",
+              infoBox("Mapunit Name:",
+                    uiOutput("muname", inline= TRUE, container=span),
+                    width=12, icon=icon("map"), color="blue"),
+              fluidRow(
+                box(plotOutput("result"), width=12)),
+                box("This application was developed by John Hammerly and Stephen Roecker.", width=12)
+                )
+            ),
+    tabItem(
+      tabName="Data",
             titlePanel("Water Table Data"),
             verticalLayout(
-              mainPanel(infoBox("Mapunit Name:", uiOutput("muname2", inline= TRUE, container=span), width=12, icon=icon("map"), color="blue"),
-                        fluidRow(
-            dataTableOutput("shdatatab"),p("This application was developed by John Hammerly and Stephen Roecker."))))),
-    tabItem(tabName="OMPlots", titlePanel("Organic Matter"), box("This Plot is currently under development.")),
-            tabItem(tabName="help", titlePanel("Help"), box("This site is a set web applications which use",
-                                                            a(href="https://www.r-project.org/", "R"), "to query information from",
-                                                            a(href="https://sdmdataaccess.nrcs.usda.gov/", "Soil Data Access"),
-                                                            "and assembles the data into a table or plots it graphically.",
-                                                             width=12),
+             infoBox("Mapunit Name:",
+                     uiOutput("muname2", inline= TRUE, container=span), width=12, icon=icon("map"), color="blue"),
+             fluidRow(
+              box(dataTableOutput("shdatatab"), width=12),
+              box("This application was developed by John Hammerly and Stephen Roecker.", width=12))
+            )),
+    tabItem(
+      tabName="OMPlots",
+        titlePanel("Organic Matter"),
+          box("This Plot is currently under development.", width=12)),
+            tabItem(tabName="help",
+                    titlePanel("Help"),
+                    box("This site is a set web applications which use",
+                      a(href="https://www.r-project.org/", "R"), "to query information from",
+                      a(href="https://sdmdataaccess.nrcs.usda.gov/", "Soil Data Access"),
+                      "and assembles the data into a table or plots it graphically.",
+                      width=12),
                     fluidRow(
-                    infoBox("Water Table", "You will need to determine the mapunit key (mukey) of the mapunit of interest to view the data tables and plots.  Enter this number in the text input box in the side bar.  You also have the option of viewing either flooding frequency or ponding frequency in the plot by clicking the radio buttons.", width=6, icon=icon("tint"), color="blue"),
-                    infoBox("Organic Matter", "This plot is currently still in development.", icon=icon("leaf"), color="green")))
+                      infoBox("Water Table",
+                            "You will need to determine the mapunit key (mukey) of the mapunit of interest to view the data tables and plots.
+                            Enter this number in the text input box in the side bar and click on the submit button.  
+                            You also have the option of viewing either flooding frequency or ponding frequency in the plot by clicking the radio buttons.",
+                            width=12, icon=icon("tint"), color="blue"),
+                      infoBox("Organic Matter",
+                            "This plot is currently still in development.",
+                            icon=icon("leaf"), color="green", width=12)
+                      )
+                    )
     )
-  
-            
 )
 
 ui <- dashboardPage(header, sidebar, body)
@@ -67,7 +84,7 @@ server <- function(input, output){
   output$result <- renderPlot({ input$submukey
     
     
-    wtlevels <- get_cosoilmoist_from_SDA_db(WHERE = paste0("mukey = '", isolate(input$inmukey), "'"), duplicates = TRUE)
+    wtlevels <- get_cosoilmoist_from_SDA(WHERE = paste0("mukey = '", isolate(input$inmukey), "'"), duplicates = TRUE)
     
     if (input$filltype=="flooding") {ggplot(wtlevels, aes(x = as.integer(month), y = dept_r, lty = status))+
         geom_rect(aes(xmin = as.integer(month), xmax = as.integer(month)+
@@ -92,24 +109,17 @@ server <- function(input, output){
         ggtitle("Water Table Levels from Component Soil Moisture Month Data")}})
   
   output$muname<-renderText({    input$submukey
-    wtlevels <- get_cosoilmoist_from_SDA_db(WHERE = paste0("mukey = '", isolate(input$inmukey), "'"), duplicates = TRUE)
+    wtlevels <- get_cosoilmoist_from_SDA(WHERE = paste0("mukey = '", isolate(input$inmukey), "'"), duplicates = TRUE)
     
     wtlevels$muname[1]})
   
   output$muname2<-renderText({   input$submukey 
-    wtlevels <- get_cosoilmoist_from_SDA_db(WHERE = paste0("mukey = '", isolate(input$inmukey), "'"), duplicates = TRUE)
+    wtlevels <- get_cosoilmoist_from_SDA(WHERE = paste0("mukey = '", isolate(input$inmukey), "'"), duplicates = TRUE)
     
     wtlevels$muname[1]})
   
   output$shdatatab<- renderDataTable({input$submukey
-    wtlevels <- get_cosoilmoist_from_SDA_db(WHERE = paste0("mukey = '", isolate(input$inmukey), "'"), duplicates = TRUE)}, options = list(pageLength=50))
-  
-  output$choicelist<- renderUI( 
-    selectInput("comp","Choose component for interactive plot", {input$submukey
-      wtlevels <- get_cosoilmoist_from_SDA_db(WHERE = paste0("mukey = '", isolate(input$inmukey), "'"), duplicates = TRUE)
-      as.list(unique(wtlevels$compname))}))
-  
-  
-  
+    wtlevels <- get_cosoilmoist_from_SDA(WHERE = paste0("mukey = '", isolate(input$inmukey), "'"), duplicates = TRUE)}, options = list(paging=FALSE))
+
 }
 shinyApp(ui = ui, server = server)
