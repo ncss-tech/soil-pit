@@ -1,5 +1,5 @@
 ---
-title: "MLRA 111B - Glynwood B-slope Erosion; Northeastern IN"
+title: "MLRA 111B - Glynwood B-slope Erosion"
 author: "Stephen Roecker and Neil Martin"
 date: "`r Sys.Date()`"
 output: 
@@ -24,6 +24,7 @@ Spatially disaggregate the existing SSURGO polygons for Glynwood B-slope map uni
 knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 
 options(stringsAsFactors = FALSE)
+gdalUtils::gdal_setInstallation(search_path="C:/Program Files/QGIS Essen/bin", rescan = TRUE)
 
 ownCloud <- "C:/Users/stephen.roecker/ownCloud/projects/201711FIN001_Glynwood/"
 geodata <- "M:/geodata/"
@@ -33,7 +34,6 @@ geodata <- "M:/geodata/"
 # Data Preparation
 
 ```{r load packages}
-library(aqp)
 library(soilDB)
 
 library(reshape2)
@@ -46,14 +46,16 @@ library(caret)
 library(party)
 library(vegan)
 
+library(rgdal)
 library(sp)
 library(raster)
 library(mapview)
+library(gdalUtils)
 ```
 
 ## Point Data
 
-```{r nasis pedons, eval=FALSE}
+```{r nasis pedons, eval=TRUE}
 # load project from NASIS
 project <- get_projectmapunit_from_NASIS()
 project_nodups <- project[!duplicated(project$nationalmusym), c("nationalmusym", "muname")]
@@ -72,11 +74,16 @@ carb_vars <- c("hzdept", "effervescence")
 solum_vars <- c("hzdept")
 
 h2 <- by(h, h[vars], function(x) data.frame(
-  x[vars][1, ], # grouping variable
-  x[A_vars][1, ], # A horizon data
-  x[grepl("Bt", x$hzname), Bt_vars, ][1, ], # Bt horizon data
-  x[x$effervescence %in% c("strong", "violent"), carb_vars][1,], # CaCO3 data
-  x[grepl("^C|^2C|^3C", x$hzname), solum_vars][1] # solum depth
+  # grouping variable
+  x[vars][1, ],
+  # A horizon data
+  x[A_vars][1, ],
+  # Bt horizon data
+  x[grepl("Bt", x$hzname), Bt_vars, ][1, ],
+  # CaCO3 data
+  x[x$effervescence %in% c("strong", "violent"), carb_vars][1,],
+  # solum depth
+  x[grepl("^C|^2C|^3C", x$hzname), solum_vars][1]
   ))
 h2 <- do.call("rbind", h2)
 
@@ -90,6 +97,12 @@ h2 <- within(h2,{
 
 gw1 <- merge(s, h2, by = "peiid", all.x = TRUE)
 gw1 <- gw1[order(gw1$upedonid), ]
+
+# convert field dataset to a spatial object
+gw1 <- gw1[complete.cases(gw1[c("lat", "long")]), ]
+gw_sp <- gw1
+coordinates(gw_sp) <- ~ long + lat
+proj4string(gw_sp) <- CRS("+init=epsg:4326")
 ```
 
 
@@ -105,7 +118,12 @@ ssa <- spTransform(ssa, CRS("+init=epsg:4326"))
 # load soil series extent of Glynwood from SoilWeb
 gw_series <- seriesExtent("Glynwood")
 
+save(gw_pol, ssa, gw_series, file = paste0(ownCloud, "201711FIN_Glynwood_pol.RData"))
+```
 
+
+```{r import data and tranform, eval=TRUE}
+load(file = paste0(ownCloud, "201711FIN_Glynwood_pol.RData"))
 
 # load field data
 gw2 <- read.csv(paste0(ownCloud, "Pts_gnbero_27Jan17.csv"))
@@ -113,13 +131,8 @@ vars <- c("upedonid", "EroClassSIE", "relpos", "SlopeSIE", "wetness", "PlanCrv",
 gw <- merge(gw1, gw2[vars], by = "upedonid", all.x = TRUE)
 gw <- gw[complete.cases(gw[c("lat", "long")]), ]
 
-# convert field dataset to a spatial object
-gw_sp <- gw
-coordinates(gw_sp) <- ~ long + lat
-proj4string(gw_sp) <- CRS("+init=epsg:4326")
-gw_sp <- spTransform(gw_sp, CRS(proj4string(gw_pol)))
-
 # extract mupolygon data from field coordinates and merge with mapunit data from NASIS
+gw_sp <- spTransform(gw_sp, CRS(proj4string(gw_pol)))
 vars <- c("AREASYMBOL", "nationalmu")
 gw <- cbind(gw, over(gw_sp, gw_pol)[vars])
 gw <- merge(gw, project_nodups, by.x = "nationalmu", by.y = "nationalmusym", all.x = TRUE, sort = FALSE)
@@ -151,6 +164,13 @@ gw <- within(gw, {
   soilname2 = ifelse(soilname2 %in% c("Blount", "Elliott"), "Blount", soilname2)
   soilname2 = ifelse(soilname2 %in% c("Pewamo", "Pandora", "Mermill"), "Pewamo", soilname2)
   soilname3 = paste0(soilname2, ifelse(soilname2 == "Glynwood", paste0("-", EroClassFD2), ""))
+  
+  # difference between A and Bt horizons
+  clay_dif = firstbtclay - claytotest
+  tex_dif  = firstbttexture == texture
+  dep_dif  = hzthk - 15
+  value_dif = firstbtmxchroma - mxvalue
+  chroma_dif = firstbtmxchroma - mxchroma
   })
 
 # convert transformed field dataset to a spatial object
@@ -291,11 +311,7 @@ gw_sub <- gw[vals2]
 
 # Frequency of field observation vs map unit
 # Duplicate the data for each REASYMBOL and relabel MLRA
-gw_sub2 <- by(gw_sub, gw_sub$nationalmu, function(x) {
-  x[vals2][1, ]
-  x[, "AREASYMBOL"] <- "MLRA"
-  return(x)
-  })
+gw_sub2["AREASYMBOL"] <- "MLRA"
 gw_sub2 <- do.call("rbind", gw_sub2)
 gw_sub <- rbind(gw_sub, gw_sub2)
 gw_sub$natmuSsaEro <-  with(gw_sub,
@@ -329,14 +345,15 @@ The accuracy of the current ArcSIE model appears to be low, according to several
 
 ```{r EroClassFD boxplots, fig.height=11, fig.width=8.5}
 soil_vals <- c("hzthk", "SolumDp", "CaCO3Dp", "claytotest", "firstbtclay", "mxvalue", "mxchroma")
+soil_dif_vals <- c("clay_dif", "tex_dif", "dep_dif", "value_dif", "chroma_dif")
 geo_vals1 <- c("SlopeSIE", "ProfCrv", "PlanCrv", "relpos", "wetness")
 geo_vals2 <- c("slope5", "kt5", "kp5", "z2streams", "wetness2", "mvalley")
 
-vals <- c(soil_vals, geo_vals1, geo_vals2)
+vals <- c(soil_vals, soil_dif_vals, geo_vals1, geo_vals2)
 gw <- gw[complete.cases(gw[c("EroClassFD", soil_vals)]), ]
 
-gw_lo1 <- melt(gw, id.vars = "EroClassFD", measure.vars = vals)
-gw_lo2 <- melt(gw, id.vars = "EroClassSIE", measure.vars = vals)
+gw_lo1 <- melt(gw, id.vars = c("EroClassFD", "landform"), measure.vars = vals)
+gw_lo2 <- melt(gw, id.vars = c("EroClassSIE", "landform"), measure.vars = vals)
 
 names(gw_lo1)[1] <- "EroClass"
 gw_lo1$method <- "FD"
@@ -346,9 +363,9 @@ gw_lo <- rbind(gw_lo1, gw_lo2)
 gw_lo <- subset(gw_lo, !is.na(EroClass))
 
 gw_lo <- na.exclude(gw_lo)
-ggplot(gw_lo, aes(x = EroClass, y = value)) +
+ggplot(gw_lo1, aes(x = EroClass, y = value, color = landform)) +
   geom_boxplot() +
-  facet_wrap(~ paste(variable, method, landform), scales="free", ncol = 4) +
+  facet_wrap(~ paste(variable, method), scales="free", ncol = 4) +
   coord_flip()
 ```
 
@@ -366,7 +383,7 @@ test_d <- daisy(scale(test), metric = "gower")
 test_mds <- metaMDS(test_d, distance = "gower", autotransform = FALSE, trace = FALSE)
 test_pts <- cbind(as.data.frame(test_mds$points), EroClassFD = gw$EroClassFD)
 
-g1 <- ggplot(gw, aes(x = hzthk, y = SolumDp, color = EroClassFD)) +
+g1 <- ggplot(gw, aes(x = claytotest, y = hzthk, color = EroClassFD)) +
   geom_point(cex = 2, alpha = 0.75) +
   theme(aspect.ratio = 1)
 g2 <- ggplot(test_pts, aes(x = MDS1, y = MDS2, color = EroClassFD)) +
