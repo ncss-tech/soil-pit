@@ -27,13 +27,14 @@ options(stringsAsFactors = FALSE)
 gdalUtils::gdal_setInstallation(search_path="C:/Program Files/QGIS Essen/bin", rescan = TRUE)
 
 ownCloud <- "C:/Users/stephen.roecker/ownCloud/projects/201711FIN001_Glynwood/"
-geodata <- "M:/geodata/"
+geodata <- "D:/geodata/"
 ```
 
 
 # Data Preparation
 
 ```{r load packages}
+library(aqp)
 library(soilDB)
 
 library(reshape2)
@@ -48,12 +49,35 @@ library(vegan)
 
 library(rgdal)
 library(sp)
+library(sf)
 library(raster)
 library(mapview)
 library(gdalUtils)
 ```
 
 ## Point Data
+
+```{r search NASIS for extra pedons, eval=FALSE, echo=FALSE}
+# all 11-FIN MUPOLYGONS exported from geodatabase
+R11FIN_pol <- read_sf(dsn = "C:/workspace", layer = "R11FIN_pol")
+
+# NASIS site data
+test <- get_site_data_from_NASIS_db()
+test <- test[complete.cases(test[c("x", "y")]), ]
+
+test_sp <- test
+coordinates(test_sp) <- ~ x + y
+proj4string(test_sp) <- CRS("+init=epsg:4326")
+test_sp <- spTransform(test_sp, CRS("+init=epsg:5070"))
+test_sf <- st_as_sf(test_sp)
+st_crs(test_sf) <-  st_crs(R11FIN_pol)
+
+# intersect mupolygons and points
+idx <- st_intersects(test_sf, R11FIN_pol)
+R11FIN_gw_pol_sub <- R11FIN_pol[unlist(idx), ]
+
+save(R11FIN_gw_pol_sub, file = paste0(ownCloud, "R11FIN_gw_pol_sub.RData"))
+```
 
 ```{r nasis pedons, eval=TRUE}
 # load project from NASIS
@@ -109,6 +133,7 @@ proj4string(gw_sp) <- CRS("+init=epsg:4326")
 ```{r import data and tranform, eval=FALSE}
 # load mupolygons exported from geodatabse
 gw_pol <- readOGR(dsn = paste0(ownCloud, "glynwood.shp"), layer = "glynwood")
+gw_pol <- read_sf(dsn = paste0(ownCloud, "glynwood.shp"), layer = "glynwood")
 
 # load soil survey areas
 ssa <- readOGR(dsn = paste0(geodata, "soils/soilsa_a_nrcs.shp"), layer = "soilsa_a_nrcs")
