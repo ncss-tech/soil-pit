@@ -16,7 +16,15 @@ sidebar<-dashboardSidebar(
         actionButton("submukey", "Submit"),
         radioButtons(inputId="filltype", "Choose fill:", c("flooding","ponding")), br()
 ),
-    menuItem("Organic Matter", tabName="OMPlots", icon=icon("leaf")),
+    menuItem("Organic Matter", icon=icon("leaf"),
+             menuSubItem("Plot", tabName="OMPlots", icon=icon("area-chart")),
+             menuSubItem("Data", tabName="omdata", icon=icon("table")),
+             textInput(
+               inputId="ominmukey",
+               label="Enter mukey to plot -",
+               406338),
+             actionButton("omsubmukey", "Submit"), br(),p()
+             ),
     menuItem("Source Code", icon=icon("file-code-o"), href="https://github.com/ncss-tech/soil-pit/blob/master/sandbox/john/water_table_report_app/app.R"),
     menuItem("Help", tabName="help", icon=icon("question"))
  )
@@ -42,13 +50,20 @@ body<-dashboardBody(
              infoBox("Mapunit Name:",
                      uiOutput("muname2", inline= TRUE, container=span), width=12, icon=icon("map"), color="blue"),
              fluidRow(
-              box(dataTableOutput("shdatatab"), width=12),
+              box(tags$div(DT::dataTableOutput("shdatatab"), style="width:100%; overflow-x: scroll"), width=12),
               box("This application was developed by John Hammerly and Stephen Roecker.", width=12))
             )),
     tabItem(
       tabName="OMPlots",
-        titlePanel("Organic Matter"),
-          box("This Plot is currently under development.", width=12)),
+      titlePanel("Organic Matter Plots"),
+      verticalLayout(
+        infoBox("Mapunit Name:",
+                uiOutput("muname3", inline= TRUE, container=span),
+                width=12, icon=icon("map"), color="blue"),
+        fluidRow(
+          box(plotOutput("omplot"), width=12)),
+        box("This application was developed by John Hammerly and Stephen Roecker.", width=12))
+    ),
             tabItem(tabName="help",
                     titlePanel("Help"),
                     box("This site is a set web applications which use",
@@ -58,15 +73,25 @@ body<-dashboardBody(
                       width=12),
                     fluidRow(
                       infoBox("Water Table",
-                            "You will need to determine the mapunit key (mukey) of the mapunit of interest to view the data tables and plots.
+                            "First, determine the mapunit key (mukey) of the mapunit of interest to view the data tables and plots.  You can do this within Web Soil Survey by using the identify button.
                             Enter this number in the text input box in the side bar and click on the submit button.  
                             You also have the option of viewing either flooding frequency or ponding frequency in the plot by clicking the radio buttons.",
                             width=12, icon=icon("tint"), color="blue"),
                       infoBox("Organic Matter",
-                            "This plot is currently still in development.",
+                              "First, determine the mapunit key (mukey) of the mapunit of interest to view the data tables and plots.  You can do this within Web Soil Survey by using the identify button.
+                            Enter this number in the text input box in the side bar and click on the submit button.  No additional options are available.",
                             icon=icon("leaf"), color="green", width=12)
                       )
-                    )
+                    ),
+          tabItem(tabName="omdata",
+                  titlePanel("Organic Matter Data"),
+                  verticalLayout(
+                    infoBox("Mapunit Name:",
+                            uiOutput("muname4", inline= TRUE, container=span), width=12, icon=icon("map"), color="blue"),
+                    fluidRow(
+                      box(tags$div(DT::dataTableOutput("omdatatab"), style="width:100%; overflow-x: scroll"), width=12),
+                      box("This application was developed by John Hammerly and Stephen Roecker.", width=12))
+                  ))
     )
 )
 
@@ -80,6 +105,8 @@ server <- function(input, output){
   library(ggplot2)
   library(httr)
   library(jsonlite)
+  library(DT)
+  library(aqp)
   
   output$result <- renderPlot({ input$submukey
     
@@ -118,8 +145,43 @@ server <- function(input, output){
     
     wtlevels$muname[1]})
   
-  output$shdatatab<- renderDataTable({input$submukey
+  output$muname3<-renderText({   input$omsubmukey 
+    wtlevels <- get_cosoilmoist_from_SDA(WHERE = paste0("mukey = '", isolate(input$ominmukey), "'"), duplicates = TRUE)
+    
+    wtlevels$muname[1]})
+  
+  output$muname4<-renderText({   input$omsubmukey 
+    wtlevels <- get_cosoilmoist_from_SDA(WHERE = paste0("mukey = '", isolate(input$ominmukey), "'"), duplicates = TRUE)
+    
+    wtlevels$muname[1]})
+  
+  output$shdatatab<- DT::renderDataTable({input$submukey
     wtlevels <- get_cosoilmoist_from_SDA(WHERE = paste0("mukey = '", isolate(input$inmukey), "'"), duplicates = TRUE)}, options = list(paging=FALSE))
-
+  
+  output$omplot<-renderPlot({ input$omsubmukey
+    # import soil data using the fetchSDA_component() function
+    omdata = fetchSDA_component(WHERE = paste0("mukey = '", isolate(input$ominmukey), "'"), duplicates= TRUE)
+    
+    # Convert the data for plotting
+    omdata_slice <- aqp::slice(omdata$spc, 0:200 ~ om_l + om_r + om_h)
+    h = horizons(omdata_slice)
+    h = merge(h, site(omdata$spc)[c("cokey", "compname", "comppct_r")], by = "cokey", all.x = TRUE)
+    
+    # plot clay content
+    ggplot(h) +
+      geom_line(aes(y = om_r, x = hzdept_r)) +
+      geom_ribbon(aes(ymin = om_l, ymax = om_h, x = hzdept_r), alpha = 0.2) +
+      xlim(200, 0) +
+      xlab("depth (cm)") + ylab("organic matter (%)") +
+      ggtitle("Depth Plots of Organic Matter by Soil Component") +
+      facet_wrap(~ paste(compname, comppct_r, "%")) +
+      coord_flip()})
+  
+  output$omdatatab<- DT::renderDataTable({input$omsubmukey
+    omdata <- fetchSDA_component(WHERE = paste0("mukey = '", isolate(input$ominmukey), "'"), duplicates= TRUE);    omdata_slice <- aqp::slice(omdata$spc, 0:200 ~ om_l + om_r + om_h)
+    h = horizons(omdata_slice)
+    h = merge(h, site(omdata$spc)[c("cokey", "compname", "comppct_r")], by = "cokey", all.x = TRUE)}, options = list(paging=FALSE))
+  
+  
 }
 shinyApp(ui = ui, server = server)
