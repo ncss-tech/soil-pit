@@ -27,7 +27,7 @@ options(stringsAsFactors = FALSE)
 gdalUtils::gdal_setInstallation(search_path="C:/Program Files/QGIS Essen/bin", rescan = TRUE)
 
 ownCloud <- "C:/Users/stephen.roecker/ownCloud/projects/201711FIN001_Glynwood/"
-geodata <- "D:/geodata/"
+geodata <- "M:/geodata/"
 ```
 
 
@@ -58,8 +58,24 @@ library(gdalUtils)
 ## Point Data
 
 ```{r search NASIS for extra pedons, eval=FALSE, echo=FALSE}
+# load soil series extent of Glynwood from SoilWeb
+gw_series <- seriesExtent("Glynwood")
+gw_series <- st_as_sf(gw_series)
+
+# load project from NASIS
+project <- get_projectmapunit_from_NASIS()
+project_nodups <- project[!duplicated(project$nationalmusym), c("nationalmusym", "muname")]
+
+
 # all 11-FIN MUPOLYGONS exported from geodatabase
-R11FIN_pol <- read_sf(dsn = "C:/workspace", layer = "R11FIN_pol")
+R11FIN_pol <- read_sf(dsn = "M:/geodata/soils/2017/MLRA_11_FIN_FY17.gdb", layer = "MUPOLYGON")
+st_crs(R11FIN_pol) <- st_crs("+init=epsg:5070")
+
+ssa <- read_sf(dsn = "M:/geodata/soils/2017/MLRA_11_FIN_FY17.gdb", layer = "SAPOLYGON")
+st_crs(ssa) <- st_crs("+init=epsg:5070")
+ssa <- ssa[ssa$AREASYMBOL %in% project$areasymbol, ]
+ssa <- st_transform(ssa, crs = "+init=epsg:4326")
+
 
 # NASIS site data
 test <- get_site_data_from_NASIS_db()
@@ -68,38 +84,49 @@ test <- test[complete.cases(test[c("x", "y")]), ]
 test_sp <- test
 coordinates(test_sp) <- ~ x + y
 proj4string(test_sp) <- CRS("+init=epsg:4326")
-test_sp <- spTransform(test_sp, CRS("+init=epsg:5070"))
+
 test_sf <- st_as_sf(test_sp)
-st_crs(test_sf) <-  st_crs(R11FIN_pol)
+test_sf <- st_transform(test_sf, crs = "+init=epsg:5070")
+
+
+# filter mupolygons by mukey
+R11FIN_pol_sub <- R11FIN_pol[R11FIN_pol$MUKEY %in% project$mukey, ]
 
 # intersect mupolygons and points
-idx <- st_intersects(test_sf, R11FIN_pol)
-R11FIN_gw_pol_sub <- R11FIN_pol[unlist(idx), ]
+R11FIN_pol_sub2 <- R11FIN_pol[R11FIN_pol$AREASYMBOL %in% project$areasymbol, ]
+idx <- st_intersects(test_sf, R11FIN_pol_sub2)
+idx2 <- lapply(idx, function(x) ifelse(length(x) == 0, NA, x))
+R11FIN_pol_int <- R11FIN_pol_sub2[unlist(idx2), ]
+R11FIN_pol_int$upedonid <- test_sf$pedon_id
 
-save(R11FIN_gw_pol_sub, file = paste0(ownCloud, "R11FIN_gw_pol_sub.RData"))
+# save and export files
+write_sf(R11FIN_pol_sub, 
+         dsn = paste0(ownCloud, "201711FIN001_glynwood_mupolygon.shp"), 
+         layer = "201711FIN001_glynwood_mupolygon", 
+         driver = "ESRI Shapefile"
+         )
+save(R11FIN_pol_int, R11FIN_pol_sub, ssa, gw_series, file = paste0(ownCloud, "201711FIN001_glynwood_pol.RData"))
 ```
 
-```{r nasis pedons, eval=TRUE}
-# load project from NASIS
-project <- get_projectmapunit_from_NASIS()
-project_nodups <- project[!duplicated(project$nationalmusym), c("nationalmusym", "muname")]
-
+```{r nasis pedons, eval=FALSE}
 # load pedons from NASIS
 gp <- fetchNASIS()
-s <- site(gp)[c("peiid", "pedon_id", "taxonname", "x", "y", "describer", "erocl")]
+
+vars <- c("peiid", "pedon_id", "taxonname", "x", "y", "describer", "erocl")
+s <- site(gp)[vars]
 h <- horizons(gp)
 
 
 # duplicate field data from the original spreadsheet, originally came from "PEDON - ArcSIE Data Dump 11-FIN v2.0" report, diagnostic data was populated in the pedon field measured property table
-vars <- c("peiid")
+g_vars <- c("peiid")
 A_vars <- c("hzname", "hzdept", "clay", "texture", "m_hue", "m_value", "m_chroma")
 Bt_vars <- c("hzdept", "clay", "texture", "m_value", "m_chroma")
 carb_vars <- c("hzdept", "effervescence")
 solum_vars <- c("hzdept")
 
-h2 <- by(h, h[vars], function(x) data.frame(
+h2 <- by(h, h[g_vars], function(x) data.frame(
   # grouping variable
-  x[vars][1, ],
+  x[g_vars][1, ],
   # A horizon data
   x[A_vars][1, ],
   # Bt horizon data
@@ -111,7 +138,7 @@ h2 <- by(h, h[vars], function(x) data.frame(
   ))
 h2 <- do.call("rbind", h2)
 
-names(h2) <- c(vars, "hzname", "A_hzthk", "claytotest", "texture", "mxhue", "mxvalue", "mxchroma", "hzthk", "firstbtclay", "firstbttexture", "firstbtmxvalue", "firstbtmxchroma", "CaCO3Dp", "effervescence", "SolumDp")
+names(h2) <- c(g_vars, "hzname", "A_hzthk", "claytotest", "texture", "mxhue", "mxvalue", "mxchroma", "hzthk", "firstbtclay", "firstbttexture", "firstbtmxvalue", "firstbtmxchroma", "CaCO3Dp", "effervescence", "SolumDp")
 names(s)[c(2:5, 7)]  <- c("upedonid", "soilname", "long", "lat", "EroClassFD")
 
 h2 <- within(h2,{
@@ -120,47 +147,22 @@ h2 <- within(h2,{
              })
 
 gw1 <- merge(s, h2, by = "peiid", all.x = TRUE)
-gw1 <- gw1[order(gw1$upedonid), ]
-
-# convert field dataset to a spatial object
 gw1 <- gw1[complete.cases(gw1[c("lat", "long")]), ]
-gw_sp <- gw1
-coordinates(gw_sp) <- ~ long + lat
-proj4string(gw_sp) <- CRS("+init=epsg:4326")
 ```
 
 
 ```{r import data and tranform, eval=FALSE}
-# load mupolygons exported from geodatabse
-gw_pol <- readOGR(dsn = paste0(ownCloud, "glynwood.shp"), layer = "glynwood")
-gw_pol <- read_sf(dsn = paste0(ownCloud, "glynwood.shp"), layer = "glynwood")
-
-# load soil survey areas
-ssa <- readOGR(dsn = paste0(geodata, "soils/soilsa_a_nrcs.shp"), layer = "soilsa_a_nrcs")
-ssa <- subset(ssa, areasymbol %in% project$areasymbol)
-ssa <- spTransform(ssa, CRS("+init=epsg:4326"))
-
-# load soil series extent of Glynwood from SoilWeb
-gw_series <- seriesExtent("Glynwood")
-
-save(gw_pol, ssa, gw_series, file = paste0(ownCloud, "201711FIN_Glynwood_pol.RData"))
-```
-
-
-```{r import data and tranform, eval=TRUE}
-load(file = paste0(ownCloud, "201711FIN_Glynwood_pol.RData"))
+load(file = paste0(ownCloud, "201711FIN001_glynwood_pol.RData"))
 
 # load field data
 gw2 <- read.csv(paste0(ownCloud, "Pts_gnbero_27Jan17.csv"))
 vars <- c("upedonid", "EroClassSIE", "relpos", "SlopeSIE", "wetness", "PlanCrv", "ProfCrv", "maxcrv", "mincrv")
 gw <- merge(gw1, gw2[vars], by = "upedonid", all.x = TRUE)
-gw <- gw[complete.cases(gw[c("lat", "long")]), ]
 
 # extract mupolygon data from field coordinates and merge with mapunit data from NASIS
-gw_sp <- spTransform(gw_sp, CRS(proj4string(gw_pol)))
-vars <- c("AREASYMBOL", "nationalmu")
-gw <- cbind(gw, over(gw_sp, gw_pol)[vars])
-gw <- merge(gw, project_nodups, by.x = "nationalmu", by.y = "nationalmusym", all.x = TRUE, sort = FALSE)
+vars <- c("AREASYMBOL", "nationalmusym", "MUNAME", "upedonid")
+test <- data.frame(R11FIN_pol_int)[vars]
+gw <- merge(gw, test, by = "upedonid", all.x = TRUE)
 
 # erosion labels
 ero_labels <- c("undisturbed", "slight", "moderate", "severe")
@@ -174,14 +176,14 @@ gw <- within(gw, {
   
   # extract erosion phases from mapunit names
   EroClassNASIS = NA
-  EroClassNASIS[grepl("eroded", muname)] = "eroded"
-  EroClassNASIS[grepl("sev.|severely", muname)] = "sev.eroded"
-  EroClassNASIS[!grepl("eroded", muname)] = "non.eroded"
+  EroClassNASIS[grepl("eroded", MUNAME)] = "eroded"
+  EroClassNASIS[grepl("sev.|severely", MUNAME)] = "sev.eroded"
+  EroClassNASIS[!grepl("eroded", MUNAME)] = "non.eroded"
   
   # extract landform from mapunit names
   landform = NA
-  landform[grepl("ground moraine", muname)] = "ground"
-  landform[grepl("end moraine", muname)] =  "end"
+  landform[grepl("ground moraine", MUNAME)] = "ground"
+  landform[grepl("end moraine", MUNAME)] =  "end"
   
   # correlate field taxonnames to mapunit components
   soilname2 = soilname
@@ -202,7 +204,10 @@ gw <- within(gw, {
 gw_sp <- gw
 coordinates(gw_sp) <- ~ long + lat
 proj4string(gw_sp) <- CRS("+init=epsg:4326")
-gw_sp <- spTransform(gw_sp, CRS(proj4string(gw_pol)))
+
+gw_sf <- st_as_sf(gw_sp)
+
+gw_sp <- spTransform(gw_sp, CRS("+init=epsg:5070"))
 ```
 
 ## Spatial Data
@@ -288,7 +293,7 @@ dd <- paste0(fd, dd2)
 
 input <- dd
 output <- paste0(geodata, "project_data/11FIN/201711FIN001_Glynwood/", gsub(".sdat", ".tif", dd2))
-bb <- bbox(gw_sp <- spTransform(gw_sp, CRS("+init=epsg:5070")))
+bb <- st_bbox(st_transform(gw_sf, crs = "+init=epsg:5070"))
 
 mapply(subset_rasters, input, output)
 mapply(subset_rasters, 
@@ -314,36 +319,38 @@ rm(gd10m, gd30m)
 
 
 # Save data
-save(gw, gw_sp, gw_pol, gw_series, ssa, ero_labels, file = paste0(ownCloud, "Pts_gnbero_27Jan17_geodata3.RData"))
+save(gw, gw_sf, gw_sp, ero_labels, file = paste0(ownCloud, "201711FIN001_glynwood_geodata.RData"))
 ```
 
 
 # Plot Pedon Coordinates, SSA, and Series Extent
 ```{r create map}
 # Load cached dataset
-load(paste0(ownCloud, "Pts_gnbero_27Jan17_geodata3.RData"))
+load(paste0(ownCloud, "201711FIN001_glynwood_pol.RData"))
+load(paste0(ownCloud, "201711FIN001_glynwood_geodata.RData"))
+
 
 # Create interactive map
-mapView(gw_series) + ssa + gw_sp
+mapView(gw_series) + ssa + gw_sf
 ```
 
 
 # Map Units vs Field Observations
 
 ```{r mapunit eval}
-vals2 <- c("EroClassFD", "EroClassNASIS", "nationalmu", "AREASYMBOL")
-gw_sub <- gw[vals2]
+vars <- c("EroClassFD", "EroClassNASIS", "nationalmusym", "AREASYMBOL")
+gw_sub <- gw[vars]
+gw_dup <- gw[vars]
 
 # Frequency of field observation vs map unit
 # Duplicate the data for each REASYMBOL and relabel MLRA
-gw_sub2["AREASYMBOL"] <- "MLRA"
-gw_sub2 <- do.call("rbind", gw_sub2)
-gw_sub <- rbind(gw_sub, gw_sub2)
-gw_sub$natmuSsaEro <-  with(gw_sub,
-                            paste0(nationalmu, "-", AREASYMBOL, "-", EroClassNASIS)
+gw_dup["AREASYMBOL"] <- "MLRA"
+gw_dup <- rbind(gw_sub, gw_dup)
+gw_dup$natmuSsaEro <-  with(gw_dup,
+                            paste0(nationalmusym, "-", AREASYMBOL, "-", EroClassNASIS)
                             )
-test <- xtabs(~ natmuSsaEro + EroClassFD, data = gw_sub)
-kable(test, caption = "Frequence by MUSYM-SSA-EROSION")
+test <- xtabs(~ natmuSsaEro + EroClassFD, data = gw_dup)
+kable(addmargins(test, margin = 2), caption = "Frequence by MUSYM-SSA-EROSION")
 kable(round(prop.table(test, 1) * 100), caption = "Percent by MUSYM-SSA-EROSION")
 ```
 
@@ -410,6 +417,7 @@ test_pts <- cbind(as.data.frame(test_mds$points), EroClassFD = gw$EroClassFD)
 
 g1 <- ggplot(gw, aes(x = claytotest, y = hzthk, color = EroClassFD)) +
   geom_point(cex = 2, alpha = 0.75) +
+  xlim(c(max(gw$claytotest), min(gw$claytotest))) +
   theme(aspect.ratio = 1)
 g2 <- ggplot(test_pts, aes(x = MDS1, y = MDS2, color = EroClassFD)) +
   geom_point(cex = 2, alpha = 0.75) +
@@ -440,7 +448,7 @@ An analysis of the EroClassFD above with a classification tree is an attempt to 
 In order to see if more separation can be achieved amongst the erosion classes a hierachical classifition was peformed. Four unsupervised classes were chosen and manually matched to the FD classes. 
 
 ```{r generate clusters, fig.height=4, fig.width=7.5}
-test_c <- hclust(test_d, method = "ward")
+test_c <- hclust(test_d, method = "ward.D")
 plot(test_c, labels = gw$upedonid)
 rect.hclust(test_c, k = 4)
 ```
@@ -457,7 +465,7 @@ clusters <- cbind(gw,
 clusters <- cbind(gw, 
                   test_pts[, 1:2], 
                   clusters = factor(cutree(test_c, k = 4),
-                                    levels = c(4, 1, 2, 3),
+                                    levels = c(4, 3, 2, 1),
                                     labels = ero_labels
                                     )
                   )
@@ -484,11 +492,13 @@ In comparison the hierarchical clusters have less overlap when viewed along the 
 ## Box Plots
 
 ```{r, fig.height=11, fig.width=8.5}
+gw_lo1 <- melt(gw, id.vars = "EroClassFD", measure.vars = c(soil_vals, geo_vals2))
 gw_lo3 <- melt(clusters, id.vars = "clusters", measure.vars = c(soil_vals, geo_vals2))
 
+names(gw_lo1)[1] <- "EroClass"
 names(gw_lo3)[1] <- "EroClass"
+gw_lo1$method <- "FD"
 gw_lo3$method <- "clusters"
-gw_lo1 <- subset(gw_lo1, ! variable %in%  c("relpos", "wetness", "SlopeSIE"))
 gw_lo <- rbind(gw_lo1, gw_lo3)
 
 ggplot(gw_lo, aes(x = EroClass, y = value)) +
