@@ -57,7 +57,7 @@ library(gdalUtils)
 
 ## Point Data
 
-```{r search NASIS for extra pedons, eval=FALSE, echo=FALSE}
+```{r search NASIS for extra pedons, eval=FALSE}
 # load soil series extent of Glynwood from SoilWeb
 gw_series <- seriesExtent("Glynwood")
 gw_series <- st_as_sf(gw_series)
