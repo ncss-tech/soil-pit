@@ -31,11 +31,12 @@ library(latticeExtra)
 # library(ggplot2)
 library(circular)
 
+library(maps)
+library(maptools)
 library(rgdal)
 library(sp)
 library(sf)
 library(raster)
-library(mapView)
 
 library(soilDB)
 
@@ -49,10 +50,11 @@ trellis.par.set(tpg)
 
 
 ```{r map unit summary function}
-
+project <- get_projectmapunit_from_NASIS()
+  
 office_folder <- paste0(dir, office, "/")
 region_folder <- paste0(dir, "11REGION/")
-cache <- paste0(shp, "_", samplePercent, ".Rdata")
+cache <- paste0(unique(project$uprojectid), "_", samplePercent, ".Rdata")
 mupolygon_cache <- gsub(".gdb", "", paste0(office_folder, geodatabase, "_cache.RData"))
 
 
@@ -70,8 +72,6 @@ if (!file.exists(cache)){
     save(mupolygon, sapolygon, file = mupolygon_cache)
   } else load(file = mupolygon_cache)
   
-  project <- get_projectmapunit_from_NASIS()
-  
   idx <- names(mupolygon) != "Shape"
   names(mupolygon)[idx] <- tolower(names(mupolygon)[idx])
   
@@ -86,24 +86,19 @@ if (!file.exists(cache)){
   n <- ceiling(sum(mupolygon$shape_area) / 900 * samplePercent / 100)
   
   mupolygon$idx <- 1:nrow(mupolygon)
-  test <- by(mupolygon, mupolygon$idx, function(x) st_sample(x, 10))
-  test2 <- lapply(test[[1]], function(x) data.frame(x))
-  test2 <- do.call(rbind, test)
-  apply(mupolygon, 1, function(x) st_sample(x, 10))
+  mupolygon_sp <- by(mupolygon, mupolygon$idx, function(x) as(st_sample(x, 10), "Spatial"))
+  mupolygon_sp <- do.call(rbind, mupolygon_sp)
+  proj4string(mupolygon_sp) <- CRS("+init=epsg:5070")
+  mupolygon_sf <- st_as_sf(mupolygon_sp)
   
-  mupolygon.s <- st_sample(mupolygon, size = n)
-  
-  
-  mupolygon_sp <- as(mupolygon.s, "Spatial")
-
   geodata <- raster_extract(mupolygon_sp)
-  idx  <- st_intersects(mupolygon.s, mupolygon)
+  idx  <- st_intersects(mupolygon_sf, mupolygon)
   mapunit.df <- mupolygon[unlist(idx), ]
 
   data <- cbind(data.frame(mapunit.df[c("areasymbol", "musym")]), geodata)
   
 #  mlra <- readOGR(dsn = "M:/geodata/project_data/11REGION/mlra_a_r11.shp", layer = "mlra_a_r11", encoding = "ESRI Shapefile")
-#  mlra_i <- over(mupolygon.s, mlra)
+#  mlra_i <- over(mupolygon_sp, mlra)
 #  mlra_acres <- ddply(mlra_i, .(MLRARSYM), summarize, mlra_percent = sum(length(OBJECTID)))
 #  mlra_acres <- transform(mlra_acres, mlra_percent = round(mlra_percent / sum(mlra_percent) * 100, 0))
 
@@ -124,7 +119,7 @@ data <- rbind(data2, data)
 
 ### Shapefile Name
 ```{r project name}
-shp
+unique(project$projectname)
 ```
 
 
