@@ -5,8 +5,8 @@ date: "May 22, 2017"
 output: html_document
 ---
 
-```{r resampling data}
-ownCloud <- "C:/Users/stephen.roecker/ownCloud/projects/neil_arcsie/"
+```{r reshaping data}
+ownCloud <- "C:/Users/stephen/ownCloud/projects/201711FIN001_Glynwood/"
 geodata <- "M:/geodata/"
 
 gw <- read.csv(paste0(ownCloud, "Pts_gnbero_27Jan17.csv"))
@@ -16,8 +16,7 @@ library(tidyr)
 
 soil_vals <- c("hzthk", "SolumDp", "CaCO3Dp", "claytotest", "firstbtclay", "mxvalue", "mxchroma")
 geo_vals1 <- c("SlopeSIE", "ProfCrv", "PlanCrv", "relpos", "wetness")
-geo_vals2 <- c("slope5", "kt5", "kp5", "z2streams", "wetness2", "mvalley")
-vals <- c(soil_vals, geo_vals1, geo_vals2)
+vals <- c(soil_vals, geo_vals1)
 
 
 # reshape with reshape2
@@ -26,11 +25,11 @@ gw_lo2 <- melt(gw, id.vars = "EroClassSIE", measure.vars = vals)
 
 
 # reshape with base
-gw_lo1 <- reshape(gw,
-                     times = vals, timevar = "variable",
-                     varying = vals, v.names = "value",
+gw_lo1_b <- reshape(gw[c("EroClassFD", vals)],
                      direction = "long",
-                     drop = which(!names(gw) %in% c("EroClassFD", vals))
+                     times = vals, timevar = "variable",
+                     varying = vals, v.names = "value"
+                     # drop = which(!names(gw) %in% c("EroClassFD", vals))
                      )
 
 
