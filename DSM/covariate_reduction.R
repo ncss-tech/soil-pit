@@ -1,10 +1,11 @@
 #-----------------------------------------------------------------------------------------------------------------
 #
-#   Animas Valley Playa Predictive Soil Modeling
+#   Predictive Soil Modeling
 #
-#   Part 1: covariate reduction for polypedon development
-
-
+#   Part 1: Covariate reduction using near zero variance, correlation reduction, and iterative principal component 
+#           analysis.
+#
+#
 #
 #-----------------------------------------------------------------------------------------------------------------
 
@@ -211,7 +212,7 @@ dem.df.all <- as.data.frame(dem.spdf, xy = TRUE, na.rm = TRUE)
 
 dem.df <- within(dem.df.all, rm(x, y))
 
-# When data has negative balues corrplot does not work, produces question marks ??  
+# When data has negative values corrplot does not work, produces question marks ??  
 # need to center and scale first
 
 trans.dem.df <- preProcess(dem.df, method = c("BoxCox", "center", "scale"))
