@@ -28,7 +28,7 @@ library(raster)
 # 1.0 PrePocessing covariates
 # Load Raster Data
 
-# set working directory for the basin covariates
+# set working directory for the covariates
 setwd("E:/PSSAT_Random_Forest/StraddlebugMtGIS/tif/")
 
 r.asr1m.tif <- raster("asr1m.tif")
