@@ -1,0 +1,45 @@
+---
+title: "New soilDB R Functions for Accessing Soil Data from SDA and NASIS"
+author: "Stephen Roecker"
+date: "May 19, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE)
+```
+
+Numerous websites are available to access the USDA-NRCS's soil information, such as [Web Soil Survey (WSS)](http://websoilsurvey.sc.egov.usda.gov/App/HomePage.htm), [SoilWeb Apps](http://casoilresource.lawr.ucdavis.edu/soilweb-apps), and [Soil Explorer](http://soilexplorer.net/). Each of these websites provides a different flavor of the Soil SURvey GeOgraphic Database (SSURGO), and meets the needs of different soil user groups. A less well known website that also provides access to SSURGO is [Soil Data Access (SDA)](http://sdmdataaccess.nrcs.usda.gov/). SDA is different from the previously mentioned websites, in that it provides the most unfiltered access to the SSURGO database. However in order to access data from SDA, users must develop SQL queries (e.g. 'SELECT muname FROM mapunit'), which requires a detailed understanding of the SSURGO database and the Structured Query Language (SQL). SQL queries can be can be submitted to SDA either via the website or submitted remotely using popular programming languages such as R or Python.
+
+Within the Soil Scientific Community, [R](http://www.r-project.org/) is the arguably the most popular scientific programming language and has numerous R packages for analyzing soil data. The [soilDB R package](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) in particular can import soil data from several USDA-NRCS soil databases, including SDA. Recently, in an effort to streamline the analysis and visualization of the SSURGO data, Region 11 has developed several new soilDB R functions to import data from SDA and NASIS (yet another database). The following code below shows a small example of how to import soil data into R using the `fetchSDA_component()` function, and how to construct a depth plot. The only input necessary is an short text string specifying an SQL WHERE clause.
+
+```{r install soilDB from GitHub, eval=FALSE}
+# install development version of soilDB from GitHub
+devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
+```
+```{r fetchSDA_component example}
+# load packages
+library(aqp)
+library(soilDB)
+library(ggplot2)
+
+# import soil data using the fetchSDA_component() function
+MnpB2 = fetchSDA_component(WHERE = "areasymbol = 'IN005' AND musym = 'MnpB2'")
+
+# Convert the data for plotting
+MnpB2_slice = slice(MnpB2$spc, 0:200 ~ claytotal_l + claytotal_r + claytotal_h)
+h = horizons(MnpB2_slice)
+h = merge(h, site(MnpB2$spc)[c("cokey", "compname", "comppct_r")], by = "cokey", all.x = TRUE)
+
+# plot clay content
+ggplot(h) +
+  geom_line(aes(y = claytotal_r, x = hzdept_r)) +
+  geom_ribbon(aes(ymin = claytotal_l, ymax = claytotal_h, x = hzdept_r), alpha = 0.2) +
+  xlim(200, 0) +
+  xlab("depth (cm)") + ylab("clay content (%)") +
+  ggtitle("Depth Plots of Clay Content by Soil Component") +
+  facet_wrap(~ paste(compname, comppct_r, "%")) +
+  coord_flip()
+```
+
+Hopefully folks familiar with R will find the new `fetchSDA_component()` soilDB R function(s) useful for importing soil data from SDA. For those that aren't R literate, have no fear, see John Hammerly's article on plotting water table data using a Web App. One of the nice features of R, is that it can also be used to create Web Apps for the general public. So in the near future, please vist the Region 11 website learn to Soils with our custom Web Apps.

@@ -1,0 +1,96 @@
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8.5}
+library(soilDB)
+library(ggplot2)
+library(gridExtra)
+
+# project mapunits
+
+pm <- get_projectmapunit_from_NASIS()
+unique(pm$projectname)
+
+
+# load component data
+test <- fetchNASIS_component_data()
+test$dep <- test$hzdept_r
+test$comp_id <- paste(test$dmuiid, "\n", test$compname, test$comppct_r)
+
+# profile plot
+plot(test, label = "comp_id")
+
+vars <- c("claytotal", "fragvoltot", "om", "dbovendry", "ksat", "awc", "ph1to1h2o")
+
+
+# convert the data for depth plot
+vars_slice = horizons(slice(test, seq(0, 200, 2) ~ hzname + dep + 
+                              claytotal_l + claytotal_r + claytotal_h +
+                              fragvoltot_l + fragvoltot_r + fragvoltot_h +
+                              om_l + om_r + om_h +
+                              dbovendry_l + dbovendry_r + dbovendry_h + 
+                              ksat_l + ksat_r + ksat_h +
+                              awc_l + awc_r + awc_h + 
+                              ph1to1h2o_l + ph1to1h2o_r + ph1to1h2o_h
+                            ))
+
+h <- merge(vars_slice, site(test)[c("dmuiid", "coiid", "compname", "comppct_r")], by = "coiid", all.x = TRUE)
+
+# depth plot of clay content by soil component
+gg_comp <- function(x, var) {
+  ggplot(x) +
+  geom_line(aes(y = r, x = hzdept_r)) +
+  geom_ribbon(aes(ymin = l, ymax = h, x = hzdept_r), alpha = 0.2) +
+  xlim(200, 0) +
+  xlab("depth (cm)") + ylab(var) +
+  facet_grid(paste("dmu-", dmuiid) ~ var + paste(compname, comppct_r, "%")) + 
+  coord_flip()
+  }
+
+gg_list <- lapply(vars, function(x) {
+  h_sub = h[c("dmuiid", "coiid", "compname", "comppct_r", "hzname", "dep", "hzdept_r", "hzdepb_r", 
+                 paste0(x, c("_l", "_r", "_h")))]
+  names(h_sub) = gsub(paste0(x, "_"), "", names(h_sub))
+  h_sub$var = x
+  gg_temp = gg_comp(h_sub, x)
+  
+  if (x == "ksat") {
+    brks = c(0, 0.01, 0.1, 1, 10, 100, 1000)
+    gg_temp = gg_temp + scale_y_log10(breaks = brks)
+    }
+  return(gg_temp)
+  })
+names(gg_list) <- vars
+
+plot(gg_list$claytotal)
+plot(gg_list$fragvoltot)
+plot(gg_list$om)
+plot(gg_list$dbovendry)
+plot(gg_list$ksat)
+plot(gg_list$awc)
+plot(gg_list$ph1to1h2o)
+
+
+# query cosoilmoist (e.g. water table data) by mukey
+
+test <- get_cosoilmoist_from_NASIS()
+
+# remove depths with NA
+test <- subset(test, !is.na(dept_r))
+
+# plot annual water table
+
+ggplot(test, aes(x = as.integer(month), y = dept_r, lty = status)) +
+  geom_rect(aes(xmin = as.integer(month), xmax = as.integer(month) + 1,
+                ymin = 0, ymax = max(test$depb_r),
+                fill = flodfreqcl)) +
+  geom_line(cex = 1) +
+  geom_point() +
+  geom_ribbon(aes(ymin = dept_l, ymax = dept_h), alpha = 0.2) +
+  ylim(max(test$depb_r), 0) +
+  xlab("month") + ylab("depth (cm)") +
+  scale_x_continuous(breaks = 1:12, labels = month.abb, name="Month") +
+  facet_grid(paste0("dmu-", dmuiid) ~ paste(compname, comppct_r, "%", sep = "-")) +
+  ggtitle("Water Table Levels from Component Soil Moisture Month Data")
+
+```
+

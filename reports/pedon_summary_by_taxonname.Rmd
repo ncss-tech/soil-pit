@@ -18,32 +18,36 @@ library(aqp)
 library(soilDB)
 library(circular)
 library(lattice)
+library(latticeExtra)
 library(RColorBrewer)
 library(plyr)
-library(ggplot2)
 library(reshape2)
-library(stringr)
 library(knitr)
 library(maps)
 
 source("../soilDB_x/utils.R")
 source(paste0("./genhz_rules/", series, "_rules.R"))
 
+opar <- trellis.par.get()
+trellis.par.set(theme = ggplot2like())
+tpg <- trellis.par.get()
+tpg$axis.line <-  list(alpha = 1, col = "#000000", lty = rep(1, 7), lwd = rep(0.2, 7))
+tpg$strip.border <- list(alpha = 1, col = "#000000", lty = rep(1, 7), lwd = rep(0.2, 7))
+trellis.par.set(tpg)
 ```
 
 
 ```{r fetch and format, load-data, echo=FALSE, warning=FALSE}
 # load NASIS data
-pedons <- fetchNASIS(nullFragsAreZero = TRUE)
+pedons <- fetchNASIS(nullFragsAreZero = TRUE, lab = TRUE)
 
 h <- horizons(pedons)
-h$hzname[is.na(h$hzname)] <- "missing"
-na_idx <- is.na(pedons$genhz)
-h[na_idx, "genhz"] <- as.character(sapply(h[na_idx, "hzname"], function(x) generalize.hz(x, ghr$n, ghr$p)))
+h <- mutate(h,
+            hzname = ifelse(is.na(hzname), "missing", hzname),
+            genhz = generalize.hz(hzname, ghr$n, ghr$p)
+            )
+
 horizons(pedons) <- h
-pedons$hzdepm <- (pedons$hzdept + pedons$hzdepb)/2
-genhz_med <- sort(tapply(pedons$hzdepm, pedons$genhz, median))
-pedons$genhz <- factor(pedons$genhz, levels = names(genhz_med), ordered = TRUE)                                                                                                       
 
 h <- horizons(pedons)
 s <- site(pedons)
@@ -53,7 +57,6 @@ h <- data.frame(lapply(h, na_replace), stringsAsFactors = FALSE)
 s <- data.frame(lapply(s, na_replace), stringsAsFactors = FALSE)
 
 l <- length(unique(h$peiid))
-
 ```
 
 
@@ -98,22 +101,26 @@ for (i in unique(idx)){
 ### Summary of the soil surface
 
 ```{r surface rock fragments, echo=FALSE, results='asis'}
-srf <- subset(s, select=c("surface_fgravel", "surface_gravel", "surface_cobbles", "surface_stones", "surface_boulders", "surface_flagstones", "surface_channers"))
-names(srf) <- unlist(lapply(strsplit(names(srf), "surface_"), paste0, collapse = ""))
-srf$total_srf <- srf$gravel + srf$cobbles + srf$stones + srf$boulders + srf$flagstones + srf$channers
-srf$gravel <- srf$gravel - srf$fgravel
+srf <- s[, grepl("surface_", names(s))]
+names(srf) <- gsub("surface_", "", names(srf))
+srf <- mutate(srf, 
+              total_srf = gravel + cobbles + stones + 
+                boulders + flagstones + channers,
+              gravel = gravel - fgravel
+              )
 
-
-srf.lo <- melt(srf, measure.vars=c("total_srf", "fgravel", "gravel", "cobbles", "stones", "boulders", "channers", "flagstones"))
+srf.lo <- melt(srf, measure.vars = c("total_srf", "fgravel", "gravel", "cobbles", "stones", "boulders", "channers", "flagstones"))
 srf.5n <- ddply(srf.lo, .(variable), .fun = sum5n)
 
 kable(srf.5n, align = "c", caption =  "Surface rock fragments (min, 25th, median, 75th, max)(n)")
  
 
 if (sum(srf$total_srf, na.rm = T) != 0) {
-  bwplot(variable ~ variable, data = srf.lo, ylab = "percent", main = "Boxplots of surface rock fragments")
-  
-  # qplot(variable, value, data = srf.lo, geom = "boxplot", ylab = "%", main = "Boxplots of surface rock fragments") + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  bwplot(variable ~ variable, data = srf.lo, 
+         main = "Boxplots of surface rock fragments",
+         ylab = "percent",
+         axis = axis.grid
+         )
   }         
 ```
 
@@ -145,10 +152,12 @@ kable(diag.wi, align = "c", caption = "Depths and thickness of diagnostic horizo
 
 
 if (!all(is.na(diag.lo$value))) {
-  bwplot(diag_kind ~ value | variable, data = diag.lo, scales =list(x="free"), main = "Boxplots of diagnostic horizon and feature depths", as.table = TRUE)
-  
-  # qplot(diag_kind, value, data = diag.lo, geom = "boxplot", ylab = "cm", main = "Boxplots of diagnostic horizon and feature depths") + facet_wrap(~variable, scales = "free") + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
-}
+  bwplot(diag_kind ~ value | variable, data = diag.lo, 
+         main = "Boxplots of diagnostic horizon and feature depths", 
+         scales =list(x="free"), axis = axis.grid, 
+         as.table = TRUE
+         )
+  }
 ```
 
 
@@ -173,9 +182,11 @@ kable(dcast(genhz.5n, genhz ~ variable, value.var = 'range'), align = "c", capti
 
 genhz.lo$genhz <- factor(genhz.lo$genhz, levels = rev(levels(genhz.lo$genhz)))
 
-bwplot(genhz ~ value | variable, data = genhz.lo, scales =list(x="free"), main = "Boxplots of horizon generic horizon depths and thickness", as.table = TRUE)
-
-# qplot(genhz, value, data = genhz.lo, geom = "boxplot", ylab = "cm", main = "Boxplots of horizon generic horizon depths and thickness") + facet_wrap(~variable, scales = "free") + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+bwplot(genhz ~ value | variable, data = genhz.lo, 
+       main = "Boxplots of horizon generic horizon depths and thickness",
+       scales =list(x="free"), axis = axis.grid,
+       as.table = TRUE
+       )
 ```
 
 ```{r genhz numeric variables, echo=FALSE, results='asis', warning=FALSE, fig.height=8, fig.width=8}
@@ -183,9 +194,12 @@ idx <- names(h) == "total_frags_pct_cal" | names(h) == "total_frags_pct"
 names(h)[idx] <- c("fragvoltotc", "fragvoltot")
 var <- c("fine_gravel", "gravel", "cobbles", "stones", "boulders", "paragravel", "paracobbles", "channers", "flagstones")
 h[, var] <- lapply(h[var], as.integer)
-h$gravel <- h$gravel-h$fine_gravel
+h$gravel <- h$gravel - h$fine_gravel
 
-h.lo <- melt(h, id.vars="genhz", measure.vars = c('clay', 'sand', 'fine_gravel', 'gravel', 'cobbles', 'stones', 'fragvoltot', 'phfield', 'd_value', 'd_chroma', 'm_value', 'm_chroma'))
+num_vars <- names(h)[! names(h) %in% c('peiid', 'phiid', 'hzname', 'genhz', 'hzdept', 'hzdepb', 'labsampnum', 'd_r', 'd_g', 'd_b', 'm_r', 'm_g', 'm_b', 'parafine_gravel', 'paragravel', 'paracobbles', 'parastones', 'paraboulders', 'parachanners', 'paraflagstones', 'unspecified') &
+                       sapply(h, is.numeric) & 
+                       sapply(h, function(x) !all(is.na(x)))]
+h.lo <- melt(h, id.vars="genhz", measure.vars = num_vars)
 h.5n <- ddply(h.lo, .(variable, genhz), .fun = sum5n)
 h.wi <- dcast(h.5n, genhz ~ variable, value.var = 'range')
 
@@ -196,17 +210,15 @@ kable(h.wi[c(1, 10:13)], align = "c")
 h.lo$genhz <- factor(h.lo$genhz, levels = rev(levels(h.lo$genhz)))
 n <- ceiling(length(levels(h.lo$variable))/4)
 
-bwplot(genhz ~ value | variable, data = h.lo, scales=list(x="free"), main = "Box plots of numeric variables by generic horizon", as.table = TRUE, layout = c(4, n))
-
-# qplot(genhz, value, data = h.lo, geom = "boxplot", ylab = "cm", main = "Boxplots of numeric variable by generic horizon") + facet_wrap(~variable, scales = "free") + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+bwplot(genhz ~ value | variable, data = h.lo,
+       main = "Box plots of numeric variables by generic horizon",
+       scales=list(x="free"), axis = axis.grid,
+       as.table = TRUE, layout = c(4, n)
+       )
 ```
 </p>
 
 ```{r, echo=FALSE, results='asis'}
-tc <- c("cos", "s", "fs", "vfs", "lcos", "ls", "lfs", "lvfs", "cosl", "sl", "fsl", "vfsl", "l", "sil", "si", "scl", "cl", "sicl", "sc", "sic", "c", "NA")
-tc <- tc[tc %in% unique(h$texture_class)]
-h$texture_class <- factor(h$texture_class, levels = tc)
-
 kable(addmargins(table(h$genhz, h$texture_class, exclude = NULL)), digits = 0, caption = "Texture by generic horizon (counts)")
 
 hz_tex <- addmargins(table(h$genhz, h$texture))
@@ -232,7 +244,7 @@ eff <- c(violent = "violent", strong = "strong", slight = "slight", very.slight 
 h$effervescence <- eff[h$effervescence]
 h$effervescence <- factor(h$effervescence, levels = eff)
 
-kable(addmargins(table(h$genhz, h$effervescence)), digits = 0, caption = "Effervescence by generic horizon (counts)")
+kable(addmargins(xtabs(~ genhz + effervescence, data = h, drop.unused.levels = TRUE)), digits = 0, caption = "Effervescence by generic horizon (counts)")
 ```
 
 
@@ -253,7 +265,11 @@ if (!all(is.na(s$aspect_field))) {
 } else(kable(morf.5n, caption="Elevation and slope gradient (min, 25th, median, 75th, max)(n)", align = "c")
 )         
 
-bwplot(~ value | variable, data = morf.lo, scales=list(x="free"), main = "Boxplots of elevation and slope gradient", as.table = TRUE)
+bwplot(~ value | variable, data = morf.lo, 
+       main = "Boxplots of elevation and slope gradient",
+       scales=list(x="free"), axis = axis.grid,
+       as.table = TRUE
+       )
 
 # qplot("variable", value, data = morf.lo, geom = "boxplot", main = "Boxplots of elevation and slope gradient") + facet_wrap(~variable, scales = "free")
 
@@ -265,15 +281,10 @@ if (!all(is.na(s[c("pmorigin", "pmkind", "landform.string")]))){
   }
 
 if (!all(is.na(s[c("shapedown", "shapeacross")]))) {
-  s$shapedown <- factor(s$shapedown, levels=c("Convex", "Linear", "Concave", "missing"))
-  s$shapeacross <- factor(s$shapeacross, levels=c("Convex", "Linear", "Concave", "missing"))
-  kable(addmargins(table(s$shapedown, s$shapeacross)), caption = "Down slope (y-axis) vs across slope (x-axis) (counts)")
+  kable(addmargins(xtabs(~ shapedown + shapeacross, data = s)), caption = "Down slope (y-axis) vs across slope (x-axis) (counts)")
 } 
 
 if (!all(is.na(s[c("hillslope_pos", "drainagecl")]))) {
-  s$hillslope_pos <- factor(s$hillslope_pos, levels=c("Summit", "Shoulder", "Backslope", "Footslope", "Toeslope", "missing"))
-  s$drainagecl <- factor(s$drainagecl, levels= c("Excessivelly drained", "Well drained", "Somewhat excessively well drained", "Moderately well drained", "Somewhat poorly drained", "Poorly drained", "Very poorly drained", "Subaqueous drainage", "missing"))
-  
-  kable(addmargins(table(s$drainagecl, s$hillslope_pos)), digits = 0, caption = "Drainage class vs hillslope position (counts)")
+  kable(addmargins(xtabs(~ drainagecl + hillslope_pos, data = s, drop.unused.levels = TRUE)), digits = 0, caption = "Drainage class vs hillslope position (counts)")
 }
 ```

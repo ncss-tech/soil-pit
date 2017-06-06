@@ -19,7 +19,13 @@ du_report <- function(fy) {
   report <- report[-1, ] # remove the first row
   names(report) <- unlist(lapply(names(report), function(x) paste(strsplit(x, " ")[[1]], collapse = "_"))) # reformat column names
   
-  write.csv(report, file = paste0("report_digitizing_unit_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
+  write.csv(report, 
+            file = paste0(
+              "report_digitizing_unit_",
+              format(Sys.time(), "%Y_%m_%d"),
+              ".csv"),
+            row.names = FALSE
+            )
   
   return(du = report)
 }
@@ -74,7 +80,15 @@ correlation_report <- function(asymbol, fy){
   corr$old_musym2 <- mapply(z_error, old = corr$old_musym, new = corr$new_musym)
   corr$spatial <- corr$new_musym != corr$old_musym2
   
-  write.csv(corr, file = paste0("report_correlation_fy", fy, "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
+  write.csv(corr, 
+            file = paste0(
+              "report_correlation_fy",
+              fy, 
+              "_", 
+              format(Sys.time(), "%Y_%m_%d"), 
+              ".csv"),
+            row.names = FALSE
+            )
   
   return(corr = corr)
 }
@@ -90,9 +104,10 @@ sdjr_correlation <- function(asymbol, project_id, start_date, finish_date){
     l <- list()
     for (i in seq_along(x)){
       cat(paste("working on", x[i], "\n"))
-      cor_w <- RCurl::getURLContent(x[i], ssl.verifypeer = F)
-      if (length(XML::readHTMLTable(cor_w, stringsAsFactors = FALSE)) > 0) {
-        l[[i]] <- XML::readHTMLTable(cor_w, stringsAsFactors = FALSE)[[1]]}
+      cor_w <- RCurl::getURLContent(x[i], ssl.verifypeer = FALSE)
+      cor_t <- XML::readHTMLTable(cor_w, stringsAsFactors = FALSE)
+      if (length(cor_t) > 0) {
+        l[[i]] <- cor_t[[1]]}
     }
     test <- length(l) > 0
     if (test) do.call("rbind", l) else message("no data")
@@ -112,29 +127,74 @@ sdjr_correlation <- function(asymbol, project_id, start_date, finish_date){
   temp <- do.call("rbind", temp)
   corr <- merge(corr, temp, by = vals, all.x = TRUE, sort = FALSE)
   
-  corr <- transform(corr, muacres = as.numeric(muacres), new_muacres = as.numeric(new_muacres))
+  corr <- transform(corr, 
+                    muacres = as.numeric(muacres), 
+                    new_muacres = as.numeric(new_muacres),
+                    current_mukey = ifelse(musym != new_musym & !is.na(new_mukey), new_mukey, mukey))
   corr <- as.data.frame(lapply(corr[seq_along(corr)], function(x) if (is.character(x)) ifelse(x == "", NA, x) else x))
   
-  spatial <- function(muacres, new_muacres, n_musym, musym, new_musym) {
-    acre_test <- NA
-    n_test <- NA
-    musym_test <- NA
+  z_clean <- function(old, new){
+    new <- new
+    old_clean <- old
+    n <- nchar(old)
+    begin1 <- substr(old, 2, n)
+    end1 <- substr(old, 1, n - 1)
+    end4 <- substr(old, 1, n - 4)
     
-    if (!is.na(muacres) & !is.na(new_muacres)) {
-      if (muacres != new_muacres) acre_test <- TRUE else acre_test <- FALSE} else acre_test <- NA
-    if (!is.na(new_musym)) {
-      if (musym != new_musym & !grepl("^[zxa]|[zxaZS]$|+$|_old$", musym)) musym_test <- TRUE else musym_test <- FALSE} else musym_test <- NA
-    if (n_musym > 1) n_test <- TRUE else n_test <- FALSE
-    return(any(acre_test, n_test, musym_test))
+    if (!is.na(new)) {
+      if (grepl("^[zxaZ]{1}", old) & old != new) {old_clean = begin1} else old_clean
+      if (grepl("[zxcZS]${1}", old) & old != new) {old_clean = end1} else old_clean # Joe recommended using |\\+${1}, but appears to be legit in some cases
+      if (grepl("_old${3}", old) & old != new) {old_clean = end4} else old_clean
+    } else old_clean == NA
+    
+    return(old_clean)
   }
   
-  corr$spatial_change <- with(corr, mapply(spatial, muacres, new_muacres, n_musym, musym, new_musym))
+  corr$musym_orig <- corr$musym
+  corr$musym <- mapply(z_clean, corr$musym, corr$new_musym)
+  
+  spatial <- function(muacres, new_muacres, n_musym, musym, new_musym, pmu_seqnum, fy) {
+    seqnum_test = NA
+    acre_test = NA
+    musym_test = NA
+    n_test = NA
+    
+    # seqnum test
+    if(!is.na(pmu_seqnum)) {
+      if (pmu_seqnum == fy) seqnum_test = TRUE
+      }
+    # acre test
+    if (!is.na(muacres) & !is.na(new_muacres)) {
+      if (muacres != new_muacres) {
+        acre_test = TRUE
+        } else acre_test = FALSE
+      } else acre_test = NA
+    # musym test
+    if (!is.na(new_musym)) {
+      if (musym != new_musym) {
+        musym_test = TRUE
+        } else musym_test = FALSE
+      } else musym_test = NA
+    # n test
+#     if (n_musym > 1) n_test <- TRUE 
+#     else n_test <- FALSE
+    return(any(seqnum_test, acre_test, musym_test)) #, n_test))
+  }
+  
+  corr$spatial_change <- with(corr, mapply(spatial, muacres, new_muacres, n_musym, musym, new_musym, pmu_seqnum, fy))
   
 #   (lmu.musym NOT LIKE '[zx]%' OR lmu.musym NOT LIKE '%[ZS]' OR lmu.musym NOT LIKE '%[zx]' OR lmu.musym NOT LIKE '%[Z]' OR # Region 11 rules for legend constraint error
 #   lmu.musym NOT LIKE '[a]%' OR lmu.musym NOT LIKE '%[a]' OR lmu.musym NOT LIKE '%[+]' OR lmu.musym NOT LIKE '%[_old]')) OR # Other Region rules for legend constraint error
   
-  
-  write.csv(corr, file = paste0("report_correlation_fy", format(as.Date(finish_date, "%m/%d/%Y"), "%Y"), "_", paste0(asymbol[1], "_", asymbol[length(asymbol)]), "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
+  asym <-paste0(asymbol[1], "_", asymbol[length(asymbol)], "_", format(Sys.time(), "%Y_%m_%d"))
+  write.csv(corr, 
+            file = paste0(
+              "lims_correlation_fy", 
+              format(as.Date(finish_date, "%m/%d/%Y"), "%Y"), 
+              "_", 
+              asym,
+              ".csv"), 
+            row.names = FALSE)
   
   return(corr = corr)
 }
@@ -143,38 +203,51 @@ sdjr_correlation <- function(asymbol, project_id, start_date, finish_date){
 
 # WEB-MLRA_Goals_Progress
 
-goals_report <- function(fy, off){
-  url <- paste0("https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-MLRA_Goals_Progress_Office_FY&fy=", fy, "&off=", off)
-  goals_w <- getURLContent(url, ssl.verifypeer = F)
+goals_report <- function(fy, office){
+  url <- paste0("https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-PROJECT-MLRA_Goals_Progress&fy=", fy, "&off=", office)
+  goals_w <- RCurl::getURLContent(url, ssl.verifypeer = F)
   doc <- htmlParse(goals_w)
   tableNodes <- getNodeSet(doc, "//tr")
-  l <- list()
-  for (i in 1:length(tableNodes)){
-    l[[i]] <- rbind(readHTMLList(tableNodes[[i]]))
-  }
-  goals <- ldply(l)
   
-  names(goals) <- c(goals[1, ])
-  names(goals) <- sapply(names(goals), function(x) paste(strsplit(x, " ")[[1]], collapse = "_"))
-  goals <- goals[-1, ]
-  goals$fy <- fy
+  goals_l <- lapply(tableNodes, function(x) rbind(readHTMLList(x)))
+  goals <- as.data.frame(do.call("rbind", goals_l[-c(1, length(goals_l))]))
   
-  write.csv(goals, file = paste0("report_goals_fy", fy, "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
+  names(goals) <- goals_l[[1]][1, ]
+  names(goals) <- sub(" ", "", (names(goals)))
+  names(goals) <- tolower(names(goals))
+  
+  goals <- transform(goals, 
+                     goaled = as.numeric(goaled),
+                     reported = as.numeric(reported)
+  )
+  
+  write.csv(goals, file = paste0(
+    "lims_goals_fy", 
+    substr(fy, 3, 4),
+    "_",
+    format(Sys.time(), "%Y_%m_%d"),
+    ".csv"),
+    row.names = FALSE
+    )
   
   return(goals)
 }
 
-legends_report <- function(as) {
-  url <- paste0("https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-legends&off=", as)
+
+legends_report <- function(areasymbol) {
+  url <- paste0("https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-legends&off=", areasymbol)
   
   url_download <- function(x) {
     l <- list()
     for (i in seq(x)){
-      leg_w <- getURLContent(x[i], ssl.verifypeer = F)
-      if (length(readHTMLTable(cor_w, stringsAsFactors = F)) > 0) {
-        l[[i]] <- readHTMLTable(leg_w, stringsAsFactors = F)[[1]]}
+      cat(paste("working on", x[i], "\n"))
+      leg_r <- getURLContent(x[i], ssl.verifypeer = F)
+      leg_t <- readHTMLTable(leg_r, stringsAsFactors = F)
+      if (length(leg_t) > 0) {
+        l[[i]] <- leg_t[[1]]
+        }
     }
-    ldply(l)
+    do.call(rbind, l)
   }
   
   leg <- url_download(url)
@@ -187,7 +260,13 @@ legends_report <- function(as) {
   num <- c("total_acres", "area_acres")
   leg[num] <- sapply(leg[num], as.numeric)
   
-  write.csv(leg, file = paste0("report_legends_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
+  write.csv(leg, 
+            file = paste0(
+              "report_legends_",
+              format(Sys.time(),
+                     "%Y_%m_%d"),
+              ".csv"),
+            row.names = FALSE)
   
   return(leg)
 }
