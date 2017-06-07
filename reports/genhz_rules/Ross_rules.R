@@ -1,13 +1,11 @@
 ghr <- list(
-  n = c("A", 
-        "Ap", 
+  n = c("Ap", 
         "Bw", 
         "C", 
         "BC", 
         "missing"),
   
   p = c("A",
-        "p|P",
         "B", 
         "C",
         "BC|B3",

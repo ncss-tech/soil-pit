@@ -1,0 +1,145 @@
+---
+title: "Data Logger"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(maps) #create maps
+library(plyr) #splitting, applying, & combining data
+library(ggplot2) #plot
+library(lattice) #xy plot
+
+```
+
+## R Markdown
+
+#Project Area Location
+
+
+```{r final project, echo=FALSE}
+
+map('county', 'indiana') # plot county boundaries for all of Indiana
+map('county', 'indiana,marion', add=T, fill = T, col="purple") #add Pulaski County, Indiana in purple to map
+map.text("county", "indiana,Marion", add=T) #add text for Pulaski
+
+#read all the csv files from a folder as one table
+datalogger=ldply(list.files(path="E:/geodata/project_data/11IND//IPO_Data_Loggers/data_loggers_2017/brookston_51_2_ECP_Marion_IN",pattern="csv",full.names=TRUE),function(filename) {
+  dum=read.csv(filename)
+  dum$filename=filename
+  return(dum)
+})
+
+#read the date from the table
+datalogger$date <- as.Date (datalogger$date, '%m/%d/%Y')
+
+
+```
+
+ 
+
+**Plots:**
+
+```{r pressure, echo=FALSE}
+datalogger$year <- as.Date(cut(datalogger$date,
+                              breaks = "year"))
+datalogger$month <- as.Date(cut(datalogger$date,
+                              breaks = "month"))
+datalogger$week <- as.Date(cut(datalogger$date,
+                             breaks = "week",
+                             start.on.monday = FALSE)) # changes weekly break point to Sunday
+
+#Conversions of data
+datalogger$inches <-(datalogger$feet*12) #feet x inches
+datalogger$convin <- (31-datalogger$inches) #inches -
+datalogger$cm <- (datalogger$convin*2.54) #converted inches x centimeters
+
+datalogger$date<-as.POSIXlt(datalogger$date,format="%m/%d/%y %H:%M:%S")
+datalogger <- within(datalogger, {
+  day =   as.character(format(datalogger$date, "%m/%d/%y"))
+  Jday =  as.integer(format(datalogger$date, "%j"))
+  year =  as.integer(format(datalogger$date, "%Y"))
+  month = as.integer(format(datalogger$date, "%m"))
+  week =  as.integer(format(datalogger$date, "%W"))
+})
+
+#datalogger <- subset(datalogger, year>2008) #subset out after 2008 data because there is an error that shows and was also mentioned in the metadata
+
+cmavmonths <- aggregate(cm ~ month+year, data = datalogger, mean) #mean of months and years
+cmminmonth <- aggregate(cm ~ month+year, data = datalogger, "min") #min of months & years
+cmmaxmonth <- aggregate(cm ~ month+year, data = datalogger, "max") #max of months & years
+
+cmminyear <- aggregate(cm ~ year, data = datalogger, "min") #min of years
+cmmaxyear <- aggregate(cm ~ year, data = datalogger, "max") #max of years
+
+cmyear <- aggregate(cm ~ year, data = datalogger, mean) #averages years
+cmavweek <- aggregate(cm ~ week+year, data = datalogger, mean) #averages of weeks & years
+cmavday <- aggregate(cm ~ Jday+year, data = datalogger, mean) #averages of day & years
+cmavdayweyr <- aggregate(cm ~ Jday+week+year, data = datalogger, mean) #averages of day, week, & years
+cmav <-aggregate(cm ~ time+Jday+week+month+year, data = datalogger, mean) #averages of time, day, week, & years
+cmavdaywemoyr <- aggregate(cm ~ Jday+week+month+year, data = datalogger, mean) #averages of day, week, month & years
+
+inyear <- aggregate(convin ~ year, data = datalogger, mean) #averages years in inches
+inmoyear <- aggregate(convin ~ month+year, data = datalogger, mean) #averages years in inches
+
+
+
+#plot averages of years inches
+ggplot(data = inyear, aes(year, convin)) +
+  geom_line(colour="purple")+ 
+  ylim(50, 0)+
+  geom_smooth(colour="green")+ 
+  #ylim(50, 0) +
+  ggtitle("Year Averages") +
+  ylab("Inches")+
+  theme(plot.title = element_text(lineheight=.8, face="bold"))
+
+
+
+#plot averages of months and years in inches
+ggplot(data = inmoyear, aes(month, convin, group = year)) +
+  geom_line(aes(colour= factor(year)))+
+  ylim(40, 0)+
+  ggtitle("Averages of Months and Years")+
+  ylab("Inches")+
+  theme(plot.title = element_text(lineheight=.8, face="bold"))
+
+
+
+
+#plot averages of months and years in inches ~ data gaps are noticable 
+ggplot(data = inmoyear, aes(month, convin)) +
+  geom_line(colour="purple") +
+  geom_smooth(colour="green") + 
+  ylim(40, 0) +
+  facet_wrap(~ year)+
+  ggtitle("Averages of Months and Years")+
+  ylab("Inches")+
+  theme(plot.title = element_text(lineheight=.8, face="bold"))
+
+
+
+#Soil Moisture Numbers from NASIS
+datalogger_sm=ldply(list.files(path="E:/Documents/GIS/Trainings/Stat_for_Soil_Survey/final_Project/nasis",pattern="csv",full.names=TRUE),function(filename) {
+  dum=read.csv(filename)
+  dum$filename=filename
+  return(dum)
+})
+
+#subset wet column
+dataloggersm0 <- subset(datalogger_sm, Moisture.Status == "wet")
+
+#Plot Low, RV, & High for Soil Moisture -needs a legend
+#ggplot()+geom_point(data=dataloggersm0, aes(Month, High), colour='red')+facet_wrap(~High)+
+  #geom_point(data=dataloggersm0, aes(Month, RV), colour='purple')+ facet_wrap(~High)+
+  #geom_point(data=dataloggersm0, aes(Month, Low), colour='green')+ facet_wrap(~High)+
+ # ylim (200, 0)+ 
+ # ylab("Low, RV, High")+
+ # ggtitle("Soil Moisture Months from NASIS")+
+ # theme(plot.title = element_text(lineheight=.8, face="bold"))
+
+
+
+
+```
+

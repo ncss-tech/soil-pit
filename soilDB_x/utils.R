@@ -9,7 +9,7 @@ pindex <- function(x, interval){
 
 na_replace <- function(x){
   if(class(x)[1] == "character" | class(x)[1] == "logical") 
-    {x <- replace(x, is.na(x) | x == "NA", "missing")} 
+    {x <- replace(x, is.na(x) | x == "NA", "Not_Populated")} 
   else (x <-  x)
   }
 
