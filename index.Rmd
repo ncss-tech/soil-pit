@@ -1,5 +1,5 @@
 ---
-title: "Homepage for soil-pit Projects, Presentations, Tutorials, and Apps"
+title: "The soil-pit"
 output: html_document
 ---
 
@@ -7,20 +7,30 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# MLRA Soil Survey Projects
+
+This page highlights some of the work contributed by [ncss-tech members](https://github.com/orgs/ncss-tech/people).
+
+
+## MLRA Soil Survey Projects
+
 - [2016 MLRA 111E - Cardington and Centerburg silt loams](http://ncss-tech.github.io/soil-pit/projects/MLRA111E_Cardington_and_Centerburg_silt_loams.html)
 - [2017 MLRA 111B - Glynwood B-slope Erosion; Northeastern IN](http://ncss-tech.github.io/soil-pit/projects/MLRA111B_Glynwood_B-slope_Erosion_Northeastern_IN.html)
 - [2017 MLRA 104 - Aquolls, Aquents, Intermittent Water, Wetlands Recorrelation](http://ncss-tech.github.io/soil-pit/projects/MLRA104_Aquolls_Aquents_Intermittent_Water_Wetlands_Recorrelation.html)
 - [11-IND Kokomo Water Table Monitoring](http://ncss-tech.github.io/soil-pit/sandbox/alena/data_logger/Kokomo71_fp.html)
+- [2017 MLRA 55A - Barnes series - Investigation of Souris Lobe, Soil-Water Monitoring, and Map Unit Recorrelation](https://www.cloudvault.usda.gov/index.php/s/nQZA4kYPER8wNxi/download?path=%2F&files=Classification%20and%20Correlation%20of%20the%20Soil%20Survey%20of%20Northern%20Black%20Glaciated%20Plains%2C%20Souris%20Till%20Plain.txt)
 
 
-# Presentations
+## Presentations
+
 - [2015 Future Directions in Soil Survey: Ecological Sites and Dynamic Soil Properties to Assess and Predict Soil Condition and Change](https://docs.google.com/presentation/d/1b0CyDpy4Km7ZCgBHrUiS4MkMQB15ezvFegLmTyzVZeg/edit?usp=sharing)
 - [2015 Digital Soil Morphometrics - Digital summaries of legacy pedon descriptions](http://ncss-tech.github.io/soil-pit/sandbox/stephen/madison2015_prez.html)
 - [2016 North Central Regional Cooperative Soil Survey Conference - The Future of Soil Survey Information and Interpretation](https://www.nrcs.usda.gov/wps/PA_NRCSConsumption/download?cid=nrcseprd1273812&ext=pdf)
 - [2017 Indiana Association of Professional Soil Classifiers Winter Meeting - GIS Resources: soil datasets & software](https://docs.google.com/presentation/d/1qGaRHG1y0zQxniJSwZgAO4SJW6J77ZQDvV1ngNpv7bw/edit?usp=sharing)
+- [2017 Soil-Landscape Studies in MLRA Updates](https://www.cloudvault.usda.gov/index.php/s/nQZA4kYPER8wNxi/download?path=%2F&files=Barnes_Souris_BRENNAN_Notes.pptx)
 
-# R Tutorials and Web Apps
+
+## R Tutorials and Web Apps
+
 - [Statistics for Soil Scientists](http://ncss-tech.github.io/stats_for_soil_survey/chapters/)
 - [fetchSDA_component()](http://ncss-tech.github.io/soil-pit/sandbox/stephen/cuneiform_article_20170519.html)
 - [Water Tables Plots](https://hammerly.shinyapps.io/test_application/)
