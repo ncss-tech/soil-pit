@@ -1,0 +1,117 @@
+---
+title: "Final Project"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(sp)
+library(maps)
+library (ggplot2)
+library (chron)
+library(plyr)
+library(scales)
+```
+
+## R Markdown
+
+Project Area Location
+
+```{r cars}
+map('county', 'ohio') # plot county boundaries for all of Ohio
+map('county', 'ohio,madison', add=T, fill = T, col="purple") #add Madison County, Ohio in purple to map
+map.text("county", "ohio,Madison", add=T) #add text to madison
+
+#Kokomo <- Sys.glob("C:/workspace/merge71/*.csv") #finds all csv files in folder
+#for (Ko in Kokomo) {Kokomo71 <- read.csv(Ko, header = TRUE, sep = ",")} #iterate across all files?
+Kokomo71=ldply(list.files(path="C:/workspace/merge71/",pattern="csv",full.names=TRUE),function(filename) {
+  dum=read.csv(filename)
+  dum$filename=filename
+  return(dum)
+})
+
+Kokomo71$date <- as.Date (Kokomo71$date, '%m/%d/%Y')
+
+ggplot(data=Kokomo71, aes (date, feet)) +geom_line()+ ylim(10, -5) #plot line
+
+```
+
+**Objectives:**
+
+* Show multiple years of data from one data logger site
+* Organize data
+* Data Gaps
+* Use R instead of excel to create graphs
+* Create Plots
+  * Totals by months and years
+  * Averages by Month and years
+  * Show a week of all depths
+* Create output report using R Markdown
+
+**Plots:**
+
+```{r pressure, echo=TRUE}
+Kokomo71$year <- as.Date(cut(Kokomo71$date,
+                              breaks = "year"))
+Kokomo71$month <- as.Date(cut(Kokomo71$date,
+                              breaks = "month"))
+Kokomo71$week <- as.Date(cut(Kokomo71$date,
+                             breaks = "week",
+                             start.on.monday = FALSE)) # changes weekly break point to Sunday
+
+
+# graph by year:
+ggplot(data = Kokomo71,
+       aes(year, feet)) +
+  stat_summary(fun.y = "mean", # averages all observations for the year
+               geom = "line") + # or "line"
+  scale_x_date(date_labels = "%Y", date_breaks = "1 year")
+
+ggplot(data = Kokomo71,
+       aes(year, feet)) +
+  stat_summary(fun.y = "mean", # averages all observations for the year
+               geom = "bar") + # or "line"
+  scale_x_date(date_labels = "%Y", date_breaks = "1 year")
+
+# graph by month:
+ggplot(data = Kokomo71,
+       aes(month, feet)) +
+  stat_summary(fun.y = "mean", # averages all observations for the month
+               geom = "line") + # or "line"
+  scale_x_date(date_labels = "%m/%Y", date_breaks = "3 months")
+
+ggplot(data = Kokomo71,
+       aes(month, feet)) +
+  stat_summary(fun.y = "mean", # averages all observations for the month
+               geom = "bar") + # or "line"
+  scale_x_date(date_labels = "%m/%Y", date_breaks = "1 month")
+
+# graph by week:
+ggplot(data = Kokomo71,
+       aes(week, feet)) +
+  stat_summary(fun.y = "mean", # averages all observations for the week
+               geom = "line") + # or "line"
+  scale_x_date(date_labels = "%d/%m/%Y", date_breaks = "1 week")
+
+Kokomo71$inches <-(Kokomo71$feet*12) #feet x inches
+Kokomo71$cm <- (Kokomo71$inches*2.54) #inches x centimeters
+
+# graph by year:
+ggplot(data = Kokomo71,
+       aes(year, cm)) +
+  stat_summary(fun.y = "mean", # averages all observations for the year in centimeters
+               geom = "line") + # or "line"
+  scale_x_date(date_labels = "%Y", date_breaks = "1 year")
+
+ggplot(data = Kokomo71,
+       aes(year, inches)) +
+  stat_summary(fun.y = "mean", # averages all observations for the year in inches
+               geom = "line") + # or "line"
+  scale_x_date(date_labels = "%Y", date_breaks = "1 year")
+
+
+plot(as.Date(Kokomo71$date,'%d/%m/%Y'),Kokomo71$feet, xlab="Date", ylab= "Feet",type="l", lwd=2, col='purple', main="Kokomo 71")
+grid(col="darkgrey")
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
