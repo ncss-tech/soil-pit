@@ -1,0 +1,215 @@
+---
+title: "Data Logger"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(maps) #create maps
+library(plyr) #splitting, applying, & combining data
+library(ggplot2) #plot
+library(lattice) #xy plot
+
+```
+
+
+## R Markdown
+
+#Project Area Location ~ Clermont Woods 17 Brown County, Ohio
+
+
+```{r data logger project, echo=FALSE}
+#Alter for each site
+  #Update Project Name 
+  #Update Spatial Location plot
+  #Alter File location
+  #Change ground to bottom number
+  #Alter graph numbers
+
+#Need to incorporate
+  #Add precipitation data
+  #30 year data
+  #Compare multiple sites
+  #Existing NASIS data
+
+
+#Plot spatial location
+map('county', 'ohio') # plot county boundaries for all of state
+map('county', 'ohio,Brown', add=T, fill = T, col="purple") #add County in purple to map
+map.text("county", "ohio,Brown", add=T) #add text for County name
+
+#read all the csv files from a folder as one table
+#use owncloud path
+#alter path as needed
+datalogger=ldply(list.files(path="C:/Users/Alena.Stephens/ownCloud/Shared/IND_Data_Logger_Tables/clermont_woods_17_Brown_OH",pattern="csv",full.names=TRUE),function(filename) {
+  dum=read.csv(filename)
+  dum$filename=filename
+  return(dum)
+})
+
+#read the date from the table
+datalogger$date <- as.Date (datalogger$date, '%m/%d/%Y')
+
+
+```
+
+ 
+
+**Plots:**
+
+```{r pressure, echo=FALSE}
+datalogger$year <- as.Date(cut(datalogger$date,
+                              breaks = "year"))
+datalogger$month <- as.Date(cut(datalogger$date,
+                              breaks = "month"))
+datalogger$week <- as.Date(cut(datalogger$date,
+                             breaks = "week",
+                             start.on.monday = FALSE)) # changes weekly break point to Sunday
+
+#Conversions of data
+datalogger$inches <-(datalogger$feet*12) #feet x inches
+datalogger$convin <- (17 - datalogger$inches) #inches - ground to bottom
+datalogger$cm <- (datalogger$convin*2.54) #converted inches x centimeters
+
+datalogger$date<-as.POSIXlt(datalogger$date,format="%m/%d/%y %H:%M:%S")
+datalogger <- within(datalogger, {
+  day =   as.character(format(datalogger$date, "%m/%d/%y"))
+  Jday =  as.integer(format(datalogger$date, "%j"))
+  year =  as.integer(format(datalogger$date, "%Y"))
+  month = as.integer(format(datalogger$date, "%m"))
+  week =  as.integer(format(datalogger$date, "%W"))
+})
+
+datalogger <- subset(datalogger, year>2008) #subset out after 2008 data because there is an error that shows and was also mentioned in the metadata
+
+cmavmonths <- aggregate(cm ~ month+year, data = datalogger, mean) #mean of months and years
+cmminmonth <- aggregate(cm ~ month+year, data = datalogger, "min") #min of months & years
+cmmaxmonth <- aggregate(cm ~ month+year, data = datalogger, "max") #max of months & years
+
+cmminyear <- aggregate(cm ~ year, data = datalogger, "min") #min of years
+cmmaxyear <- aggregate(cm ~ year, data = datalogger, "max") #max of years
+
+cmyear <- aggregate(cm ~ year, data = datalogger, mean) #averages years
+cmavweek <- aggregate(cm ~ week+year, data = datalogger, mean) #averages of weeks & years
+cmavday <- aggregate(cm ~ Jday+year, data = datalogger, mean) #averages of day & years
+cmavdayweyr <- aggregate(cm ~ Jday+week+year, data = datalogger, mean) #averages of day, week, & years
+cmav <-aggregate(cm ~ time+Jday+week+month+year, data = datalogger, mean) #averages of time, day, week, & years
+cmavdaywemoyr <- aggregate(cm ~ Jday+week+month+year, data = datalogger, mean) #averages of day, week, month & years
+
+#subset monthly data March - July
+cmavmonths3_7 <- subset(cmavmonths, month >2 & month < 8)
+
+#subset monthly data Feb - May
+cmavmonths1_6 <- subset(cmavmonths, month >1 & month < 6)
+
+#subset monthly data April
+cmavmonths_apr <- subset(cmavmonths, month >3 & month < 5)
+
+#subset same day every year
+#cmavdaywemoyr_105 <- subset(cmavdaywemoyr, month == 4 & Jday==105)
+cmavdaywemoyr_105 <- subset(cmavdaywemoyr, month == 4 & Jday > 104 & Jday < 106 )
+
+
+#plot averages of years centimeters
+ggplot(data = cmyear, aes(year, cm)) +
+  geom_line(colour="purple")+ 
+  ylim(40, 0)+
+  geom_smooth(colour="green")+ 
+  ylim(40, 0) +
+  ggtitle("Year Averages") +
+  theme(plot.title = element_text(lineheight=.8, face="bold"))
+
+
+
+#plot averages of months and years in centimeters
+ggplot(data = cmavmonths, aes(month, cm, group = year)) +
+  geom_line(aes(colour= factor(year)))+
+  ylim(75, -15) +
+  ggtitle("Averages of Months and Years")+
+  theme(plot.title = element_text(lineheight=.8, face="bold"))
+
+
+
+
+#plot averages of months and years in centimeters ~ data gaps are noticable 
+ggplot(data = cmavmonths, aes(month, cm)) +
+  geom_line(colour="purple") +
+  geom_smooth(colour="green") + 
+  ylim(50, 0) +
+  facet_wrap(~ year)+
+  ggtitle("Averages of Months and Years")+
+  theme(plot.title = element_text(lineheight=.8, face="bold"))
+
+#plot averages of subset months March - July
+ggplot(data = cmavmonths3_7, aes(month, cm, group = year)) +
+  geom_line(aes(colour= factor(year))) +
+  ylim(75, 0) +
+  ggtitle("Averages of Months ~ March - July")+
+  theme(plot.title = element_text(lineheight=.8, face="bold"))
+
+#plot averages of subset months Feb - May
+ggplot(data = cmavmonths1_6, aes(month, cm, group = year)) +
+  geom_line(aes(colour= factor(year))) +
+  ylim(40, 0) +
+  ggtitle("Averages of Months ~ February - May")+
+  theme(plot.title = element_text(lineheight=.8, face="bold"))
+
+#plot averages of subset month of April 
+ggplot(data = cmavmonths_apr, aes(year, cm, group = year)) +
+  geom_point(aes(colour= factor(year))) +
+  ylim(40, 0) +
+  ggtitle("Averages of Subset Day in April")+
+  theme(plot.title = element_text(lineheight=.8, face="bold"))
+
+#plot averages of subset day 
+ggplot(data = cmavdaywemoyr_105, aes(Jday, cm, group = year)) +
+  geom_boxplot(aes(colour= factor(year))) +
+  ylim(40, 0) +
+  ggtitle("Averages of Subset Day in April")+
+  theme(plot.title = element_text(lineheight=.8, face="bold"))
+
+#plot daily average of Jday and years in centimeters
+ggplot(data = cmavdaywemoyr, aes(Jday, cm, group = year)) +
+  geom_line(aes(colour= factor(year)))+
+  ylim(100, -15) +
+  ggtitle("Daily Average")+
+  theme(plot.title = element_text(lineheight=.8, face="bold"))
+
+#plot daily of Jday and years in centimeters
+ggplot(data = datalogger, aes(Jday, cm, group = year)) +
+  geom_line(aes(colour= factor(year)))+
+  ylim(100, -15) +
+  ggtitle("Daily")+
+  theme(plot.title = element_text(lineheight=.8, face="bold"))
+
+
+
+
+
+
+#Soil Moisture Numbers from NASIS
+#datalogger_sm=ldply(list.files(path="E:/Documents/GIS/Trainings/Stat_for_Soil_Survey/final_Project/nasis",pattern="csv",full.names=TRUE),function(filename) {
+#  dum=read.csv(filename)
+#  dum$filename=filename
+#  return(dum)
+#})
+
+#subset wet column
+#dataloggersm0 <- subset(datalogger_sm, Moisture.Status == "wet")
+
+#Plot Low, RV, & High for Soil Moisture -needs a legend
+#ggplot()+geom_boxplot(data=dataloggersm0, aes(Month, High), colour='red')+facet_wrap(~High)+
+ # geom_boxplot(data=dataloggersm0, aes(Month, RV), colour='purple')+ facet_wrap(~High)+
+ # geom_boxplot(data=dataloggersm0, aes(Month, Low), colour='green')+ facet_wrap(~High)+
+ # ylim (200, 0)+ 
+ # ylab("Low, RV, High")+
+ # ggtitle("Soil Moisture Months from NASIS")+
+ # theme(plot.title = element_text(lineheight=.8, face="bold"))+
+ # scale_fill_manual(breaks=c("High", "RV", "Low"))
+
+
+
+
+```
+
+
