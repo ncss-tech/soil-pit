@@ -32,7 +32,6 @@ library(lattice) #xy plot
   #Compare multiple sites
   #Existing NASIS data
 
-
 #Plot spatial location
 map('county', 'ohio') # plot county boundaries for all of state
 map('county', 'ohio,Brown', add=T, fill = T, col="purple") #add County in purple to map
