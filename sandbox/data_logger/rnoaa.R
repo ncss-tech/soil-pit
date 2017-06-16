@@ -32,19 +32,28 @@ outg <- ncdc(datasetid = 'GHCND', datatypeid= 'PRCP', startdate= '2010-01-01', e
 station_data<-ghcnd_stations()
 
 #filger precip data
-station_data %>% filter (element == "PRCP")
+#station_data %>% filter (element == "PRCP")
 
 #subset precip data
 prcp <- subset(station_data, element == "PRCP")
 
-prcp(cbind(latitude, longitude))
+#prcp(cbind(latitude, longitude))
 
-map <- get_map(location = 'US', zoom = 4)
+map <- get_map(location = 'usa', zoom = 1)
 
-mapPoints <-ggmap(map)+ 
-  geom_point(aes(x= longitude, y = latitude))
+#prcp1 <-make_bbox(lon = prcp$longitude, lat = prcp$latitude, f=15)
 
+#sq_map <- get_map(location = prcp1, maptype = "terrain", source = "google", zoom= 15)
 
+ggmap(map)+ 
+  geom_point(data = prcp, mapping = aes(x= longitude, y = latitude))
+
+states<- map_data("state")
+ggplot(data = states) + 
+  geom_polygon(aes(x = long, y = lat, fill = region, group = group), color = "white") + 
+  geom_point(data = prcp, mapping = aes(x= longitude, y = latitude))+
+  coord_fixed(1.3) +
+  guides(fill=FALSE) 
 
 # rename column to "id" so rnoaa understands
 s_ids<-plyr::rename(s, c("site_id"="id"))
