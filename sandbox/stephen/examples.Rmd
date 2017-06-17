@@ -26,12 +26,17 @@ gw_lo2 <- melt(gw, id.vars = "EroClassSIE", measure.vars = vals)
 
 # reshape with base
 gw_lo1_b <- reshape(gw[c("EroClassFD", vals)],
-                     direction = "long",
-                     times = vals, timevar = "variable",
-                     varying = vals, v.names = "value"
-                     # drop = which(!names(gw) %in% c("EroClassFD", vals))
-                     )
+                    direction = "long",
+                    timevar = "variable", times = vals,
+                    v.names = "value", varying = vals 
+                    )
 
+gw_wi1_b <- reshape(test, 
+                    direction = "wide",
+                    timevar = "variable",
+                    v.names = "value"
+                    )
+names(test2) <- gsub("value", "", names(test2))
 
 # reshape with tidyr
 idx <- which(names(gw) %in% vals)
