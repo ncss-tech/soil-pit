@@ -8,6 +8,8 @@ library(lattice) #xy plot
 #KUYF - Madison County, Ohio airport code
 #TZR - Bolton Field, Colombus, Ohio airport code
 #KI69 - Clermont County, Batavia, Ohio
+#KEYE - Eagle Creek
+#KBAK - Columbus, Indana
 
 
 #data_okay <- checkDataAvailability("I14", "2016-03-21" )
@@ -21,19 +23,23 @@ for (yr in 1950:2017) {
   start <- paste(yr,"-01-01",sep="")
   end <- paste(yr,"-12-31",sep="") 
   precip_yr <- paste("precip_",yr, sep="") 
-  yr_data <- getWeatherForDate("KI69", start_date=start, ,end_date=end, opt_custom_columns=T, custom_columns=c(20)) 
+  yr_data <- getWeatherForDate("KBAK", start_date=start, ,end_date=end, opt_custom_columns=T, custom_columns=c(24)) 
   yr_data$Date <- ymd(yr_data$Date) 
   # make csv file name for each year of data downloaded 
-  my_dir <- "E:/temp/weatherData/KI69" 
+  my_dir <- "E:/temp/weatherData/KBAK" 
   link <- paste(my_dir,precip_yr,".csv",sep="")
   write.csv(yr_data, link, quote=FALSE, row.names = F) }
 
 #alter path as needed
-precip=ldply(list.files(path="E:/temp/weatherData/KI69",pattern="csv",full.names=TRUE),function(filename) {
+precip=ldply(list.files(path="E:/temp/weatherData/KUYF",pattern="csv",full.names=TRUE),function(filename) {
   dum=read.csv(filename)
   dum$filename=filename
   return(dum)
 })
+
+#rename column
+#colnames(precip)[colnames(precip)=="Date"]<- "date"
+colnames(precip)<-c("date", "PrecipitationIn", "filename")
 
 #read the date from the table
 precip$date <- as.Date (precip$date, '%m/%d/%Y')
@@ -59,7 +65,7 @@ precip_s<- subset(precip, Events = PrecipitationIn)
 #plot
 ggplot(data = precip_s, aes(week, PrecipitationIn)) +geom_point(colour="purple")
 
-ggplot(data = precip_s, aes(PrecipitationIn, year)) +geom_point(colour="purple")
+#ggplot(data = precip_s, aes(PrecipitationIn, year)) +geom_point(colour="purple")
 
 ggplot(data = precip_s, aes(Jday, PrecipitationIn)) +geom_line(colour="purple")
 

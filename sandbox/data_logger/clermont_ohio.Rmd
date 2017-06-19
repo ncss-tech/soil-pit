@@ -1,0 +1,138 @@
+---
+title: "Clermont_CNTY_Ohio"
+author: "A. Stephens"
+date: "June 19, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(weatherData)
+library(lubridate)
+library(maps) #create maps
+library(plyr) #splitting, applying, & combining data
+library(ggplot2) #plot
+library(lattice) #xy plot
+```
+
+
+
+
+
+
+```{r cars}
+#read all the csv files from a folder as one table
+#use owncloud path
+#alter path as needed
+datalogger=ldply(list.files(path="C:/Users/Alena.Stephens/ownCloud/Shared/IND_Data_Logger_Tables/clermont_woods_17_Brown_OH",pattern="csv",full.names=TRUE),function(filename) {
+  dum=read.csv(filename)
+  dum$filename=filename
+  return(dum)
+})
+
+#read the date from the table
+datalogger$date <- as.Date (datalogger$date, '%m/%d/%Y')
+
+datalogger$year <- as.Date(cut(datalogger$date,
+                              breaks = "year"))
+datalogger$month <- as.Date(cut(datalogger$date,
+                              breaks = "month"))
+datalogger$week <- as.Date(cut(datalogger$date,
+                             breaks = "week",
+                             start.on.monday = FALSE)) # changes weekly break point to Sunday
+
+#Conversions of data
+datalogger$inches <-(datalogger$feet*12) #feet x inches
+datalogger$convin <- (17 - datalogger$inches) #inches - ground to bottom
+datalogger$cm <- (datalogger$convin*2.54) #converted inches x centimeters
+
+datalogger$date<-as.POSIXlt(datalogger$date,format="%m/%d/%y %H:%M:%S")
+datalogger <- within(datalogger, {
+  day =   as.character(format(datalogger$date, "%m/%d/%y"))
+  Jday =  as.integer(format(datalogger$date, "%j"))
+  year =  as.integer(format(datalogger$date, "%Y"))
+  month = as.integer(format(datalogger$date, "%m"))
+  week =  as.integer(format(datalogger$date, "%W"))
+})
+
+datalogger <- subset(datalogger, year>2008) #subset out after 2008 data because there is an error that shows and was also mentioned in the metadata
+
+cmavmonths <- aggregate(cm ~ month+year, data = datalogger, mean) #mean of months and years
+cmminmonth <- aggregate(cm ~ month+year, data = datalogger, "min") #min of months & years
+cmmaxmonth <- aggregate(cm ~ month+year, data = datalogger, "max") #max of months & years
+
+cmminyear <- aggregate(cm ~ year, data = datalogger, "min") #min of years
+cmmaxyear <- aggregate(cm ~ year, data = datalogger, "max") #max of years
+
+cmyear <- aggregate(cm ~ year, data = datalogger, mean) #averages years
+cmavweek <- aggregate(cm ~ week+year, data = datalogger, mean) #averages of weeks & years
+cmavday <- aggregate(cm ~ Jday+year, data = datalogger, mean) #averages of day & years
+cmavdayweyr <- aggregate(cm ~ Jday+week+year, data = datalogger, mean) #averages of day, week, & years
+cmav <-aggregate(cm ~ time+Jday+week+month+year, data = datalogger, mean) #averages of time, day, week, & years
+cmavdaywemoyr <- aggregate(cm ~ Jday+week+month+year, data = datalogger, mean) #averages of day, week, month & years
+
+#subset monthly data March - July
+cmavmonths3_7 <- subset(cmavmonths, month >2 & month < 8)
+
+#subset monthly data Feb - May
+cmavmonths1_6 <- subset(cmavmonths, month >1 & month < 6)
+
+#subset monthly data April
+cmavmonths_apr <- subset(cmavmonths, month >3 & month < 5)
+
+#subset same day every year
+#cmavdaywemoyr_105 <- subset(cmavdaywemoyr, month == 4 & Jday==105)
+cmavdaywemoyr_105 <- subset(cmavdaywemoyr, month == 4 & Jday > 104 & Jday < 106 )
+
+#alter path as needed
+precip=ldply(list.files(path="E:/temp/weatherData/KI69",pattern="csv",full.names=TRUE),function(filename) {
+  dum=read.csv(filename)
+  dum$filename=filename
+  return(dum)
+})
+
+#read the date from the table
+precip$date <- as.Date (precip$date, '%m/%d/%Y')
+
+precip$date<-as.POSIXlt(precip$date,format="%m/%d/%y %H:%M:%S")
+precip <- within(precip, {
+  day =   as.character(format(precip$date, "%m/%d/%y"))
+  Jday =  as.integer(format(precip$date, "%j"))
+  year =  as.integer(format(precip$date, "%Y"))
+  month = as.integer(format(precip$date, "%m"))
+  week =  as.integer(format(precip$date, "%W"))
+})
+
+#subset data Events & PrecipitationIn
+precip_s<- subset(precip, Events = PrecipitationIn)
+
+#subset same day every year
+#cmavdaywemoyr_105 <- subset(cmavdaywemoyr, month == 4 & Jday==105)
+cmavdaywemoyr_105 <- subset(cmavdaywemoyr, month == 4 & Jday > 104 & Jday < 106 )
+```
+
+## Including Plots
+
+
+  
+  
+```{r pressure, echo=FALSE}
+ggplot(data = cmyear, aes(year, cm)) +
+  geom_line(colour="purple")+ 
+  ylim(40, 0)+
+  geom_smooth(colour="green")+ 
+  ylim(40, 0) +
+  ggtitle("Year Averages") +
+  theme(plot.title = element_text(lineheight=.8, face="bold"))
+
+ggplot(data = precip_s, aes(Jday, PrecipitationIn)) +geom_line(colour="purple")
+
+# Plot daily rainfall and soil moisture data
+ ggplot() +
+  geom_line(data= datalogger, aes(x= as.Date(date),y=(cm), colour = 'red')) +
+  geom_line(data= precip_s, aes(x= as.Date(date),y= PrecipitationIn), color='purple') +
+  ylim(75, 0)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

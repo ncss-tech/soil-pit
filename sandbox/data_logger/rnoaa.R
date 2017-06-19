@@ -3,6 +3,7 @@ library(dplyr)
 library(ggmap)
 library(ggplot2)
 library(maps)
+library(leaflet)
 
 options(noaakey = "GzYofYCBrXwSICBKNfKSOIPjfhSCyPeV")
 
@@ -19,7 +20,9 @@ res$data
 #ncdc_stations(datasetid = '', locationid = '', stationid = '')
 
 #Find Stations within County using State and County FIPS 
-ncdc_stations(datasetid = 'GHCND', locationid="FIPS:39097")
+# 18 Indiana
+# 39 Ohio
+ncdc_stations(datasetid = 'PRECIP_HLY', locationid="FIPS:18079")
 
 ncdc_stations(datasetid = 'GHCND', locationid = 'FIPS:39097', stationid = 'GHCND:USC00334681')
 ncdc_stations(datasetid = 'PRECIP_HLY', locationid = 'FIPS:39097', stationid = 'GHCND:USC00334681')
@@ -36,6 +39,13 @@ station_data<-ghcnd_stations()
 
 #subset precip data
 prcp <- subset(station_data, element == "PRCP")
+prcpst <- subset(prcp, state == "IN")
+
+#leaflet map
+leaflet()%>%
+  addTiles()%>%
+  addMarkers (data=prcp)
+  addPopups('name')
 
 #prcp(cbind(latitude, longitude))
 
@@ -46,14 +56,19 @@ map <- get_map(location = 'usa', zoom = 1)
 #sq_map <- get_map(location = prcp1, maptype = "terrain", source = "google", zoom= 15)
 
 ggmap(map)+ 
-  geom_point(data = prcp, mapping = aes(x= longitude, y = latitude))
+  geom_point(data = prcpst, mapping = aes(x= longitude, y = latitude))
 
-states<- map_data("state")
+states<- map_data("states")
 ggplot(data = states) + 
   geom_polygon(aes(x = long, y = lat, fill = region, group = group), color = "white") + 
-  geom_point(data = prcp, mapping = aes(x= longitude, y = latitude))+
+  geom_point(data = prcpst, mapping = aes(x= longitude, y = latitude))+
   coord_fixed(1.3) +
-  guides(fill=FALSE) 
+  guides(fill=FALSE) # do this to leave off the color legend
+
+ggplot(data = states) + 
+  geom_polygon(aes(x = long, y = lat, fill = region, group = group), color = "white") + 
+  coord_fixed(1.3) +
+  guides(fill=FALSE)  # do this to leave off the color legend
 
 # rename column to "id" so rnoaa understands
 s_ids<-plyr::rename(s, c("site_id"="id"))
