@@ -3,7 +3,7 @@ Experimental Code Currently in Development
 Region 11 Web Application
 -----------------------
 
-This is a shiny app which uses R and USDA Soil Data Access to create useful plots for understanding soils.  The app can be found in the water_table_report_app folder.
+This is a shiny app which uses R and USDA Soil Data Access to create useful plots for understanding soils.  The app can be found in the water_table_report_app folder.  The app is also available online at https://hammerly.shinyapps.io/test_application/.
 
 
 NRCS Health App
