@@ -32,9 +32,11 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 
 options(stringsAsFactors = FALSE)
 gdalUtils::gdal_setInstallation(search_path="C:/Program Files/QGIS Essen/bin", rescan = TRUE)
+myenv <- RSAGA::rsaga.env(path = "C:/Program Files/QGIS Essen/apps/saga") # set rsaga path
 
 ownCloud <- "C:/Users/stephen.roecker/ownCloud/projects/201711FIN001_Glynwood/"
-geodata <- "M:/geodata/"
+geodata <- "D:/geodata/"
+fd <- paste0(geodata, "project_data/11FIN/")
 ```
 
 
@@ -57,6 +59,7 @@ library(sf)
 library(raster)
 library(mapview)
 library(gdalUtils)
+library(RSAGA)
 
 library(aqp)
 library(soilDB)
@@ -73,11 +76,12 @@ gw_series <- st_as_sf(gw_series)
 
 # load project from NASIS
 project <- get_projectmapunit_from_NASIS()
-project_nodups <- project[!duplicated(project$nationalmusym), c("nationalmusym", "muname")]
+project_nodups <- project[!duplicated(project$mukey), c("nationalmusym", "mukey")]
 
 
 # load mupolygon from geodatabase
 mupolygon <- read_sf(dsn = paste0(geodata, "soils/2017/MLRA_11_FIN_FY17.gdb"), layer = "MUPOLYGON")
+mupolygon$idx <- row.names(mupolygon)
 st_crs(mupolygon) <- st_crs("+init=epsg:5070")
 mupolygon_sub <- mupolygon[mupolygon$MUKEY %in% project$mukey, ]
 
@@ -102,7 +106,7 @@ gw_sf <- st_transform(gw_sf, crs = "+init=epsg:5070")
 
 
 # intersect mupolygons and points
-mupolygon_sub2 <- mupolygon[mupolygon$AREASYMBOL %in% project$areasymbol, ]
+mupolygon_sub2 <- mupolygon_sub[mupolygon_sub$AREASYMBOL %in% project$areasymbol, ]
 idx <- st_intersects(gw_sf, mupolygon_sub2)
 idx2 <- lapply(idx, function(x) ifelse(length(x) == 0, NA, x))
 mupolygon_int <- mupolygon_sub2[unlist(idx2), ]
@@ -114,7 +118,7 @@ write_sf(mupolygon_sub,
          dsn = paste0(ownCloud, "mupolygon.shp"), 
          layer = "mupolygon", 
          driver = "ESRI Shapefile",
-         over
+         delete_layer = TRUE
          )
 save(mupolygon_int, mupolygon_sub, sapolygon_sub, gw_series, file = paste0(ownCloud, "glynwood_pol.RData"))
 ```
@@ -239,7 +243,7 @@ The geodata from the Glynwood points was extracted from several rasters at vario
 ```{r geodata, eval=FALSE}
 # Extract data from rasters
 # NW files
-fd <- paste0(geodata, "project_data/11FIN/PointDataEval/")
+fd1 <- paste0(fd, "PointDataEval/")
 dd <- c("slope10",
         "procrv10",
         "plncrv10",
@@ -248,7 +252,7 @@ dd <- c("slope10",
         "relpos_r5",
         "wetness_mp"
         )
-fp <- paste0(fd, "Mosaic_NW_pts/Derivatives/", dd, "/", "w001001.adf")
+fp <- paste0(fd1, "Mosaic_NW_pts/Derivatives/", dd, "/", "w001001.adf")
 rs <- stack(fp)
 names(rs) <- dd
 proj4string(rs) <- CRS("+init=epsg:2965")
@@ -256,7 +260,7 @@ gd_nw <- extract(rs, gw_sp, df = TRUE, sp = TRUE)@data
 gd_nw <- subset(gd_nw, !is.na(slope10))
 
 # SE files
-fp <- paste0(fd, "Mosaic_SE_pts/Derivatives/", dd, "/", "w001001.adf")
+fp <- paste0(fd1, "Mosaic_SE_pts/Derivatives/", dd, "/", "w001001.adf")
 rs <- stack(fp)
 names(rs) <- dd
 proj4string(rs) <- CRS("+init=epsg:2965")
@@ -275,7 +279,7 @@ subset_rasters <- function(input, output) {
   gdal_translate(
     src_dataset = input,
     dst_dataset = output,
-    projwin = c(bb[1,1], bb[2,2], bb[1,2], bb[2,1]),
+    projwin = c(bb[1], bb[4], bb[3], bb[2]),
     of = "GTiff",
     a_nodata = -99999,
     overwrite = TRUE,
@@ -299,46 +303,39 @@ warp_rasters <- function(input, output){
     )
   }
 
-fd <- paste0(geodata, "project_data/11FIN/sdat/")
-dd2 <- c("ned10m_11FIN.sdat",
-        "ned10m_11FIN_aspect5.sdat",
-        "ned10m_11FIN_slope5.sdat",
-        "ned10m_11FIN_cupro5.sdat",
-        "ned10m_11FIN_cutan5.sdat",
-        "ned30m_11FIN_mvalleys.sdat",
-        "ned30m_11FIN_wetness.sdat",
-        "ned30m_11FIN_z2stream.sdat",
-        "nlcd30m_11FIN_lulc2011.sdat"
+dd <- c(elev   = "ned10m_11FIN.tif",
+        aspect5 = "ned10m_11FIN_aspect5.tif",
+        slope5  = "ned10m_11FIN_slope5.tif",
+        ss      = "ned10m_11FIN_slopeshape.tif",
+        mvalley = "ned30m_11FIN_mvalleys.tif",
+        wetness2  = "ned30m_11FIN_wetness.tif",
+        z2streams = "ned30m_11FIN_z2stream.tif",
+        lulc    = "nlcd30m_11FIN_lulc2011.tif"
         )
-dd_names <- c("elev", "aspect5", "slope5", "kp5", "kt5", "mvalley", "wetness2", "z2streams", "lulc")
-dd <- paste0(fd, dd2)
 
-input <- dd
-output <- paste0(geodata, "project_data/11FIN/201711FIN001_Glynwood/", gsub(".sdat", ".tif", dd2))
-bb <- st_bbox(st_transform(gw_sf, crs = "+init=epsg:5070"))
+input <- paste0(fd, dd)
+output <- paste0(fd, "glynwood/", dd)
+
+mupolygon_in <- mupolygon_sub[grepl("^IN", mupolygon_sub$AREASYMBOL), ]
+bb <- st_bbox(st_transform(mupolygon_in, crs = "+init=epsg:5070"))
 
 mapply(subset_rasters, input, output)
-mapply(subset_rasters, 
-       input = paste0(geodata, "project_data/11FIN/nlcd30m_11FIN_lulc2011.tif"), 
-       output = paste0(geodata, "project_data/11FIN/201711FIN001_Glynwood/nlcd30m_11FIN_lulc2011.tif")
-       )
-mapply(warp_rasters, input = output, output = gsub(".tif", "2.tif", gsub("30m", "10m", output)))
+output2 <- gsub(".tif", "2.tif", 
+                gsub("30m", "10m", output)
+                )
+mapply(warp_rasters, input = output, output = output2)
+gdal_translate(src_dataset = output2[3],
+               dst_dataset = gsub(".tif", ".sdat", output2[3]),
+               t_srs = CRSargs(CRS("+init=epsg:5070")),
+               of = "SAGA",
+               overwrite = TRUE
+               )
 
-dd <- output
- 
-rs10m <- stack(dd[grepl("10m", dd)])
-names(rs10m) <- dd_names[1:5]
-rs30m <- stack(dd[grepl("30m", dd)])
-names(rs30m) <- dd_names[6:9]
+rs10m <- stack(output2)
+rs10m <- rs10m[[-6]]
+names(rs10m) <- c(names(dd)[1:3], "kp5", "kt5", names(dd)[5:8]) 
 
-rs10m <- stack(gsub(".tif", "2.tif", gsub("30m", "10m", output)))
-names(rs10m) <- dd_names
-
-gd10m <- as.data.frame(extract(rs10m, gw_sp, df = TRUE, sp = TRUE))
-gd30m <- as.data.frame(extract(rs30m, gw_sp, df = TRUE))
-gw <- cbind(gd10m, gd30m[, -1])
-rm(gd10m, gd30m)
-
+gw <- as.data.frame(extract(rs10m, gw_sp, df = TRUE, sp = TRUE))
 
 # Save data
 save(gw, gw_sf, gw_sp, ero_labels, file = paste0(ownCloud, "glynwood_geodata.RData"))
@@ -622,17 +619,80 @@ ggplot(gw_lo, aes(x = EroClass, y = value)) +
 ```
 
 ```{r, eval = FALSE}
-predfun <- function(model, data) {
+predfun1 <- function(model, data) {
   v <- predict(model, data, type = "response")
   cbind(
-    p = as.vector(v$fit)
+    p = as.vector(v)
     )
-}
-r <- predict(rs10m, test3, fun = predfun, index = 1:2, progress = "text")
-writeRaster(r[[1]], "C:/workspace/severe_erosion.tif", overwrite = TRUE, progress = "text")
+  }
+predfun2 <- function(model, data) {
+  v <- predict(model, data, type = "response")
+  cbind(
+    p = as.vector(v) > 0.4
+    )
+  }
+r <- predict(rs10m, test3, fun = predfun, index = 1, progress = "text")
+r2 <- predict(rs10m, test3, fun = predfun2, index = 1, progress = "text")
+
+fd2 <- paste0(fd, "glynwood/")
+
+writeRaster(r, paste0(fd2, "severe_erosion.tif"), overwrite = TRUE, progress = "text")
+writeRaster(r2, paste0(fd2, "severe_erosion_class.sdat"), overwrite = TRUE, progress = "text")
 
 r <-predict(rs10m, test4, type='response', progress='text')
 writeRaster(r[[1]], "C:/workspace/severe_erosion_cf.tif", overwrite = TRUE, progress = "text")
+
+ned <- rs10m[[1]]
+test <- raster(extent(st_bbox(mupolygon_in)[1:4]), ext = extent(ned), crs = crs(ned), res = res(ned))  # create a blank raster that matches the DEM
+writeRaster(test, file = paste0(fd2, "mupolygon.sdat"), format = "SAGA", progress = "text", overwrite = TRUE) # export the raster
+
+# Convert the CA794 shapefile to a rsaga raster
+
+rsaga.geoprocessor("grid_gridding", 0, env = myenv, list(
+  INPUT = paste0(ownCloud, "mupolygon.shp"),
+  FIELD = "idx",
+  OUTPUT = "2",
+  TARGET = "0",
+  GRID_TYPE = "2",
+  USER_GRID = paste0(fd2, "mupolygon.sdat"),
+  USER_XMIN = extent(test)[1] + 5,
+  USER_XMAX = extent(test)[2] - 5,
+  USER_YMIN = extent(test)[3] + 5,
+  USER_YMAX = extent(test)[4] - 5,
+  USER_SIZE = res(test)[1]
+  ))
+
+rsaga.geoprocessor("statistics_grid", 5, env = myenv, list(
+  ZONES    = paste0(fd2, "mupolygon.sgrd"),
+  CATLIST  = paste0(fd2, "severe_erosion_class.sgrd"),
+  OUTTAB   = paste0(ownCloud, "mupolygon_zonal_count.csv")
+  ))
+rsaga.geoprocessor("statistics_grid", 5, env = myenv, list(
+  ZONES    = paste0(fd2, "mupolygon.sgrd"),
+  STATLIST = paste0(fd2, "ned10m_11FIN_slope52.sgrd"),
+  OUTTAB   = paste0(ownCloud, "mupolygon_zonal_slope.csv")
+  ))
+e_count <- read.csv(paste0(ownCloud, "mupolygon_zonal_count.csv"))
+s_stats <- read.csv(paste0(ownCloud, "mupolygon_zonal_slope.csv"))
+
+e1 <- e_count[e_count$severe_erosion_class == 1, ]
+
+zstats <- merge(s_stats, e1[c("mupolygon", "Count.UCU")], by = "mupolygon", all.x = TRUE)
+with(zstats, hist(Count.UCU.y / Count.UCU.x))
+names(zstats) <- gsub("ned10m_11FIN_slope52", "slope_", names(zstats))
+names(zstats)[grepl("Count.UCU", names(zstats))] <- c("total_count", "erocl_count")
+zstats <- within(zstats, {
+  erocl_pct = erocl_count / total_count
+  erocl_50plus = erocl_pct > 0.5
+  })
+
+test <- merge(mupolygon_sub, zstats, by.x = "idx", by.y = "mupolygon")
+test <- merge(test, project_nodups, by.x = "MUKEY", by.y = "mukey", all.x = TRUE)
+
+group_by(test, nationalmusym, erocl_50plus) %>% 
+  summarize(n = length(erocl_50plus), 
+            slope_mean = round(mean(slope_MEAN, na.rm = TRUE))
+            )
 ```
 
 
