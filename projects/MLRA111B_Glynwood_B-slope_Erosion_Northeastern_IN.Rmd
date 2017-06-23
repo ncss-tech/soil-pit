@@ -690,9 +690,17 @@ test <- merge(mupolygon_sub, zstats, by.x = "idx", by.y = "mupolygon")
 test <- merge(test, project_nodups, by.x = "MUKEY", by.y = "mukey", all.x = TRUE)
 
 group_by(test, nationalmusym, erocl_50plus) %>% 
-  summarize(n = length(erocl_50plus), 
+  summarize(n = sum(erocl_50plus),
+            acres = round(sum(Shape_Area, na.rm = TRUE) * 0.000247), 
             slope_mean = round(mean(slope_MEAN, na.rm = TRUE))
             )
+test2 <- by(test, test$nationalmusym, function(x) data.frame(
+  nationalmusym = x[1, "nationalmusym"],
+  erocl_acres = x[2, "Shape_Area"],
+  total_acres = round(sum(x$Shape_Area, na.rm = TRUE))
+  ))
+test2 <- do.call("rbind", test2)
+test2$erocl_pct <- round(with(test2, erocl_acres.Shape_Area / total_acres))
 ```
 
 
