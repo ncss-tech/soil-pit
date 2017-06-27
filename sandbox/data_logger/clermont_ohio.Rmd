@@ -21,7 +21,7 @@ library(lattice) #xy plot
 
 
 
-```{r cars}
+```{r clermont datalogger, echo=FALSE}
 #read all the csv files from a folder as one table
 #use owncloud path
 #alter path as needed
