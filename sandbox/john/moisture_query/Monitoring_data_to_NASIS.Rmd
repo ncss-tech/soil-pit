@@ -8,14 +8,33 @@ output:
           toc_depth: 4
           toc_float: true
 params:
-  mdata: "C:/Users/john.hammerly/ownCloud/water_monitor_data/000009BEC048_20120919_1128.txt"
-  office: "11-ATL"
-  usiteid: "2013IA001001"
-  project: "DSP - MLRA 108D - Shelby, clay loam"
-  projectid: "201711ATL999"
-  sensor: ""
-  bottomdepth: "210"
-  sensordepth: "210"
+  mdata:
+    label: "Monitoring Data File"
+    value: "000009BEC048_20120919_1128.txt"
+    input: file
+  office: 
+    label: "Data Collector"
+    value: "11-ATL"
+  usiteid: 
+    label: "User Site ID"
+    value: "2013IA001001"
+  project: 
+    label: "Project Name"
+    value: "DSP - MLRA 108D - Shelby, clay loam"
+  projectid: 
+    label: "User Project ID"
+    value: "201711ATL999"
+  sensor:
+    label: "Sensor Type"
+    value: ""
+    input: select
+    choices: ["", aquaflex,	campbell scientific,	coleman,	CS650,	decagon ec-5,	decagon 5tm,	dynamax,	echo probe,	global water data logger wl16s,	global water data logger wl16u,	global water data logger wl15,	global water data logger wl16,	hydra probe analog,	hydra probe II SDI-12,	S-SMC-M005,	sentry 200ap,	soil moisture equipment,	TDR 300,	tektronix,	theta probe,	trime,	vitel hydra probe,	watermark,	infinites usa,	solinst 3001 levelogger edge,	global water data logger wl15x-015]
+  bottomdepth:
+    label: "Bottom Depth"
+    value: "210"
+  sensordepth:
+    label: "Sensor Depth"
+    value: "210"
 ---
 ###Description
 
