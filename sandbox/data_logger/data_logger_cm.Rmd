@@ -15,7 +15,7 @@ library(lattice) #xy plot
 
 ## R Markdown
 
-#Project Area Location ~ Clermont Woods 17 Brown County, Ohio
+#Project Area Location ~ Blount 27 Randolph County, Indiana
 
 
 ```{r data logger project, echo=FALSE}
@@ -33,14 +33,14 @@ library(lattice) #xy plot
   #Existing NASIS data
 
 #Plot spatial location
-map('county', 'ohio') # plot county boundaries for all of state
-map('county', 'ohio,Brown', add=T, fill = T, col="purple") #add County in purple to map
-map.text("county", "ohio,Brown", add=T) #add text for County name
+map('county', 'indiana') # plot county boundaries for all of state
+map('county', 'indiana,Randolph', add=T, fill = T, col="purple") #add County in purple to map
+map.text("county", "indiana,Randolph", add=T) #add text for County name
 
 #read all the csv files from a folder as one table
 #use owncloud path
 #alter path as needed
-datalogger=ldply(list.files(path="C:/Users/Alena.Stephens/ownCloud/Shared/IND_Data_Logger_Tables/clermont_woods_17_Brown_OH",pattern="csv",full.names=TRUE),function(filename) {
+datalogger=ldply(list.files(path="C:/Users/Alena.Stephens/ownCloud/Shared/IND_Data_Logger_Tables/blount_27_Randolph_IN",pattern="csv",full.names=TRUE),function(filename) {
   dum=read.csv(filename)
   dum$filename=filename
   return(dum)
@@ -67,7 +67,7 @@ datalogger$week <- as.Date(cut(datalogger$date,
 
 #Conversions of data
 datalogger$inches <-(datalogger$feet*12) #feet x inches
-datalogger$convin <- (17 - datalogger$inches) #inches - ground to bottom
+datalogger$convin <- (27 - datalogger$inches) #inches - ground to bottom
 datalogger$cm <- (datalogger$convin*2.54) #converted inches x centimeters
 
 datalogger$date<-as.POSIXlt(datalogger$date,format="%m/%d/%y %H:%M:%S")
@@ -75,6 +75,7 @@ datalogger <- within(datalogger, {
   day =   as.character(format(datalogger$date, "%m/%d/%y"))
   Jday =  as.integer(format(datalogger$date, "%j"))
   year =  as.integer(format(datalogger$date, "%Y"))
+  months =   as.character(format(datalogger$date, "%B"))
   month = as.integer(format(datalogger$date, "%m"))
   week =  as.integer(format(datalogger$date, "%W"))
 })
@@ -82,6 +83,7 @@ datalogger <- within(datalogger, {
 datalogger <- subset(datalogger, year>2008) #subset out after 2008 data because there is an error that shows and was also mentioned in the metadata
 
 cmavmonths <- aggregate(cm ~ month+year, data = datalogger, mean) #mean of months and years
+cmavmonthsword <- aggregate(cm ~ months+year, data = datalogger, mean) #mean of months and years
 cmminmonth <- aggregate(cm ~ month+year, data = datalogger, "min") #min of months & years
 cmmaxmonth <- aggregate(cm ~ month+year, data = datalogger, "max") #max of months & years
 
@@ -122,6 +124,13 @@ ggplot(data = cmyear, aes(year, cm)) +
 
 #plot averages of months and years in centimeters
 ggplot(data = cmavmonths, aes(month, cm, group = year)) +
+  geom_line(aes(colour= factor(year)))+
+  ylim(75, -15) +
+  ggtitle("Averages of Months and Years")+
+  theme(plot.title = element_text(lineheight=.8, face="bold"))
+
+#plot averages of months and years in centimeters
+ggplot(data = cmavmonthsword, aes(months, cm, group = year)) +
   geom_line(aes(colour= factor(year)))+
   ylim(75, -15) +
   ggtitle("Averages of Months and Years")+
@@ -170,14 +179,21 @@ ggplot(data = cmavdaywemoyr_105, aes(Jday, cm, group = year)) +
 #plot daily average of Jday and years in centimeters
 ggplot(data = cmavdaywemoyr, aes(Jday, cm, group = year)) +
   geom_line(aes(colour= factor(year)))+
-  ylim(100, -15) +
+  ylim(75, -15) +
   ggtitle("Daily Average")+
   theme(plot.title = element_text(lineheight=.8, face="bold"))
 
 #plot daily of Jday and years in centimeters
 ggplot(data = datalogger, aes(Jday, cm, group = year)) +
   geom_line(aes(colour= factor(year)))+
-  ylim(100, -15) +
+  ylim(75, -15) +
+  ggtitle("Daily")+
+  theme(plot.title = element_text(lineheight=.8, face="bold"))
+
+#plot time
+ggplot(data = datalogger, aes(time, cm, group = year)) +
+  geom_line(aes(colour= factor(year)))+
+  ylim(75, -15) +
   ggtitle("Daily")+
   theme(plot.title = element_text(lineheight=.8, face="bold"))
 
