@@ -202,6 +202,7 @@ ggplot(data = datalogger, aes(time, cm, group = year)) +
 
 
 
+
 #Soil Moisture Numbers from NASIS
 #datalogger_sm=ldply(list.files(path="E:/Documents/GIS/Trainings/Stat_for_Soil_Survey/final_Project/nasis",pattern="csv",full.names=TRUE),function(filename) {
 #  dum=read.csv(filename)
