@@ -18,6 +18,7 @@ library(maps) #create maps
 library(plyr) #splitting, applying, & combining data
 library(ggplot2) #plot
 library(lattice) #xy plot
+library(dygraphs)
 
 ```
 
@@ -128,6 +129,10 @@ cmavmonths_apr <- subset(cmavmonths, month >3 & month < 5)
 #cmavdaywemoyr_105 <- subset(cmavdaywemoyr, month == 4 & Jday==105)
 cmavdaywemoyr_105 <- subset(cmavdaywemoyr, month == 4 & Jday > 104 & Jday < 106 )
 
+#plot dygraph
+dygraph(cmyear) %>%
+  dyAxis("y", label= "CM")%>%
+  dyAxis("x", label= "Year")
 
 #plot averages of years centimeters
 ggplot(data = cmyear, aes(year, cm)) +
@@ -138,7 +143,7 @@ ggplot(data = cmyear, aes(year, cm)) +
   ggtitle("Year Averages") +
   theme(plot.title = element_text(lineheight=.8, face="bold"))
 
-
+dygraph(cmavmonths)
 
 #plot averages of months and years in centimeters
 ggplot(data = cmavmonths, aes(month, cm, group = year)) +
@@ -146,6 +151,8 @@ ggplot(data = cmavmonths, aes(month, cm, group = year)) +
   ylim(75, -15) +
   ggtitle("Averages of Months and Years")+
   theme(plot.title = element_text(lineheight=.8, face="bold"))
+
+#dygraph(cmavmonthsword)
 
 #plot averages of months and years in centimeters
 ggplot(data = cmavmonthsword, aes(months, cm, group = year)) +
@@ -166,6 +173,8 @@ ggplot(data = cmavmonths, aes(month, cm)) +
   ggtitle("Averages of Months and Years")+
   theme(plot.title = element_text(lineheight=.8, face="bold"))
 
+dygraph(cmavmonths3_7)
+
 #plot averages of subset months March - July
 ggplot(data = cmavmonths3_7, aes(month, cm, group = year)) +
   geom_line(aes(colour= factor(year))) +
@@ -173,6 +182,7 @@ ggplot(data = cmavmonths3_7, aes(month, cm, group = year)) +
   ggtitle("Averages of Months ~ March - July")+
   theme(plot.title = element_text(lineheight=.8, face="bold"))
 
+dygraph(cmavmonths1_6)
 #plot averages of subset months Feb - May
 ggplot(data = cmavmonths1_6, aes(month, cm, group = year)) +
   geom_line(aes(colour= factor(year))) +
@@ -180,6 +190,7 @@ ggplot(data = cmavmonths1_6, aes(month, cm, group = year)) +
   ggtitle("Averages of Months ~ February - May")+
   theme(plot.title = element_text(lineheight=.8, face="bold"))
 
+dygraph(cmavmonths_apr)
 #plot averages of subset month of April 
 ggplot(data = cmavmonths_apr, aes(year, cm, group = year)) +
   geom_point(aes(colour= factor(year))) +
@@ -187,6 +198,7 @@ ggplot(data = cmavmonths_apr, aes(year, cm, group = year)) +
   ggtitle("Averages of Subset Day in April")+
   theme(plot.title = element_text(lineheight=.8, face="bold"))
 
+dygraph(cmavdaywemoyr_105)
 #plot averages of subset day 
 ggplot(data = cmavdaywemoyr_105, aes(Jday, cm, group = year)) +
   geom_boxplot(aes(colour= factor(year))) +
@@ -194,6 +206,7 @@ ggplot(data = cmavdaywemoyr_105, aes(Jday, cm, group = year)) +
   ggtitle("Averages of Subset Day in April")+
   theme(plot.title = element_text(lineheight=.8, face="bold"))
 
+dygraph(cmavdaywemoyr)
 #plot daily average of Jday and years in centimeters
 ggplot(data = cmavdaywemoyr, aes(Jday, cm, group = year)) +
   geom_line(aes(colour= factor(year)))+
