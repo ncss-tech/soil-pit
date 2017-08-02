@@ -19,6 +19,8 @@ library(plyr) #splitting, applying, & combining data
 library(ggplot2) #plot
 library(lattice) #xy plot
 library(dygraphs)
+library(DT)
+library(RColorBrewer)
 
 ```
 
@@ -99,7 +101,10 @@ datalogger <- within(datalogger, {
   week =  as.integer(format(datalogger$date, "%W"))
 })
 
-datalogger <- subset(datalogger, year>2008) #subset out after 2008 data because there is an error that shows and was also mentioned in the metadata
+#create data table
+datatable(datalogger, options=list(pageLength=20))
+
+#datalogger <- subset(datalogger, year>2008) #subset out after 2008 data because there is an error that shows and was also mentioned in the metadata
 
 cmavmonths <- aggregate(cm ~ month+year, data = datalogger, mean) #mean of months and years
 cmavmonthsword <- aggregate(cm ~ months+year, data = datalogger, mean) #mean of months and years
@@ -131,8 +136,10 @@ cmavdaywemoyr_105 <- subset(cmavdaywemoyr, month == 4 & Jday > 104 & Jday < 106 
 
 #plot dygraph
 dygraph(cmyear) %>%
-  dyAxis("y", label= "CM")%>%
-  dyAxis("x", label= "Year")
+  dyAxis("y", label= "CM", valueRange = c(70, -5))%>%
+  dyAxis("x", label= "Year")%>%
+  dyRangeSelector()%>%
+  dyOptions(colors = "purple")
 
 #plot averages of years centimeters
 ggplot(data = cmyear, aes(year, cm)) +
@@ -143,7 +150,13 @@ ggplot(data = cmyear, aes(year, cm)) +
   ggtitle("Year Averages") +
   theme(plot.title = element_text(lineheight=.8, face="bold"))
 
-dygraph(cmavmonths)
+#dygraph
+dygraph(cmavmonths) %>%
+  dyAxis("y", label= "CM", valueRange = c(70, -5))%>%
+  dyAxis("x", label= "Year")%>%
+  dyRangeSelector()%>%
+  dyOptions(colors = RColorBrewer::brewer.pal(7, "Accent"))
+
 
 #plot averages of months and years in centimeters
 ggplot(data = cmavmonths, aes(month, cm, group = year)) +
@@ -173,7 +186,13 @@ ggplot(data = cmavmonths, aes(month, cm)) +
   ggtitle("Averages of Months and Years")+
   theme(plot.title = element_text(lineheight=.8, face="bold"))
 
-dygraph(cmavmonths3_7)
+#dygraph
+dygraph(cmavmonths3_7) %>%
+  dyAxis("y", label= "CM", valueRange = c(70, -5))%>%
+  dyAxis("x", label= "Year")%>%
+  dyRangeSelector()%>%
+  dyOptions(colors = "purple")
+
 
 #plot averages of subset months March - July
 ggplot(data = cmavmonths3_7, aes(month, cm, group = year)) +
@@ -182,7 +201,14 @@ ggplot(data = cmavmonths3_7, aes(month, cm, group = year)) +
   ggtitle("Averages of Months ~ March - July")+
   theme(plot.title = element_text(lineheight=.8, face="bold"))
 
-dygraph(cmavmonths1_6)
+#dygraph
+dygraph(cmavmonths1_6) %>%
+  dyAxis("y", label= "CM", valueRange = c(70, -5))%>%
+  dyAxis("x", label= "Year")%>%
+  dyRangeSelector()%>%
+  dyOptions(colors = "purple")
+
+
 #plot averages of subset months Feb - May
 ggplot(data = cmavmonths1_6, aes(month, cm, group = year)) +
   geom_line(aes(colour= factor(year))) +
@@ -190,7 +216,13 @@ ggplot(data = cmavmonths1_6, aes(month, cm, group = year)) +
   ggtitle("Averages of Months ~ February - May")+
   theme(plot.title = element_text(lineheight=.8, face="bold"))
 
-dygraph(cmavmonths_apr)
+#dygraph
+dygraph(cmavmonths_apr) %>%
+  dyAxis("y", label= "CM", valueRange = c(70, -5))%>%
+  dyAxis("x", label= "Year")%>%
+  dyRangeSelector()%>%
+  dyOptions(colors = "purple")
+
 #plot averages of subset month of April 
 ggplot(data = cmavmonths_apr, aes(year, cm, group = year)) +
   geom_point(aes(colour= factor(year))) +
@@ -198,7 +230,13 @@ ggplot(data = cmavmonths_apr, aes(year, cm, group = year)) +
   ggtitle("Averages of Subset Day in April")+
   theme(plot.title = element_text(lineheight=.8, face="bold"))
 
-dygraph(cmavdaywemoyr_105)
+#dygraph
+dygraph(cmavdaywemoyr_105) %>%
+  dyAxis("y", label= "CM", valueRange = c(70, -5))%>%
+  dyAxis("x", label= "Year")%>%
+  dyRangeSelector()%>%
+  dyOptions(colors = "purple")
+
 #plot averages of subset day 
 ggplot(data = cmavdaywemoyr_105, aes(Jday, cm, group = year)) +
   geom_boxplot(aes(colour= factor(year))) +
@@ -206,7 +244,14 @@ ggplot(data = cmavdaywemoyr_105, aes(Jday, cm, group = year)) +
   ggtitle("Averages of Subset Day in April")+
   theme(plot.title = element_text(lineheight=.8, face="bold"))
 
-dygraph(cmavdaywemoyr)
+#dygraph
+dygraph(cmavdaywemoyr) %>%
+  dyAxis("y", label= "CM", valueRange = c(70, -5))%>%
+  dyAxis("x", label= "Year")%>%
+  dyRangeSelector()%>%
+  dyOptions(colors = "purple")
+
+
 #plot daily average of Jday and years in centimeters
 ggplot(data = cmavdaywemoyr, aes(Jday, cm, group = year)) +
   geom_line(aes(colour= factor(year)))+
