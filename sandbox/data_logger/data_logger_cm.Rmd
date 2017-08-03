@@ -151,11 +151,15 @@ ggplot(data = cmyear, aes(year, cm)) +
   theme(plot.title = element_text(lineheight=.8, face="bold"))
 
 #dygraph
-dygraph(cmavmonths) %>%
+dygraph(cmavmonths, "month") %>%
   dyAxis("y", label= "CM", valueRange = c(70, -5))%>%
-  dyAxis("x", label= "Year")%>%
+  dyAxis("x", label= "Month", valueRange = c(1, 12))%>%
+  #dySeries("year", axis='y2')%>%
+  #dyOptions(stackedGraph= TRUE)%>%
   dyRangeSelector()%>%
-  dyOptions(colors = RColorBrewer::brewer.pal(7, "Accent"))
+  dyLegend(width=400, show= "follow")%>%
+  #dyOptions(colors = RColorBrewer::brewer.pal(Paired, ""))%>%
+
 
 
 #plot averages of months and years in centimeters
@@ -191,7 +195,7 @@ dygraph(cmavmonths3_7) %>%
   dyAxis("y", label= "CM", valueRange = c(70, -5))%>%
   dyAxis("x", label= "Year")%>%
   dyRangeSelector()%>%
-  dyOptions(colors = "purple")
+  dyOptions(colors = RColorBrewer::brewer.pal(7, "Accent"))
 
 
 #plot averages of subset months March - July
@@ -206,7 +210,7 @@ dygraph(cmavmonths1_6) %>%
   dyAxis("y", label= "CM", valueRange = c(70, -5))%>%
   dyAxis("x", label= "Year")%>%
   dyRangeSelector()%>%
-  dyOptions(colors = "purple")
+  dyOptions(colors = RColorBrewer::brewer.pal(7, "Accent"))
 
 
 #plot averages of subset months Feb - May
@@ -221,7 +225,7 @@ dygraph(cmavmonths_apr) %>%
   dyAxis("y", label= "CM", valueRange = c(70, -5))%>%
   dyAxis("x", label= "Year")%>%
   dyRangeSelector()%>%
-  dyOptions(colors = "purple")
+  dyOptions(colors = RColorBrewer::brewer.pal(7, "Accent"))
 
 #plot averages of subset month of April 
 ggplot(data = cmavmonths_apr, aes(year, cm, group = year)) +
@@ -235,7 +239,7 @@ dygraph(cmavdaywemoyr_105) %>%
   dyAxis("y", label= "CM", valueRange = c(70, -5))%>%
   dyAxis("x", label= "Year")%>%
   dyRangeSelector()%>%
-  dyOptions(colors = "purple")
+  dyOptions(colors = RColorBrewer::brewer.pal(7, "Accent"))
 
 #plot averages of subset day 
 ggplot(data = cmavdaywemoyr_105, aes(Jday, cm, group = year)) +
@@ -249,7 +253,7 @@ dygraph(cmavdaywemoyr) %>%
   dyAxis("y", label= "CM", valueRange = c(70, -5))%>%
   dyAxis("x", label= "Year")%>%
   dyRangeSelector()%>%
-  dyOptions(colors = "purple")
+  dyOptions(colors = RColorBrewer::brewer.pal(7, "Accent"))
 
 
 #plot daily average of Jday and years in centimeters

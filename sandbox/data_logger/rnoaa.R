@@ -22,13 +22,13 @@ res$data
 #Find Stations within County using State and County FIPS 
 # 18 Indiana
 # 39 Ohio
-ncdc_stations(datasetid = 'PRECIP_HLY', locationid="FIPS:18079")
+ncdc_stations(datasetid = 'PRECIP_HLY', locationid="FIPS:18135")
 
 ncdc_stations(datasetid = 'GHCND', locationid = 'FIPS:39097', stationid = 'GHCND:USC00334681')
 ncdc_stations(datasetid = 'PRECIP_HLY', locationid = 'FIPS:39097', stationid = 'GHCND:USC00334681')
 
-out <- ncdc(datasetid = 'NORMAL_DLY', datatypeid= 'dly-tmax-normal', startdate= '2010-01-01', enddate = '2010-12-10')
-outp <- ncdc(datasetid = 'PRECIP_HLY', datatypeid= 'PRCP', startdate= '2010-01-01', enddate = '2010-12-10')
+out <- ncdc(datasetid = 'NORMAL_DLY', datatypeid= 'dly-tmax-normal', startdate= '2014-01-01', enddate = '2010-12-10')
+outp <- ncdc(datasetid = 'PRECIP_HLY', datatypeid= 'PRCP', startdate= '2013-031-01', enddate = '2014-01-01')
 outg <- ncdc(datasetid = 'GHCND', datatypeid= 'PRCP', startdate= '2010-01-01', enddate = '2010-12-10', limit = 500)
 
 # dowload station data (there is a lot of data so it takes a while for this) will look at creating Regional subsets later

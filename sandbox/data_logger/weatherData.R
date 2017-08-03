@@ -10,6 +10,7 @@ library(lattice) #xy plot
 #KI69 - Clermont County, Batavia, Ohio
 #KEYE - Eagle Creek
 #KBAK - Columbus, Indana
+#KMIE - Delaware County, Indiana
 
 
 #data_okay <- checkDataAvailability("I14", "2016-03-21" )
@@ -19,14 +20,14 @@ library(lattice) #xy plot
 #getWeatherForDate("KUYF", "2014-05-05")
 
 ## Need to loop through individual years to get full historical record 
-for (yr in 1950:2017) { 
+for (yr in 2000:2005) { 
   start <- paste(yr,"-01-01",sep="")
   end <- paste(yr,"-12-31",sep="") 
   precip_yr <- paste("precip_",yr, sep="") 
-  yr_data <- getWeatherForDate("KBAK", start_date=start, ,end_date=end, opt_custom_columns=T, custom_columns=c(24)) 
+  yr_data <- getWeatherForDate("KMIE", start_date=start, ,end_date=end, opt_custom_columns=T, custom_columns=c(24)) 
   yr_data$Date <- ymd(yr_data$Date) 
   # make csv file name for each year of data downloaded 
-  my_dir <- "E:/temp/weatherData/KBAK" 
+  my_dir <- "E:/temp/weatherData/KMIE" 
   link <- paste(my_dir,precip_yr,".csv",sep="")
   write.csv(yr_data, link, quote=FALSE, row.names = F) }
 
@@ -38,8 +39,8 @@ precip=ldply(list.files(path="E:/temp/weatherData/KUYF",pattern="csv",full.names
 })
 
 #rename column
-#colnames(precip)[colnames(precip)=="Date"]<- "date"
-colnames(precip)<-c("date", "PrecipitationIn", "filename")
+#colnames(precip)[colnames(precip)=="Date"]<- "Date"
+colnames(precip)<-c("Date", "PrecipitationIn", "filename")
 
 #read the date from the table
 precip$date <- as.Date (precip$date, '%m/%d/%Y')
