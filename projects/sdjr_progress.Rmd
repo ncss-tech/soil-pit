@@ -1,5 +1,7 @@
 ---
-output: word_document
+output:
+  html_document: default
+  word_document: default
 ---
 
 For the past several years Soil Survey Offices in the East Central Glaciated Region (11) have focused their work on the Soil Data Join and Recorrelation (SDJR) National Initiative. The goal of this Initiative has been to increase the consistency of the Soil SURvey GeOgraphic database (SSURGO) across political boundaries. A summary of the affected areas in Wisconsin are presented below. Fiscal year (FY) 2016 will be the last official year of the SDJR Initiative. After FY2016, MLRA projects will become the main focus of Soil Survey Offices in Region 11.
@@ -19,7 +21,7 @@ library(RColorBrewer)
 
 setwd("C:/Users/stephen.roecker/ownCloud/data/lims_data")
 
-st <- c("IL")
+st <- c("IN")
 ro <- c(11)
 pt <- "SDJR"
 

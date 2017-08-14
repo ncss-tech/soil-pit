@@ -21,7 +21,7 @@ library(reshape2)
 library(plyr)
 library(tidyverse)
 
-source("C:/workspace/github/soil-pit/trunk/queries/kssl_queries.R")
+source("C:/workspace2/github/soil-pit/trunk/queries/kssl_queries.R")
 ```
 
 
@@ -38,29 +38,32 @@ data(state); st <- tolower(state.abb)
 project_id <- "%25"
 
 ssa <- read.dbf("M:/geodata/soils/soilsa_a_nrcs.dbf")
-ownership <- read.csv("M:/geodata/soils/SSA_Regional_Ownership_MASTER_MLRA_OFFICE.csv")
+ownership <- read.csv("M:/geodata/soils/SSA_Regional_Ownership_MASTER_fy17.csv")
 
-ownership[ownership$Region_Download == 11, "AREASYMBOL"] ->.;
-sort(unique(.)) ->
-  asymbol
+idx <- ownership$Region == 11
+asymbol <- ownership[idx, "AREASYMBOL"]
+asymbol <- paste0(unique(
+  substr(asymbol, 1, 2)), 
+  "%25")
 
-# # fetch goals
-# years <- 2012:2017
-# goals <- ldply(years, function(x){
-#   cat("fetching", x, "goal\n")
-#   goals_report(x, "%25")
-#   })
-# 
-# 
-# # reverse correlation
-# years <- 2016:2017
-# start_date <- paste0("10/01/", years - 1)
-# finish_date <- paste0("10/01/", years)
-# 
-# rcors <- mapply(function(years, start_date, finish_date){
-#   cat("fetching", years, "reverse correlation\n")
-#   sdjr_correlation(asymbol, project_id, start_date, finish_date)
-#   }, years, start_date, finish_date, SIMPLIFY = FALSE); rcors <- do.call("rbind", rcors)
+
+# fetch goals
+years <- 2018
+goals <- ldply(years, function(x){
+  cat("fetching", x, "goal\n")
+  goals_report(x, "%25")
+  })
+
+
+# reverse correlation
+years <- 2017
+start_date <- paste0("09/30/", years - 1)
+finish_date <- paste0("10/01/", years)
+
+rcors <- mapply(function(years, start_date, finish_date){
+  cat("fetching", years, "reverse correlation\n")
+  sdjr_correlation(asymbol, project_id, start_date, finish_date)
+  }, years, start_date, finish_date, SIMPLIFY = FALSE); rcors <- do.call("rbind", rcors)
 
 
 ## Load data from files
@@ -85,14 +88,14 @@ old_names <- c("sso", "old_musym", "old_natsym", "new_natsym", "old_mukey", "old
 new_names <- c("office", "musym", "nationalmusym", "new_nationalmusym", "mukey", "muacres", "new_muacres", "muname", "musym_orig", "spatial_change")
 names(rcors..) <- tolower(names(rcors..))
 names(rcors..)[which(names(rcors..) %in% old_names)] <- new_names
-rcors.. <- mutate(rcors..,
-                  projecttypename = substr(projectname, 1, 4),
+rcors.. <- within(rcors.., {
+                  projecttypename = substr(projectname, 1, 4)
                   state = substr(areasymbol, 1, 2)
-                  )
-rcors17 <- filter(rcors17, !is.na(new_mukey))
-rcors17 <- mutate(rcors17,
+                  })
+rcors17 <- subset(rcors17, !is.na(new_mukey))
+rcors17 <- within(rcors17, {
                   state = substr(areasymbol, 1, 2)
-                  )
+                  })
 
 idx <- names(rcors..)[names(rcors..) %in% names(rcors16)]
 rcors <- rbind(rcors..[idx], rcors16[idx])
@@ -274,13 +277,14 @@ kable(progress)
 ```{r spatial}
 r11_spatial <- rcors %>%
   filter(region %in% ro & spatial_change == TRUE & projecttypename %in% pt3) %>%
-  group_by(fy, projecttypename, region, office) %>%
-  summarize(
-    acres = sum(muacres, na.rm = T),
-    n_areasymbol = length(unique(areasymbol)),
-    n_musym = length(unique(musym_orig))
-    ) %>%
-  arrange(desc(acres))
+  group_by(fy, projecttypename, region, office) %>% 
+    summarize(
+      acres = sum(muacres, na.rm = TRUE),
+      n_areasymbol = length(unique(areasymbol)),
+      n_musym = length(unique(musym_orig))
+      ) %>%
+  arrange(desc(acres)) %>%
+  as.data.frame()
 
 filter(r11_spatial, fy == 2017) %>%
 ggplot(aes(x = n_musym, y = n_areasymbol, group = fy, color = office)) + 
