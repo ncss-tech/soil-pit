@@ -41,9 +41,9 @@ ssa <- read.dbf("M:/geodata/soils/soilsa_a_nrcs.dbf")
 ownership <- read.csv("M:/geodata/soils/SSA_Regional_Ownership_MASTER_fy17.csv")
 
 idx <- ownership$Region == 11
-asymbol <- ownership[idx, "AREASYMBOL"]
+asymbol2 <- ownership[idx, "AREASYMBOL"]
 asymbol <- paste0(unique(
-  substr(asymbol, 1, 2)), 
+  substr(asymbol2, 1, 2)), 
   "%25")
 
 
@@ -57,8 +57,8 @@ goals <- ldply(years, function(x){
 
 # reverse correlation
 years <- 2017
-start_date <- paste0("09/30/", years - 1)
-finish_date <- paste0("10/01/", years)
+start_date <- paste0("10/01/", years - 1)
+finish_date <- paste0("09/30/", years)
 
 rcors <- mapply(function(years, start_date, finish_date){
   cat("fetching", years, "reverse correlation\n")
