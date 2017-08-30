@@ -48,7 +48,7 @@ asymbol <- paste0(unique(
 
 
 # fetch goals
-years <- 2018
+years <- 2017
 goals <- ldply(years, function(x){
   cat("fetching", x, "goal\n")
   goals_report(x, "%25")
@@ -65,6 +65,10 @@ rcors <- mapply(function(years, start_date, finish_date){
   sdjr_correlation(asymbol, project_id, start_date, finish_date)
   }, years, start_date, finish_date, SIMPLIFY = FALSE); rcors <- do.call("rbind", rcors)
 
+
+# fetch legends
+legends <- lapply(asymbol, legends_report) 
+legends <- do.call("rbind", legends)
 
 ## Load data from files
 goal_dates <- "2017_04_17"
