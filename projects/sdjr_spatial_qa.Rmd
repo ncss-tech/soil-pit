@@ -18,8 +18,8 @@ ownCloud <- "C:/Users/stephen.roecker/ownCloud/data/lims_data/"
 
 fy <- 2017
 region <- 11
-office <- c("11-CLI")
-mupolygon <- read.dbf("C:/Users/stephen.roecker/ownCloud/r11_cli_spatial.dbf", as.is = TRUE)
+office <- c("11-UNI")
+mupolygon <- foreign::read.dbf("C:/Users/stephen.roecker/ownCloud/r11_uni_spatial.dbf", as.is = TRUE)
 names(mupolygon) <- tolower(names(mupolygon))
 owners <- read.csv("M:/geodata/soils/SSA_Regional_Ownership_MASTER_fy17.csv")
 
@@ -33,10 +33,10 @@ st <- paste0(toupper(c("ia", "il", "in", "ks", "ky", "mi", "mn", "mo", "ne", "oh
 goals <- read.csv(paste0(ownCloud, "lims_goals_fy18_2017_08_30.csv"))
 
 # corr <- sdjr_correlation(asymbol, project_id, start_date, finish_date)
-corr <- read.csv(paste0(ownCloud, "lims_correlation_fy2017_IA%25_WI%25_2017_08_30.csv"))
+corr <- read.csv(paste0(ownCloud, "lims_correlation_fy2017_IA%25_WI%25_2017_08_31.csv"))
 
 # legend <- legends_report("mi%25")
-legends <- read.csv(paste0(ownCloud, "report_legends_2017_08_30.csv"))
+legends <- read.csv(paste0(ownCloud, "report_legends_2017_08_31.csv"))
 ```
 
 ```{r, summarize geodatabase tabular changes, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
@@ -126,11 +126,11 @@ geo_qa1 <- mupolygon_edits %>%
     n_musym = length(unique(musym)),
     musym_c = paste0(unique(musym), collapse=", ")
     )
-geo_qa2 <- mupolygon_edits %>%
-  group_by(areasymbol, new_musym) %>%
-  summarise(
-    musym = unique(musym)
-    )
+vals <- c("areasymbol", "new_musym")
+geo_qa2 <- {by(mupolygon_edits, mupolygon_edits[, vals], function(x)  data.frame(
+  x[1, vals], 
+  musym = unique(x$musym)
+  )) ->.; do.call("rbind", .)}
 geo_qa <- left_join(geo_qa2, geo_qa1, by = c("areasymbol", "new_musym"))
 
 write.csv(geo_qa, 
@@ -158,7 +158,11 @@ qa <- transform(qa,
                 in_legend = qa_key %in% leg_key # need to separate out this check, cuz
                 )
 
-qa_sub <- subset(qa, musym != new_musym)
+qa_sub <- subset(qa, 
+                 musym != new_musym #&
+                 #substr(musym, 1, nchar(musym)) != new_musym &
+                 #substr(musym, 2, nchar(musym) - 1) != new_musym
+                 )
 
 qa_project <- filter(qa_sub, in_project == FALSE)
 qa_geo <- filter(qa_sub, in_geodatabase == FALSE)

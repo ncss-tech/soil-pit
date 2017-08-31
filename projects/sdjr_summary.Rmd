@@ -67,8 +67,8 @@ rcors <- mapply(function(years, start_date, finish_date){
 
 
 # fetch legends
-legends <- lapply(asymbol, legends_report) 
-legends <- do.call("rbind", legends)
+legends <- legends_report(asymbol) 
+
 
 ## Load data from files
 goal_dates <- "2017_04_17"
