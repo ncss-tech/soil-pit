@@ -18,8 +18,8 @@ ownCloud <- "C:/Users/stephen.roecker/ownCloud/data/lims_data/"
 
 fy <- 2017
 region <- 11
-office <- c("11-JUE")
-mupolygon <- foreign::read.dbf("C:/Users/stephen.roecker/ownCloud/r11_jue_spatial.dbf", as.is = TRUE)
+office <- c("11-WAV")
+mupolygon <- foreign::read.dbf("C:/Users/stephen.roecker/ownCloud/r11_wav_spatial3.dbf", as.is = TRUE)
 names(mupolygon) <- tolower(names(mupolygon))
 owners <- read.csv("M:/geodata/soils/SSA_Regional_Ownership_MASTER_fy17.csv")
 
@@ -33,10 +33,10 @@ st <- paste0(toupper(c("ia", "il", "in", "ks", "ky", "mi", "mn", "mo", "ne", "oh
 goals <- read.csv(paste0(ownCloud, "lims_goals_fy17_2017_09_05.csv"))
 
 # corr <- sdjr_correlation(asymbol, project_id, start_date, finish_date)
-corr <- read.csv(paste0(ownCloud, "lims_correlation_fy2017_IA%25_WI%25_2017_09_07.csv"))
+corr <- read.csv(paste0(ownCloud, "lims_correlation_fy2017_IA%25_WI%25_2017_09_12.csv"))
 
 # legend <- legends_report("mi%25")
-legends <- read.csv(paste0(ownCloud, "report_legends_2017_09_07.csv"))
+legends <- read.csv(paste0(ownCloud, "report_legends_2017_09_12.csv"))
 ```
 
 ```{r, summarize geodatabase tabular changes, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}

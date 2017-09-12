@@ -30,7 +30,7 @@ R11IND <- cbind(sso = "11IND", read.dbf(paste0(ownCloud, "r11_ind_spatial.dbf"),
 R11JUE <- cbind(sso = "11JUE", read.dbf(paste0(ownCloud, "r11_jue_spatial.dbf"), as.is = TRUE)[, vars])
 R11MAN <- cbind(sso = "11MAN", read.dbf(paste0(ownCloud, "r11_man_spatial.dbf"), as.is = TRUE)[, vars])
 R11UNI <- cbind(sso = "11UNI", read.dbf(paste0(ownCloud, "r11_uni_spatial.dbf"), as.is = TRUE)[, vars])
-R11WAV <- cbind(sso = "11WAV", read.dbf(paste0(ownCloud, "r11_wav_spatial.dbf"), as.is = TRUE)[, vars])
+R11WAV <- cbind(sso = "11WAV", read.dbf(paste0(ownCloud, "r11_wav_spatial2.dbf"), as.is = TRUE)[, vars])
 
 edits <- rbind(R11ATL, R11AUR, R11CLI, R11FIN, R11GAL, R11IND, R11JUE, R11MAN, R11UNI, R11WAV)
 names(edits) <- tolower(names(edits))
