@@ -6,9 +6,9 @@ output: html_document
 
 
 params:
-  datalogger: !r as.character ("C:/Users/Alena.Stephens/ownCloud/Shared/IND_Data_Logger_Tables/blount_27_Randolph_IN")
-  countymap: !r as.character ("Randolph")
-  statemap: !r as.character ("Indiana")
+  datalogger: !r as.character ("C:/Users/Alena.Stephens/ownCloud/Shared/IND_Data_Logger_Tables/westboro_17_Clermont_OH")
+  countymap: !r as.character ("Clermont")
+  statemap: !r as.character ("Ohio")
   #groundnum: !r as.character("27")
 ---
 
@@ -142,13 +142,13 @@ dygraph(cmyear) %>%
   dyOptions(colors = "purple")
 
 #plot averages of years centimeters
-ggplot(data = cmyear, aes(year, cm)) +
-  geom_line(colour="purple")+ 
-  ylim(40, 0)+
-  geom_smooth(colour="green")+ 
-  ylim(40, 0) +
-  ggtitle("Year Averages") +
-  theme(plot.title = element_text(lineheight=.8, face="bold"))
+#ggplot(data = cmyear, aes(year, cm)) +
+ # geom_line(colour="purple")+ 
+#  ylim(40, 0)+
+#  geom_smooth(colour="green")+ 
+#  ylim(40, 0) +
+#  ggtitle("Year Averages") +
+ # theme(plot.title = element_text(lineheight=.8, face="bold"))
 
 #dygraph
 dygraph(cmavmonths, "month") %>%
@@ -163,32 +163,32 @@ dygraph(cmavmonths, "month") %>%
 
 
 #plot averages of months and years in centimeters
-ggplot(data = cmavmonths, aes(month, cm, group = year)) +
-  geom_line(aes(colour= factor(year)))+
-  ylim(75, -15) +
-  ggtitle("Averages of Months and Years")+
-  theme(plot.title = element_text(lineheight=.8, face="bold"))
+#ggplot(data = cmavmonths, aes(month, cm, group = year)) +
+ # geom_line(colour= factor(year))+
+  #ylim(75, -15) +
+  #ggtitle("Averages of Months and Years")+
+  #theme(plot.title = element_text(lineheight=.8, face="bold"))
 
 #dygraph(cmavmonthsword)
 
 #plot averages of months and years in centimeters
-ggplot(data = cmavmonthsword, aes(months, cm, group = year)) +
-  geom_line(aes(colour= factor(year)))+
-  ylim(75, -15) +
-  ggtitle("Averages of Months and Years")+
-  theme(plot.title = element_text(lineheight=.8, face="bold"))
+#ggplot(data = cmavmonthsword, aes(months, cm, group = year)) +
+#  geom_line(colour= factor(year))+
+#  ylim(75, -15) +
+#  ggtitle("Averages of Months and Years")+
+#  theme(plot.title = element_text(lineheight=.8, face="bold"))
 
 
 
 
 #plot averages of months and years in centimeters ~ data gaps are noticable 
-ggplot(data = cmavmonths, aes(month, cm)) +
-  geom_line(colour="purple") +
-  geom_smooth(colour="green") + 
-  ylim(50, 0) +
-  facet_wrap(~ year)+
-  ggtitle("Averages of Months and Years")+
-  theme(plot.title = element_text(lineheight=.8, face="bold"))
+#ggplot(data = cmavmonths, aes(month, cm)) +
+#  geom_line(colour="purple") +
+#  geom_smooth(colour="green") + 
+#  ylim(50, 0) +
+#  facet_wrap(~ year)+
+#  ggtitle("Averages of Months and Years")+
+#  theme(plot.title = element_text(lineheight=.8, face="bold"))
 
 #dygraph
 dygraph(cmavmonths3_7) %>%
@@ -199,11 +199,11 @@ dygraph(cmavmonths3_7) %>%
 
 
 #plot averages of subset months March - July
-ggplot(data = cmavmonths3_7, aes(month, cm, group = year)) +
-  geom_line(aes(colour= factor(year))) +
-  ylim(75, 0) +
-  ggtitle("Averages of Months ~ March - July")+
-  theme(plot.title = element_text(lineheight=.8, face="bold"))
+#ggplot(data = cmavmonths3_7, aes(month, cm, group = year)) +
+ # geom_line(aes(colour= factor(year))) +
+ # ylim(75, 0) +
+#  ggtitle("Averages of Months ~ March - July")+
+#  theme(plot.title = element_text(lineheight=.8, face="bold"))
 
 #dygraph
 dygraph(cmavmonths1_6) %>%
@@ -214,11 +214,11 @@ dygraph(cmavmonths1_6) %>%
 
 
 #plot averages of subset months Feb - May
-ggplot(data = cmavmonths1_6, aes(month, cm, group = year)) +
-  geom_line(aes(colour= factor(year))) +
-  ylim(40, 0) +
-  ggtitle("Averages of Months ~ February - May")+
-  theme(plot.title = element_text(lineheight=.8, face="bold"))
+#ggplot(data = cmavmonths1_6, aes(month, cm, group = year)) +
+#  geom_line(aes(colour= factor(year))) +
+#  ylim(40, 0) +
+#  ggtitle("Averages of Months ~ February - May")+
+#  theme(plot.title = element_text(lineheight=.8, face="bold"))
 
 #dygraph
 dygraph(cmavmonths_apr) %>%
@@ -228,11 +228,11 @@ dygraph(cmavmonths_apr) %>%
   dyOptions(colors = RColorBrewer::brewer.pal(7, "Accent"))
 
 #plot averages of subset month of April 
-ggplot(data = cmavmonths_apr, aes(year, cm, group = year)) +
-  geom_point(aes(colour= factor(year))) +
-  ylim(40, 0) +
-  ggtitle("Averages of Subset Day in April")+
-  theme(plot.title = element_text(lineheight=.8, face="bold"))
+#ggplot(data = cmavmonths_apr, aes(year, cm, group = year)) +
+ # geom_point(aes(colour= factor(year))) +
+#  ylim(40, 0) +
+#  ggtitle("Averages of Subset Day in April")+
+#  theme(plot.title = element_text(lineheight=.8, face="bold"))
 
 #dygraph
 dygraph(cmavdaywemoyr_105) %>%
