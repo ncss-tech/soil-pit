@@ -1506,8 +1506,67 @@ se_df4 <- by(se_df3, se_df3$se, function(x) {data.frame(
   se_p_max = max(x$se_p, na.rm = TRUE)
   )})
 se_df4 <- do.call("rbind", se_df4)
-
 ```
+
+```{r legend correlation}
+options(stringsAsFactors = FALSE)
+
+library(soilDB)
+library(sf)
+
+ownCloud <- "C:/Users/Stephen.Roecker/ownCloud/"
+
+
+project <- get_projectmapunit_from_NASIS()
+mukeys <- unique(project$mukey)
+idx <- with(project, is.na(areasymbol))
+project_sub <- project[idx, ]
+# add musym to new mlra mapunits in Excel
+# write.csv(project_sub, file = paste0(ownCloud, "r11_cor_legend.csv"), row.names = FALSE)
+project_sub <- read.csv(paste0(ownCloud, "r11_cor_legend.csv"))
+project2 <- rbind(project[!idx, ],
+                  project_sub
+                  )
+
+
+old <- read_sf(dsn = paste0(ownCloud, "r11_fin_spatial_old.shp"), layer = "r11_fin_spatial_old")
+st_crs(old) <- "+init=epsg:5070"
+# old_sub <- old[old$mukey %in% mukeys,]
+# rm(old)
+
+new <- read_sf(dsn = paste0(ownCloud, "r11_fin_spatial_new.shp"), layer = "r11_fin_spatial_new")
+st_crs(new) <- "+init=epsg:5070"
+# Relabel Column Names
+# idx <- ! names(new) %in% "geometry"
+# names(new)[idx] <- paste0(names(new)[idx], "_new")
+# idx <- with(new, MUSYM != ORIG_MUSYM | !is.na(Creator_Field) | Editor_Field != "ALENA.STEPHENS"
+# new_sub <- new[idx, ]
+names(new) <- tolower(names(new))
+new_df <- as.data.frame(new)
+new_df$geometry <- NULL
+test <- project_sub[, c("musym", "muname")]
+new_df2 <- merge(new_df,test, by = "musym", all.x = TRUE)
+
+
+vars <- c("areasymbol", "musym")
+test <- by(new_df2, new_df2[vars], function(x) data.frame(
+  x[1, c(vars, "muname.y")],
+  acres = round(sum(x$shape_area * 0.000247))
+  ))
+test <- do.call("rbind", test)
+test <- test[order(test$areasymbol), ]
+
+fin_int <- st_intersection(new, old)
+
+test2 <- group_by(fin_int, areasymbol_new, musym_new, musym) %>% summarize(
+  acres_new = round(sum(shape_area_new * 0.000247)),
+  acres_old = round(sum(shape_area * 0.000247)),
+  diff = acres_old - acres_new
+)
+
+by(fin_int, with(fin_)
+```
+
 
 
 # Summary
