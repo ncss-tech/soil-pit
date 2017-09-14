@@ -1533,8 +1533,11 @@ old <- read_sf(dsn = paste0(ownCloud, "r11_fin_spatial_old.shp"), layer = "r11_f
 st_crs(old) <- "+init=epsg:5070"
 # old_sub <- old[old$mukey %in% mukeys,]
 # rm(old)
+names(old) <- tolower(names(old))
 
-new <- read_sf(dsn = paste0(ownCloud, "r11_fin_spatial_new.shp"), layer = "r11_fin_spatial_new")
+
+new1 <- read_sf(dsn = paste0(ownCloud, "r11_fin_spatial_new.shp"), layer = "r11_fin_spatial_new")
+new <- read_sf(dsn = paste0(ownCloud, "r11_fin_spatial_new2.shp"), layer = "r11_fin_spatial_new2")
 st_crs(new) <- "+init=epsg:5070"
 # Relabel Column Names
 # idx <- ! names(new) %in% "geometry"
@@ -1544,27 +1547,46 @@ st_crs(new) <- "+init=epsg:5070"
 names(new) <- tolower(names(new))
 new_df <- as.data.frame(new)
 new_df$geometry <- NULL
-test <- project_sub[, c("musym", "muname")]
-new_df2 <- merge(new_df,test, by = "musym", all.x = TRUE)
-
+test1 <- project_sub[, c("musym", "nationalmusym", "muname")]
+new_df2 <- merge(new_df, test1, by = "musym", all.x = TRUE)
+new_df2 <- merge(new_df2, project[-idx, c("areasymbol", "musym", "nationalmusym", "muname")], by = c("areasymbol", "musym"), all.x = TRUE)
+new_df2 <- within(new_df2, {
+  muname = ifelse(is.na(muname), muname.y, muname)
+  nationalmusym = ifelse(is.na(nationalmusym.y), nationalmusym.x, nationalmusym.y)
+  })
 
 vars <- c("areasymbol", "musym")
 test <- by(new_df2, new_df2[vars], function(x) data.frame(
-  x[1, c(vars, "muname.y")],
+  x[1, c(vars, "nationalmusym", "muname")],
   acres = round(sum(x$shape_area * 0.000247))
   ))
 test <- do.call("rbind", test)
-test <- test[order(test$areasymbol), ]
+test <- test[with(test, order(areasymbol, musym)), ]
 
+
+# Relabel Column Names
+idx <- ! names(new) %in% "geometry"
+names(new)[idx] <- paste0(names(new)[idx], "_new")
+
+# Intersect new and old MUPOLYGONs
 fin_int <- st_intersection(new, old)
+fin_df <- as.data.frame(fin_int)
 
-test2 <- group_by(fin_int, areasymbol_new, musym_new, musym) %>% summarize(
-  acres_new = round(sum(shape_area_new * 0.000247)),
-  acres_old = round(sum(shape_area * 0.000247)),
-  diff = acres_old - acres_new
-)
 
-by(fin_int, with(fin_)
+# Summarize Interaction Acres
+vars <- c("areasymbol_new", "musym_new", "musym")
+fin_df$idx <- apply(fin_df[vars], 1, paste0, collapse = "")
+test2 <- by(fin_df, fin_df$idx, function(x) {
+  acres_new = round(sum(x$shape_area_new * 0.000247))
+  acres_old = round(sum(x$shape_area * 0.000247))
+  
+  data.frame(x[vars][1, ],
+             acres_new,
+             acres_old,
+             diff = acres_old - acres_new
+             )})
+test2 <- do.call("rbind", test2)
+
 ```
 
 
