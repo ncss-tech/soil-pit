@@ -53,8 +53,12 @@ library(soilDB)
 test2 <- get_cosoilmoist_from_SDA_db(WHERE = "mukey = '406339'")
 test <- subset(test2, !is.na(dept_r) & status == "Wet")
 
-ggplot(test, aes(x = as.integer(month), y = dept_r, lty = status)) + geom_line() + ylim(150, 0)
-
+ggplot(test, aes(x = as.integer(month), y = dept_r)) +
+  geom_ribbon(aes(ymin = dept_l, ymax = dept_h), alpha = 0.2) +
+  geom_line() +
+  ylim(max(test$dept_h), -5) + # won't plot unless the full range is present
+  facet_wrap(~ compname)
+  
 panel_gribbon <- function(x, y, upper, lower, ..., 
                          fill, col, subscripts, font, fontface) {
   upper = upper[subscripts]
@@ -70,10 +74,22 @@ panel_ribbon <- function(x, y, ...) {
 
 xyplot(data = test, dept_r ~ as.integer(month) | compname, 
        groups = test$compname,
+       type = "b", lty = 1:2,
        upper = test$dept_l, lower = test$dept_h,
-       type = "b", cex = 0.6, lty = 1:2,
        ylim = c(150, -5),
        grid = TRUE,
-       panel = panel_ribbon
+       panel = function(x, y, ...){
+         panel.superpose(x, y, ..., panel.groups = panel_gribbon)
+         panel.xyplot(x, y, ...)
+         }
+       )
+
+xyplot(data = test, dept_r ~ as.integer(month) | compname, 
+       groups = test$compname,
+       type = "b", lty = 1:2,
+       upper = test$dept_l, lower = test$dept_h,
+       ylim = c(150, -5),
+       grid = TRUE,
+       panel = panel_ribbon,
        )
 ```
