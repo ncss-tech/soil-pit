@@ -130,7 +130,8 @@ sdjr_correlation <- function(asymbol, project_id, start_date, finish_date){
   corr <- transform(corr, 
                     muacres = as.numeric(muacres), 
                     new_muacres = as.numeric(new_muacres),
-                    current_mukey = ifelse(musym != new_musym & !is.na(new_mukey), new_mukey, mukey))
+                    current_mukey = ifelse(musym != new_musym & !is.na(new_mukey), new_mukey, mukey)
+                    )
   corr <- as.data.frame(lapply(corr[seq_along(corr)], function(x) if (is.character(x)) ifelse(x == "", NA, x) else x))
   
   z_clean <- function(old, new){
@@ -142,10 +143,10 @@ sdjr_correlation <- function(asymbol, project_id, start_date, finish_date){
     end4 <- substr(old, 1, n - 4)
     
     if (!is.na(new)) {
-      if (grepl("^[zxaZ]{1}", old) & old != new) {old_clean = begin1} else old_clean
+      if (grepl("^[zxaZY]{1}", old) & old != new) {old_clean = begin1} else old_clean
       if (grepl("[zxcZS]${1}", old) & old != new) {old_clean = end1} else old_clean # Joe recommended using |\\+${1}, but appears to be legit in some cases
       if (grepl("_old${3}", old) & old != new) {old_clean = end4} else old_clean
-    } else old_clean == NA
+    } else old_clean = old
     
     return(old_clean)
   }
@@ -204,7 +205,7 @@ sdjr_correlation <- function(asymbol, project_id, start_date, finish_date){
 # WEB-MLRA_Goals_Progress
 
 goals_report <- function(fy, office){
-  url <- paste0("https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-PROJECT-MLRA_Goals_Progress&fy=", fy, "&off=", office)
+  url <- paste0("https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-PROJECT-MLRA_Goals_Progress&pm_fy=", fy, "&pm_ssoffice=", office)
   goals_w <- RCurl::getURLContent(url, ssl.verifypeer = F)
   doc <- htmlParse(goals_w)
   tableNodes <- getNodeSet(doc, "//tr")
@@ -213,7 +214,7 @@ goals_report <- function(fy, office){
   goals <- as.data.frame(do.call("rbind", goals_l[-c(1, length(goals_l))]))
   
   names(goals) <- goals_l[[1]][1, ]
-  names(goals) <- sub(" ", "", (names(goals)))
+  names(goals) <- gsub(" ", "", (names(goals)))
   names(goals) <- tolower(names(goals))
   
   goals <- transform(goals, 

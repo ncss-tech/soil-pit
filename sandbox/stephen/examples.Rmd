@@ -26,11 +26,17 @@ gw_lo2 <- melt(gw, id.vars = "EroClassSIE", measure.vars = vals)
 
 # reshape with base
 gw_lo1_b <- reshape(gw[c("EroClassFD", vals)],
-                     direction = "long",
-                     times = vals, timevar = "variable",
-                     varying = vals, v.names = "value"
-                     # drop = which(!names(gw) %in% c("EroClassFD", vals))
-                     )
+                    direction = "long",
+                    timevar = "variable", times = vals,
+                    v.names = "value", varying = vals 
+                    )
+
+gw_wi1_b <- reshape(test, 
+                    direction = "wide",
+                    timevar = "variable",
+                    v.names = "value"
+                    )
+names(test2) <- gsub("value", "", names(test2))
 
 
 # reshape with tidyr
@@ -39,4 +45,51 @@ gw_lo1 <- select(gw, EroClassFD, idx) %>%
   gather(key = variable, value = value, - EroClassFD)
 gw_lo2 <- select(gw, EroClassSIE, idx) %>%
   gather(key = variable, value = value, - EroClassSIE)
+```
+
+```{r lattice}
+library(soilDB)
+
+test2 <- get_cosoilmoist_from_SDA_db(WHERE = "mukey = '406339'")
+test <- subset(test2, !is.na(dept_r) & status == "Wet")
+
+ggplot(test, aes(x = as.integer(month), y = dept_r)) +
+  geom_ribbon(aes(ymin = dept_l, ymax = dept_h), alpha = 0.2) +
+  geom_line() +
+  ylim(max(test$dept_h), -5) + # won't plot unless the full range is present
+  facet_wrap(~ compname)
+  
+panel_gribbon <- function(x, y, upper, lower, ..., 
+                         fill, col, subscripts, font, fontface) {
+  upper = upper[subscripts]
+  lower = lower[subscripts]
+  panel.polygon(c(x, rev(x)), c(upper, rev(lower)),
+                col = fill, border = FALSE)
+  }
+panel_ribbon <- function(x, y, ...) {
+  panel.superpose(x, y, ..., panel.groups = panel_gribbon)
+  panel.xyplot(x, y, ...)
+  }
+
+
+xyplot(data = test, dept_r ~ as.integer(month) | compname, 
+       groups = test$compname,
+       type = "b", lty = 1:2,
+       upper = test$dept_l, lower = test$dept_h,
+       ylim = c(150, -5),
+       grid = TRUE,
+       panel = function(x, y, ...){
+         panel.superpose(x, y, ..., panel.groups = panel_gribbon)
+         panel.xyplot(x, y, ...)
+         }
+       )
+
+xyplot(data = test, dept_r ~ as.integer(month) | compname, 
+       groups = test$compname,
+       type = "b", lty = 1:2,
+       upper = test$dept_l, lower = test$dept_h,
+       ylim = c(150, -5),
+       grid = TRUE,
+       panel = panel_ribbon,
+       )
 ```

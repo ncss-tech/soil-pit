@@ -1,0 +1,72 @@
+---
+title: "MLRA 18 & 22A Available "
+author: "Andrew Brown"
+date: "April 21, 2017"
+output: html_document
+---
+
+This report fetches all KSSL data from MLRAs 18 and 22A. Pedon horizon available water (1/3 bar water content minus 15 bar water content) data are stratified based on lab textural class, estimated organic matter and 1/3 bar (field capacity) bulk density.
+
+```{r setup, include=FALSE}
+### install and load required packages
+packz=c("soilDB","lattice","reshape2")
+newpackz=packz[!(packz %in% installed.packages()[,"Package"])]
+if(length(newpackz)) install.packages(newpackz)
+loaded <- lapply(packz,FUN=require,character.only=TRUE)
+if(sum(as.numeric(loaded))!=length(packz)) {
+  stop("Failed to load one or more required packages!")
+  geterrmessage()
+}
+
+f1 <- fetchKSSL(mlra = "18")
+f2 <- fetchKSSL(mlra = "22A")
+f<-rbind(f1,f2)
+
+f$lab_texture_class <- factor(toupper(f$lab_texture_class))
+
+#water retention data correction for rock frags?
+
+#inspect water holding capacity by lab texture for both MLRAs
+plot(f$whc~f$lab_texture_class)
+
+#create organic matter groups
+f$fom[f$estimated_om > 15] = NA #organic soil material
+f$fom[f$estimated_om < 15 & f$estimated_om >= 3] = ">3% OM"
+f$fom[f$estimated_om < 3 & f$estimated_om >= 0.5] = "0.5-3% OM"
+f$fom[f$estimated_om < 0.5] = "<0.5% OM"
+f$fom = factor(f$fom,levels=c("<0.5% OM","0.5-3% OM",">3% OM"))
+
+#create bulk density groups
+f$dbg[f$db_13b > 1.5] = "> 1.5g/cc"  
+f$dbg[f$db_13b < 1.5 & f$db_13b >= 1.25] = "1.25 - 1.5g/cc"
+f$dbg[f$db_13b < 1.25 & f$db_13b >= 1] = "1 - 1.25g/cc"
+f$dbg[f$db_13b < 1] = "< 1g/cc"
+f$dbg = factor(f$dbg, levels=c("< 1g/cc","1 - 1.25g/cc","1.25 - 1.5g/cc","> 1.5g/cc"))
+```
+
+```{r,echo=F,fig.width=8, fig.height=15}
+dat=melt(horizons(f),measure.vars="whc",id.vars=c("lab_texture_class","fom","dbg"),na.rm = T)
+
+tps <- list(box.rectangle=list(col='black'), box.umbrella=list(col='black', lty=1), box.dot=list(cex=0.75), plot.symbol=list(col=rgb(0.1, 0.1, 0.1, alpha = 0.25, maxColorValue = 1), cex=0.25))
+
+bwplot(value ~ lab_texture_class | fom, data=dat, scales=list(y=list(alternating=3), x=list(relation='free', tick.number=10)), as.table=TRUE, col='black',        strip=strip.custom(bg=grey(0.85)), xlab='', par.settings=tps, subscripts=TRUE, layout=c(1, length(unique(dat$fom))),ylab = "Available Water Content, cm/cm")
+
+```
+
+---
+
+```{r,echo=F,fig.width=8, fig.height=35}
+bwplot(value ~ fom | lab_texture_class, data=dat, scales=list(y=list(alternating=3), x=list(relation='free', tick.number=10)), as.table=TRUE, col='black',        strip=strip.custom(bg=grey(0.85)), xlab='', par.settings=tps, subscripts=TRUE, layout=c(1, length(unique(dat$lab_texture_class))),ylab = "Available Water Content, cm/cm")
+```
+
+---
+
+```{r,echo=F,fig.width=8, fig.height=15}
+bwplot(value ~ dbg | fom, data=dat, scales=list(y=list(alternating=3), x=list(relation='free', tick.number=10)), as.table=TRUE, col='black',        strip=strip.custom(bg=grey(0.85)), xlab='', par.settings=tps, subscripts=TRUE, layout=c(1, length(unique(dat$fom))),ylab = "Available Water Content, cm/cm")
+```
+
+---
+
+```{r,echo=F,fig.width=8, fig.height=35}
+bwplot(value ~ dbg | lab_texture_class, data=dat, scales=list(y=list(alternating=3), x=list(relation='free', tick.number=10)), as.table=TRUE, col='black',        strip=strip.custom(bg=grey(0.85)), xlab='', par.settings=tps, subscripts=TRUE, layout=c(1, length(unique(dat$lab_texture_class))),ylab = "Available Water Content, cm/cm")
+```
