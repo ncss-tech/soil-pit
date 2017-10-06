@@ -1,0 +1,197 @@
+---
+title: "Ecological Site Differentiation in Iowa"
+author: "John R. Hammerly"
+date: "March 16, 2016"
+output:
+  html_document:
+          toc: true
+          toc_depth: 3
+          toc_float: true
+---
+###Project Area
+
+The area of interest for this project are two ecological sites within Medora Prairie, located in Warren County, Iowa.  For this project, I used some ecological species data collected by Tom Rosburg, a professor at Drake University for my analysis:
+
+* medora_prairie.shp
+* medora_plots.shp
+* ecosites_native.csv
+* ecosites_exotic.csv
+
+For a comparison dataset, I obtained a USDA PLANTS species list available from package 'blender'.  In addition to having the USDA PLANTS data, this package is also a collection of tools for assessing exotic species' contributions to landscape homogeneity using average pairwise Jaccard similarity and an analytical approximation derived in Harris et al. (2011, "Occupancy is nine-tenths of the law," The American Naturalist).  These functions will be demonstrated later.  Using R, we can view the project area.
+
+```{r, message=F}
+library(rgdal) #read shapefile
+library(maps) #generate simple maps
+medora_poly<-readOGR(dsn="C:/workspace",layer="medora_prairie", verbose=F)#read shapefile and assign SpatialPolygonsDataFrame
+map_poly<-SpatialPolygons2map(medora_poly)#convert SpatialPolygonsDataFrame to a list readable by maps library
+map("county","iowa") #county map of Iowa
+map("county","iowa,warren",add=T,fill=T,col="red") #add Warren county in red color to map
+map(map_poly,add=T) #add outline of Medora Prairie to map
+```
+
+Above, you can see the boundaries of all the counties in Iowa.  Warren County is located colored red.  The tiny black speck within Warren County is Medora Prairie.  Let's take a closer look, again using R.
+
+```{r}
+map("county","iowa,warren") #map of Warren County, Iowa
+map(map_poly,add=T,fill=T,col="red") #add Medora Prairie to map with red fill
+map.text("county","iowa,warren",add=T) #add warren text to map
+```
+
+In this map, the Prairie is colored red.  Now let's look at only the prairie and the sites of interest, for this we can use the built in plot function in R.
+
+```{r}
+plot(medora_poly) #plot Medora Prairie outline
+medora_points<-readOGR(dsn="C:/workspace",layer="medora_plots", verbose=F) #read shapefile and assign SpatialPointsDataFrame
+plot(medora_points,add=T) #add points to plot
+text(medora_points, row.names(medora_points),pos=2) #add text labels from row names to plot
+```
+
+These two sites, marked 1 and 2 in the plot above are relatively close to each other spatially.
+
+###Objectives
+
+1.  Discover if sites 1 and 2 are similar to each other.
+    + A distance function will be used
+2.  Discern whether the plant species found in sites 1 and 2 are similar to plant species found throughout Warren County.
+    + A combination of the distance function and clustering will be used
+3.  Investigate how these sites compare to other surrounding counties in Iowa.
+    + The distance function, clustering, and dendrograms will be used
+4.  Understand the effect of non-native species on site homogeneity.
+    + Average pairwise Jaccard similarity function will be used.
+
+With these objectives in mind, it would be helpful create another map from R to show the 7 counties surrounding Warren which will be used in the analysis.  This can be accomplished with the following commands in R.
+
+```{r}
+map("county","iowa") #map of Iowa Counties
+map("county","iowa,warren",add=T,fill=T,col="dark green") #add and fill Warren county green
+map("county", c("iowa,clarke","iowa,dallas","iowa,jasper","iowa,lucas","iowa,madison","iowa,marion","iowa,polk"),add=T,fill=T,col="red") #add and fill surrounding counties with red
+```
+
+In this map, Warren County is green and the surrounding counties are red.
+
+Typically, we can use standardized databases such as NASIS or ESIS for data sources, however, in this case, my data is not yet available from one of these sources.  So, before my analysis, there are a few things to do in R to prepare the species data.
+
+```{r, message=F}
+library(blender)#contains a set of USDA PLANTS data across the United States for comparison
+library(dplyr) #for manipulating data
+data(PLANTS) #load PLANTS data
+ia_native_species<-PLANTS[20]#gets Iowa native species data from the list
+ia_native_species<-ia_native_species$`IA native table` #get individual dataframe from the list
+central_ia_native_species<-ia_native_species[,c(88,47,60,67,26,69,72,78)] #keep only columns of counties in central Iowa
+native_ecosite<-read.csv("C:/workspace/ecosites_native.csv",header=T) #read .csv file and create data frame
+rownames(native_ecosite)<-native_ecosite[,1] #assign rownames from column 1
+native_ecosite<-native_ecosite[,c(2,3)] #keep only columns 2 and 3
+t_matrix_central_ia_native_species<-t(central_ia_native_species) #transpose and create matrix
+t_matrix_native_ecosite<-t(native_ecosite) #transpose and create matrix
+t_central_ia_native_species<-data.frame(t_matrix_central_ia_native_species) #assign to data frame
+t_native_ecosite<-data.frame(t_matrix_native_ecosite) #assign to data frame
+ecosite_central_ia_native_species<-bind_rows(t_central_ia_native_species,t_native_ecosite) #combine tables together
+rownames(ecosite_central_ia_native_species)<-c(rownames(t_central_ia_native_species),rownames(t_native_ecosite)) #reassign row names
+ecosite_central_ia_native_species[is.na(ecosite_central_ia_native_species)]<-as.integer(0) # replace NA values with 0
+```
+
+These data manipulations were needed in order to combine the data from my ecological sites to the data retrieved from the USDA PLANTS data.  Now we are ready for some analysis.  Let us look at a portion of the combined data in R.
+
+```{r}
+library(knitr) #formats data for rmd
+kable(ecosite_central_ia_native_species[,36:38],format="markdown",row.names=T) #show all rows, and show only columns 37-38
+```
+
+You can see a few columns here.  Each column is a different species, a zero indicates the species is not present and a one indicates the species is present at the site.  Let's investigate further, this time looking at the number of columns in the data.
+
+```{r, results='asis'}
+ncol(ecosite_central_ia_native_species) #returns a count of the number of columns
+```
+
+Some of these species, such as "Amaranthus.hybridus" you can see contains all zeros in the data table above, and are not present at any of the 10 sites.  This is due to the original format of PLANTS data.  The original dataset contained species from all 99 counties in Iowa.  Let's remove those species which are not located in the area of interest.
+
+```{r}
+ecosite_central_ia_native_species<-ecosite_central_ia_native_species[,colSums(ecosite_central_ia_native_species)!=0] #keep columns with sums not equal to zero
+rownames(ecosite_central_ia_native_species)<-c(rownames(t_central_ia_native_species),rownames(t_native_ecosite)) #reassign row names
+```
+
+Looking again at the number of columns.
+
+```{r, results='asis'}
+ncol(ecosite_central_ia_native_species) #returns a count of the number of columns
+```
+
+This is helpful, but looking at how many species are present at each site would be more interesting.
+
+```{r}
+native_species_present<-rowSums(ecosite_central_ia_native_species) #sum the rows
+native_species_present<-data.frame(native_species_present) #assign a data frame
+kable(native_species_present,row.names=T) #make a table
+```
+
+From this data table we see Madison County has an exceptional amount of native species diversity throughout the county.  Another interesting note, both ecosites have as many, or more native species then some entire counties!  Now let's see how closely related these sites are by using a distance function and clustering.
+
+```{r}
+native_distances<-dist(ecosite_central_ia_native_species,method='binary') #assigns distance function
+h_ecosite_central_ia_native_species<- hclust(native_distances, method='complete') #distance cluster
+plot(h_ecosite_central_ia_native_species,font=2, cex=0.85)  #plot of dendrogram
+```
+
+###Results
+
+This dendrogram shows ecosite1 and ecosite2 are very similar, which isn't too surprising.  However, Warren County appears to be quite dissimilar.  This is a bit of an unexpected result considering these ecosites are located within the county.  A possible explanation, the USDA PLANTS species data from Warren County is incomplete.  Another possible explanation, this is a restored prairie and not an original prairie remnant.  Yet, another possibility, the species which were sampled at the prairie do not contribute very much to the similarities when compared to the differences seen across entire counties. This may be true since the prairie species are only one part of all species in a county, and prairies typically contain few trees.
+
+In the above comparison, only native species data was explored.  Now we will look at non-native species data.  Again, some data manipulation is necessary in R.
+
+```{r}
+ia_exotic_species<-PLANTS[19]#gets Iowa exotic species data from the list
+ia_exotic_species<-ia_exotic_species$`IA exotic table` #get individual dataframe from the list
+central_ia_exotic_species<-ia_exotic_species[,c(88,47,60,67,26,69,72,78)] #keep only columns of counties in central Iowa
+exotic_ecosite<-read.csv("C:/workspace/ecosites_exotic.csv",header=T) #read .csv file and create data frame
+rownames(exotic_ecosite)<-exotic_ecosite[,1] #assign rownames from column 1
+exotic_ecosite<-exotic_ecosite[,c(2,3)] #keep only columns 2 and 3
+t_matrix_central_ia_exotic_species<-t(central_ia_exotic_species) #transpose and create matrix
+t_matrix_exotic_ecosite<-t(exotic_ecosite) #transpose and create matrix
+t_central_ia_exotic_species<-data.frame(t_matrix_central_ia_exotic_species) #assign to data frame
+t_exotic_ecosite<-data.frame(t_matrix_exotic_ecosite) #assign to data frame
+ecosite_central_ia_exotic_species<-bind_rows(t_central_ia_exotic_species,t_exotic_ecosite) #combine tables together
+rownames(ecosite_central_ia_exotic_species)<-c(rownames(t_central_ia_exotic_species),rownames(t_exotic_ecosite)) #reassign row names
+ecosite_central_ia_exotic_species[is.na(ecosite_central_ia_exotic_species)]<-as.integer(0) # replace NA values with 0
+ecosite_central_ia_exotic_species<-ecosite_central_ia_exotic_species[,colSums(ecosite_central_ia_exotic_species)!=0] #keep columns with sums not equal to zero
+rownames(ecosite_central_ia_exotic_species)<-c(rownames(t_central_ia_exotic_species),rownames(t_exotic_ecosite)) #reassign row names
+exotic_species_present<-rowSums(ecosite_central_ia_exotic_species) #sum rows
+exotic_species_present<-data.frame(exotic_species_present) #create data frame
+```
+
+Now we can compare native species to non-native species.
+
+```{r}
+compare_species<-cbind(native_species_present,exotic_species_present) #bind columns from tables
+compare_species<-round(compare_species/(compare_species$native_species_present+compare_species$exotic_species_present), 2)*100 #calculate percentages
+compare_species<-data.frame(compare_species) #create data frame
+kable(compare_species,row.names=T) #view data
+```
+
+The values are percentages of the total looking at native and non-native species at a site.  Both sites from the prairie are low in non-native species.  This is good information if they will be used as a reference community for ecological site descriptions.  A comparison between non-native sites could also be useful.
+
+```{r}
+exotic_distances<-dist(ecosite_central_ia_exotic_species,method='binary') #assigns distance function
+h_ecosite_central_ia_exotic_species<- hclust(exotic_distances, method='complete') #distance cluster
+plot(h_ecosite_central_ia_exotic_species,font=2, cex=0.85)  #plot of dendrogram
+```
+
+Looking at this dendrogram we can still see the close similarity between both ecosites, but notice the county groupings have changed slightly.  There seems to be more similarities between counties when comparing non-native species.  This could partially be explained by the relative scarcity of non-native species in general at all sites.  The effect of homogenization can be better explained using the blend function.
+
+```{r}
+analysis<-list(`ecosites exotic`=t(ecosite_central_ia_exotic_species),`ecosites native`=t(ecosite_central_ia_native_species)) #create a list containing the transposition of both native and non-native speices
+results<-blend(analysis) #assign results of the blend function to an object
+table_results<-results[1:9] #look at results
+table_results<-data.frame(table_results)
+kable(table_results,row.names=T)
+plot(results) #plot results
+```
+
+For this project, the number of native species is high at these sites.  So, the effect of non-native occupancy is less.  As more non-native species are added at the sites, the mean similarity quickly changes from differentiation (negative values) to homogenization (positive values).  If the sites had a lower number of native species, the differentiation would have produced a "scoop" shape with a much lower bottom point (p\*/2) depicted in the chart by the dashed line on the left side.  The point at which the values shift from negative to positive (p\*) is depicted in the chart by the dashed line on the right.
+
+###Discussion
+
+In review of the objectives, the results show these two sites in Medora Prairie are in fact similar, and unexpectedly, not similar to Warren County.  It also shows the sites are not very similar to any of the surrounding counties.  The previous statements can be said for both native and non-native species.  The results from the average pairwise Jaccard similarity function further indicates there is greater homogeneity between sites in looking at non-native species, than for native species.
+
+###References
+
+Harris, David J. and Smith, Kevin G. and Hanly, Patrick, J.  2011.  "Occupancy Is Nine-Tenths of the Law:  Occupancy Rates Determine the Homogenizing and Differentiating Effects of Exotic Species".  *The American Naturalist* Vol. 177, No.4. 535-543.

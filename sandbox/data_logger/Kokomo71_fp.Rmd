@@ -1,0 +1,221 @@
+---
+title: "Kokomo 71 Water Data Logger Final Project"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(maps) #create maps
+library(plyr) #splitting, applying, & combining data
+library(ggplot2) #plot
+library(lattice) #xy plot
+
+```
+
+## R Markdown
+
+#Project Area Location
+The water data logger site is located in Madison County, Ohio. It has been collecting data since April 19, 2006.From the metadata, "Bottom of the hole is 71in below the top of the piezometer.  Bottom of the hole is 50in below the soil surface."
+
+```{r final project}
+
+map('county', 'ohio') # plot county boundaries for all of Ohio
+map('county', 'ohio,madison', add=T, fill = T, col="purple") #add Madison County, Ohio in purple to map
+map.text("county", "ohio,Madison", add=T) #add text for Madison
+
+#read all the csv files from a folder as one table
+Kokomo71=ldply(list.files(path="E:/geodata/project_data/11IND//IPO_Data_Loggers/data_loggers_2017/kokomo_71_Madison_OH",pattern="csv",full.names=TRUE),function(filename) {
+  dum=read.csv(filename)
+  dum$filename=filename
+  return(dum)
+})
+
+#read the date from the table
+Kokomo71$date <- as.Date (Kokomo71$date, '%m/%d/%Y')
+
+#plot feet line -data from the csv before conversion to centimeters - shows data prior to 2008 is scewed
+ggplot(data=Kokomo71, aes (date, feet)) +geom_line(colour='purple')+ ylim(10, -5)+ggtitle("Feet Years")+theme(plot.title = element_text(lineheight=.8, face="bold")) 
+
+```
+
+##Objectives:
+
+Our MLRA office has mulitiple data logger sites that have been collecting data for over 10 years. Some sites have been graphed in excel and haven't been analyzed since 2012. We wanted a better way to explore and ananlyze the data. Only one site was picked for this project. 
+
+* Show multiple years of data from one data logger site
+* Organize data
+* Use R instead of excel to create graphs
+* Convert data from feet to centimeters 
+* Create Plots
+* Create output report using R Markdown
+
+
+
+##Results
+The data was organized in a folder with similar naming conventions and attributed with the same column headings. The data was converted from feet to centimeters. The data was subsetted for after 2008 because there is a prior unknown skewness. There are data gaps possibly because of dead batteries or the data wasn't efficiently collected. Many plots were created. I only included a few of the more interesting ones below. I included Year Averages, Averages of Months and Years, Averages of Weeks & Years, Averages of Days and Months. I was able to use R Markdown for the final output. 
+
+**Plots:**
+
+```{r pressure, echo=TRUE}
+Kokomo71$year <- as.Date(cut(Kokomo71$date,
+                              breaks = "year"))
+Kokomo71$month <- as.Date(cut(Kokomo71$date,
+                              breaks = "month"))
+Kokomo71$week <- as.Date(cut(Kokomo71$date,
+                             breaks = "week",
+                             start.on.monday = FALSE)) # changes weekly break point to Sunday
+
+#Conversions of data
+Kokomo71$inches <-(Kokomo71$feet*12) #feet x inches
+Kokomo71$convin <- (Kokomo71$inches-21) #inches - 21
+Kokomo71$cm <- (Kokomo71$convin*2.54) #converted inches x centimeters
+
+Kokomo71$date<-as.POSIXlt(Kokomo71$date,format="%m/%d/%y %H:%M:%S")
+Kokomo71 <- within(Kokomo71, {
+  day =   as.character(format(Kokomo71$date, "%m/%d/%y"))
+  Jday =  as.integer(format(Kokomo71$date, "%j"))
+  year =  as.integer(format(Kokomo71$date, "%Y"))
+  month = as.integer(format(Kokomo71$date, "%m"))
+  week =  as.integer(format(Kokomo71$date, "%W"))
+})
+
+Kokomo71_sub08 <- subset(Kokomo71, year>2008) #subset out after 2008 data because there is an error that shows and was also mentioned in the metadata
+
+cmavmonths <- aggregate(cm ~ month+year, data = Kokomo71_sub08, mean) #mean of months and years
+cmminmonth <- aggregate(cm ~ month+year, data = Kokomo71_sub08, "min") #min of months & years
+cmmaxmonth <- aggregate(cm ~ month+year, data = Kokomo71_sub08, "max") #max of months & years
+
+cmminyear <- aggregate(cm ~ year, data = Kokomo71_sub08, "min") #min of years
+cmmaxyear <- aggregate(cm ~ year, data = Kokomo71_sub08, "max") #max of years
+
+cmyear <- aggregate(cm ~ year, data = Kokomo71_sub08, mean) #averages years
+cmavweek <- aggregate(cm ~ week+year, data = Kokomo71_sub08, mean) #averages of weeks & years
+cmavday <- aggregate(cm ~ Jday+year, data = Kokomo71_sub08, mean) #averages of day & years
+cmavdayweyr <- aggregate(cm ~ Jday+week+year, data = Kokomo71_sub08, mean) #averages of day, week, & years
+cmav <-aggregate(cm ~ time+Jday+week+month+year, data = Kokomo71_sub08, mean) #averages of time, day, week, & years
+cmavdaywemoyr <- aggregate(cm ~ Jday+week+month+year, data = Kokomo71_sub08, mean) #averages of day, week, month & years
+
+inmoyear <- aggregate(convin ~ month+year, data = Kokomo71_sub08, mean) #averages years in inches
+inavweek <- aggregate(convin ~ week+year, data = Kokomo71_sub08, mean) #averages of weeks & years
+inyear <- aggregate(convin ~ year, data = Kokomo71_sub08, mean) #averages years in inches
+inavdaywemoyr <- aggregate(convin ~ Jday+week+month+year, data = Kokomo71_sub08, mean) #averages of day, week, month & years
+
+#plot averages of years centimeters
+ggplot(data = cmyear, aes(year, cm)) +
+  geom_line(colour="purple")+ 
+  ylim(100, -100)+
+  geom_smooth(colour="green")+ 
+  ylim(100, -100) +
+  ggtitle("Year Averages") +
+  theme(plot.title = element_text(lineheight=.8, face="bold"))
+
+#plot averages of years inches 
+ggplot(data = inyear, aes(year, convin)) +
+  geom_line(colour="purple")+ 
+  ylim(100, -50)+
+  geom_smooth(colour="green")+ 
+  ylim(100, -50) +
+  ggtitle("Year Averages") +
+  ylab("Inches")+
+  theme(plot.title = element_text(lineheight=.8, face="bold"))
+
+#plot averages of months and years centimeters
+ggplot(data = cmavmonths, aes(month, cm, group = year)) +
+  geom_line(aes(colour= factor(year)))+
+  ggtitle("Averages of Months and Years")+
+  theme(plot.title = element_text(lineheight=.8, face="bold"))
+
+#plot averages of months and years in inches
+ggplot(data = inmoyear, aes(month, convin, group = year)) +
+  geom_line(aes(colour= factor(year)))+
+  ylim(100, -75) +
+  ggtitle("Averages of Months and Years")+
+  ylab("Inches")+
+  theme(plot.title = element_text(lineheight=.8, face="bold"))
+
+#plot averages of months and years ~ data gaps are noticable in 2009, 2011, 2015, and 2016
+ggplot(data = cmavmonths, aes(month, cm)) +
+  geom_line(colour="purple") +
+  geom_smooth(colour="green") + 
+  ylim(100, -100) +
+  facet_wrap(~ year)+
+  ggtitle("Averages of Months and Years")+
+  theme(plot.title = element_text(lineheight=.8, face="bold"))
+
+#plot averages of months and years in inches ~ data gaps are noticable 
+ggplot(data = inmoyear, aes(month, convin)) +
+  geom_line(colour="purple") +
+  geom_smooth(colour="green") + 
+  ylim(75, -75) +
+  facet_wrap(~ year)+
+  ggtitle("Averages of Months and Years")+
+  ylab("Inches")+
+  theme(plot.title = element_text(lineheight=.8, face="bold"))
+
+#plot averages of months and years data
+xyplot(cm ~ year | factor(month), data=cmavmonths, main='Averages of Months and Years', type=c('l', 'g'), as.table=TRUE, layout=c(2,6), xlab='month', ylab='cm')
+
+#plot averages of months and years
+ggplot(data = cmavmonths, aes(month, cm)) +
+  geom_point(colour="purple")+ 
+  ylim(100, -100)+facet_wrap(~year)+
+  ggtitle("Averages of Months and Years")+
+  theme(plot.title = element_text(lineheight=.8, face="bold"))
+
+#plot averages of weeks & years
+ggplot(data = cmavweek, aes(week, cm, group=year)) +
+  geom_line(aes(colour=factor(year)))+
+  ylim(100, -100)+
+  ggtitle("Averages of Weeks & Years")+
+  theme(plot.title = element_text(lineheight=.8, face="bold"))
+
+#plot averages of weeks & years inches
+ggplot(data = inavweek, aes(week, convin, group=year)) +
+  geom_line(aes(colour=factor(year)))+
+  ylim(50, -75)+
+  ggtitle("Averages of Weeks & Years")+
+  ylab("Inches")+
+  theme(plot.title = element_text(lineheight=.8, face="bold"))
+
+#plot averages of Jday, week, month, & years as lines
+ggplot(data = cmavdaywemoyr, aes(Jday, cm)) +
+  geom_line(aes(colour=factor(month)))+
+  ylim(100, -100)+
+  ggtitle("Averages of Days and Months")+
+  theme(plot.title = element_text(lineheight=.8, face="bold"))
+
+#plot averages of Jday, week, month, & years as lines inches
+ggplot(data = inavdaywemoyr, aes(Jday, convin)) +
+  geom_line(aes(colour=factor(month)))+
+  ylim(50, -75)+
+  ggtitle("Averages of Days and Months")+
+  ylab("Inches")+
+  theme(plot.title = element_text(lineheight=.8, face="bold"))
+
+#Soil Moisture Numbers from NASIS
+Kokomo_sm=ldply(list.files(path="E:/Documents/GIS/Trainings/Stat_for_Soil_Survey/final_Project/nasis",pattern="csv",full.names=TRUE),function(filename) {
+  dum=read.csv(filename)
+  dum$filename=filename
+  return(dum)
+})
+
+#subset wet column
+Kokomosm0 <- subset(Kokomo_sm, Moisture.Status == "wet")
+
+#Plot Low, RV, & High for Soil Moisture -needs a legend
+ggplot()+geom_point(data=Kokomosm0, aes(Month, High), colour='red')+facet_wrap(~High)+
+  geom_point(data=Kokomosm0, aes(Month, RV), colour='purple')+ facet_wrap(~High)+
+  geom_point(data=Kokomosm0, aes(Month, Low), colour='green')+ facet_wrap(~High)+
+  ylim (200, 0)+ 
+  ylab("Low, RV, High")+
+  ggtitle("Soil Moisture Months from NASIS")+
+  theme(plot.title = element_text(lineheight=.8, face="bold"))
+
+
+
+
+```
+
+##Discussion:
+Using R for accessing and analyzing the data will be better than excel. It will be easier to update the markdown files as new data is acquired. Code can be updated and combined better as I learn more in R. 
+What I will have to do for the other sites is organize the data and attribute the column headings correctly. I would like the data to be uploaded into a database, so we can use the "Fetch" command and the data will be stored somewhere else for backup. I want metadata to be kept for the current and future sites. I would also like to plot multiple sites together for comparison. Also, compare with data already entered in NASIS. I would also like to incorporate use of the prism, weather data, or noaa packages. Might be possible to incorporate the graphs with the pictures and story map that I had started in ArcGIS Online for the data loggers. 
