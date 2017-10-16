@@ -27,6 +27,13 @@ sidebar<-dashboardSidebar(
                406338),
              actionButton("omsubmukey", "Submit"), br(),p()
              ),
+    menuItem("Project", icon=icon("stack-overflow"),
+              menuSubItem("Report", tabName="projectreport", icon=icon("file-text")),
+              textInput(
+                inputId="projectreport",
+                label="Enter Project Name", "SDJR - MLRA 111A - Ross silt loam, 0 to 2 percent slopes, frequently flooded"),
+              actionButton("reportsubmit", "Submit"), br(),p()
+              ),
     menuItem("Source Code", icon=icon("file-code-o"), href="https://github.com/ncss-tech/soil-pit/blob/master/sandbox/john/water_table_report_app/app.R"),
     menuItem("Help", tabName="help", icon=icon("question"))
  )
@@ -55,6 +62,13 @@ body<-dashboardBody(
               box(tags$div(DT::dataTableOutput("shdatatab"), style="width:100%; overflow-x: scroll"), width=12),
               box("This application was developed by John Hammerly and Stephen Roecker.", width=12))
             )),
+    tabItem(
+      tabName="projectreport",
+      verticalLayout(
+        fluidRow(
+            box(uiOutput("projectreport", inline=TRUE, container=span), width=12),
+            box("This application was developed by John Hammerly and Stephen Roecker.", width=12))
+        )),
     tabItem(
       tabName="OMPlots",
       titlePanel("Organic Matter Plots"),
@@ -109,6 +123,7 @@ ui <- dashboardPage(header, sidebar, body)
 
 server <- function(input, output){
   
+  library(tidyverse)
   library(soilDB)
   library(dplyr)
   library(ggplot2)
@@ -116,6 +131,8 @@ server <- function(input, output){
   library(jsonlite)
   library(DT)
   library(aqp)
+  library(soilReports)
+  library(knitr)
   
   output$result <- renderPlot({ input$submukey
     
@@ -166,7 +183,9 @@ server <- function(input, output){
   
   output$shdatatab<- DT::renderDataTable({input$submukey
     wtlevels <- get_cosoilmoist_from_SDA(WHERE = paste0(isolate(input$wtchoice),"='", isolate(input$inmukey), "'"), duplicates = TRUE)}, options = list(paging=FALSE))
-  
+
+  output$projectreport<-renderUI({includeMarkdown(knit("G:/workspace/report.Rmd"))})
+    
   output$omplot<-renderPlot({ input$omsubmukey
     # import soil data using the fetchSDA_component() function
     omdata = fetchSDA_component(WHERE = paste0(isolate(input$omchoice),"='", isolate(input$ominmukey), "'"), duplicates= TRUE)
