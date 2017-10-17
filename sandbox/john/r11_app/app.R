@@ -1,8 +1,7 @@
 library(shinydashboard)
 
 header<-dashboardHeader(
-  title="Region 11 SDA Web Application", titleWidth= 450
-    )
+  title="Region 11 Web App")
 
 sidebar<-dashboardSidebar(
   sidebarMenu(
@@ -29,12 +28,14 @@ sidebar<-dashboardSidebar(
              ),
     menuItem("Project", icon=icon("stack-overflow"),
               menuSubItem("Report", tabName="projectreport", icon=icon("file-text")),
-              textInput(
+              textAreaInput(
                 inputId="projectreport",
-                label="Enter Project Name", "SDJR - MLRA 111A - Ross silt loam, 0 to 2 percent slopes, frequently flooded"),
+                label="Enter Project Name", "SDJR - MLRA 111A - Ross silt loam, 0 to 2 percent slopes, frequently flooded",
+                resize="none",
+                rows=5),
               actionButton("reportsubmit", "Submit"), br(),p()
               ),
-    menuItem("Source Code", icon=icon("file-code-o"), href="https://github.com/ncss-tech/soil-pit/blob/master/sandbox/john/water_table_report_app/app.R"),
+    menuItem("Source Code", icon=icon("file-code-o"), href="https://github.com/ncss-tech/soil-pit/blob/master/sandbox/john/r11_app/app.R"),
     menuItem("Help", tabName="help", icon=icon("question"))
  )
 )
@@ -64,7 +65,10 @@ body<-dashboardBody(
             )),
     tabItem(
       tabName="projectreport",
+      titlePanel("Component Report from LIMS"),
       verticalLayout(
+        infoBox("Project Name:",
+                uiOutput("prjname", inline=TRUE, container=span),width=12, icon=icon("map"), color="blue"),
         fluidRow(
             box(uiOutput("projectreport", inline=TRUE, container=span), width=12),
             box("This application was developed by John Hammerly and Stephen Roecker.", width=12))
@@ -86,21 +90,24 @@ body<-dashboardBody(
                     infoBox("About", box("This site is a set web applications which use",
                                                    a(href="https://www.r-project.org/", "R"), "to query information from",
                                                    a(href="https://sdmdataaccess.nrcs.usda.gov/", "Soil Data Access"),
-                                                   "and assembles the data into a table or plots it graphically.",width=12),width=12, icon=icon("info"), color="yellow"),
+                                                   "or LIMS and assembles the data into a table, plots it graphically, or generates a report.",width=12),width=12, icon=icon("info"), color="yellow"),
                     infoBox("How to Use", box(
-                      p("1.  Choose a data type by clicking on the corresponding menu item in the list on the sidebar to the left.  Currently there are 2 data types available to explore:  Water Table and Organic Matter."),
-                      p("2.  Choose how to view the data.  You can view either a plot or data table."),
-                      p("3.  Choose a query method.  You can query using any one of 3 methods:  Mapunit Key, National Mapunit Symbol, or Mapunit Name.  A choice list is provided."),
+                      p("1.  Choose a data type by clicking on the corresponding menu item in the list on the sidebar to the left.  Currently there are 3 choices available to explore:  Water Table, Organic Matter and Project."),
+                      p("2.  Choose how to view the data.  You can view either a plot or data table for the Water Table and Organic Matter choices.  The Project choice can only generate a report"),
+                      p("3.  Choose a query method.  This is only needed if you choose the Water Table or Organic Matter choices.  You can query using any one of 3 methods:  Mapunit Key, National Mapunit Symbol, or Mapunit Name.  A choice list is provided."),
                       p("4.  Enter your query.  Be sure to enter the proper format.  Each of the previously mentioned methods has a unique set of criteria in order to return data without error."),
                       p("5.  Click the Submit button.  The query will not execute until this button is clicked."),width=12),width=12, icon=icon("life-ring"), color="purple"
                       )),
                     fluidRow(
                       infoBox("Water Table",
-                            box("Use this data to learn more about the moisture the soil.  The plot shows depths at which different moisture status typically occur throughout the year.  You also have the option of viewing either flooding frequency or ponding frequency in the plot by clicking the radio buttons.", width=12),
+                            box("Use this data to learn more about the moisture in the soil.  The plot shows depths at which different moisture status typically occur throughout the year.  You also have the option of viewing either flooding frequency or ponding frequency in the plot by clicking the radio buttons.", width=12),
                             width=12, icon=icon("tint"), color="blue"),
                       infoBox("Organic Matter",
                               box("Use this data to learn more about the organic matter in the soil.  The plot shows how organic matter changes with depth.  There are no additional options for viewing this data.", width=12),
                             icon=icon("leaf"), color="green", width=12),
+                      infoBox("Project",
+                              box("Use this data to compare project data with previously populated data.  There are no additional options for viewing this data.", width=12),
+                            icon=icon("file-text"), color="orange", width=12),
                       infoBox("Source Code",
                               box("This menu item provides a link to a GitHub repository containing the computer code used in this application", width=12),
                               width=12, icon=icon("file-code-o"), color="red")
@@ -184,7 +191,11 @@ server <- function(input, output){
   output$shdatatab<- DT::renderDataTable({input$submukey
     wtlevels <- get_cosoilmoist_from_SDA(WHERE = paste0(isolate(input$wtchoice),"='", isolate(input$inmukey), "'"), duplicates = TRUE)}, options = list(paging=FALSE))
 
-  output$projectreport<-renderUI({includeMarkdown(knit("G:/workspace/report.Rmd"))})
+  output$projectreport<-renderUI({includeMarkdown(knit("report.Rmd"))})
+  
+  output$prjname<-renderText({input$reportsubmit
+    prjname<-fetchLIMS_component(isolate(input$projectreport), fill = TRUE)
+    prjname$mapunit[1,3]})
     
   output$omplot<-renderPlot({ input$omsubmukey
     # import soil data using the fetchSDA_component() function
