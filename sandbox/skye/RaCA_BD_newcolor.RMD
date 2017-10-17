@@ -78,10 +78,10 @@ rs %>%
   scale_colour_viridis(option = "magma",begin = 0, end = 1, direction = -1 )
 
 
-rs %>%
-  filter(Master %in% c('A','E','B','C')) %>%
-  ggplot(aes(y = BD, x = SOC)) + geom_hex()+
-  scale_colour_gradient2(low = "green", mid = "grey", high = "blue", midpoint = 500)
+# rs %>%
+#   filter(Master %in% c('A','E','B','C')) %>%
+#   ggplot(aes(y = BD, x =SOC)) + geom_hex(fill = ..density.., color = "black") +
+#   scale_colour_gradientn(colours=rainbox(7))
 
 
 rs %>%
@@ -151,12 +151,16 @@ Recreated some plots with the CETLAB color palettes.
 
 ```{r color}
 
-display_cet_attribute(attribute = "linear")
-display_cet_attribute(attribute = "diverging")
-?cet_color_maps
+# display_cet_attribute(attribute = "linear")
+# display_cet_attribute(attribute = "diverging")
+ ?cet_color_maps
 
 ggplot(rs, aes(y = BD, x = Master)) + geom_jitter(aes(color = SOC), alpha = .5) +
   scale_color_gradientn(colours = cet_pal(5, name = "inferno"))
+
+ggplot(rs, aes(y = BD, x = Master)) + geom_jitter(aes(color = SOC), alpha = .5) +
+  scale_color_gradientn(colours = cet_pal(3, name = "diverging_bwr_40-95_c42_n256"))
+
 
 
 ggplot(rs, aes(y = BD, x = Master)) + geom_jitter(aes(color = SOC), alpha = .5) +
@@ -167,13 +171,28 @@ rs %>%
   ggplot(aes(y = BD, x = Master)) + geom_jitter(aes(color = SOC)) +
   scale_color_gradientn(colors = cet_pal(5, name = "inferno"))
 
-
+grid.arrange(
 rs %>%
   filter(Master %in% c('A','E','B','C')) %>%
   ggplot(aes(y = BD, x = Master)) + geom_jitter(aes(color = SOC)) +
-  scale_colour_gradientn(colours = cet_pal(10, name = "diverging-rainbow_bgymr_45-85_c67_n256"))
-
-
+  scale_colour_gradientn(colours = cet_pal(3, name = "diverging-rainbow_bgymr_45-85_c67_n256"))
+,
+rs %>%
+  filter(Master %in% c('A','E','B','C')) %>%
+  ggplot(aes(y = BD, x = Master)) + geom_jitter(aes(color = SOC)) +
+  scale_colour_gradientn(colours = cet_pal(5, name = "diverging-rainbow_bgymr_45-85_c67_n256"))
+,
+rs %>%
+  filter(Master %in% c('A','E','B','C')) %>%
+  ggplot(aes(y = BD, x = Master)) + geom_jitter(aes(color = SOC)) +
+  scale_colour_gradientn(colours = cet_pal(5, name = "diverging_cwm_80-100_c22_n256"))
+,
+rs %>%
+  filter(Master %in% c('A','E','B','C')) %>%
+  ggplot(aes(y = BD, x = Master)) + geom_jitter(aes(color = SOC)) +
+  scale_colour_gradientn(colours = cet_pal(20, name = "diverging-linear_bjr_30-55_c53_n256"))
+,
+nrow=2,ncol=2)
 #########
 
 #joy plot with continuous fill
@@ -225,9 +244,7 @@ rs %>%
         plot.title=element_text(size=24))+
   labs(x="Bulk Density",y="Master Horizon",caption="@wills_skye", title="BeeSwarm Plot w/ KGY CET color")
 
-
-
-
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
