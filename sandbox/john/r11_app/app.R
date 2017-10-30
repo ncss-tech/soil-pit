@@ -1,6 +1,7 @@
 #load required library for creating a dashboard in shiny
 
 library(shinydashboard)
+library(leaflet)
 
 #create a dashboard header
 
@@ -56,10 +57,10 @@ sidebar<-dashboardSidebar(
               menuItem("Project Extent", icon=icon("map-signs"),
                        menuSubItem("Extent", tabName="projectextent", icon=icon("map")),
                        textInput(inputId="fyinput", label="Enter Fiscal Year -", 2018),
-                       selectInput("office", "Choose an Office -", c("Atlantic"="11-ATL","Aurora"="11-AUR","Clinton"="11-CLI","Findlay"="11-FIN","Gallatin"="11-GAL","Indianapolis"="11-IND","Juneau"="11-JUE","Marion"="11-MAN","Springfield"="11-SPR","Union"="11-UNI","Waverly"="11-WAV"), selected="11-WAV",multiple=FALSE),
+                       selectInput("office", "Choose an Office -", c("Atlantic"="11-ATL","Aurora"="11-AUR","Clinton"="11-CLI","Findlay"="11-FIN","Gallatin"="11-GAL","Indianapolis"="11-IND","Juneau"="11-JUE","Marion"="11-MAN","Springfield"="11-SPR","Union"="11-UNI","Waverly"="11-WAV"), selected="11-CLI",multiple=FALSE),
                        textAreaInput(
                          inputId="projectextent",
-                         label="Enter Project Name -", "MLRA 104 - Readlyn soils texture and slope phases",
+                         label="Enter Project Name -","EVAL - MLRA 112 - Bates and Dennis soils, 3 to 5 percent slopes, eroded",
                          resize="none",
                          rows=5),
                        actionButton("extentsubmit", "Submit"), br(),p()
@@ -94,7 +95,11 @@ body<-dashboardBody(
             titlePanel("Welcome to the Region 11 Web App"),
             verticalLayout(
               infoBox("About this App", "The Region 11 Web App is a tool for USDA soil scientists to get soils information on the web.", width=12, icon=icon("university"), color="blue"),
-              box(p(tags$b("Get started using the Region 11 Web App by selecting a menu item on the left.")),  p("Remember to click on a sub-menu item in order to view the results of a query."),  p("Once the sub-menu item is active it will begin loading an example query unless you have already changed the query inputs."),  p("The submit button can be used to submit another query after the sub-menu item has already been selected."), width=12),
+              box(p(tags$b("Get started using the Region 11 Web App by selecting a menu item on the left.")),
+                  p("Remember to click on a sub-menu item in order to view the results of a query."),
+                  p("Once the sub-menu item is active it will begin loading an example query unless you have already changed the query inputs."),
+                  p("The submit button can be used to submit another query after the sub-menu item has already been selected."),
+                  p("This Application is viewed best in a browser such as Google Chrome or Mozilla Firefox"), width=12),
               box("This application was developed by John Hammerly, Stephen Roecker, and Dylan Beaudette.", width=12)
             )),
     #water table plot tab   
@@ -296,6 +301,8 @@ server <- function(input, output){
     library(rgdal)
     library(leaflet)
     library(rgeos)
+    library(leaflet.esri)
+    library(leaflet.extras)
     
     withProgress(message="Generating Map", value=0,{
       
@@ -394,16 +401,18 @@ server <- function(input, output){
       
       m<-leaflet()
       m<-addTiles(m, group="OSM")
-      m<-addPolygons(m, data=sp.final, group="Mapunits")
+
       
       incProgress(1/10, detail =paste("Adding Data to Map"))
       
       m<-addProviderTiles(m, providers$Esri.WorldImagery, group="Imagery")
       m<-addProviderTiles(m, providers$OpenMapSurfer.AdminBounds, group="Admin Boundaries")
-      m<-addLayersControl(m, baseGroups=c("OSM", "Imagery"),overlayGroups=c("Mapunits", "Admin Boundaries"))
-      m<-hideGroup(m, "Admin Boundaries")
+      m<-hideGroup(m, c("Admin Boundaries","MLRA"))
       m<-addEasyButton(m, easyButton(icon="fa-globe", title="Zoom to CONUS", onClick=JS("function(btn, map){map.setZoom(4);}")))
-      incProgress(1/10, detail =paste("Your Map is on it's way!"))
+      m<-addEsriFeatureLayer(map=m, url='https://services.arcgis.com/SXbDpmb7xQkk44JV/arcgis/rest/services/US_MLRA/FeatureServer/0/', group="MLRA", useServiceSymbology = TRUE, options=featureLayerOptions(renderer='L.canvas'))
+      m<-addPolygons(m, data=sp.final, group="Mapunits")
+      m<-addLayersControl(m, baseGroups=c("OSM", "Imagery"),overlayGroups=c("MLRA", "Admin Boundaries", "Mapunits"))
+     incProgress(1/10, detail =paste("Your Map is on it's way!"))
     })
     m
   })
