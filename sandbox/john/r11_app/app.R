@@ -57,7 +57,19 @@ sidebar<-dashboardSidebar(
               menuItem("Project Extent", icon=icon("map-signs"),
                        menuSubItem("Extent", tabName="projectextent", icon=icon("map")),
                        textInput(inputId="fyinput", label="Enter Fiscal Year -", 2018),
-                       selectInput("office", "Choose an Office -", c("Atlantic"="11-ATL","Aurora"="11-AUR","Clinton"="11-CLI","Findlay"="11-FIN","Gallatin"="11-GAL","Indianapolis"="11-IND","Juneau"="11-JUE","Marion"="11-MAN","Springfield"="11-SPR","Union"="11-UNI","Waverly"="11-WAV"), selected="11-CLI",multiple=FALSE),
+                       selectizeInput("office", "Choose an Office -",
+                                   c("11-ATL"="11-ATL",
+                                     "11-AUR"="11-AUR",
+                                     "11-CLI"="11-CLI",
+                                     "11-FIN"="11-FIN",
+                                     "11-GAL"="11-GAL",
+                                     "11-IND"="11-IND",
+                                     "11-JUE"="11-JUE",
+                                     "11-MAN"="11-MAN",
+                                     "11-SPR"="11-SPR",
+                                     "11-UNI"="11-UNI",
+                                     "11-WAV"="11-WAV"),
+                                   selected="11-CLI",multiple=FALSE, options=list(create=TRUE)),
                        textAreaInput(
                          inputId="projectextent",
                          label="Enter Project Name -","EVAL - MLRA 112 - Bates and Dennis soils, 3 to 5 percent slopes, eroded",
@@ -99,7 +111,9 @@ body<-dashboardBody(
                   p("Remember to click on a sub-menu item in order to view the results of a query."),
                   p("Once the sub-menu item is active it will begin loading an example query unless you have already changed the query inputs."),
                   p("The submit button can be used to submit another query after the sub-menu item has already been selected."),
-                  p("This Application is viewed best in a browser such as Google Chrome or Mozilla Firefox"), width=12),
+                  p("This Application is viewed best in a browser such as Google Chrome or Mozilla Firefox"),
+                  p("Wildcards can be used in the project extent query.  Use a percent symbol % for office.  Use an asterisk * for the project name."),
+                  p("Maximum number of records returned from Soil Data Access is 100,000."), width=12),
               box("This application was developed by John Hammerly, Stephen Roecker, and Dylan Beaudette.", width=12)
             )),
     #water table plot tab   
@@ -178,7 +192,9 @@ body<-dashboardBody(
               )),
             fluidRow(
               infoBox("Water Table",
-                      box("Use this data to learn more about the moisture in the soil.  The plot shows depths at which different moisture status typically occur throughout the year.  You also have the option of viewing either flooding frequency or ponding frequency in the plot by clicking the radio buttons.", width=12),
+                      box("Use this data to learn more about the moisture in the soil.  
+                          The plot shows depths at which different moisture status typically occur throughout the year.  
+                          You also have the option of viewing either flooding frequency or ponding frequency in the plot by clicking the radio buttons.", width=12),
                       width=12, icon=icon("tint"), color="blue"),
               infoBox("Organic Matter",
                       box("Use this data to learn more about the organic matter in the soil.  The plot shows how organic matter changes with depth.  There are no additional options for viewing this data.", width=12),
@@ -379,7 +395,7 @@ server <- function(input, output){
       
       incProgress(1/10, detail =paste("Computing Feature Envelope")) 
       
-      sp <- dlply(d, 'mukey', getFeatures, .progress='text')
+      sp <- dlply(d, 'Project.Name', getFeatures, .progress='text')
       
       incProgress(1/10, detail =paste("Please Wait")) 
       
@@ -399,19 +415,32 @@ server <- function(input, output){
       incProgress(1/10, detail =paste("Please Wait"))
       ##### End of Dylan's code #####
       
+      pal<- colorFactor(palette="viridis", domain=sp.final$muname)
+      
       m<-leaflet()
-      m<-addTiles(m, group="OSM")
+      m<-addTiles(m, group="Open Street Map")
 
       
       incProgress(1/10, detail =paste("Adding Data to Map"))
       
-      m<-addProviderTiles(m, providers$Esri.WorldImagery, group="Imagery")
+      m<-addProviderTiles(m, providers$Esri.WorldImagery, group="ESRI Imagery")
       m<-addProviderTiles(m, providers$OpenMapSurfer.AdminBounds, group="Admin Boundaries")
       m<-hideGroup(m, c("Admin Boundaries","MLRA"))
       m<-addEasyButton(m, easyButton(icon="fa-globe", title="Zoom to CONUS", onClick=JS("function(btn, map){map.setZoom(4);}")))
-      m<-addEsriFeatureLayer(map=m, url='https://services.arcgis.com/SXbDpmb7xQkk44JV/arcgis/rest/services/US_MLRA/FeatureServer/0/', group="MLRA", useServiceSymbology = TRUE, options=featureLayerOptions(renderer='L.canvas'))
-      m<-addPolygons(m, data=sp.final, group="Mapunits")
-      m<-addLayersControl(m, baseGroups=c("OSM", "Imagery"),overlayGroups=c("MLRA", "Admin Boundaries", "Mapunits"))
+      m<-addEsriFeatureLayer(map=m, url='https://services.arcgis.com/SXbDpmb7xQkk44JV/arcgis/rest/services/US_MLRA/FeatureServer/0/',
+                             group="MLRA", useServiceSymbology = TRUE, popupProperty =propsToHTML(props=c("MLRARSYM","MLRA_NAME")), smoothFactor=1, options=featureLayerOptions(renderer='L.canvas'))
+      m<-addProviderTiles(m, providers$Esri.WorldStreetMap, group="ESRI Street")
+      m<-addProviderTiles(m, providers$Esri.WorldTopoMap, group="ESRI Topo")
+      m<-addProviderTiles(m, providers$Stamen.Terrain, group="Stamen Terrain")
+      m<-addProviderTiles(m, providers$Stamen.TonerLite, group="Stamen TonerLite")
+      m<-addPolygons(m, data=sp.final, stroke=TRUE, color= ~pal(muname), weight=2, popup= paste("<b>MLRA SSO Area Symbol:  </b>", sp.final$Area.Symbol, "<br>",
+                                                    "<b>Project Type:  </b>", sp.final$Project.Type.Name, "<br>",
+                                                    "<b>Project Name:  </b>", sp.final$Project.Name, "<br>",
+                                                    "<b>Mapunit Key:  </b>", sp.final$mukey, "<br>",
+                                                    "<b>National Symbol:  </b>", sp.final$National.Mapunit.Symbol, "<br>",
+                                                    "<b>Mapunit Name:  </b>", sp.final$muname), group="Mapunits")
+      m<-addLayersControl(m, baseGroups=c("ESRI Street", "ESRI Topo", "ESRI Imagery","Open Street Map", "Stamen Terrain", "Stamen TonerLite"),overlayGroups=c("MLRA", "Admin Boundaries", "Mapunits"))
+      m<-addLegend(m, pal=pal, position="bottomleft", values= sp.final$muname)
      incProgress(1/10, detail =paste("Your Map is on it's way!"))
     })
     m
