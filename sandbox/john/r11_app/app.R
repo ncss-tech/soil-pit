@@ -113,7 +113,8 @@ body<-dashboardBody(
                   p("The submit button can be used to submit another query after the sub-menu item has already been selected."),
                   p("This Application is viewed best in a browser such as Google Chrome or Mozilla Firefox"),
                   p("Wildcards can be used in the project extent query.  Use a percent symbol % for office.  Use an asterisk * for the project name."),
-                  p("Maximum number of records returned from Soil Data Access is 100,000."), width=12),
+                  p("Maximum number of records returned from Soil Data Access is 100,000."),
+                  p("Project Extent query uses pattern matching.  Anchors (^ or $) may be needed if exact results are needed"), width=12),
               box("This application was developed by John Hammerly, Stephen Roecker, and Dylan Beaudette.", width=12)
             )),
     #water table plot tab   
@@ -149,7 +150,7 @@ body<-dashboardBody(
         infoBox("Project Name:",
                 uiOutput("prjname", inline=TRUE, container=span),width=12, icon=icon("map"), color="blue"),
         fluidRow(
-          box(uiOutput("projectreport", inline=TRUE, container=span), width=12),
+          box(tags$div(uiOutput("projectreport", inline=TRUE, container=span), style="width:100%; overflow-x: scroll"), width=12),
           box("This application was developed by John Hammerly and Stephen Roecker.", width=12))
       )),
     
@@ -179,7 +180,7 @@ body<-dashboardBody(
     tabItem(tabName="help",
             titlePanel("Help"),
             fluidRow(
-              infoBox("About", box("This site is a set web applications which use",
+              infoBox("About", box("This site is a set of web applications which use",
                                    a(href="https://www.r-project.org/", "R"), "to query information from",
                                    a(href="https://sdmdataaccess.nrcs.usda.gov/", "Soil Data Access"),
                                    "or LIMS and assembles the data into a table, plots it graphically, or generates a report.",width=12),width=12, icon=icon("info"), color="yellow"),
@@ -437,11 +438,11 @@ server <- function(input, output){
                                                     "<b>Project Type:  </b>", sp.final$Project.Type.Name, "<br>",
                                                     "<b>Project Name:  </b>", sp.final$Project.Name, "<br>",
                                                     "<b>Mapunit Key:  </b>", sp.final$mukey, "<br>",
-                                                    "<b>National Symbol:  </b>", sp.final$National.Mapunit.Symbol, "<br>",
+                                                    "<b>National Mapunit Symbol:  </b>", sp.final$National.Mapunit.Symbol, "<br>",
                                                     "<b>Mapunit Name:  </b>", sp.final$muname), group="Mapunits")
       m<-addLayersControl(m, baseGroups=c("ESRI Street", "ESRI Topo", "ESRI Imagery","Open Street Map", "Stamen Terrain", "Stamen TonerLite"),overlayGroups=c("MLRA", "Admin Boundaries", "Mapunits"))
       m<-addLegend(m, pal=pal, position="bottomleft", values= sp.final$muname)
-     incProgress(1/10, detail =paste("Your Map is on it's way!"))
+     incProgress(1/10, detail =paste("Your Map is on its way!"))
     })
     m
   })
