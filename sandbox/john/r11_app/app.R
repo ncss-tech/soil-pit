@@ -80,7 +80,7 @@ sidebar<-dashboardSidebar(
               
               #Source Code Menu
               
-              menuItem("Source Code", icon=icon("file-code-o"), href="https://github.com/ncss-tech/soil-pit/blob/master/sandbox/john/r11_app/app.R"),
+              menuItem("Source Code", icon=icon("file-code-o"), href="https://github.com/ncss-tech/soil-pit/blob/master/sandbox/john/r11_app/"),
               
               #Help Menu
               
@@ -434,13 +434,14 @@ server <- function(input, output){
       m<-addProviderTiles(m, providers$Esri.WorldTopoMap, group="ESRI Topo")
       m<-addProviderTiles(m, providers$Stamen.Terrain, group="Stamen Terrain")
       m<-addProviderTiles(m, providers$Stamen.TonerLite, group="Stamen TonerLite")
+      m<-addWMSTiles(m, "https://SDMDataAccess.sc.egov.usda.gov/Spatial/SDM.wms?", options= WMSTileOptions(version="1.1.1", transparent=TRUE, format="image/png"), layers="mapunitpoly", group="Soil Polygons")
       m<-addPolygons(m, data=sp.final, stroke=TRUE, color= ~pal(muname), weight=2, popup= paste("<b>MLRA SSO Area Symbol:  </b>", sp.final$Area.Symbol, "<br>",
                                                     "<b>Project Type:  </b>", sp.final$Project.Type.Name, "<br>",
                                                     "<b>Project Name:  </b>", sp.final$Project.Name, "<br>",
                                                     "<b>Mapunit Key:  </b>", sp.final$mukey, "<br>",
                                                     "<b>National Mapunit Symbol:  </b>", sp.final$National.Mapunit.Symbol, "<br>",
                                                     "<b>Mapunit Name:  </b>", sp.final$muname), group="Mapunits")
-      m<-addLayersControl(m, baseGroups=c("ESRI Street", "ESRI Topo", "ESRI Imagery","Open Street Map", "Stamen Terrain", "Stamen TonerLite"),overlayGroups=c("MLRA", "Admin Boundaries", "Mapunits"))
+      m<-addLayersControl(m, baseGroups=c("ESRI Street", "ESRI Topo", "ESRI Imagery","Open Street Map", "Stamen Terrain", "Stamen TonerLite"),overlayGroups=c("Soil Polygons", "MLRA", "Admin Boundaries", "Mapunits"))
       m<-addLegend(m, pal=pal, position="bottomleft", values= sp.final$muname)
      incProgress(1/10, detail =paste("Your Map is on its way!"))
     })
