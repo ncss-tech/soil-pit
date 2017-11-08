@@ -89,10 +89,10 @@ print(kable(with(s, data.frame(
   dmudesc_short, compname, comppct_r, majcompflag, localphase, drainagecl, 
   slope_l, slope_r, slope_h,
   taxpartsize, taxsubgrp))
-  , "html") %>% kable_styling(bootstrap_options=c("striped", "hover")))
+  , "html") %>% kable_styling(bootstrap_options=c("striped", "hover", "responsive")))
 
 # parent material and landform
-print(kable(with(s, data.frame(dmudesc_short, compname, taxpartsize, pmgroupname)), "html") %>% kable_styling(bootstrap_options=c("striped", "hover")))
+print(kable(with(s, data.frame(dmudesc_short, compname, taxpartsize, pmgroupname)), "html") %>% kable_styling(bootstrap_options=c("striped", "hover", "responsive")))
 # , landform.string)))
 ```
 
