@@ -78,6 +78,14 @@ sidebar<-dashboardSidebar(
                        actionButton("extentsubmit", "Submit"), br(),p()
               ),
               
+              #Long Range Plan
+              
+              menuItem("Long Range Plan", icon=icon("plane"),
+                       menuSubItem("Report", tabName="lrp", icon=icon("calendar")),
+                       textInput(inputId="lrpinput", label="Enter SSO Office -", "11-UNI"),
+                       actionButton("lrpsubmit", "Submit"), br(),p()
+                       ),
+              
               #Source Code Menu
               
               menuItem("Source Code", icon=icon("file-code-o"), href="https://github.com/ncss-tech/soil-pit/blob/master/sandbox/john/r11_app/"),
@@ -162,6 +170,16 @@ body<-dashboardBody(
           box(leafletOutput("projectextentmap"), width=12),
           box("This application was developed by John Hammerly, Stephen Roecker and Dylan Beaudette.", width=12))
       )),
+    
+    #Long Range Plan tab
+    tabItem(
+      tabName="lrp",
+      titlePanel("Long Range Plan"),
+      verticalLayout(
+        fluidRow(
+        box(tags$div(uiOutput("lrp", inline=TRUE, container=span), style="width:100%; overflow-x: scroll"), width=12),
+        box("This application was developed by John Hammerly and Stephen Roecker.", width=12)))
+    ),
     
     #Organic Matter Plot Tab
     tabItem(
@@ -300,6 +318,11 @@ server <- function(input, output){
   output$projectreport<-renderUI({
     
     withProgress(message="Generating Report", detail="Please Wait", value=1, {includeMarkdown(knit("report.Rmd"))})})
+  
+  #render long range plan report markdown
+  output$lrp<-renderUI({ input$lrpsubmit
+    withProgress(message="Generating Report", detail="Please Wait", value=1, {includeMarkdown(knit("r11_long_range_plan.Rmd"))})
+  })
   
   #render project name text for project report tab
   output$prjname<-renderText({input$reportsubmit
