@@ -1,0 +1,201 @@
+---
+title: "GRACEnet BD"
+author: "Wills"
+date: "November 8, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list=ls()) #clear previous data
+
+rm(list=ls()) #clear previous data
+
+require("knitr")
+knitr::opts_chunk$set(echo = TRUE, comment = "#", warning = FALSE, message = FALSE, error =FALSE, tidy.opts=list(width.cutoff=60),tidy=TRUE)
+
+#opts_knit$set(root.dir = "C:/Users/skye.wills/ownCloud")
+workdir <- setwd(getwd()) # personalize the working directory for each user.
+opts_knit$set(root.dir = workdir)
+
+list.of.packages <- c("ggplot2", "plyr", "Rcpp", "RColorBrewer", "lattice", "aqp", "stringr", "reshape2", "ggthemes", "tidyverse", "RCurl", "Hmisc", "gridExtra", 'ggmosaic', 'png','rstan','lme4', 'printr', "dplyr","tidyr",  "hexbin",  "ggridge", "ggbeeswarm", "viridis", "gridExtra", "cetcolor", "ggjoy", "readxl")
+
+# new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+# if(length(new.packages)) install.packages(new.packages)
+
+library(tidyverse)
+library(Rcpp)
+library(RColorBrewer)
+library(lattice)
+library(stringr)
+library(ggthemes)
+library(RCurl)
+library(rstan)
+library(lme4)
+library(printr)
+library(hexbin)
+library(ggbeeswarm)
+library(viridis)
+library(gridExtra)
+library(cetcolor)
+library(ggjoy)
+library(readxl)
+
+```
+
+**GraceNet** - Greenhouse gas Reduction through Agricultural Carbon Enhancement network, Agriculture Research Service project data http://usdaars.maps.arcgis.com/apps/MapSeries/index.html?appid=9415d09247f64ae5bde462a3a9292e6c 
+
+
+**this code chunk downloads data into the folder you set to BD_data - uncomment to run**
+
+```{r dataDownload}
+#set BD_data equal to working directory
+#BD_data <- getwd()
+#get and combine gracenet data
+BD_data <- "C:/Users/skye.wills/ownCloud/BD_eval/"  #shortcut for personal use
+
+# natres.url <- 'https://www.cloudvault.usda.gov/index.php/s/4AY9kGm6TVBD2u6/download'
+# ifelse(!file.exists(paste0(BD_data, '/natres.xlsx'),download.file(natres.xlsx, destfile = paste0(BD_data,'/data/natres.csv')), "File already downloaded")
+
+library(readxl)
+library(tidyverse)
+
+site <- read_excel(paste0(BD_data, "data/natres.xlsx"), sheet ="FieldSites" )
+names(site) <- gsub(" ", "_", names(site)) #fix names so that there are no spaces
+names(site)[1] <- "SiteID" #fix names so that Site ID matches Treatments and units
+
+units <- read_excel(paste0(BD_data, "data/natres.xlsx"), sheet ="ExperUnits" ) 
+names(units) <- gsub(" ", "_", names(units))
+names(units) <- gsub("%", "pct", names(units)) #fix names so that there are no %(special character)
+names(units)[1] <- "SiteID" #fix names so that Site ID matches Treatments and sites
+
+
+trt <- read_excel(paste0(BD_data, "data/natres.xlsx"), sheet ="Treatments" )
+names(trt) <- gsub(" ", "_", names(trt))
+names(trt)[1] <- "SiteID" #fix names so that Site ID matches sites and units
+
+phys <- read_excel(paste0(BD_data, "data/natres.xlsx"), sheet = "MeasSoilPhys")
+names(phys) <- gsub(" ", "_", names(phys))
+names(phys) <- gsub("%", "pct", names(phys)) #fix names so that there are no %(special character)
+names(phys) <- gsub("/", "per", names(phys)) #fix names so that there are no /(special character)
+
+chem <- read_excel(paste0(BD_data, "data/natres.xlsx"), sheet = "MeasSoilChem")  
+names(chem) <- gsub(" ", "_", names(chem))
+names(chem) <- gsub("%", "pct", names(chem)) #fix names so that there are no %(special character)
+names(chem) <- gsub("/", "per", names(chem)) #fix names so that there are no /(special character)
+
+bio <- read_excel(paste0(BD_data, "data/natres.xlsx"), sheet = "MeasSoilBiol")  
+names(bio) <- gsub(" ", "_", names(bio))
+names(bio) <- gsub("/", "per", names(bio)) #fix names so that there are no /(special character)
+
+             #join descriptors             
+grnt <- site %>% select(SiteID, Date, Elev = Elevation_m, lat = Latitude_decimal_deg, lon = Longitude_decimal_deg, 
+                             Spatial_Description, Native_Veg, MAP = MAP_mm, MAT = MAT_degC) %>%
+              left_join(units %>% select(SiteID, Treatment_ID, Exp_Unit_ID, Field_ID, Slope_pct, lat_unit = Latitude, lon_unit = Longitude, 
+                                         Soil.taxa = Soil_Classification, size_unit = Exp_Unit_Size_m2) %>% 
+                left_join(trt %>%  select(SiteID, Treatment_ID, Treatment_Descriptor, till = Tillage_Descriptor, Cover_Crop) %>%
+         #join to soil measurements
+                  left_join(phys %>% select(SiteID, Exp_Unit_ID, Treatment_ID, Upper_cm, Lower_cm, Sand = Sand_pct, Silt = Silt_pct, Clay = Clay_pct,
+                                        BD = Bulk_Density_gpercm3, AggStab = H2O_Stable_Aggregates_pct) %>%
+                    left_join(chem %>% select(SiteID, Exp_Unit_ID, Treatment_ID, SOC = Organic_C_gCperkg, TSC_gCperkg, pH) %>%
+                        left_join(bio %>% select(SiteID, Exp_Unit_ID, Treatment_ID, bg = Glucosidase_mgperkgperhr, POM_gCperkg)
+                        )))))
+  
+
+```
+
+```{r graphs}
+
+# Graphs of BD and OM
+
+#limit to surface horizons
+G <- grnt %>% filter(!is.na(BD) & !is.na(SOC) & Upper_cm == 0)
+
+
+G %>% ggplot(aes(x = SOC)) + geom_density()
+ 
+G %>% ggplot(aes(y = BD, x=SOC)) + geom_point() +
+  ggtitle('BD and SOC')
+
+
+
+
+#bee swarm
+B <- G %>%
+  ggplot(aes(x=BD, y = till, color = BD)) +  
+  geom_quasirandom(alpha=0.82, groupOnX=FALSE) + 
+  scale_color_gradientn(colours = cet_pal(10, name = "cyclic_mrybm_35-75_c68_n256"), name = "BD")+
+  theme_joy() +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+  labs(x="Bulk Density",y="Tillage Class",caption="GRACEnet by @wills_skye", title="Surface BD by Tillage Class")
+
+B          
+
+#add SOC measurement for visulaization
+B_C <- G %>%
+  ggplot(aes(x=BD, y = till, color = SOC)) +  
+  geom_quasirandom(alpha=0.82, groupOnX=FALSE) + 
+  scale_color_viridis()+
+  theme_joy() +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+  labs(x="Bulk Density",y="Tillage Class",caption="Gracenet by @wills_skye", title="Surface BD by Tillage Class")
+
+B_C
+
+#bee swarm
+Bo <- G %>%
+  ggplot(aes(x=BD, y = till, color = Lower_cm)) +  
+  geom_quasirandom(alpha=0.82, groupOnX=FALSE) + 
+  scale_color_gradientn(colours = cet_pal(10, name = "cyclic_mrybm_35-75_c68_n256"), name = "Lower Depth (cm)")+
+  theme_joy() +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+  labs(x="Bulk Density",y="Tillage",caption="GRACEnet by @wills_skye", title="SurfaceBulk Density by Tillage")
+
+Bo
+
+Bow <- G %>%
+  ggplot(aes(x=BD, y = till, color = BD)) +  
+  geom_quasirandom(alpha=0.82, groupOnX=FALSE) + 
+  scale_color_gradientn(colours = cet_pal(10, name = "cyclic_mrybm_35-75_c68_n256"), name = "BD")+
+  theme_joy() +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+labs(x="Bulk Density",y="Tillage",caption="GRACEnet by @wills_skye", title="Surface Bulk Density by Tillage")
+
+Bow
+
+#with SOC measurement
+BowC <- G%>%
+  ggplot(aes(x=BD, y = till, color = SOC)) +  
+  geom_quasirandom(alpha=0.82, groupOnX=FALSE) + 
+  scale_color_viridis(option = "magma")+
+  theme_joy() +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+  labs(x="Bulk Density",y="Tillage",caption="GRACEnet by @wills_skye", title="Surface Bulk Density by Tillage")
+
+BowC
+
+BowT <- G  %>%
+  ggplot(aes(x=BD, y = till, color =Upper_cm)) +  
+  geom_quasirandom(alpha=0.5, groupOnX=FALSE) + 
+  scale_color_viridis(option = "magma")+
+  theme_joy() +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+  labs(x="Bulk Density",y="Tillage",caption="GRACEnet by @wills_skye", title="Surface Bulk Density by Tillage")
+
+BowT                  
+```
+
+##more analysis
+I'd like to add something by depth.  There's got to be a depth component to these.........
