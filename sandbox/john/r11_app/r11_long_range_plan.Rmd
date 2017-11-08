@@ -1,0 +1,166 @@
+---
+title: Summary of Long Range Plan (10-year)
+author: "`r Sys.getenv('USERNAME')`"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    keep_md: no
+    number_sections: yes
+    toc: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: no
+---
+
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE)
+
+options(stringsAsFactors = FALSE)
+```
+
+```{r}
+# load packages
+
+suppressWarnings( {
+  library(soilDB)
+  library(ggplot2)
+  library(knitr)
+  library(kableExtra)
+  })
+```
+
+```{r}
+# get data
+
+url <- "https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-PROJECTS-Long_Range_Plan"
+p <- list(p_projectname = "%", p_ssoffice = paste0(isolate(input$lrpinput), "%"), p_start_fy = "10/01/2017", p_end_fy = "09/30/2027")
+
+r <- parseWebReport(url, args = p)
+r_all <- r
+
+
+# modify data
+
+names(r) <- {
+ make.names(names(r)) ->.;
+ tolower(.) ->.;
+ gsub("\\.", "_", .) ->.;
+ gsub("proposed_scheduled_", "", .) ->.;
+ }
+names(r)[13] <- "ssoffice"
+
+r <- within(r, {
+ project_acres  = as.numeric(gsub(",", "", project_acres))
+ #start_date     = as.Date(start_date)
+ #completed_date = as.Date(completed_date)
+ })
+#write.csv(r, file = paste0("C:/Users/stephen.roecker/ownCloud/data/lims_data/lrp_", substr(Sys.time(), 1, 10), ".csv"), row.names = FALSE)
+```
+
+```{r}
+#r <- read.csv(file = "C:/Users/stephen.roecker/ownCloud/data/lims_data/lrp_2017-11-08.csv")
+
+# summarize projects
+
+## figure
+
+r_sub <- subset(r, fy %in% 2018:2027 & grepl(isolate(input$lrpinput), ssoffice))
+
+r_sub$office <- r_sub$ssoffice
+vars <- c("office", "fy", "project_type_name")
+a <- {
+  split(r_sub, r_sub[vars], drop = TRUE) ->.;
+  lapply(., function(x) { data.frame(
+    x[vars][1, ], 
+    n = length(unique(x$project_name)),
+    acres = sum(as.numeric(x$project_acres), na.rm = TRUE)
+    )}) ->.;
+  do.call("rbind", .)
+  }
+
+vals <- c("n", "acres")
+a_long <- reshape(a, 
+               direction = "long",
+               timevar = "variable", times = vals,
+               v.names = "value", varying = vals
+               )
+
+a_long_acres <- subset(a_long, value > 1 & variable == "acres")
+gg_acres <- ggplot(a_long_acres, aes(x = fy, y = value)) +
+  geom_point() +
+  geom_line() +
+  facet_grid(office ~ project_type_name, scale = "free_y") +
+  ggtitle("Long Range Plan Summarized by Acreage") + ylab("Acreage") + xlab("Fiscal Year") +
+  scale_x_continuous(breaks = seq(2018, 2027, 2))
+
+a_long_n <- subset(a_long, value >= 1 & variable == "n")
+gg_n <- ggplot(a_long_n, aes(x = fy, y = value)) +
+  geom_point() +
+  geom_line() +
+  facet_grid(office ~ project_type_name, scale = "free_y") +
+  ggtitle("Long Range Plan Summarized by Total Number (n) of Projects") + ylab("n") + xlab("Fiscal Year") +
+  scale_x_continuous(breaks = seq(2018, 2027, 2))
+
+
+# figure height of plots
+
+n_offices <- length(unique(a$office)) + 1
+
+```
+
+```{r, fig.width = 8}
+gg_acres
+gg_n
+```
+
+```{r, results='asis'}
+## table
+
+# by acreage of projects
+a2 <- a
+a2$acres <- prettyNum(a2$acres, big.mark = ",", preserve.width = "common")
+a_wide2 <- reshape(a2[names(a2) != "n"],
+                   direction = "wide", 
+                   idvar = c("project_type_name", "office"),
+                   timevar = "fy",
+                   v.names = "acres"
+                   )
+names(a_wide2) <- gsub("acres.", "", names(a_wide2))
+row.names(a_wide2) <- 1:nrow(a_wide2)
+print(kable(a_wide2, align = "r", caption = "Long Range Plan Summarized by Acreage of Projects", format="html") %>% kable_styling(bootstrap_options=c("striped", "hover")))
+```
+
+``` {r, results='asis'}
+
+# by number of projects
+a_wide1 <- reshape(a[names(a) != "acres"],
+                  direction = "wide", 
+                  idvar = c("project_type_name", "office"),
+                  timevar = "fy",
+                  v.names = "n"
+                  )
+names(a_wide1) <- gsub("n.", "", names(a_wide1))
+row.names(a_wide1) <- 1:nrow(a_wide1)
+print(kable(a_wide1, align = "r", caption = "Long Range Plan Summarized by Total Number (n) of Projects", format="html") %>% kable_styling(bootstrap_options=c("striped", "hover")))
+
+```
+
+
+```{r, eval = FALSE}
+# r2 <- r
+# 
+# r_sub <- subset(r, project_type_name %in% "MLRA")
+# 
+# vars <- c("ssoffice", "project_name", "start_date", "completed_date")
+# vals <- c("start_date", "completed_date")
+# r_long <- reshape(r_sub[vars],
+#                   direction = "long",
+#                   timevar = "variable", times = vals,
+#                   v.names = "value", varying = vals 
+#                   )
+# 
+# 
+# ggplot(r_long, aes(x = ))
+```
+
