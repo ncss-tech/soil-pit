@@ -45,6 +45,13 @@ gw_lo1 <- select(gw, EroClassFD, idx) %>%
   gather(key = variable, value = value, - EroClassFD)
 gw_lo2 <- select(gw, EroClassSIE, idx) %>%
   gather(key = variable, value = value, - EroClassSIE)
+
+
+# select top 2 components with dplyr
+test = get_component_from_SDA(WHERE = "areasymbol = 'IN001'")
+
+test2 = group_by(test, nationalmusym) %>% arrange(- comppct_r) %>% filter(between(row_number(), 1, 2)) %>% arrange(nationalmusym)
+
 ```
 
 ```{r lattice}
