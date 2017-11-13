@@ -1,0 +1,253 @@
+---
+title: "base R vs the tidyverse"
+author: "Stephen Roecker"
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    toc: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: no
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Abstract
+
+There are now 2 distinct dialects of the R programming language in the wild. The first and original dialect is typically referred to as "base" R, which derives from the base R package that comes pre-loaded as part of the standard R installation. The second, is known as the ["tidyverse"](https://www.tidyverse.org/) (or affectionately "Hadleyverse") was largely developed by Hadley Wickham, one of R's most prolific R package contributors. The tidyverse is an 'opinionated' collection of R packages that duplicate and seek to improve upon numerous base R functions for data manipulation (e.g. dplyr) and graphing (e.g. ggplot2). As the tidyverse has grown increasing more comprehensive, it has been suggested that it be taught first to new R users. The debate between which R dialect is better has generated a lot of heat, but much light. This talk will review the similarities (with numerous examples) between the 2 dialects and hopefully help give new and old R users some perspective.
+
+
+
+**Base R**
+- base R more closely associated with "statistics", with focus on statistical methods
+- variable syntax
+- lots of [books](https://www.r-project.org/doc/bib/R-books.html) and [examples](https://www.statmethods.net/index.html), but fewer [free books](https://en.wikibooks.org/wiki/R_Programming)
+- multiple ways to accomplish the same thing
+
+**Tidyverse**
+- tidyverse more closely associated with "Data Science", with focus on data manipulation methods
+- consistent synatx
+- lots of [free books](https://bookdown.org/)[(e.g. R for Data Science)](http://r4ds.had.co.nz/) and [examples](https://www.rstudio.com/resources/cheatsheets/) of tidyverse 
+- fewer ways to accomplish the same thing
+- has similarly named functions (e.g. order vs arrange, subset vs filter)
+
+
+
+## Load Packages
+
+```{r}
+library(tidyverse) # includes: dplyr, tidyr, ggplot2, etc...
+library(soilDB)
+```
+
+## Toy Soil Dataset
+
+```{r}
+comp <- fetchSDA_component(WHERE = "areasymbol = 'IN097'")
+
+m <- comp$mapunit
+spc <- comp$spc
+h <- horizons(spc)
+s <- site(spc)
+
+h <- merge(h, s[c("cokey", "compname")], by = "cokey", all.x = TRUE)
+
+
+# examine dataset
+
+str(spc, 2)
+
+
+# plot dataset
+
+plot(spc[1:10], label = "compname", name = "hzname", color = "claytotal_r")
+```
+
+## Standard Evaluation
+
+```{r}
+# base
+
+## square brackets using column names
+mean(h[, "claytotal_r"], na.rm = TRUE)
+
+# square brackets using column indices
+mean(h[, 13], na.rm = TRUE)
+
+# square brackets using logical indices
+idx <- names(h) %in% "claytotal_r"
+mean(h[, idx], na.rm = TRUE)
+
+## $ operator
+mean(h$claytotal_r, na.rm = TRUE)
+
+```
+
+## Options
+
+In a lot of cases the tidyverse has different defaults for similarly named functions, such as .
+
+```{r}
+fp <- "C:/workspace2/test.csv"
+write.csv(s, file = fp, row.names = FALSE)
+
+s1 <- read.csv(file = fp)
+str(s1$drainagecl)
+
+# base option 1
+s1 <- read.csv(file = fp, stringsAsFactors = FALSE)
+str(s1$drainagecl)
+
+# base option 2
+options(stringsAsFactors = FALSE)
+s1 <- read.csv(file = fp)
+str(s1$drainagecl)
+
+head(s1) # or
+# print(s1) # prints the whole table
+
+# tidyverse
+s2 <- read_csv(file = fp)
+str(s2$drainagecl)
+
+head(s2) # or 
+print(s2) # prints the first 10 rows
+
+```
+
+
+## Non-Standard Evaluation
+
+The tidyverse operates 
+
+```{r}
+# base non-standard evalution
+with(h, mean(claytotal_r, na.rm = TRUE))
+
+attach(h)
+mean(claytotal_r, na.rm = TRUE)
+detach(h)
+
+# tidyverse non-standard evaluation (enabled by default)
+summarize(h, mean(claytotal_r, na.rm = TRUE))
+
+```
+
+
+## Subsetting vs Filtering
+
+```{r}
+# base R
+s_sub1 <- subset(s, drainagecl != "Well drained")
+
+dim(s_sub1)
+
+# tidyverse
+s_sub2 <- filter(s, drainagecl != "Well drained")
+
+dim(s_sub2)
+```
+
+## Ordering vs Arranging
+
+```{r}
+# base
+with(s, s[order(cokey), ])[1, 1:4]
+
+# tidyverse
+arrange(s, cokey)[1, 1:4]
+```
+
+## Pipping
+
+Referred too as 'syntactic' sugar, pipping is supposed to make code more readable, by making if read from left to right, rather than from inside out.
+
+
+## Reshaping
+
+```{r, eval =  FALSE}
+soil_vals <- c("hzthk", "SolumDp", "CaCO3Dp", "claytotest", "firstbtclay", "mxvalue", "mxchroma")
+geo_vals1 <- c("SlopeSIE", "ProfCrv", "PlanCrv", "relpos", "wetness")
+vals <- c(soil_vals, geo_vals1)
+
+
+# reshape with reshape2
+gw_lo1 <- melt(gw, id.vars = "EroClassFD", measure.vars = vals)
+gw_lo2 <- melt(gw, id.vars = "EroClassSIE", measure.vars = vals)
+
+
+# reshape with base
+gw_lo1_b <- reshape(gw[c("EroClassFD", vals)],
+                    direction = "long",
+                    timevar = "variable", times = vals,
+                    v.names = "value", varying = vals 
+                    )
+
+gw_wi1_b <- reshape(test, 
+                    direction = "wide",
+                    timevar = "variable",
+                    v.names = "value"
+                    )
+names(test2) <- gsub("value", "", names(test2))
+
+
+# reshape with tidyr
+idx <- which(names(gw) %in% vals)
+gw_lo1 <- select(gw, EroClassFD, idx) %>%
+  gather(key = variable, value = value, - EroClassFD)
+gw_lo2 <- select(gw, EroClassSIE, idx) %>%
+  gather(key = variable, value = value, - EroClassSIE)
+```
+
+```{r lattice, eval = FALSE, echo = FALSE}
+
+test2 <- get_cosoilmoist_from_SDA_db(WHERE = "mukey = '406339'")
+test <- subset(test2, !is.na(dept_r) & status == "Wet")
+
+ggplot(test, aes(x = as.integer(month), y = dept_r)) +
+  geom_ribbon(aes(ymin = dept_l, ymax = dept_h), alpha = 0.2) +
+  geom_line() +
+  ylim(max(test$dept_h), -5) + # won't plot unless the full range is present
+  facet_wrap(~ compname)
+  
+panel_gribbon <- function(x, y, upper, lower, ..., 
+                         fill, col, subscripts, font, fontface) {
+  upper = upper[subscripts]
+  lower = lower[subscripts]
+  panel.polygon(c(x, rev(x)), c(upper, rev(lower)),
+                col = fill, border = FALSE)
+  }
+panel_ribbon <- function(x, y, ...) {
+  panel.superpose(x, y, ..., panel.groups = panel_gribbon)
+  panel.xyplot(x, y, ...)
+  }
+
+
+xyplot(data = test, dept_r ~ as.integer(month) | compname, 
+       groups = test$compname,
+       type = "b", lty = 1:2,
+       upper = test$dept_l, lower = test$dept_h,
+       ylim = c(150, -5),
+       grid = TRUE,
+       panel = function(x, y, ...){
+         panel.superpose(x, y, ..., panel.groups = panel_gribbon)
+         panel.xyplot(x, y, ...)
+         }
+       )
+
+xyplot(data = test, dept_r ~ as.integer(month) | compname, 
+       groups = test$compname,
+       type = "b", lty = 1:2,
+       upper = test$dept_l, lower = test$dept_h,
+       ylim = c(150, -5),
+       grid = TRUE,
+       panel = panel_ribbon,
+       )
+
+```
+
+## Conclusion
+
+- the tidyverse is verbose
