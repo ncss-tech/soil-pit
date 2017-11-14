@@ -13,7 +13,7 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```
 
 ## Abstract
@@ -21,19 +21,27 @@ knitr::opts_chunk$set(echo = TRUE)
 There are now 2 distinct dialects of the R programming language in the wild. The first and original dialect is typically referred to as "base" R, which derives from the base R package that comes pre-loaded as part of the standard R installation. The second, is known as the ["tidyverse"](https://www.tidyverse.org/) (or affectionately "Hadleyverse") was largely developed by Hadley Wickham, one of R's most prolific R package contributors. The tidyverse is an 'opinionated' collection of R packages that duplicate and seek to improve upon numerous base R functions for data manipulation (e.g. dplyr) and graphing (e.g. ggplot2). As the tidyverse has grown increasing more comprehensive, it has been suggested that it be taught first to new R users. The debate between which R dialect is better has generated a lot of heat, but not much light. This talk will review the similarities (with numerous examples) between the 2 dialects and hopefully help give new and old R users some perspective.
 
 
+## Comparison
 
-**Base R**
+**base**
+
 - base R is more closely associated with "Statistics", with focus on **statistical methods** not data manipulation methods
 - variable syntax
 - multiple ways to accomplish the same thing
-- the vector is probably the primary object 
+- vector is probably the primary object
+- base functions may produce multiple outputs based on arguments
+- stable
 - lots of [books](https://www.r-project.org/doc/bib/R-books.html) and [examples](https://www.statmethods.net/index.html), but fewer [free books](https://en.wikibooks.org/wiki/R_Programming)
 
-**Tidyverse**
+
+**tidyverse**
+
 - tidyverse more closely associated with "Data Science", with focus on **data manipulation** methods
-- consistent synatx
+- consistent synatx (e.g. data argument always comes first)
 - fewer ways to accomplish the same thing
-- the data.frame is the primary object
+- data.frame is the primary object
+- tidyverse functions produce a single output
+- unstable
 - lots of [free books](https://bookdown.org/)[(e.g. R for Data Science)](http://r4ds.had.co.nz/) and [examples](https://www.rstudio.com/resources/cheatsheets/) of tidyverse 
 
 
@@ -41,10 +49,12 @@ There are now 2 distinct dialects of the R programming language in the wild. The
 ## Load Packages
 
 ```{r}
-library(aqp)
-library(soilDB) # install from github
-library(lattice)
-library(tidyverse) # includes: dplyr, tidyr, ggplot2, etc...
+suppressWarnings( {
+  library(aqp)
+  library(soilDB) # install from github
+  library(lattice)
+  library(tidyverse) # includes: dplyr, tidyr, ggplot2, etc...
+  })
 ```
 
 ## Toy Soil Dataset
@@ -81,7 +91,7 @@ plot(h2[1:10], label = "compname", name = "genhz", color = "clay_r")
 In a lot of cases the tidyverse has different defaults for similarly named functions.
 
 
-## strings vs factors
+### strings vs factors
 
 ```{r}
 fp <- "C:/workspace2/test.csv"
@@ -141,23 +151,31 @@ summary(h$clay_r, na.rm = TRUE)
 
 ## Non-Standard Evaluation (NSE)
 
-Non-standard evaluation (NSE) allows you access columns within a data.frame without the need to repeatedly specifying the data.frame. This is particularly useful with long data.frame object names (e.g. soil_horizons vs h) and many calls to different columns. The tidyverse implements NSE by default. Base R has a few functions like 'with()' that facilitate NSE evaluation, but few functions implement it by default. NSE is somewhat contensious because it can have unintended consequences if you have objects and columns with the same name. As such, NSE is generally meant for interactive analysis, and not programming.
+Non-standard evaluation (NSE) allows you access columns within a data.frame without the need to repeatedly specifying the data.frame. This is particularly useful with long data.frame object names (e.g. soil_horizons vs h) and many calls to different columns. The tidyverse implements NSE by default. Base R has a few functions like 'with()' and 'attach()' that facilitate NSE evaluation, but few functions implement it by default. NSE is somewhat contensious because it can have unintended consequences if you have objects and columns with the same name. As such, NSE is generally meant for interactive analysis, and not programming.
 
 ```{r nse}
 # base option 1
-with(h, summary(clay_r, na.rm = TRUE))
-
+with(h, { data.frame(
+  min = min(clay_r, na.rm = TRUE),
+  mean = mean(clay_r, na.rm = TRUE), 
+  max = max(clay_r, na.rm = TRUE)
+  )})
+  
 # base option 2
 attach(h)
-summary(clay_r, na.rm = TRUE)
+data.frame(
+  min = min(clay_r, na.rm = TRUE),
+  mean = mean(clay_r, na.rm = TRUE), 
+  max = max(clay_r, na.rm = TRUE)
+  )
 detach(h)
 
 # tidyverse non-standard evaluation (enabled by default) - dplyr
-summarize(h, 
+summarize(h,
           min = min(clay_r, na.rm = TRUE), 
           mean = mean(clay_r, na.rm = TRUE), 
           max = max(clay_r, na.rm = TRUE)
-          ) # notice the output is a data.frame
+          )
 
 ```
 
@@ -214,20 +232,20 @@ In lots of cases we want to know the variation within groups.
 # base
 vars <- c("compname", "genhz")
 sca_b <- {
-  split(h, h[vars], drop = TRUE) ->.;
-  lapply(., function(x) data.frame(
+  split(h, h[vars], drop = TRUE) ->.;                 # split
+  lapply(., function(x) data.frame(                   # apply 
     x[vars][1, ],
     clay_min  = round(min(x$clay_r, na.rm =TRUE)),
     clay_mean = round(mean(x$clay_r, na.rm = TRUE)),
     clay_max  = round(max(x$clay_r, na.rm = TRUE))
     )) ->.;
-  do.call("rbind", .)
+  do.call("rbind", .)                                  # combine
   }
 print(sca_b)
 
 # tidyverse - dplyr
-sca_t <- group_by(h, compname, genhz) %>%
-  summarize(
+sca_t <- group_by(h, compname, genhz) %>%              # split (sort of)
+  summarize(                                           # apply and combine
     clay_min  = round(min(clay_r, na.rm =TRUE)),
     clay_mean = round(mean(clay_r, na.rm = TRUE)),
     clay_max  = round(max(clay_r, na.rm = TRUE))
@@ -248,23 +266,24 @@ vars <- c("clay_r", "sand_r", "om_r")
 idvars <- c("compname", "genhz")
 head(h[c(idvars, vars)])
 
-lo_b <- reshape(h[c("compname", "genhz", vars)],
+lo_b <- reshape(h[c("compname", "genhz", vars)],      # need to exclude unused columns
                   direction = "long",
-                  timevar = "variable", times = vars,
-                  v.names = "value", varying = vars
+                  timevar = "variable", times = vars, # capture names of variables in variable column
+                  v.names = "value", varying = vars   # capture values of variables in value column
                   )
 head(lo_b) # notice the row.names
 
 # tidyverse wide to long
 idx <- which(names(h) %in% vars)
-lo_t <- select(h, compname, idx) %>%
+lo_t <- select(h, compname, idx) %>%                   # need to exclude unused columns
   gather(key = variable, 
-         value = value, 
+         value = value,
          - compname
          )
 
 head(lo_t)
 
+# sort factors
 comp_sort <- aggregate(value ~ compname, data = lo_b[lo_b$variable == "clay_r", ], median, na.rm = TRUE)
 comp_sort <- comp_sort[order(comp_sort$value), ]
 lo_b <- within(lo_b, {
@@ -272,13 +291,17 @@ lo_b <- within(lo_b, {
   genhz = factor(genhz, levels = rev(levels(genhz)))
   })
 
+
 # lattice density plot
-bwplot(genhz ~ value | variable + compname, data = lo_b,
-            scales = list(x = "free")
-            )
+bwplot(genhz ~ value | variable + compname, 
+       data = lo_b,
+       scales = list(x = "free")
+       )
+
+
 # ggplot2 density plot
-ggplot(lo_b, aes(x = genhz, y = value)) +
-  geom_boxplot() +
+ggplot(lo_b, aes(x = genhz, y = value)) + # ggplot2 doesn't like factors or strings on the y-axis
+  geom_boxplot() +                        # notice ggplot2 pipes is "+" not "%>%"
   facet_wrap(~ compname + variable, scales = "free_x") +
   coord_flip()
 ```
@@ -332,4 +355,23 @@ xyplot(data = test, dept_r ~ as.integer(month) | compname,
 
 ## Conclusion
 
-- the tidyverse is verbose
+The tidyverse and it's precusors plyr and reshape2, introduced me to a lot of cool ways of manipulating data in new ways, and made me question 'how I would do that in base'.
+
+**base**
+
+- can be tidyish
+- more abstract syntax (e.g. "[")
+- fast
+- 'very' flexible, to the point of being confusing
+- awkward defaults (e.g. column and row naming, default sorting)
+
+**tidyverse**
+
+- more verbose syntax for some things, less verbose for others
+- faster (usually)
+- 'very' opinionated, to the point of being annoying
+- clean defaults
+
+## Questions
+
+- is the tidyverse a better syntax for new R users?
