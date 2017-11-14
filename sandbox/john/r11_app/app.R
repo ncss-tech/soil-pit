@@ -82,7 +82,7 @@ sidebar<-dashboardSidebar(
               
               menuItem("Long Range Plan", icon=icon("plane"),
                        menuSubItem("Report", tabName="lrp", icon=icon("calendar")),
-                       textInput(inputId="lrpinput", label="Enter SSO Office -", "11-UNI"),
+                       textInput(inputId="lrpinput", label="Enter Region -", "11"),
                        actionButton("lrpsubmit", "Submit"), br(),p()
                        ),
               
