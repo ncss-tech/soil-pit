@@ -23,7 +23,7 @@ There are now 2 distinct dialects of the R programming language in the wild. The
 
 
 **Base R**
-- base R is more closely associated with "Statistics", with focus on **statistical methods**
+- base R is more closely associated with "Statistics", with focus on **statistical methods** not data manipulation methods
 - variable syntax
 - multiple ways to accomplish the same thing
 - the vector is probably the primary object 
@@ -42,7 +42,7 @@ There are now 2 distinct dialects of the R programming language in the wild. The
 
 ```{r}
 library(aqp)
-library(soilDB)
+library(soilDB) # install from github
 library(lattice)
 library(tidyverse) # includes: dplyr, tidyr, ggplot2, etc...
 ```
@@ -51,28 +51,37 @@ library(tidyverse) # includes: dplyr, tidyr, ggplot2, etc...
 
 ```{r}
 # soil data for Marion County
-s <- get_component_from_SDA(WHERE = "compname = 'Miami' AND majcompflag = 'Yes'")
-s <- subset(s, comppct_r > 15)
-h <- get_chorizon_from_SDA(WHERE = "compname = 'Miami'")
+s <- get_component_from_SDA(WHERE = "compname IN ('Miami', 'Crosby') AND majcompflag = 'Yes' AND areasymbol != 'US'")
+h1 <- get_chorizon_from_SDA(WHERE = "compname IN ('Miami', 'Crosby')")
+source("https://raw.githubusercontent.com/ncss-tech/soilReports/master/inst/reports/region11/lab_summary_by_taxonname/genhz_rules/Miami_rules.R")
 
+h <- subset(h1, cokey %in% s$cokey & !grepl("H", hzname))
+h$genhz <- generalize.hz(h$hzname, new = ghr$n, pat = ghr$p)
 names(h) <- gsub("total", "", names(h))
-h2 <- merge(s[c("cokey", "compname")], h, by = "cokey", all.x = TRUE)
+h2 <- h
+
+h <- merge(h, s[c("cokey", "compname")], by = "cokey", all.x = TRUE)
+
 depths(h2) <- cokey ~ hzdept_r + hzdepb_r
+site(h2) <- s
 
 # examine dataset
 
-str(h2, 2)
+str(h, 2)
 
 
 # plot dataset
 
-plot(h2[1:10], label = "cokey", name = "hzname", color = "clay_r")
+plot(h2[1:10], label = "compname", name = "genhz", color = "clay_r")
 ```
 
 
 ## Options
 
 In a lot of cases the tidyverse has different defaults for similarly named functions.
+
+
+## strings vs factors
 
 ```{r}
 fp <- "C:/workspace2/test.csv"
@@ -90,23 +99,28 @@ options(stringsAsFactors = FALSE)
 s_b <- read.csv(file = fp)
 str(s_b$drainagecl)
 
+# tidyverse -readr
+s_t <- read_csv(file = fp) # notice the output is a data.frame
+str(s_t$drainagecl)
+
+```
+
+### Printing
+```{r}
+# base
 head(s_b) # or
 # print(s_b) # prints the whole table
 
 # tidyverse
-s_t <- read_csv(file = fp) # notice the output is a data.frame
-str(s_t$drainagecl)
-
 head(s_t) # or 
 # print(s_t) # prints the first 10 rows
 
 ```
 
 
-## Standard Evaluation
+## Standard Evaluation with base R
 
 ```{r accessing operators}
-# base
 
 ## square brackets using column names
 summary(h[, "clay_r"], na.rm = TRUE)
@@ -127,7 +141,7 @@ summary(h$clay_r, na.rm = TRUE)
 
 ## Non-Standard Evaluation (NSE)
 
-Non-standard evaluation (NSE) allows you access columns within a data.frame with repeatedly specifying data.frame. This is particularly useful with long data.frame object names (e.g. soil_horizons vs h). The tidyverse implements NSE by default. Base R has a few functions like 'with()' that facilitate NSE evaluation, but few functions implement it by default. NSE is somewhat contensious because it can have unintended consequences. As such, NSE is generally meant for interactive analysis, and not programming.
+Non-standard evaluation (NSE) allows you access columns within a data.frame without the need to repeatedly specifying the data.frame. This is particularly useful with long data.frame object names (e.g. soil_horizons vs h) and many calls to different columns. The tidyverse implements NSE by default. Base R has a few functions like 'with()' that facilitate NSE evaluation, but few functions implement it by default. NSE is somewhat contensious because it can have unintended consequences if you have objects and columns with the same name. As such, NSE is generally meant for interactive analysis, and not programming.
 
 ```{r nse}
 # base option 1
@@ -138,7 +152,7 @@ attach(h)
 summary(clay_r, na.rm = TRUE)
 detach(h)
 
-# tidyverse non-standard evaluation (enabled by default)
+# tidyverse non-standard evaluation (enabled by default) - dplyr
 summarize(h, 
           min = min(clay_r, na.rm = TRUE), 
           mean = mean(clay_r, na.rm = TRUE), 
@@ -152,12 +166,12 @@ summarize(h,
 
 ```{r subsetting}
 # base R
-sub_b <- subset(h, hzdept_r < 1)
+sub_b <- subset(h, genhz == "Ap")
 
 dim(sub_b)
 
-# tidyverse
-sub_t <- filter(h, hzdept_r < 1)
+# tidyverse - dplyr
+sub_t <- filter(h, genhz == "Ap")
 
 dim(sub_t)
 ```
@@ -166,10 +180,10 @@ dim(sub_t)
 
 ```{r ordering}
 # base
-with(s, s[order(- comppct_r, nationalmusym), ])[1, 1:4]
+with(h, h[order(cokey, hzdept_r), ])[1:4, 1:4]
 
-# tidyverse
-arrange(s, - comppct_r, nationalmusym)[1, 1:4]
+# tidyverse - dplyr
+arrange(h, cokey, hzdept_r)[1:4, 1:4]
 ```
 
 ## Pipping
@@ -179,14 +193,46 @@ Referred too as 'syntactic' sugar, pipping is supposed to make code more readabl
 ```{r pipping}
 # base
 pip_b <- {subset(s, drainagecl == "Well drained") ->.;
-  .[order(.$compname), ] ->.;
+  .[order(.$nationalmusym), ]
   }
-pip_b[1, 1:4]
+pip_b[1:4, 1:4]
 
 # tidyverse
 pip_t <- filter(s, drainagecl == "Well drained") %>% 
-  arrange(compname)
-pip_t[1, 1:4]
+  arrange(nationalmusym)
+pip_t[1:4, 1:4]
+
+```
+
+
+## Split-Combine-Apply
+
+In lots of cases we want to know the variation within groups.
+
+```{r split}
+
+# base
+vars <- c("compname", "genhz")
+sca_b <- {
+  split(h, h[vars], drop = TRUE) ->.;
+  lapply(., function(x) data.frame(
+    x[vars][1, ],
+    clay_min  = round(min(x$clay_r, na.rm =TRUE)),
+    clay_mean = round(mean(x$clay_r, na.rm = TRUE)),
+    clay_max  = round(max(x$clay_r, na.rm = TRUE))
+    )) ->.;
+  do.call("rbind", .)
+  }
+print(sca_b)
+
+# tidyverse - dplyr
+sca_t <- group_by(h, compname, genhz) %>%
+  summarize(
+    clay_min  = round(min(clay_r, na.rm =TRUE)),
+    clay_mean = round(mean(clay_r, na.rm = TRUE)),
+    clay_max  = round(max(clay_r, na.rm = TRUE))
+  )
+print(sca_t)
 
 ```
 
@@ -199,10 +245,10 @@ In lots of instances, particularly for graphing, it's necessary to convert the a
 
 # base wide to long
 vars <- c("clay_r", "sand_r", "om_r")
+idvars <- c("compname", "genhz")
+head(h[c(idvars, vars)])
 
-head(h[c("compname", vars)])
-
-lo_b <- reshape(h[c("compname", vars)],
+lo_b <- reshape(h[c("compname", "genhz", vars)],
                   direction = "long",
                   timevar = "variable", times = vars,
                   v.names = "value", varying = vars
@@ -221,16 +267,19 @@ head(lo_t)
 
 comp_sort <- aggregate(value ~ compname, data = lo_b[lo_b$variable == "clay_r", ], median, na.rm = TRUE)
 comp_sort <- comp_sort[order(comp_sort$value), ]
-lo_b$compname <- factor(lo_b$compname, levels = comp_sort$compname)
+lo_b <- within(lo_b, {
+  compname = factor(lo_b$compname, levels = comp_sort$compname)
+  genhz = factor(genhz, levels = rev(levels(genhz)))
+  })
 
 # lattice density plot
-bwplot(compname ~ value | variable, data = lo_b,
-            scales = list(x = "free"),
+bwplot(genhz ~ value | variable + compname, data = lo_b,
+            scales = list(x = "free")
             )
 # ggplot2 density plot
-ggplot(lo_b, aes(x = compname, y = value)) +
+ggplot(lo_b, aes(x = genhz, y = value)) +
   geom_boxplot() +
-  facet_grid(~ variable, scales = "free_x") +
+  facet_wrap(~ compname + variable, scales = "free_x") +
   coord_flip()
 ```
 
