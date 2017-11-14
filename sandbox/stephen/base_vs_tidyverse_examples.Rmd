@@ -8,6 +8,8 @@ output:
     toc_float:
       collapsed: yes
       smooth_scroll: no
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -16,78 +18,61 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Abstract
 
-There are now 2 distinct dialects of the R programming language in the wild. The first and original dialect is typically referred to as "base" R, which derives from the base R package that comes pre-loaded as part of the standard R installation. The second, is known as the ["tidyverse"](https://www.tidyverse.org/) (or affectionately "Hadleyverse") was largely developed by Hadley Wickham, one of R's most prolific R package contributors. The tidyverse is an 'opinionated' collection of R packages that duplicate and seek to improve upon numerous base R functions for data manipulation (e.g. dplyr) and graphing (e.g. ggplot2). As the tidyverse has grown increasing more comprehensive, it has been suggested that it be taught first to new R users. The debate between which R dialect is better has generated a lot of heat, but much light. This talk will review the similarities (with numerous examples) between the 2 dialects and hopefully help give new and old R users some perspective.
+There are now 2 distinct dialects of the R programming language in the wild. The first and original dialect is typically referred to as "base" R, which derives from the base R package that comes pre-loaded as part of the standard R installation. The second, is known as the ["tidyverse"](https://www.tidyverse.org/) (or affectionately "Hadleyverse") was largely developed by Hadley Wickham, one of R's most prolific R package contributors. The tidyverse is an 'opinionated' collection of R packages that duplicate and seek to improve upon numerous base R functions for data manipulation (e.g. dplyr) and graphing (e.g. ggplot2). As the tidyverse has grown increasing more comprehensive, it has been suggested that it be taught first to new R users. The debate between which R dialect is better has generated a lot of heat, but not much light. This talk will review the similarities (with numerous examples) between the 2 dialects and hopefully help give new and old R users some perspective.
 
 
 
 **Base R**
-- base R more closely associated with "statistics", with focus on statistical methods
+- base R is more closely associated with "Statistics", with focus on **statistical methods**
 - variable syntax
-- lots of [books](https://www.r-project.org/doc/bib/R-books.html) and [examples](https://www.statmethods.net/index.html), but fewer [free books](https://en.wikibooks.org/wiki/R_Programming)
 - multiple ways to accomplish the same thing
+- the vector is probably the primary object 
+- lots of [books](https://www.r-project.org/doc/bib/R-books.html) and [examples](https://www.statmethods.net/index.html), but fewer [free books](https://en.wikibooks.org/wiki/R_Programming)
 
 **Tidyverse**
-- tidyverse more closely associated with "Data Science", with focus on data manipulation methods
+- tidyverse more closely associated with "Data Science", with focus on **data manipulation** methods
 - consistent synatx
-- lots of [free books](https://bookdown.org/)[(e.g. R for Data Science)](http://r4ds.had.co.nz/) and [examples](https://www.rstudio.com/resources/cheatsheets/) of tidyverse 
 - fewer ways to accomplish the same thing
-- has similarly named functions (e.g. order vs arrange, subset vs filter)
+- the data.frame is the primary object
+- lots of [free books](https://bookdown.org/)[(e.g. R for Data Science)](http://r4ds.had.co.nz/) and [examples](https://www.rstudio.com/resources/cheatsheets/) of tidyverse 
 
 
 
 ## Load Packages
 
 ```{r}
-library(tidyverse) # includes: dplyr, tidyr, ggplot2, etc...
+library(aqp)
 library(soilDB)
+library(lattice)
+library(tidyverse) # includes: dplyr, tidyr, ggplot2, etc...
 ```
 
 ## Toy Soil Dataset
 
 ```{r}
-comp <- fetchSDA_component(WHERE = "areasymbol = 'IN097'")
+# soil data for Marion County
+s <- get_component_from_SDA(WHERE = "compname = 'Miami' AND majcompflag = 'Yes'")
+s <- subset(s, comppct_r > 15)
+h <- get_chorizon_from_SDA(WHERE = "compname = 'Miami'")
 
-m <- comp$mapunit
-spc <- comp$spc
-h <- horizons(spc)
-s <- site(spc)
-
-h <- merge(h, s[c("cokey", "compname")], by = "cokey", all.x = TRUE)
-
+names(h) <- gsub("total", "", names(h))
+h2 <- merge(s[c("cokey", "compname")], h, by = "cokey", all.x = TRUE)
+depths(h2) <- cokey ~ hzdept_r + hzdepb_r
 
 # examine dataset
 
-str(spc, 2)
+str(h2, 2)
 
 
 # plot dataset
 
-plot(spc[1:10], label = "compname", name = "hzname", color = "claytotal_r")
+plot(h2[1:10], label = "cokey", name = "hzname", color = "clay_r")
 ```
 
-## Standard Evaluation
-
-```{r}
-# base
-
-## square brackets using column names
-mean(h[, "claytotal_r"], na.rm = TRUE)
-
-# square brackets using column indices
-mean(h[, 13], na.rm = TRUE)
-
-# square brackets using logical indices
-idx <- names(h) %in% "claytotal_r"
-mean(h[, idx], na.rm = TRUE)
-
-## $ operator
-mean(h$claytotal_r, na.rm = TRUE)
-
-```
 
 ## Options
 
-In a lot of cases the tidyverse has different defaults for similarly named functions, such as .
+In a lot of cases the tidyverse has different defaults for similarly named functions.
 
 ```{r}
 fp <- "C:/workspace2/test.csv"
@@ -97,108 +82,156 @@ s1 <- read.csv(file = fp)
 str(s1$drainagecl)
 
 # base option 1
-s1 <- read.csv(file = fp, stringsAsFactors = FALSE)
-str(s1$drainagecl)
+s_b <- read.csv(file = fp, stringsAsFactors = FALSE)
+str(s_b$drainagecl)
 
 # base option 2
 options(stringsAsFactors = FALSE)
-s1 <- read.csv(file = fp)
-str(s1$drainagecl)
+s_b <- read.csv(file = fp)
+str(s_b$drainagecl)
 
-head(s1) # or
-# print(s1) # prints the whole table
+head(s_b) # or
+# print(s_b) # prints the whole table
 
 # tidyverse
-s2 <- read_csv(file = fp)
-str(s2$drainagecl)
+s_t <- read_csv(file = fp) # notice the output is a data.frame
+str(s_t$drainagecl)
 
-head(s2) # or 
-print(s2) # prints the first 10 rows
+head(s_t) # or 
+# print(s_t) # prints the first 10 rows
 
 ```
 
 
-## Non-Standard Evaluation
+## Standard Evaluation
 
-The tidyverse operates 
+```{r accessing operators}
+# base
 
-```{r}
-# base non-standard evalution
-with(h, mean(claytotal_r, na.rm = TRUE))
+## square brackets using column names
+summary(h[, "clay_r"], na.rm = TRUE)
 
+# square brackets using logical indices
+idx <- names(h) %in% "clay_r"
+summary(h[, idx], na.rm = TRUE)
+
+# square brackets using column indices
+which(idx)
+summary(h[, 12], na.rm = TRUE)
+
+## $ operator
+summary(h$clay_r, na.rm = TRUE)
+
+```
+
+
+## Non-Standard Evaluation (NSE)
+
+Non-standard evaluation (NSE) allows you access columns within a data.frame with repeatedly specifying data.frame. This is particularly useful with long data.frame object names (e.g. soil_horizons vs h). The tidyverse implements NSE by default. Base R has a few functions like 'with()' that facilitate NSE evaluation, but few functions implement it by default. NSE is somewhat contensious because it can have unintended consequences. As such, NSE is generally meant for interactive analysis, and not programming.
+
+```{r nse}
+# base option 1
+with(h, summary(clay_r, na.rm = TRUE))
+
+# base option 2
 attach(h)
-mean(claytotal_r, na.rm = TRUE)
+summary(clay_r, na.rm = TRUE)
 detach(h)
 
 # tidyverse non-standard evaluation (enabled by default)
-summarize(h, mean(claytotal_r, na.rm = TRUE))
+summarize(h, 
+          min = min(clay_r, na.rm = TRUE), 
+          mean = mean(clay_r, na.rm = TRUE), 
+          max = max(clay_r, na.rm = TRUE)
+          ) # notice the output is a data.frame
 
 ```
 
 
 ## Subsetting vs Filtering
 
-```{r}
+```{r subsetting}
 # base R
-s_sub1 <- subset(s, drainagecl != "Well drained")
+sub_b <- subset(h, hzdept_r < 1)
 
-dim(s_sub1)
+dim(sub_b)
 
 # tidyverse
-s_sub2 <- filter(s, drainagecl != "Well drained")
+sub_t <- filter(h, hzdept_r < 1)
 
-dim(s_sub2)
+dim(sub_t)
 ```
 
 ## Ordering vs Arranging
 
-```{r}
+```{r ordering}
 # base
-with(s, s[order(cokey), ])[1, 1:4]
+with(s, s[order(- comppct_r, nationalmusym), ])[1, 1:4]
 
 # tidyverse
-arrange(s, cokey)[1, 1:4]
+arrange(s, - comppct_r, nationalmusym)[1, 1:4]
 ```
 
 ## Pipping
 
-Referred too as 'syntactic' sugar, pipping is supposed to make code more readable, by making if read from left to right, rather than from inside out.
+Referred too as 'syntactic' sugar, pipping is supposed to make code more readable, by making if read from left to right, rather than from inside out. This becomes particularly valuable when 3 or more functions combined. It also alleviates the need to overwrite existing objects.
+
+```{r pipping}
+# base
+pip_b <- {subset(s, drainagecl == "Well drained") ->.;
+  .[order(.$compname), ] ->.;
+  }
+pip_b[1, 1:4]
+
+# tidyverse
+pip_t <- filter(s, drainagecl == "Well drained") %>% 
+  arrange(compname)
+pip_t[1, 1:4]
+
+```
 
 
 ## Reshaping
 
-```{r, eval =  FALSE}
-soil_vals <- c("hzthk", "SolumDp", "CaCO3Dp", "claytotest", "firstbtclay", "mxvalue", "mxchroma")
-geo_vals1 <- c("SlopeSIE", "ProfCrv", "PlanCrv", "relpos", "wetness")
-vals <- c(soil_vals, geo_vals1)
+In lots of instances, particularly for graphing, it's necessary to convert the a data.frame from **wide** to **long** format. 
 
+```{r reshaping}
 
-# reshape with reshape2
-gw_lo1 <- melt(gw, id.vars = "EroClassFD", measure.vars = vals)
-gw_lo2 <- melt(gw, id.vars = "EroClassSIE", measure.vars = vals)
+# base wide to long
+vars <- c("clay_r", "sand_r", "om_r")
 
+head(h[c("compname", vars)])
 
-# reshape with base
-gw_lo1_b <- reshape(gw[c("EroClassFD", vals)],
-                    direction = "long",
-                    timevar = "variable", times = vals,
-                    v.names = "value", varying = vals 
-                    )
+lo_b <- reshape(h[c("compname", vars)],
+                  direction = "long",
+                  timevar = "variable", times = vars,
+                  v.names = "value", varying = vars
+                  )
+head(lo_b) # notice the row.names
 
-gw_wi1_b <- reshape(test, 
-                    direction = "wide",
-                    timevar = "variable",
-                    v.names = "value"
-                    )
-names(test2) <- gsub("value", "", names(test2))
+# tidyverse wide to long
+idx <- which(names(h) %in% vars)
+lo_t <- select(h, compname, idx) %>%
+  gather(key = variable, 
+         value = value, 
+         - compname
+         )
 
+head(lo_t)
 
-# reshape with tidyr
-idx <- which(names(gw) %in% vals)
-gw_lo1 <- select(gw, EroClassFD, idx) %>%
-  gather(key = variable, value = value, - EroClassFD)
-gw_lo2 <- select(gw, EroClassSIE, idx) %>%
-  gather(key = variable, value = value, - EroClassSIE)
+comp_sort <- aggregate(value ~ compname, data = lo_b[lo_b$variable == "clay_r", ], median, na.rm = TRUE)
+comp_sort <- comp_sort[order(comp_sort$value), ]
+lo_b$compname <- factor(lo_b$compname, levels = comp_sort$compname)
+
+# lattice density plot
+bwplot(compname ~ value | variable, data = lo_b,
+            scales = list(x = "free"),
+            )
+# ggplot2 density plot
+ggplot(lo_b, aes(x = compname, y = value)) +
+  geom_boxplot() +
+  facet_grid(~ variable, scales = "free_x") +
+  coord_flip()
 ```
 
 ```{r lattice, eval = FALSE, echo = FALSE}
