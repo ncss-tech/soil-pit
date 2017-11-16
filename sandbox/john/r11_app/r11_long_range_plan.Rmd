@@ -14,7 +14,7 @@ output:
 
 
 ```{r, echo = FALSE}
-knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE)
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE, fig.width = 8)
 
 options(stringsAsFactors = FALSE)
 ```
@@ -33,8 +33,16 @@ suppressWarnings( {
 ```{r}
 # get data
 
+# ssoffices <- c('1-FAI', '1-HOM', '1-IDF', '1-MTV', '1-OLY', '1-ONT', '1-PAL', '1-PAS', '1-RED', '1-SAL', '10-ALB', '10-BEM', '10-BIS', '10-DUL', '10-DVL', '10-FAR', '10-FER', '10-HAV', '10-ONA', '10-RED', '10-RHI', '10-STA', '11-ATL', '11-AUR', '11-CAR', '11-CLI', '11-FIN', '11-GAL', '11-IND', '11-JUE', '11-SPR', '11-UNI', '11-WAV', '12-BEL', '12-DFX', '12-FLI', '12-GRR', '12-PAS', '12-STJ', '12-TOL', '2-ARC', '2-CHI', '2-ELK', '2-HAN', '2-KEA', '2-KLF', '2-MIN', '2-SON', '2-TEM', '3-FRE', '3-GRE', '3-GRI', '3-HAM', '3-LAU', '3-MAZ', '3-NEW', '3-RHI', '3-RIC', '4-ALA', '4-DIL', '4-FTC', '4-GRA', '4-MIS', '4-MOS', '4-PIN', '4-POW', '4-PRI', '5-BUF', '5-DIC', '5-FTM', '5-GAR', '5-HAY', '5-LIN', '5-MIL', '5-NOR', '5-PIE', '5-PUE', '5-RAP', '5-SAL', '6-ASH', '6-COO', '6-HOT', '6-KNO', '6-LON', '6-MAT', '6-MIL', '6-MOR', '6-NOR', '6-OWN', '6-SPR', '7-AUB', '7-DEN', '7-FOR', '7-LOX', '7-MER', '7-MET', '7-MIL', '7-QUI', '7-TAV', '7-TIF', '7-TUP', '8-FLA', '8-GLO', '8-GRA', '8-LAS', '8-MAF', '8-OGD', '8-RIC', '8-SAN', '8-TUC', '8-VIC', '9-ABL', '9-ALT', '9-BRY', '9-KER', '9-LUB', '9-NAC', '9-PNB', '9-RBT', '9-ROS', '9-RUS', '9-STE', '9-STW', '9-WOD')
+
+# ss_sub <- ssoffices[grepl(params$region, ssoffices)]
+```
+
+
+```{r, eval = TRUE}
 url <- "https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-PROJECTS-Long_Range_Plan"
-p <- list(p_projectname = "%", p_ssoffice = paste0(isolate(input$lrpinput), "%"), p_start_fy = "10/01/2017", p_end_fy = "09/30/2027")
+
+p <- list(p_projectname = "%", p_ssoffice = paste0(isolate(input$lrpinput), "-%"), p_start_fy = "10/01/2017", p_end_fy = "09/30/2027")
 
 r <- parseWebReport(url, args = p)
 r_all <- r
@@ -52,10 +60,22 @@ names(r)[13] <- "ssoffice"
 
 r <- within(r, {
  project_acres  = as.numeric(gsub(",", "", project_acres))
- #start_date     = as.Date(start_date)
- #completed_date = as.Date(completed_date)
+ start_date     = as.Date(start_date, format = "%b %d %Y")
+ completed_date = as.Date(completed_date, format = "%b %d %Y")
+ p_short = abbreviate(gsub("MLRA|-", "", project_name), 10, strict = FALSE)
+ p_short = factor(p_short, levels = p_short[order(start_date, completed_date, project_acres, decreasing = TRUE)])
+ acres = cut(project_acres, 
+                        breaks = c(0, 10000, 50000, 100000, 250000, 500000, 1000000),
+                        labels = c("10k", "50k", "100k", "250k", "500k", "1000k")
+                        )
  })
 #write.csv(r, file = paste0("C:/Users/stephen.roecker/ownCloud/data/lims_data/lrp_", substr(Sys.time(), 1, 10), ".csv"), row.names = FALSE)
+
+
+# figure height for timeline plot
+
+n_tp <- length(unique(r$ssoffice[grepl(paste0("^", isolate(input$lrpinput), "-"), r$ssoffice)])) / 2 * 5
+
 ```
 
 ```{r}
@@ -65,7 +85,7 @@ r <- within(r, {
 
 ## figure
 
-r_sub <- subset(r, fy %in% 2018:2027 & grepl(isolate(input$lrpinput), ssoffice))
+r_sub <- subset(r, fy %in% 2018:2027 & grepl(paste0("^", isolate(input$lrpinput)), ssoffice))
 
 r_sub$office <- r_sub$ssoffice
 vars <- c("office", "fy", "project_type_name")
@@ -92,7 +112,7 @@ gg_acres <- ggplot(a_long_acres, aes(x = fy, y = value)) +
   geom_line() +
   facet_grid(office ~ project_type_name, scale = "free_y") +
   ggtitle("Long Range Plan Summarized by Acreage") + ylab("Acreage") + xlab("Fiscal Year") +
-  scale_x_continuous(breaks = seq(2018, 2027, 2))
+  scale_x_continuous(breaks = seq(2018, 2027, 2)) + theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5)) + scale_y_continuous(labels=function(n){format(n, scientific=FALSE)})
 
 a_long_n <- subset(a_long, value >= 1 & variable == "n")
 gg_n <- ggplot(a_long_n, aes(x = fy, y = value)) +
@@ -100,7 +120,7 @@ gg_n <- ggplot(a_long_n, aes(x = fy, y = value)) +
   geom_line() +
   facet_grid(office ~ project_type_name, scale = "free_y") +
   ggtitle("Long Range Plan Summarized by Total Number (n) of Projects") + ylab("n") + xlab("Fiscal Year") +
-  scale_x_continuous(breaks = seq(2018, 2027, 2))
+  scale_x_continuous(breaks = seq(2018, 2027, 2)) + theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5)) 
 
 
 # figure height of plots
@@ -109,7 +129,7 @@ n_offices <- length(unique(a$office)) + 1
 
 ```
 
-```{r, fig.width = 8}
+```{r}
 gg_acres
 gg_n
 ```
@@ -129,9 +149,7 @@ a_wide2 <- reshape(a2[names(a2) != "n"],
 names(a_wide2) <- gsub("acres.", "", names(a_wide2))
 row.names(a_wide2) <- 1:nrow(a_wide2)
 print(kable(a_wide2, align = "r", caption = "Long Range Plan Summarized by Acreage of Projects", format="html") %>% kable_styling(bootstrap_options=c("striped", "hover")))
-```
 
-``` {r, results='asis'}
 
 # by number of projects
 a_wide1 <- reshape(a[names(a) != "acres"],
@@ -147,20 +165,24 @@ print(kable(a_wide1, align = "r", caption = "Long Range Plan Summarized by Total
 ```
 
 
-```{r, eval = FALSE}
-# r2 <- r
-# 
-# r_sub <- subset(r, project_type_name %in% "MLRA")
-# 
-# vars <- c("ssoffice", "project_name", "start_date", "completed_date")
-# vals <- c("start_date", "completed_date")
-# r_long <- reshape(r_sub[vars],
-#                   direction = "long",
-#                   timevar = "variable", times = vals,
-#                   v.names = "value", varying = vals 
-#                   )
-# 
-# 
-# ggplot(r_long, aes(x = ))
+```{r, eval = TRUE, fig.height = n_tp}
+
+r_sub <- subset(r, project_type_name %in% "MLRA")
+
+vars <- c("fy", "ssoffice", "project_name", "p_short", "acres", "start_date", "completed_date")
+vals <- c("start_date", "completed_date")
+r_long <- reshape(r_sub[vars],
+                  direction = "long",
+                  timevar = "variable", times = vals,
+                  v.names = "value", varying = vals
+                  )
+
+
+ggplot(r_long, aes(x = value, y = p_short, color = acres)) +
+  geom_line(lwd = 1.5) +
+  geom_point(cex = 2) +
+  ggtitle("Timeline of MLRA Projects") + ylab("Abbreviated Project Name") +
+  facet_wrap(~ ssoffice, scales = "free_y", ncol = 2)
+  
 ```
 
