@@ -5,6 +5,13 @@ date: "November 8, 2017"
 output: html_document
 ---
 
+ANalysis of GraceNET data
+
+**GraceNet** - Greenhouse gas Reduction through Agricultural Carbon Enhancement network, Agriculture Research Service project data http://usdaars.maps.arcgis.com/apps/MapSeries/index.html?appid=9415d09247f64ae5bde462a3a9292e6c 
+
+
+Del Grosso, S. J., J. W. White, G. Wilson, B. Vandenberg, D. L. Karlen, R. F. Follett, J. M. F. Johnson et al. "Introducing the GRACEnet/REAP data contribution, discovery, and retrieval system." Journal of environmental quality 42, no. 4 (2013): 1274-1280.
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 rm(list=ls()) #clear previous data
@@ -43,7 +50,14 @@ library(readxl)
 
 ```
 
-**GraceNet** - Greenhouse gas Reduction through Agricultural Carbon Enhancement network, Agriculture Research Service project data http://usdaars.maps.arcgis.com/apps/MapSeries/index.html?appid=9415d09247f64ae5bde462a3a9292e6c 
+**GRACEnet** - Agriculture Research Service project data
+
+All available data downloaded for this project.
+
+Acosta-Martinez, V.; Adler, P.; Archer, D.; Arriaga, F.; Baker, J.; Balkcom, K.; Brooks, J.; Cook, K.; Del Grosso, S.; Delgado, J.; Dijkstra, F.; Dungan, R.; Durso, L.; Franzluebbers, A.; Frederick, J.; Gesch, R.; Gollany, H.; Halvorson, A.; Huang, C.; Jin, V.; Johnson, J.; Karlen, D.; Lamb, J.; Lehman, R.; Liebig, M.; Novak, J.; Osborne, S.; Phillips, R.; Roth, G.; Sainju, U.; Sistani, K.; Skinner, R.; Varvel, G.; Venterea, R.; Weyers, S.; Acosta-Martinez, V.; Adeli, A.; Augustine, D.; Barbour, N.; Barsotti, J.; Birrel, S.; Bjorneberg, D.; Blumenthal, D.; Bucholtz, D.; Caesar-TonThat, T.; Cantrell, K.; Chelko, C.; Dell , C.; Derner, J.; Dillard, A.; Ducey, T.; Gross, J.; Hatfield, P.; Jabro, J.; Johnson, H.; Kaplan, N.; Kaspar, T.; Knapp, S.; Kovar, J.; Lauenroth, W.; Lenssen, A.; Leytem, A.; McLaughlin, M.; Milchunas, D.; Miles, D.; Myers, M.; Nichols, K.; Pellack, L.; Polumsky, R.; Reyes-Fox, M.; Sauer, T.; Sigua, G.; Simmons, J.; Sindelar, A.; Smith, D.; Stevens, W.; Stott, D.; Tarkalson, D.; Tomer, M.; Upchurch, D.; Waldron, S.; Watts, D.; Wood, C.; Zobeck, T.. 2017. All; 1980-2017. ver. GPSR_NATRES. Fort Collins, CO: USDA-ARS Natural Resources Database. Project: Natural Resources and Genomics. URL: https://gpsr.ars.usda.gov/natres. File Downloaded: 2017-Oct-20;[02:05:46]. PID: d2e663ee-a9c5-4338-a319-f1db3e9276c7.
+
+****GRACEnet Data Portal****
+http://usdaars.maps.arcgis.com/apps/MapSeries/index.html?appid=9415d09247f64ae5bde462a3a9292e6c 
 
 
 **this code chunk downloads data into the folder you set to BD_data - uncomment to run**
@@ -52,7 +66,7 @@ library(readxl)
 #set BD_data equal to working directory
 #BD_data <- getwd()
 #get and combine gracenet data
-BD_data <- "C:/Users/skye.wills/ownCloud/BD_eval/"  #shortcut for personal use
+BD_data <- "D:/Disk 2/BD_eval/"  #shortcut for personal use
 
 # natres.url <- 'https://www.cloudvault.usda.gov/index.php/s/4AY9kGm6TVBD2u6/download'
 # ifelse(!file.exists(paste0(BD_data, '/natres.xlsx'),download.file(natres.xlsx, destfile = paste0(BD_data,'/data/natres.csv')), "File already downloaded")
@@ -88,7 +102,8 @@ bio <- read_excel(paste0(BD_data, "data/natres.xlsx"), sheet = "MeasSoilBiol")
 names(bio) <- gsub(" ", "_", names(bio))
 names(bio) <- gsub("/", "per", names(bio)) #fix names so that there are no /(special character)
 
-             #join descriptors             
+
+#select relevant fields and join descriptors             
 grnt <- site %>% select(SiteID, Date, Elev = Elevation_m, lat = Latitude_decimal_deg, lon = Longitude_decimal_deg, 
                              Spatial_Description, Native_Veg, MAP = MAP_mm, MAT = MAT_degC) %>%
               left_join(units %>% select(SiteID, Treatment_ID, Exp_Unit_ID, Field_ID, Slope_pct, lat_unit = Latitude, lon_unit = Longitude, 
@@ -106,7 +121,7 @@ grnt <- site %>% select(SiteID, Date, Elev = Elevation_m, lat = Latitude_decimal
 
 ```{r graphs}
 
-# Graphs of BD and OM
+# Graphs of BD and SOC
 
 #limit to surface horizons
 G <- grnt %>% filter(!is.na(BD) & !is.na(SOC) & Upper_cm == 0)
@@ -185,14 +200,14 @@ BowC <- G%>%
 BowC
 
 BowT <- G  %>%
-  ggplot(aes(x=BD, y = till, color =Upper_cm)) +  
+  ggplot(aes(x=SOC, y = till, color =Lower_cm)) +  
   geom_quasirandom(alpha=0.5, groupOnX=FALSE) + 
   scale_color_viridis(option = "magma")+
   theme_joy() +
   theme(plot.caption=element_text(hjust=0,size=9),
         axis.title=element_text(size=12),
         plot.title=element_text(size=24))+
-  labs(x="Bulk Density",y="Tillage",caption="GRACEnet by @wills_skye", title="Surface Bulk Density by Tillage")
+  labs(x="Bulk Density",y="Tillage",caption="GRACEnet by @wills_skye", title="Surface SOC by Tillage")
 
 BowT                  
 ```
