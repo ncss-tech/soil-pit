@@ -3,6 +3,10 @@
 library(shinydashboard)
 library(leaflet)
 
+source("c:/workspace2/wt.R")
+source("c:/workspace2/om.R")
+#source("c:/workspace2/pr.R")
+
 #create a dashboard header
 
 header<-dashboardHeader(
@@ -19,13 +23,7 @@ sidebar<-dashboardSidebar(
               menuItem("Water Table", icon=icon("tint"),
                        menuSubItem("Plot", tabName="WTPlots", icon=icon("area-chart")),
                        menuSubItem("Data", tabName="Data", icon=icon("table")), 
-                       selectInput("wtchoice", "Choose a query method -", c("Mapunit Key"="mukey","National Mapunit Symbol"="nationalmusym","Mapunit Name"="muname"), selected="mukey",multiple=FALSE),
-                       textInput(
-                         inputId="inmukey",
-                         label="Enter query -",
-                         406339),
-                       actionButton("submukey", "Submit"),
-                       radioButtons(inputId="filltype", "Choose fill:", c("flooding","ponding")), br()
+                       wt_selectInput("wt_query")
               ),
               
               #Organic Matter Menu
@@ -33,43 +31,44 @@ sidebar<-dashboardSidebar(
               menuItem("Organic Matter", icon=icon("leaf"),
                        menuSubItem("Plot", tabName="OMPlots", icon=icon("area-chart")),
                        menuSubItem("Data", tabName="omdata", icon=icon("table")),
-                       selectInput("omchoice", "Choose a query method -", c("Mapunit Key"="mukey","National Mapunit Symbol"="nationalmusym","Mapunit Name"="muname"), selected="mukey",multiple=FALSE),
-                       textInput(
-                         inputId="ominmukey",
-                         label="Enter query -",
-                         406338),
-                       actionButton("omsubmukey", "Submit"), br(),p()
+                       om_selectInput("om_query")
               ),
               
               #Project Report Menu
               
+              # menuItem("Project Report", icon=icon("stack-overflow"),
+                       # menuSubItem("Report", tabName="projectreport", icon=icon("file-text")),
+                        # pr_textAreaInput("pr_query")
+                       # ),
+
               menuItem("Project Report", icon=icon("stack-overflow"),
                        menuSubItem("Report", tabName="projectreport", icon=icon("file-text")),
                        textAreaInput(
                          inputId="projectreport",
-                         label="Enter Project Name -", "SDJR - MLRA 111A - Ross silt loam, 0 to 2 percent slopes, frequently flooded",
+                         label="Enter Project Name -", "EVAL - MLRA 111A - Ross silt loam, 0 to 2 percent slopes, frequently flooded",
                          resize="none",
                          rows=5),
                        actionButton("reportsubmit", "Submit"), br(),p()),
               
+                            
               #Project Extent Menu
               
               menuItem("Project Extent", icon=icon("map-signs"),
                        menuSubItem("Extent", tabName="projectextent", icon=icon("map")),
                        textInput(inputId="fyinput", label="Enter Fiscal Year -", 2018),
                        selectizeInput("office", "Choose an Office -",
-                                   c("11-ATL"="11-ATL",
-                                     "11-AUR"="11-AUR",
-                                     "11-CLI"="11-CLI",
-                                     "11-FIN"="11-FIN",
-                                     "11-GAL"="11-GAL",
-                                     "11-IND"="11-IND",
-                                     "11-JUE"="11-JUE",
-                                     "11-MAN"="11-MAN",
-                                     "11-SPR"="11-SPR",
-                                     "11-UNI"="11-UNI",
-                                     "11-WAV"="11-WAV"),
-                                   selected="11-CLI",multiple=FALSE, options=list(create=TRUE)),
+                                      c("11-ATL"="11-ATL",
+                                        "11-AUR"="11-AUR",
+                                        "11-CLI"="11-CLI",
+                                        "11-FIN"="11-FIN",
+                                        "11-GAL"="11-GAL",
+                                        "11-IND"="11-IND",
+                                        "11-JUE"="11-JUE",
+                                        "11-MAN"="11-MAN",
+                                        "11-SPR"="11-SPR",
+                                        "11-UNI"="11-UNI",
+                                        "11-WAV"="11-WAV"),
+                                      selected="11-CLI",multiple=FALSE, options=list(create=TRUE)),
                        textAreaInput(
                          inputId="projectextent",
                          label="Enter Project Name -","EVAL - MLRA 112 - Bates and Dennis soils, 3 to 5 percent slopes, eroded",
@@ -82,9 +81,9 @@ sidebar<-dashboardSidebar(
               
               menuItem("Long Range Plan", icon=icon("plane"),
                        menuSubItem("Report", tabName="lrp", icon=icon("calendar")),
-                       textInput(inputId="lrpinput", label="Enter Region -", "11"),
+                       textInput(inputId="lrpinput", label="Enter SSO Symbol -", "11"),
                        actionButton("lrpsubmit", "Submit"), br(),p()
-                       ),
+              ),
               
               #Source Code Menu
               
@@ -128,29 +127,24 @@ body<-dashboardBody(
     #water table plot tab   
     tabItem(tabName="WTPlots", class="active",
             titlePanel("Water Table Plots"),
-            verticalLayout(
-              infoBox("Mapunit Name:",
-                      uiOutput("muname", inline= TRUE, container=span),
-                      width=12, icon=icon("map"), color="blue"),
-              fluidRow(
-                box(plotOutput("result"), width=12)),
-              box("This application was developed by John Hammerly and Stephen Roecker.", width=12)
-            )
+            wt_tabItem("wt_query")
     ),
     
     #water table data tab
-    tabItem(
-      tabName="Data",
+    tabItem(tabName="Data",
       titlePanel("Water Table Data"),
-      verticalLayout(
-        infoBox("Mapunit Name:",
-                uiOutput("muname2", inline= TRUE, container=span), width=12, icon=icon("map"), color="blue"),
-        fluidRow(
-          box(tags$div(DT::dataTableOutput("shdatatab"), style="width:100%; overflow-x: scroll"), width=12),
+        wt_tabItem2("wt_query"),
+      verticalLayout(        
           box("This application was developed by John Hammerly and Stephen Roecker.", width=12))
-      )),
+      ),
     
     #project report tab
+    # tabItem(
+    #   tabName="projectreport",
+    #   titlePanel("Component Report from LIMS"),
+    #   pr_tabItem("pr_query")
+    #   ),
+    
     tabItem(
       tabName="projectreport",
       titlePanel("Component Report from LIMS"),
@@ -177,22 +171,20 @@ body<-dashboardBody(
       titlePanel("Long Range Plan"),
       verticalLayout(
         fluidRow(
-        box(tags$div(uiOutput("lrp", inline=TRUE, container=span), style="width:100%; overflow-x: scroll"), width=12),
-        box("This application was developed by John Hammerly and Stephen Roecker.", width=12)))
+          box(tags$div(uiOutput("lrp", inline=TRUE, container=span), style="width:100%; overflow-x: scroll"), width=12),
+          box("This application was developed by John Hammerly and Stephen Roecker.", width=12)))
     ),
     
     #Organic Matter Plot Tab
     tabItem(
       tabName="OMPlots",
       titlePanel("Organic Matter Plots"),
-      verticalLayout(
-        infoBox("Mapunit Name:",
-                uiOutput("muname3", inline= TRUE, container=span),
-                width=12, icon=icon("map"), color="blue"),
-        fluidRow(
-          box(plotOutput("omplot"), width=12)),
-        box("This application was developed by John Hammerly and Stephen Roecker.", width=12))
+      om_tabItem("om_query")
     ),
+    #organic matter data tab
+    tabItem(tabName="omdata",
+            titlePanel("Organic Matter Data"),
+            om_tabItem2("om_query")),
     
     #Help Tab
     tabItem(tabName="help",
@@ -224,96 +216,26 @@ body<-dashboardBody(
               infoBox("Source Code",
                       box("This menu item provides a link to a GitHub repository containing the computer code used in this application", width=12),
                       width=12, icon=icon("file-code-o"), color="red")
-            )
-    ),
-    #organic matter data tab
-    tabItem(tabName="omdata",
-            titlePanel("Organic Matter Data"),
-            verticalLayout(
-              infoBox("Mapunit Name:",
-                      uiOutput("muname4", inline= TRUE, container=span), width=12, icon=icon("map"), color="blue"),
-              fluidRow(
-                box(tags$div(DT::dataTableOutput("omdatatab"), style="width:100%; overflow-x: scroll"), width=12),
-                box("This application was developed by John Hammerly and Stephen Roecker.", width=12))
-            ))
-  )
-)
+              )
+              )
+
+  ))
 
 #combine the header, sidebar, and body into a complete page for the user interface
 ui <- dashboardPage(header, sidebar, body)
 
 #create a function for the server
-server <- function(input, output){
-  
-  #load required libraries
-  library(tidyverse)
-  library(soilDB)
-  library(dplyr)
-  library(ggplot2)
-  library(httr)
-  library(jsonlite)
-  library(DT)
-  library(aqp)
-  library(soilReports)
-  library(knitr)
-  
-  
+server <- function(input, output, session){
+
   #water table plot render
-  output$result <- renderPlot({ input$submukey
-    
-    
-    wtlevels <- get_cosoilmoist_from_SDA(WHERE = paste0(isolate(input$wtchoice),"='", isolate(input$inmukey), "'"), duplicates = TRUE)
-    
-    if (input$filltype=="flooding") {ggplot(wtlevels, aes(x = as.integer(month), y = dept_r, lty = status))+
-        geom_rect(aes(xmin = as.integer(month), xmax = as.integer(month)+
-                        1, ymin = 0, ymax = max(wtlevels$depb_r),fill = flodfreqcl)) +
-        geom_line(cex = 1) +
-        geom_point() +
-        geom_ribbon(aes(ymin = dept_l, ymax = dept_h), alpha = 0.2) +
-        ylim(max(wtlevels$depb_r), 0) +xlab("month") + ylab("depth (cm)") +
-        scale_x_continuous(breaks = 1:12, labels = month.abb, name="Month")+
-        facet_wrap(~ paste(compname, comppct_r, "pct", nationalmusym, sep = "-")) +
-        ggtitle("Water Table Levels from Component Soil Moisture Month Data")}
-    
-    else if (input$filltype=="ponding") {ggplot(wtlevels, aes(x = as.integer(month), y = dept_r, lty = status))+
-        geom_rect(aes(xmin = as.integer(month), xmax = as.integer(month)+
-                        1, ymin = 0, ymax = max(wtlevels$depb_r),fill = pondfreqcl)) +
-        geom_line(cex = 1) +
-        geom_point() +
-        geom_ribbon(aes(ymin = dept_l, ymax = dept_h), alpha = 0.2) +
-        ylim(max(wtlevels$depb_r), 0) +xlab("month") + ylab("depth (cm)") +
-        scale_x_continuous(breaks = 1:12, labels = month.abb, name="Month")+
-        facet_wrap(~ paste(compname, comppct_r, "pct", nationalmusym, sep = "-")) +
-        ggtitle("Water Table Levels from Component Soil Moisture Month Data")}})
-  
-  #mapunit name render for water table plot tab
-  output$muname<-renderText({    input$submukey
-    wtlevels <- get_cosoilmoist_from_SDA(WHERE = paste0(isolate(input$wtchoice),"='", isolate(input$inmukey), "'"), duplicates = TRUE)
-    
-    wtlevels$muname[1]})
-  
-  #mapunit name render for water table data tab
-  output$muname2<-renderText({   input$submukey 
-    wtlevels <- get_cosoilmoist_from_SDA(WHERE = paste0(isolate(input$wtchoice),"='", isolate(input$inmukey), "'"), duplicates = TRUE)
-    
-    wtlevels$muname[1]})
-  
-  #mapunit name render for organic matter plot tab
-  output$muname3<-renderText({   input$omsubmukey 
-    wtlevels <- get_cosoilmoist_from_SDA(WHERE = paste0(isolate(input$omchoice),"='", isolate(input$ominmukey), "'"), duplicates = TRUE)
-    
-    wtlevels$muname[1]})
-  
-  #mapunit name render for organic matter data tab
-  output$muname4<-renderText({   input$omsubmukey 
-    wtlevels <- get_cosoilmoist_from_SDA(WHERE = paste0(isolate(input$omchoice),"='", isolate(input$ominmukey), "'"), duplicates = TRUE)
-    
-    wtlevels$muname[1]})
-  
-  #render water table data table
-  output$shdatatab<- DT::renderDataTable({input$submukey
-    wtlevels <- get_cosoilmoist_from_SDA(WHERE = paste0(isolate(input$wtchoice),"='", isolate(input$inmukey), "'"), duplicates = TRUE)}, options = list(paging=FALSE))
-  
+
+wt_plot <- callModule(wt, "wt_query")
+
+om_plot <- callModule(om, "om_query")
+
+# pr <- callModule(pr, "pr_query")
+
+library(knitr)
   #render project report markdown
   output$projectreport<-renderUI({
     
@@ -443,7 +365,7 @@ server <- function(input, output){
       
       m<-leaflet()
       m<-addTiles(m, group="Open Street Map")
-
+      
       
       incProgress(1/10, detail =paste("Adding Data to Map"))
       
@@ -459,44 +381,17 @@ server <- function(input, output){
       m<-addProviderTiles(m, providers$Stamen.TonerLite, group="Stamen TonerLite")
       m<-addWMSTiles(m, "https://SDMDataAccess.sc.egov.usda.gov/Spatial/SDM.wms?", options= WMSTileOptions(version="1.1.1", transparent=TRUE, format="image/png"), layers="mapunitpoly", group="Soil Polygons")
       m<-addPolygons(m, data=sp.final, stroke=TRUE, color= ~pal(muname), weight=2, popup= paste("<b>MLRA SSO Area Symbol:  </b>", sp.final$Area.Symbol, "<br>",
-                                                    "<b>Project Type:  </b>", sp.final$Project.Type.Name, "<br>",
-                                                    "<b>Project Name:  </b>", sp.final$Project.Name, "<br>",
-                                                    "<b>Mapunit Key:  </b>", sp.final$mukey, "<br>",
-                                                    "<b>National Mapunit Symbol:  </b>", sp.final$National.Mapunit.Symbol, "<br>",
-                                                    "<b>Mapunit Name:  </b>", sp.final$muname), group="Mapunits")
+                                                                                                "<b>Project Type:  </b>", sp.final$Project.Type.Name, "<br>",
+                                                                                                "<b>Project Name:  </b>", sp.final$Project.Name, "<br>",
+                                                                                                "<b>Mapunit Key:  </b>", sp.final$mukey, "<br>",
+                                                                                                "<b>National Mapunit Symbol:  </b>", sp.final$National.Mapunit.Symbol, "<br>",
+                                                                                                "<b>Mapunit Name:  </b>", sp.final$muname), group="Mapunits")
       m<-addLayersControl(m, baseGroups=c("ESRI Street", "ESRI Topo", "ESRI Imagery","Open Street Map", "Stamen Terrain", "Stamen TonerLite"),overlayGroups=c("Soil Polygons", "MLRA", "Admin Boundaries", "Mapunits"))
       m<-addLegend(m, pal=pal, position="bottomleft", values= sp.final$muname)
-     incProgress(1/10, detail =paste("Your Map is on its way!"))
+      incProgress(1/10, detail =paste("Your Map is on its way!"))
     })
     m
   })
-  
-  #render organic matter plot
-  output$omplot<-renderPlot({ input$omsubmukey
-    # import soil data using the fetchSDA_component() function
-    omdata = fetchSDA_component(WHERE = paste0(isolate(input$omchoice),"='", isolate(input$ominmukey), "'"), duplicates= TRUE)
-    
-    # Convert the data for plotting
-    omdata_slice <- aqp::slice(omdata$spc, 0:200 ~ om_l + om_r + om_h)
-    h = horizons(omdata_slice)
-    h = merge(h, site(omdata$spc)[c("cokey", "compname", "comppct_r")], by = "cokey", all.x = TRUE)
-    
-    # plot clay content
-    ggplot(h) +
-      geom_line(aes(y = om_r, x = hzdept_r)) +
-      geom_ribbon(aes(ymin = om_l, ymax = om_h, x = hzdept_r), alpha = 0.2) +
-      xlim(200, 0) +
-      xlab("depth (cm)") + ylab("organic matter (%)") +
-      ggtitle("Depth Plots of Organic Matter by Soil Component") +
-      facet_wrap(~ paste(compname, comppct_r, "%")) +
-      coord_flip()})
-  
-  output$omdatatab<- DT::renderDataTable({input$omsubmukey
-    omdata <- fetchSDA_component(WHERE = paste0(isolate(input$omchoice),"='", isolate(input$ominmukey), "'"), duplicates= TRUE);    omdata_slice <- aqp::slice(omdata$spc, 0:200 ~ om_l + om_r + om_h)
-    h = horizons(omdata_slice)
-    h = merge(h, site(omdata$spc)[c("cokey", "compname", "comppct_r")], by = "cokey", all.x = TRUE)}, options = list(paging=FALSE))
-  
-  
 }
 
 #combine the user interface and server to generate the shiny app
