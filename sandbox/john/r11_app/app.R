@@ -3,8 +3,8 @@
 library(shinydashboard)
 library(leaflet)
 
-source("c:/workspace2/wt.R")
-source("c:/workspace2/om.R")
+source("wt.R")
+source("om.R")
 #source("c:/workspace2/pr.R")
 
 #create a dashboard header
