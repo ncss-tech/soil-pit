@@ -242,16 +242,28 @@ library(knitr)
     withProgress(message="Generating Report", detail="Please Wait", value=1, {includeMarkdown(knit("report.Rmd"))})})
   
   #render long range plan report markdown
+  
+  observeEvent(input$lrpsubmit,{
+    updateTabItems(session, "tabs", "lrp")
+  })
   output$lrp<-renderUI({ input$lrpsubmit
     withProgress(message="Generating Report", detail="Please Wait", value=1, {includeMarkdown(knit("r11_long_range_plan.Rmd"))})
   })
   
   #render project name text for project report tab
+  
+  observeEvent(input$reportsubmit,{
+    updateTabItems(session, "tabs", "projectreport")
+  })
   output$prjname<-renderText({input$reportsubmit
     prjname<-fetchLIMS_component(isolate(input$projectreport), fill = TRUE)
     prjname$mapunit[1,3]})
   
   #render project extent map
+  
+  observeEvent(input$extentsubmit,{
+    updateTabItems(session, "tabs", "projectextent")
+  })
   output$projectextentmap<-renderLeaflet({ input$extentsubmit
     
     #load required libraries  
