@@ -15,11 +15,11 @@ rm(list=ls()) #clear previous data
 require("knitr")
 knitr::opts_chunk$set(echo = TRUE, comment = "#", warning = FALSE, message = FALSE, error =FALSE, tidy.opts=list(width.cutoff=60),tidy=TRUE)
 
-opts_knit$set(root.dir = "C:/Users/skye.wills/ownCloud")
+opts_knit$set(root.dir = "C:/Users/skye.wills/ownCloud/AGU_BD-OM")
 workdir <- setwd(getwd()) # personalize the working directory for each user.
 opts_knit$set(root.dir = workdir)
 
-list.of.packages <- c("ggplot2", "plyr", "Rcpp", "RColorBrewer", "lattice", "aqp", "stringr", "reshape2", "ggthemes", "tidyverse", "RCurl", "Hmisc", "gridExtra", 'ggmosaic', 'ggpmisc', 'png','rstan','lme4', 'printr', "dplyr","tidyr",  "hexbin", "ggbeeswarm", "viridis", "gridExtra", "cetcolor", "ggjoy")
+list.of.packages <- c("ggplot2", "plyr", "Rcpp", "RColorBrewer", "lattice", "aqp", "stringr", "reshape2", "ggthemes", "tidyverse", "RCurl", "Hmisc", "gridExtra", 'ggmosaic', 'ggpmisc', 'png','rstan','lme4', 'printr', "dplyr","tidyr",  "hexbin", "ggbeeswarm", "viridis", "gridExtra", "cetcolor", "ggjoy", "readxl")
 
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
@@ -41,6 +41,7 @@ library(gridExtra)
 library(cetcolor)
 library(ggjoy)
 library(ggpmisc)
+library(readxl)
 
 # when ggjoy is decomisioned replace with  "ggridge", 
 
@@ -66,6 +67,8 @@ Data for this project was supplied by ISCN for BD modeling and population.
 
 **this code chunk downloads data into the folder you set to BD_data - uncomment to run**
 
+
+**Add RF model results to these - then look at those at the end.  Do a two-way comparison, dataset by estimation method**
 ```{r dataDownload}
 
 #set folder name to desired download location
@@ -94,6 +97,13 @@ BD_data <- "D:/Disk 2/BD_eval/"  #shortcut for personal use
 # iscn.url <- 'https://nrcs.box.com/shared/static/4abhdlvwxt8196fs99r25s46spvsmcok.csv'
 # ifelse(!file.exists('data/ISCN_BDfill_pred_wMEtA.csv'),download.file(iscn.url, destfile = paste0(BD_data,'/data/ISCN_BDfill_pred_wMEtA.csv')), "File already downloaded")
 
+#file from Umakant Mishra
+# iscnNLCD.url <- 'https://nrcs.box.com/shared/static/wyothwomyb9q8dg3rp21ew61juestd0b.xlsx'
+# ifelse(!file.exists('data/USobs_Luke.xlsx'),download.file(iscn.url, destfile = paste0(BD_data,'data/USobs_Luke.xlsx')), "File already downloaded")
+
+
+
+### links not working
 # # 
 # iscnNLCD.url <- 'http://iscn.fluxdata.org/wp-content/uploads/sites/15/ISCN_Template_NLCD.xlsx'
 # ifelse(!file.exists('data/ISCN_Template_NLCD.xlsx'),download.file(iscnNLCD.url, destfile = paste0(BD_data,'data/ISCN_Template_NLCD.xlsx')), "File already downloaded")
@@ -127,43 +137,48 @@ _wpg for ISCN needs to be converted to volumetric fragment content_
 
 #load datasets, create common columns, filter and label as needed
 ncss <- read.csv(paste0(BD_data, 'data/ncss.w.bd.csv'))
-names(ncss)
+#names(ncss)
 ncss$SOC <- ifelse(ncss$SOC<0, 0, ncss$SOC)
-n <- ncss[!is.na(ncss$BD), c("sample_id", "pedlabsampnum", "top", "bottom", "Model_desg", "M", "tex_psda", "CLAY", "SOC", "CF", "BD")]
-names(n) <- c("samp_id", "Pedon_ID", "Top", "Bottom", "Model_desg", "M", "Texture", "Clay", "SOC", "CourseFrag", "BD" )
+ncss$RF.Bulk.Density <- ifelse(!is.na(ncss$below), ncss$below, ncss$above)
+n <- ncss[!is.na(ncss$BD), c("sample_id", "pedlabsampnum", "top", "bottom", "Model_desg", "M", "tex_psda", "CLAY", "SOC", "CF", "BD", "RF.Bulk.Density")]
+names(n) <- c("samp_id", "Pedon_ID", "Top", "Bottom", "Model_desg", "M", "Texture", "Clay", "SOC", "CoarseFrag", "BD", "RF.BD" )
 n$LU <- "U" #U for unknown landuse
 n$SET <- "NCSS"
 
 raca <- read.csv(paste0(BD_data,'data/RaCA_samples.csv'))
-names(raca)
+#names(raca)
 raca$CALC_SOC <- ifelse(!is.na(raca$caco3),
                         ifelse(raca$caco3>0,raca$c_tot_ncs-(raca$caco3*0.12),raca$c_tot_ncs), raca$c_tot_ncs)
 raca$SOC <- ifelse(raca$CALC_SOC<0, 0, raca$CALC_SOC)
-r <- raca[!is.na(raca$Measure_BD), c("samp", "upedonid", "TOP", "BOT", "Model_desg", "M", "texture", "fragvolc", "SOC", "Measure_BD", "LU")]
-names(r) <- c("samp_id", "Pedon_ID", "Top", "Bottom", "Model_desg", "M", "Texture",  "CourseFrag", "SOC", "BD", "LU" )
+r <- raca[!is.na(raca$Measure_BD), c("samp", "upedonid", "TOP", "BOT", "Model_desg", "M", "texture", "fragvolc", "SOC", "Measure_BD", "Model_BD", "LU")]
+names(r) <- c("samp_id", "Pedon_ID", "Top", "Bottom", "Model_desg", "M", "Texture",  "CoarseFrag", "SOC", "BD", "RF.BD","LU" )
 r$SET <- "RaCA"
 r$Clay <- NA
 
 nwca <- read.csv(paste0(BD_data,'/data/nwca.SOCsamples_5-10.csv'))
-names(nwca)
-w <- nwca[!is.na(nwca$BD), c( "samp", "Pedon", "top", "bottom", "Model_desg" , "M", "TEXTURE_CLASS", "CLAY", "ROCK_FRAGMENTS", "SOC", "BD")]
-names(w) <- c("samp_id", "Pedon_ID" ,"Top", "Bottom", "Model_desg", "M", "Texture", "Clay", "CourseFrag", "SOC", "BD")
+#names(nwca)
+w <- nwca[!is.na(nwca$BD), c( "samp", "Pedon", "top", "bottom", "Model_desg" , "M", "TEXTURE_CLASS", "CLAY", "ROCK_FRAGMENTS", "SOC", "BD", "Model")]
+names(w) <- c("samp_id", "Pedon_ID" ,"Top", "Bottom", "Model_desg", "M", "Texture", "Clay", "CoarseFrag", "SOC", "BD", "RF.BD")
 w$LU <- "W"
 w$SET <- "NWCA"
+w$Pedon_ID <- as.factor(w$Pedon_ID)
 
 iscn <- read.csv(paste0(BD_data,'data/ISCN_BDfill_pred_wMEtA.csv'))
-names(iscn)
-iscn$vpg <- iscn$wpg2*iscn$BD #convert weight coarse frags to volume
-i <- iscn[!is.na(iscn$BD), c("layer_name", "profile_name" , "layer_top", "layer_bot", "model_desg" , "M", "CLAY", "vpg", "SOC", "BD") ]
-names(i) <- c("samp_id", "Pedon_ID" ,"Top", "Bottom", "Model_desg", "M", "Clay", "CourseFrag", "SOC", "BD")
+#names(iscn)
+#convert weight coarse frags to volume force to range from 0 - 100
+iscn$vpg <- ifelse(is.na(iscn$wpg2), 0,
+                   ifelse(is.na(iscn$BD), 1.5*iscn$wpg2,iscn$wpg2*iscn$BD))
+iscn$vpg <- ifelse(iscn$vpg>100, 100, iscn$vpg) 
+i <- iscn[!is.na(iscn$BD), c("layer_name", "profile_name" , "layer_top", "layer_bot", "model_desg" , "M", "CLAY", "vpg", "SOC", "BD", "BDfill.lab.pred") ]
+names(i) <- c("samp_id", "Pedon_ID" ,"Top", "Bottom", "Model_desg", "M", "Clay", "CoarseFrag", "SOC", "BD", "RF.BD")
 i$Clay <- as.numeric(i$Clay)
 i$Texture <- "U"
 i$LU <- "U"
 i$SET <- "ISCN"
 
-iscnNLCD <- read.csv(paste0(BD_data,'data/ISCN_Template_NLCD.xlsx'))
+#need link to lat lon to implement
+#iscnNLCD <- read_excel(paste0(BD_data,'data/USobs_Luke.xlsx'), sheet ="usobsLuke" )
 
-iscnPROFILE <- read.csv(paste0(BD_data,'data/ISCN_ALL-DATA_PROFILE_1-1.xlsx'))
 
 
 
@@ -174,9 +189,21 @@ combo <- rbind(n,r,w,i)
 #there are a number of really high bulk density numbers - primarily in the ISCN set - need to investigate further
 combo <- combo %>% filter(BD<2) 
 
+n_S <- combo %>%
+  group_by(SET) %>%
+  summarise(N = n())
 
 
+n_M <- combo %>%
+  group_by(SET, M) %>%
+  summarise(N = n())
 
+n_O <- combo %>%
+  filter(M =="O") %>%
+  group_by(SET)%>%
+  summarise(N=n())
+
+#knitr::kable(n_M),digits = 1, col.names =names(n_S), caption = "Number of Samples in each Dataset", row.names =F, padding= 2)
 
 ```
 
@@ -361,6 +388,41 @@ BowTc <- combo %>%
 
 BowTc
 
+#prep select graphs for export
+B <- combo %>%
+      filter(!is.na(BD)) %>%
+  ggplot(aes(x=BD, y = SET, color = BD)) +  
+  geom_quasirandom(alpha=0.82, groupOnX=FALSE) + 
+  scale_color_gradientn(colours = cet_pal(10, name = "cyclic_mrybm_35-75_c68_n256"), guide = FALSE)+
+  theme_joy() +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+  #labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title="Beeswarm Plot of BD by Dataset")
+ labs(x =expression(paste('Bulk Density (g cm'^-3,')')), y='Dataset')
+
+B
+
+# ggsave('BDswarm_all.png', plot = B, device = "png", path = 'C:/Users/skye.wills/ownCloud/AGU_BD-OMgraphs/poster', scale = 1, width = 6, height = 3, units = "in", dpi = 600, limitsize = TRUE)
+
+
+BowC <- combo %>%
+      filter(!is.na(BD) &!is.na(SOC) & M =='O' & LU =='W') %>%
+  ggplot(aes(x=BD, y = SET, color = SOC)) +  
+  geom_quasirandom(alpha=0.82, groupOnX=FALSE) + 
+  scale_color_viridis(option = "viridis")+
+  theme_joy() +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+#labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title="Bulk Density of O Horizons \n in Wetlands by Dataset")
+ labs(x =expression(paste('Bulk Density (g cm'^-3,')')), y='Dataset', color = 'SOC (%)')
+
+BowC
+
+
+
+
 ```
 There is an known accepted relationship between SOC and BD. However, the relationship between the two variables does not appear to be standard by dataset.
 
@@ -393,17 +455,24 @@ YPm
 op <- combo %>%
       filter(!is.na(BD) & !is.na(SOC) & M =='O') %>%
   ggplot(aes(x=BD, y = SOC, color = SET)) + geom_point() + ggtitle("Organic Samples") +
-  ggtitle('BD and SOC -- Samples with O designation') +  scale_color_hue(l=40)
+  ggtitle('Samples Designated as O Horizons') + scale_color_hue(l=40) +
+  labs(x =expression(paste('Bulk Density (g cm'^-3,')')), y='Soil Organic Carbon (%)')
 
 opf <- op + facet_wrap(~SET)
 opf
 
+
 opc <- combo %>%
       filter(!is.na(BD) & !is.na(SOC) & M =='O' & SOC > 20) %>%
   ggplot(aes(x=BD, y = SOC, color = SET)) + geom_point() + ggtitle("Organic Samples") +
-  ggtitle('BD and SOC -- Organic samples, SOC > 20 %') + facet_wrap(~SET)+
-  scale_color_hue(l=40)
+  ggtitle('Organic samples, SOC > 20%') + facet_wrap(~SET) + scale_color_hue(l=40) +  
+  labs(x =expression(paste('Bulk Density (g cm'^-3,')')), y='Soil Organic Carbon (%)')
+
 opc
+
+# ggsave('BDvSOC_O.png', plot = opf, device = "png", path = 'C:/Users/skye.wills/ownCloud/AGU_BD-OM/graphs/poster', scale = 1, width = 6, height = 3, units = "in", dpi = 600, limitsize = TRUE)
+
+# ggsave('BDvSOC_O20.png', plot = opc, device = "png", path = 'C:/Users/skye.wills/ownCloud/AGU_BD-OMgraphs/poster', scale = 1, width = 6, height = 3, units = "in", dpi = 400, limitsize = TRUE)
 
 
 cop <- combo %>%
@@ -437,7 +506,17 @@ wp <- combo %>%
 
 wp
 
+out <- combo %>%
+      filter(!is.na(BD) & !is.na(SOC) & M =='O') %>%
+  ggplot(aes(x=BD, y = SOC, color = LU)) + geom_point() + ggtitle("Organic Samples") +
+  ggtitle('Samples Designated as O Horizons') + scale_color_hue(l=40) +
+  labs(x =expression(paste('Bulk Density (g cm'^-3,')')), y='Soil Organic Carbon (%)', color = 'Land Use-Cover \n Class') + 
+  facet_wrap(~SET) + 
+  scale_colour_discrete(l = 50,breaks = c( "C", "F", "P", "R","X", "W", "U"),
+    labels = c( "Cropland", "Forestland", "Pastureland","Rangeland", "Covservation Reserve Program", "Wetland", "Unknown"))
 
+
+# ggsave('BDvSOC_byLU.png', plot = out, device = "png", path = 'C:/Users/skye.wills/ownCloud/AGU_BD-OM/graphs/poster', scale = 1, width = 10, height = 4.5, units = "in", dpi = 600, limitsize = TRUE)
 
 ```
 
@@ -521,7 +600,7 @@ mbs <- r_O %>%
   theme(plot.caption=element_text(hjust=0,size=9),
         axis.title=element_text(size=12),
         plot.title=element_text(size=12))+
-  labs(x="Bulk Density",y="Method",caption="@wills_skye", title="Bulk Density of O Horizons in Wetlands")
+  labs(x="Bulk Density",y="Method", title="Bulk Density of O Horizons in Wetlands")
 
 mbs
 
@@ -615,6 +694,26 @@ raca %>% select(samp, BDmethod, BD, fit, dev) %>%
 
 raca %>% select(samp, BDmethod, BD, fit, dev) %>%
   ggplot(aes(x=BD, y = fit, color = BDmethod))+ geom_point(aes(color = BDmethod))
+
+raca %>% select(samp, BDmethod, BD, SOC, dev) %>%
+  ggplot(aes(x=BD, y = SOC, color = BDmethod))+ geom_point(aes(color = BDmethod)) +
+  scale_color_colorblind()+  
+  labs(x =expression(paste('Bulk Density (g cm'^-3,')')), y='Soil Organic Carbon (%)', title = 'RaCA - Organic Samples in Wetlands')
+
+mbs <- r_O %>%
+  ggplot(aes(x=BD, y = BDmethod, color = SOC)) +  
+  geom_quasirandom(alpha=0.5, groupOnX=FALSE) + 
+  scale_color_viridis(option = "viridis")+
+  theme_joy() +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=12))+
+  labs(x =expression(paste('Bulk Density (g cm'^-3,')')), color ='Soil Organic \n Carbon (%)', title = 'RaCA - Organic Samples in Wetlands')
+mbs
+
+#ggsave
+
+
 #   
 # library(dplyr)  
 # ped <- raca %>%
@@ -726,12 +825,17 @@ m$mix <- with(m, 1/((OM/a) + ((100 - OM)/b)))
 m %>% ggplot(aes(mix))+geom_density(aes(fill=LU), alpha = 0.5)
  
 
+  geom_point(data = m, aes(y = RF.BD, colour = "Random Forest"))
 
-yr + ggtitle("Theoretical Fit Between SOC and Bulk Density") + guides(color = guide_legend("Model")) +
+yr+   geom_point(data = m, aes(y = RF.BD, colour = "Random Forest"))
+
+
+yr + ggtitle("Model Fit Between SOC and Bulk Density") + guides(color = guide_legend("Model")) +
   geom_line(data=m, aes(y=morris, colour = "Morris")) +
-  geom_line(data=m, aes(y=mix, colour = "Mixing"))
+  geom_line(data=m, aes(y=mix, colour = "Mixing")) +
+  geom_smooth(data=m, aes(y = RF.BD, colour = "Random Forest"), se = FALSE)
 
-
+m %>% ggplot(aes(BD, RF.BD)) + geom_point()
 
 ```
 
@@ -740,27 +844,27 @@ __De Vos, B., Van Meirvenne, M., Quataert, P., Deckers, J., & Muys, B. (2005). P
 
 Future work will include building texture into these
 
-``` {r PTF}
-
-#regress from  independent dataset
-#sanderman BD = 0.0906 + 0.8757*exp(-0.0786*OC) + 0.65528*exp(-1.0975*OC)
-m$san <- 0.0906 + 0.8757*exp(-0.0786*m$SOC) + 0.65528*exp(-1.0975*m$SOC)
-
-#Alexandar, 1980 - inorganic horizons
- m$alex <- 1.60 - 0.308*((m$SOC)^0.5)
- 
- 
- yr + ggtitle("Theoretical Fit Between SOC and Bulk Density") + guides(color = guide_legend("Model")) +
-  geom_line(data=m, aes(y=san, colour = "Sanderman")) +
-  geom_line(data=m, aes(y=alex, colour = "Alexandar"))
- 
-#combine best portions based on organic/inorganic split
- m$ptf <- ifelse(m$SOC<18,m$alex,m$san)
-
-  yr + ggtitle("Theoretical Fit Between SOC and Bulk Density") + guides(color = guide_legend("Model")) +
-  geom_line(data=m, aes(y=ptf, colour = "PTF combo"))
-
-```
+# ``` {r PTF}
+#
+# #regress from  independent dataset
+# #sanderman BD = 0.0906 + 0.8757*exp(-0.0786*OC) + 0.65528*exp(-1.0975*OC)
+# m$san <- 0.0906 + 0.8757*exp(-0.0786*m$SOC) + 0.65528*exp(-1.0975*m$SOC)
+#
+# #Alexandar, 1980 - inorganic horizons
+#  m$alex <- 1.60 - 0.308*((m$SOC)^0.5)
+#
+#
+#  yr + ggtitle("Theoretical Fit Between SOC and Bulk Density") + guides(color = guide_legend("Model")) +
+#   geom_line(data=m, aes(y=san, colour = "Sanderman")) +
+#   geom_line(data=m, aes(y=alex, colour = "Alexandar"))
+#
+# #combine best portions based on organic/inorganic split
+#  m$ptf <- ifelse(m$SOC<18,m$alex,m$san)
+#
+#   yr + ggtitle("Theoretical Fit Between SOC and Bulk Density") + guides(color = guide_legend("Model")) +
+#   geom_line(data=m, aes(y=ptf, colour = "PTF combo"))
+#
+# ```
 
 
 simple regression with SOC
@@ -770,10 +874,10 @@ simple regression with SOC
 #find linear model to predict bulk density? 
 ys <- m %>%
         ggplot(aes(x=SOC, y = 1/BD)) + geom_point() +  facet_wrap(~SET)
-#I really don't came for the look of these, but will test
+#I really don't care for the look of these, but will test
 ys +  geom_smooth(method="lm")
 
-m$r.bd = 1/(m$BD + 0.01)
+m$r.m= 1/(m$BD + 0.01)
 r.ys <- m %>%
         ggplot(aes(x=SOC, y = r.bd)) + geom_point() +  facet_wrap(~SET) + geom_smooth(method="lm")
 
@@ -801,9 +905,7 @@ ggplot(m, aes(x=SOC, y= BD)) +
 formula <- y ~ poly(exp(-(x+.01), 3, raw = TRUE))
 ggplot(m, aes(x=SOC, y= BD, color = LU)) +
       geom_point() + facet_wrap(~SET) + 
-      geom_smooth(method = "lm", formula = formula) +
-      stat_poly_eq(aes(label =  paste(..eq.label.., ..adj.rr.label.., sep = "~~~~")),
-                   formula = formula, parse = TRUE)
+      geom_smooth(method = "lm", formula = formula) 
 
 #calculate RMSE from model output
 rmse <- function(mod) sqrt(mean(mod$residuals^2))
@@ -822,37 +924,108 @@ This is not estimating the error associated with any given technique but with th
 The mixing model and ptf have really distinctive distribution of sample SOC density (especially for organic samples).  The measured bd derived SOC density has a much longer tail.
 
 ``` {r dev}
-  yr + ggtitle("Theoretical Fit Between SOC and Bulk Density") + guides(color = guide_legend("Model")) +
-  geom_line(data=m, aes(y=ptf, colour = "PTF combo")) +
-   geom_line(data=m, aes(y=mix, colour = "Mixing")) +
-   geom_line(data=m, aes(y=pmod, colour = "Poly Model")) 
 
 
 m$bd.den <- m$BD*m$SOC 
-m$ptf.den <- m$ptf*m$SOC
+#m$ptf.den <- m$ptf*m$SOC
 m$mix.den <- m$mix*m$SOC
 m$pmod.den <- m$pmod*m$SOC
+m$rf.den <- m$RF.BD*m$SOC
+# 
+# breaks = c( "bd.den", "pmod.den", "rf.den", "mix.den"),
+#                        labels = c( "Measure", "Polynomial", "Random Forest","Mixing"))
+# source <- c()
 
-den.all <- m %>%
-       select(samp_id, SET, bd.den, pmod.den,mix.den,ptf.den) %>%
-      gather(key =bd.source, SOC.den, -c(samp_id, SET) ) %>%
-      ggplot(aes(SOC.den))+geom_density(aes(fill=bd.source), alpha = 0.5) +   
-      scale_color_viridis(discrete = TRUE) +  facet_wrap(~SET) + xlim(0,20) +
-      ggtitle("SOC Density for all samples")
+den <- m  %>%
+       select(samp_id, SET, bd.den, pmod.den,mix.den, rf.den) %>%
+      gather(key =bd.source, SOC.den, -c(samp_id, SET) )
+    
 
+den.all <- den %>%
+      ggplot(aes(SOC.den))+ geom_density(aes(fill=bd.source), alpha = 0.25) + 
+      facet_wrap(~SET) + xlim(0,20) +
+      labs(x =expression(paste('SOC Density (g cm'^-2,')')), y='Distribution Density', color = 'BD Method') +
+   scale_fill_viridis(discrete = TRUE, option = "viridis",  name = "BD Source", 
+                      breaks = c( "bd.den", "pmod.den", "rf.den", "mix.den"),
+                       labels = c( "Measured", "Polynomial", "Random Forest","Mixing"))
 den.all
 
-den.box <- m %>%
-      select(samp_id, SET, bd.den, pmod.den,mix.den,ptf.den) %>%
-      gather(key =bd.source, SOC.den, -c(samp_id, SET) ) %>%
+
+Dstrip <- den.all + geom_point(aes(y = bd.source, x = SOC.den, color= bd.source))  +  
+  scale_color_viridis(discrete = TRUE, option = "viridis",  name = "BD Source", 
+                      breaks = c( "bd.den", "pmod.den", "rf.den", "mix.den"),
+                       labels = c( "Measured", "Polynomial", "Random Forest","Mixing")) + 
+  scale_y_discrete( breaks = c( "bd.den", "pmod.den", "rf.den", "mix.den"),
+                       labels = c( "Measured", "Polynomial", "Random Forest","Mixing"))
+
+Dstrip +  scale_x_log10()
+
+
+Do <-  m  %>%
+       select(samp_id, SET, M, LU, bd.den, pmod.den,mix.den, rf.den) %>%
+      filter(M == "O" & LU == "W") %>%
+      gather(key =bd.source, SOC.den, -c(samp_id, SET, LU, M) ) %>%
+  ggplot(aes(SOC.den))+ geom_density(aes(fill=bd.source), alpha = 0.25) + 
+      facet_wrap(~SET) +
+      labs(x =expression(paste('SOC Density (g cm'^-2,')')), y='Distribution Density', color = 'BD Method') +
+   scale_fill_viridis(discrete = TRUE, option = "viridis",  name = "BD Source", 
+                      breaks = c( "bd.den", "pmod.den", "rf.den", "mix.den"),
+                       labels = c( "Measured", "Polynomial", "Random Forest","Mixing")) +   
+  geom_point(aes(y = bd.source, x = SOC.den, color= bd.source))  +  
+  scale_color_viridis(discrete = TRUE, option = "viridis",  name = "BD Source", 
+                      breaks = c( "bd.den", "pmod.den", "rf.den", "mix.den"),
+                       labels = c( "Measured", "Polynomial", "Random Forest","Mixing")) + 
+  scale_y_discrete( breaks = c( "bd.den", "pmod.den", "rf.den", "mix.den"),
+                       labels = c( "Measured", "Polynomial", "Random Forest","Mixing"))
+
+Do
+
+DL <- m  %>%
+       select(samp_id, SET, M, LU, bd.den, pmod.den,mix.den, rf.den) %>%
+      filter(M == "O" & LU == "W") %>%
+      gather(key =bd.source, SOC.den, -c(samp_id, SET, LU, M) ) %>%
+  ggplot(aes(SOC.den))+ geom_density(aes(fill=bd.source), alpha = 0.25) + 
+      facet_wrap(~SET) + scale_y_log10() +
+      labs(x =expression(paste('Log (SOC Density (g cm'^-2,')')), y='Distribution Density', color = 'BD Method') +
+   scale_fill_viridis(discrete = TRUE, option = "viridis",  name = "BD Source", 
+                      breaks = c( "bd.den", "pmod.den", "rf.den", "mix.den"),
+                       labels = c( "Measured", "Polynomial", "Random Forest","Mixing")) +
+   geom_point(aes(y = bd.source, x = SOC.den, color= bd.source))  +  
+  scale_color_viridis(discrete = TRUE, option = "viridis",  name = "BD Source", 
+                      breaks = c( "bd.den", "pmod.den", "rf.den", "mix.den"),
+                       labels = c( "Measured", "Polynomial", "Random Forest","Mixing")) + 
+  scale_y_discrete( breaks = c( "bd.den", "pmod.den", "rf.den", "mix.den"),
+                       labels = c( "Measured", "Polynomial", "Random Forest","Mixing"))
+
+
+#ridgeplot
+DR <- den%>%
+    ggplot(aes(x=SOC.den, y = bd.source, fill = ..x..)) +  
+    geom_joy_gradient()  + 
+    scale_fill_gradientn(colours = cet_pal(5, name = "fire"))+
+    theme_joy()     +
+    theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+    labs(x="Bulk Density", title="Ridgeplot of SOC Density by BD Source") +
+    scale_y_discrete( name = "BD Source", 
+                      breaks = c( "bd.den", "pmod.den", "rf.den", "mix.den"),
+                       labels = c( "Measured", "Polynomial", "Random Forest","Mixing"))
+
+
+DR
+
+
+den.box <- den %>%
       ggplot(aes(y = SOC.den, x = bd.source))+ geom_boxplot(aes(fill=bd.source), alpha = 0.5) +   
-      scale_color_viridis(discrete = TRUE) +  facet_wrap(~SET) + scale_y_log10() +
+      scale_color_viridis(discrete = TRUE, guide = guide_legend((override.aes = list(alpha = 1)))) +  
+      facet_wrap(~SET) + scale_y_log10() +
       ggtitle("SOC Density for all samples") + theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust = 1))
 
 den.box
 
 den.sw <-   m %>%
-       select(samp_id, SET, bd.den, pmod.den,mix.den,ptf.den) %>%
+       select(samp_id, SET, bd.den, pmod.den,mix.den, rf.den) %>%
       gather(key =bd.source, SOC.den, -c(samp_id, SET) ) %>%
       ggplot(aes(x=SOC.den, y = bd.source)) +  
             geom_quasirandom(alpha=0.82, groupOnX=FALSE) + 
@@ -866,7 +1039,7 @@ den.sw
 #limit to organic horizons
 o.den.all <- m %>%
         filter(M == "O") %>%
-       select(samp_id, SET, bd.den, pmod.den,mix.den,ptf.den) %>%
+       select(samp_id, SET, bd.den, pmod.den,mix.den, rf.den) %>%
           gather(key =bd.source, SOC.den, -c(samp_id, SET) ) %>%
       ggplot(aes(SOC.den))+geom_density(aes(fill=bd.source), alpha = 0.5) +   
       scale_color_viridis(discrete = TRUE) +  facet_wrap(~SET) + xlim(0,20) +
@@ -875,10 +1048,10 @@ o.den.all <- m %>%
 o.den.all
 
 o.den.box <- m %>%    filter(M == "O") %>%
-      select(samp_id, SET, bd.den, pmod.den,mix.den,ptf.den) %>%
+      select(samp_id, SET, bd.den, pmod.den,mix.den, rf.den) %>%
       gather(key =bd.source, SOC.den, -c(samp_id, SET) ) %>%
       ggplot(aes(y = SOC.den, x = bd.source))+ geom_boxplot(aes(fill=bd.source), alpha = 0.5) +   
-      scale_color_viridis(discrete = TRUE) +  facet_wrap(~SET) + scale_x_log10() +
+      scale_color_viridis(discrete = TRUE) +  facet_wrap(~SET) + scale_y_log10() +
       ggtitle("SOC Density for all samples") + theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust = 1))
 
 o.den.box
@@ -886,7 +1059,7 @@ o.den.box
 
 o.den.sw <-   m %>%
         filter(M == "O") %>%         
-    select(samp_id, SET, bd.den, pmod.den,mix.den,ptf.den) %>%
+    select(samp_id, SET, bd.den, pmod.den,mix.den, rf.den) %>%
       gather(key =bd.source, SOC.den, -c(samp_id, SET) ) %>%
       ggplot(aes(x=SOC.den, y = bd.source)) +  
             geom_quasirandom(alpha=0.82, groupOnX=FALSE) + 
@@ -897,7 +1070,9 @@ o.den.sw <-   m %>%
       labs(x="SOC Density",y="Dataset",caption="@wills_skye", title="SOC Density of Organic Samples")
 o.den.sw
 
+#ggsave('SOCdenBYbdsource.png', plot = Dstrip, device = "png", path = 'C:/Users/skye.wills/ownCloud/AGU_BD-OM/graphs/poster', scale = 1, width = 6, height = 6, units = "in", dpi = 600, limitsize = TRUE)
 
+#ggsave('SOCdenBYbdsource_log.png', plot = Do, device = "png", path = 'C:/Users/skye.wills/ownCloud/AGU_BD-OM/graphs/poster', scale = 1, width = 4, height = 6, units = "in", dpi = 600, limitsize = TRUE)
 
 
 ```
@@ -910,124 +1085,211 @@ Calculate range in average pedon/profile SOC stock (bd*SOC - 100cm?) based on mu
 #assign how layers are counted in stock calculations
 #puts a number on the amount (cm) of each layer used in calculation
 #there are more streamlined ways to do this but this method is maintained from previous work (it is also computationally simple and uses few computing resources)
-library(plyr)
 
-m$SOC_5 <- ifelse(m$bottom<=5, m$thick,ifelse(m$top<5, 5-m$top,0))
 
-m$SOC_30 <- ifelse(m$bottom<=30, m$thick,
-                    ifelse(m$top<30, 30-m$top,0))
+m$thick <- ifelse((m$Bottom - m$Top) < 0, 0, m$Bottom - m$Top)  
 
-m$SOC_100 <- ifelse(m$bottom<=100, m$thick,
-                    ifelse(m$top<100, 100-m$top,0))
+m$thick <- ifelse(is.na(m$thick), 0, m$thick)
+
+
+m$SOC_5 <- ifelse(m$Bottom<=5, m$thick,ifelse(m$Top<5, 5-m$Top,0))
+
+m$SOC_30 <- ifelse(m$Bottom<=30, m$thick,
+                    ifelse(m$Top<30, 30-m$Top,0))
+
+m$SOC_100 <- ifelse(m$Bottom<=100, m$thick,
+                    ifelse(m$Top<100, 100-m$Top,0))
+
+
 
 #calculate layer stocks - assigned depth * SOCden 
+
 #native units are Mg/ha
-m$SOCstock5 <- with(m, SOCden*SOC_5)
-m$SOCstock30 <- with(m, SOCden*SOC_30)
-m$SOCstock100 <- with(m, SOCden*SOC_100)
 
-#sum SOC by pedon
-SOC_5 <- aggregate(SOCstock5~MO + MOGr + LU + MOGrLU + rcasiteid + upedonid + upedon, data=m, FUN=sum)
-SOC_30 <- aggregate(SOCstock30~upedonid, data=m, FUN=sum)
-SOC_100 <-aggregate(SOCstock100~upedonid, data=m, FUN=sum) 
+m$CF <- ifelse(!is.na(m$CoarseFrag), m$CoarseFrag, 0)
+m$CF <- ifelse(m$CF>100, 100, m$CF)
 
+#measured BD
+m$SOCstock5.bd <- with(m, bd.den*SOC_5*(1 - CF/100))
+m$SOCstock30.bd <- with(m, bd.den*SOC_30*(1 - CF/100))
+m$SOCstock100.bd <- with(m, bd.den*SOC_100*(1 - CF/100))
 
-#additional information about pedons used to screen for pedons that do not meet depth requirements
-#pedon id info
-ped <- aggregate(mle.id ~MO + MOGr + LU + MOGrLU + rcasiteid + upedonid + upedon, data=m, FUN=length)
-names(ped)[8] <- "mle_count"
+#Mixing model BD
+m$SOCstock5.mix <- with(m, mix.den*SOC_5*(1 - CF/100))
+m$SOCstock30.mix <- with(m, mix.den*SOC_30*(1 - CF/100))
+m$SOCstock100.mix <- with(m, mix.den*SOC_100*(1 - CF/100))
 
-#pedon information
-pedon_thick <- aggregate(thick  ~ upedonid, data=m, FUN=sum)
-names(pedon_thick)[2] <- "total_thickness"
-ped_bott <- aggregate(bottom~upedonid, data=m, FUN=max)
-lab_no <- aggregate(natural_key~upedonid, data=m, FUN=length)
-names(lab_no)[2] <- "Lab_count"
+#Mixing model BD
+m$SOCstock5.rf <- with(m, rf.den*SOC_5*(1 - CF/100))
+m$SOCstock30.rf <- with(m, rf.den*SOC_30*(1 - CF/100))
+m$SOCstock100.rf <- with(m, rf.den*SOC_100*(1 - CF/100))
 
-mle_notR <- aggregate(mle.id~upedonid, data=m[grep("R", m$model_desg, invert=T, ignore.case=T),] , FUN=length)
-names(mle_notR)[2] <- "Non-R_mleCount"
-
-SOC_no <- aggregate(SOC~upedonid, data=m[!is.na(m$SOC), ], FUN=length)
-names(SOC_no)[2] <- "SOC_count"
-
-SOC_thick <- aggregate(thick~upedonid, data=m[!is.na(m$SOC), ], FUN=sum)
-names(SOC_thick)[2] <- "SOC_thickness"
-
-top <- aggregate(top~upedonid, data=m, FUN=min)
-names(top)[2] <- "Pedon_top"
-
-#depth of R or other restrictive layer (assumed to have negligble SOC at this depth and below)
-
-hard <- c("Bkm", "Bkmm", "Bqm", "R", "Cr", "m")
-depthR <- aggregate(top~upedonid, data=m[grepl(paste(hard, collapse='|'),  m$model_desg, ignore.case=T),], FUN=min)
-names(depthR)[2] <- "Depth_to_R"
-
-depth_O <- aggregate(thick~upedonid, data=m[m$M == "O",], FUN=min)
-names(depth_O)[2] <- "Depth_of_O"
-depth_O$Depth_of_O <- ifelse(is.na(depth_O$Depth_of_O), 0, depth_O$Depth_of_O)
-
-#combine pedon information
-
-SOC5 <- join(ped, SOC_5, by="upedonid", type="full", match="first")
-SOC30 <- join(SOC5, SOC_30, by="upedonid", type="full", match="first")
-SOC100 <- join(SOC30,SOC_100, by="upedonid", type="full", match="first")
-SOCp <- join(SOC100, pedon_thick, by="upedonid", type="full", match="first")
-SOCn <- join(SOCp, SOC_no, by="upedonid", type="full", match="first")
-SOCnn <- join(SOCn, lab_no, by="upedonid", type="full", match="first")
-SOCpn <- join(SOCnn, depthR, by="upedonid", type="full", match="first")
-SOCpp <- join(SOCpn, mle_notR, by="upedonid", type="full", match="first")
-SOCpo <- join(SOCpp, depth_O, by="upedonid", type="full", match="first")
-SOCpedons <- join(SOCpo, SOC_thick, by="upedonid", type="full", match="first")
-
-#remove unneeded tables
-rm(SOC5,SOC30, SOC100, SOCp, SOCn, SOCnn, SOCpp, SOCpo)
-
-                                                      
-SOCpedons$USE <-ifelse(SOCpedons$SOCstock5 == 0, 
-                                                ifelse(SOCpedons$SOC_count<SOCpedons$Lab_count,"MISS_anal", "MISS_labm"), 
-                       ifelse(is.na(SOCpedons$total_thickness), 'NA',
-                              ifelse(SOCpedons$SOC_thickness >= SOCpedons$total_thickness, '100',
-                                     ifelse(!is.na(SOCpedons$Depth_to_R),  
-                                            ifelse(SOCpedons$Depth_to_R <= SOCpedons$SOC_thickness , '100', 
-                                                   ifelse(SOCpedons$SOC_thickness >= 100, '100',
-                                                          ifelse(SOCpedons$SOC_thickness >= 30, '30',
-                                                                 ifelse(SOCpedons$SOC_thickness >= 5, '5', 'NA')))),
-                                            ifelse(SOCpedons$SOC_thickness >= 100, '100',
-                                                   ifelse(SOCpedons$SOC_thickness >= 30, '30',
-                                                          ifelse(SOCpedons$SOC_thickness >= 5, '5', 'NA'))))
-                              )))
-                        
-
-# check NAs and missing mles
-kable( table(SOCpedons$MO,SOCpedons$USE, useNA= "ifany"), caption = "Table S2. Counts of missing mles by depth")
-Use.pedons <- ddply(SOCpedons, .(MO), summarise, 
-                          N_5= sum(!is.na(SOCstock5)),
-                          N_30= sum(!is.na(SOCstock30)),
-                          N_100= sum(!is.na(SOCstock100))
-)
-
-#kable(Use.pedons, caption = "Count of Pedons with all SOC Data")
+M <- m %>%
+  group_by(SET, LU, Pedon_ID) %>%
+  summarise_at(vars(starts_with("SOCstock")), funs(sum(., na.rm= T)))
   
+  
+s <- M  %>%
+      gather(key = bd.source, SOCstock, -c(Pedon_ID, SET, LU) )%>%
+      separate(bd.source, c("Depth", "Source"))
+    
 
-#keep ones with values
-SOCpedons <- SOCpedons[!is.na(SOCpedons$SOCstock5),]
-SOCpedons <- SOCpedons[SOCpedons$SOCstock5 != 0,]
+stock.all <- s %>% filter(Depth == "SOCstock100") %>%
+      ggplot(aes(x = SOCstock))+ geom_density(aes(fill=Source), alpha = 0.25) + 
+      facet_wrap(~SET) + xlim(0,500) +
+      labs(x =expression(paste('SOC Stock (Mg ha'^-2,')')), y='Distribution Density', color = 'BD Method') +
+   scale_fill_viridis(discrete = TRUE, option = "magma",  name = "BD Source", 
+                      breaks = c( "bd", "rf", "mix"),
+                       labels = c( "Measured", "Random Forest","Mixing"))
+stock.all
 
-#remove stocks based on Use field 
-SOCpedons$SOCstock5 <- as.numeric(ifelse(SOCpedons$USE %in% c(5, 30, 100), SOCpedons$SOCstock5, ""))
-SOCpedons$SOCstock30 <- as.numeric(ifelse(SOCpedons$USE %in% c(30, 100), SOCpedons$SOCstock30, ""))
-SOCpedons$SOCstock100 <- as.numeric(ifelse(SOCpedons$USE %in% c(100), SOCpedons$SOCstock100, ""))
+stock.all.log <- s %>% filter(Depth == "SOCstock100") %>%
+      ggplot(aes(x = SOCstock))+ geom_density(aes(fill=Source), alpha = 0.25) + 
+      facet_wrap(~SET) + xlim(0,500) +scale_x_log10()+
+      labs(x =expression(paste('SOC Stock (Mg ha'^-2,')')), y='Distribution Density', color = 'BD Method') +
+   scale_fill_viridis(discrete = TRUE, option = "magma",  name = "BD Source", 
+                      breaks = c( "bd", "rf", "mix"),
+                       labels = c( "Measured", "Random Forest","Mixing"))
+stock.all.log
 
-#limit pedon file to those that have useable data
-SOCpedons <- SOCpedons[!is.na(SOCpedons$USE),]
+stock.all.logW <- s %>% filter(Depth == "SOCstock100" & LU =="W") %>%
+      ggplot(aes(x = SOCstock))+ geom_density(aes(fill=Source), alpha = 0.25) + 
+      facet_wrap(~SET) + xlim(0,500) +scale_x_log10()+
+      labs(x =expression(paste('SOC Stock (Mg ha'^-2,')')), y='Distribution Density', color = 'BD Method') +
+   scale_fill_viridis(discrete = TRUE, option = "magma",  name = "BD Source", 
+                      breaks = c( "bd", "rf", "mix"),
+                       labels = c( "Measured", "Random Forest","Mixing"))
+stock.all.logW
 
-#remove unwanted objects
-rm(hard, depth_O, depthR, lab_no,ped, ped_bott, pedon_thick, mle_notR, SOC_thick, SOC_100, SOC_30, SOC_5, SOC_no, SOCpn, top)
+
+# ggsave('SOCstockBYbdsource.png', plot = stock.all, device = "png", path = 'C:/Users/skye.wills/ownCloud/AGU_BD-OM/graphs/poster', scale = 1, width = 4, height = 6, units = "in", dpi = 600, limitsize = TRUE)
+# ggsave('SOCstockBYbdsource_log.png', plot = stock.all.log, device = "png", path = 'C:/Users/skye.wills/ownCloud/AGU_BD-OM/graphs/poster', scale = 1, width = 4, height = 6, units = "in", dpi = 600, limitsize = TRUE)
+# 
+# ggsave('SOCstockBYbdsource_log_WETLAND.png', plot = stock.all.logW, device = "png", path = 'C:/Users/skye.wills/ownCloud/AGU_BD-OM/graphs/poster', scale = 1, width = 4, height = 6, units = "in", dpi = 600, limitsize = TRUE)
+
+Dstrip <- den.all + geom_point(aes(y = bd.source, x = SOC.den, color= bd.source))  +  
+  scale_color_viridis(discrete = TRUE, option = "viridis",  name = "BD Source", 
+                      breaks = c( "bd.den", "pmod.den", "rf.den", "mix.den"),
+                       labels = c( "Measured", "Polynomial", "Random Forest","Mixing")) + 
+  scale_y_discrete( breaks = c( "bd.den", "pmod.den", "rf.den", "mix.den"),
+                       labels = c( "Measured", "Polynomial", "Random Forest","Mixing"))
+
+Dstrip
+
+#stack
+
+#this section uses
+library(dplyr)
+library(tidyr)
+
+ped <- s %>% filter(SET == "RaCA") %>%
+  spread(key = Depth, value = SOCstock)
 
 
-#export pedon (site) level SOC stocks
-#############
-write.table(SOCpedons,"BD_SOC_pedons.csv", sep=",", row.names=F)
+#create factors for stacked bar plots
+ped$zero_to_stock5 <- ped$SOCstock5
+ped$five_to_stock30 <- ped$SOCstock30-ped$SOCstock5
+ped$thirty_to_stock100 <- ped$SOCstock100- ped$SOCstock30
+
+# check LU order
+#levels(ped$LU)
+ped$LU <- as.factor(ped$LU)
+ped$LU <- factor(ped$LU, levels(ped$LU)[c(5,2,3,4,1,6)])
+#levels(ped$LU)
+levels(ped$LU)<- c('Wetland', 'Forestland', 'Pastureland',  "Rangeland", 'Cropland', 'CRP')
+
+
+#calculate depth increment and land use means
+
+td <-  ped %>%
+      select(Pedon_ID, Source, LU, zero_to_stock5, five_to_stock30, thirty_to_stock100) %>%
+      filter(LU != 'CRP')  %>%  #limit to land use/cover classes with spatial extent
+      gather(Depth, SOCstock, zero_to_stock5, five_to_stock30, thirty_to_stock100) %>%
+      arrange(Pedon_ID) %>%
+      group_by(Source, LU, Depth) %>%
+      summarize(
+        N = length(SOCstock),
+        SOC = mean(SOCstock, na.rm=T),
+        SOCmed = median(SOCstock, na.rm=T),
+        sd = sd(SOCstock, na.rm=T),
+        se = sd/sqrt(N),
+        CI_l = SOC-(se*1.96),
+        CI_u = SOC+ (se*1.96),
+        q25 = quantile(SOCstock, .25, na.rm=T),
+        q75 = quantile(SOCstock, .75, na.rm=T)) %>%
+      mutate(ID = paste(Source, LU,  str_sub(Depth, -3, -1), sep ="_"))
+
+#recalculate with stock totals (correct placement of error bars)  
+ti <- ped %>%
+  select(Pedon_ID, Source, LU, SOCstock5, SOCstock30, SOCstock100) %>%
+  filter(LU != 'CRP') %>%
+  gather(Depth, SOCstock, SOCstock5, SOCstock30, SOCstock100) %>%
+  group_by(Source, LU, Depth) %>%
+  summarize(
+    tN = length(SOCstock),
+    tSOC = mean(SOCstock, na.rm=T),
+    tsd = sd(SOCstock, na.rm=T),
+    tse = tsd/sqrt(tN),
+    lCI = tSOC-(tse*1.96),
+    uCI = tSOC+ (tse*1.96),        
+    tq25 = quantile(SOCstock, .25, na.rm=T),
+    tq75 = quantile(SOCstock, .75, na.rm=T)) %>%
+  mutate(ID = paste(Source, LU,  str_sub(Depth, -3, -1), sep ="_"))%>%
+  mutate(Total = Depth)%>%
+  ungroup() %>%
+  select(-c(Depth, LU))
+
+  
+t<- inner_join(td,ti)
+
+t$Depth <-  as.factor(t$Depth)
+t$Depth <- factor(t$Depth, levels(t$Depth)[c(3,1,2)])         #reorder factor levels
+#levels(t$Depth)
+levels(t$Depth) = c("0 to 5 cm","5 to 30 cm","30 to 100 cm") #relabel levels
+#levels(t.bd$LU)
+
+t$Source <-  as.factor(t$Source)
+levels(t$Source)
+levels(t$Source) = c("Measured","Mixing","Random Forest") 
+#relabel levels
+
+d <- ggplot(t, aes(LU, SOC)) + 
+  geom_col(aes(fill=factor(Depth, levels = rev(levels(Depth))))) + scale_y_reverse() +  
+  scale_fill_discrete(guide=guide_legend(reverse=T), l = 35) + 
+  labs(x ="Land Use - Land Cover Class", y=expression(paste("SOC stock (Mg ha"^-1,")")), fill = "Depth Increment") +    theme(axis.text.y=element_text(size=12), axis.text.x=element_text(size=10),legend.text=element_text(size=10)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(~Source, ncol = 1)
+
+d
+
+dw <- d +  facet_wrap(~Source, ncol = 3)
+
+dS <- ggplot(t, aes(Source, SOC)) + 
+  geom_col(aes(fill=factor(Depth, levels = rev(levels(Depth))))) + scale_y_reverse() +  
+  scale_fill_discrete(guide=guide_legend(reverse=T), l = 35) + 
+  labs(x ="Land Use - Land Cover Class", y=expression(paste("SOC stock (Mg ha"^-1,")")), fill = "Depth Increment") +    theme(axis.text.y=element_text(size=12), axis.text.x=element_text(size=10),legend.text=element_text(size=10)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(~LU, ncol = 1)
+
+dS
+
+dSw <- dS +  facet_wrap(~LU, ncol = 3)
+
+
+
+#save graph
+ggsave('STACK_source.png', plot = d, device = "png", path = 'C:/Users/skye.wills/ownCloud/AGU_BD-OM/graphs/poster', scale = 1, width = 3, height = 6, units = "in", dpi = 400, limitsize = TRUE)
+ggsave('STACK_sourceWIDE.png', plot = dw, device = "png", path = 'C:/Users/skye.wills/ownCloud/AGU_BD-OM/graphs/poster', scale = 1, width = 6, height = 3, units = "in", dpi = 600, limitsize = TRUE)
+
+ggsave('STACK_Ssource.png', plot = dS, device = "png", path = 'C:/Users/skye.wills/ownCloud/AGU_BD-OM/graphs/poster', scale = 1, width = 3, height = 6, units = "in", dpi = 400, limitsize = TRUE)
+ggsave('STACK_SsourceWIDE.png', plot = dSw, device = "png", path = 'C:/Users/skye.wills/ownCloud/AGU_BD-OM/graphs/poster', scale = 1, width = 6, height = 3, units = "in", dpi = 600, limitsize = TRUE)
+
+
+rm(t,td,ti)
+
+
+
+
 
 
 ```
