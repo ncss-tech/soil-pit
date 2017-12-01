@@ -28,9 +28,9 @@ library(kableExtra)
 fetch_list <- fetchLIMS_component(input$projectreport, fill = TRUE)
 pm <- fetch_list$mapunit
 
-print(kable(pm[1, 1:3], "html") %>% kable_styling(bootstrap_options=c("striped", "hover")))
+kable(pm[1, 1:3], "html") %>% kable_styling(bootstrap_options=c("striped", "hover"))
 
-print(kable(pm[4:ncol(pm)], "html") %>% kable_styling(bootstrap_options=c("striped", "hover")))
+kable(pm[4:ncol(pm)], "html") %>% kable_styling(bootstrap_options=c("striped", "hover"))
 
 ```
 
@@ -85,14 +85,14 @@ n_profile <- ceiling(length(unique(comp$coiid)) / 10) * 3
 
 # component
 
-print(kable(with(s, data.frame(
+kable(with(s, data.frame(
   dmudesc_short, compname, comppct_r, majcompflag, localphase, drainagecl, 
   slope_l, slope_r, slope_h,
   taxpartsize, taxsubgrp))
-  , "html") %>% kable_styling(bootstrap_options=c("striped", "hover", "responsive")))
+  , "html") %>% kable_styling(bootstrap_options=c("striped", "hover", "responsive"))
 
 # parent material and landform
-print(kable(with(s, data.frame(dmudesc_short, compname, taxpartsize, pmgroupname)), "html") %>% kable_styling(bootstrap_options=c("striped", "hover", "responsive")))
+kable(with(s, data.frame(dmudesc_short, compname, taxpartsize, pmgroupname)), "html") %>% kable_styling(bootstrap_options=c("striped", "hover", "responsive"))
 # , landform.string)))
 ```
 

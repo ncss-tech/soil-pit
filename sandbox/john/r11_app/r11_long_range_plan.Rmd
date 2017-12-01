@@ -42,7 +42,7 @@ suppressWarnings( {
 ```{r, eval = TRUE}
 url <- "https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-PROJECTS-Long_Range_Plan"
 
-p <- list(p_projectname = "%", p_ssoffice = paste0(isolate(input$lrpinput), "-%"), p_start_fy = "10/01/2017", p_end_fy = "09/30/2027")
+p <- list(p_projectname = "%", p_ssoffice = paste0(isolate(input$lrpinput), "%"), p_start_fy = "10/01/2017", p_end_fy = "09/30/2027")
 
 r <- parseWebReport(url, args = p)
 r_all <- r
@@ -74,7 +74,7 @@ r <- within(r, {
 
 # figure height for timeline plot
 
-n_tp <- length(unique(r$ssoffice[grepl(paste0("^", isolate(input$lrpinput), "-"), r$ssoffice)])) / 2 * 5
+n_tp <- length(unique(r$ssoffice[grepl(paste0("^", isolate(input$lrpinput)), r$ssoffice)])) / 2 * 5
 
 ```
 
@@ -148,7 +148,7 @@ a_wide2 <- reshape(a2[names(a2) != "n"],
                    )
 names(a_wide2) <- gsub("acres.", "", names(a_wide2))
 row.names(a_wide2) <- 1:nrow(a_wide2)
-print(kable(a_wide2, align = "r", caption = "Long Range Plan Summarized by Acreage of Projects", format="html") %>% kable_styling(bootstrap_options=c("striped", "hover")))
+kable(a_wide2, align = "r", caption = "Long Range Plan Summarized by Acreage of Projects", format="html") %>% kable_styling(bootstrap_options=c("striped", "hover"))
 
 
 # by number of projects
@@ -160,7 +160,7 @@ a_wide1 <- reshape(a[names(a) != "acres"],
                   )
 names(a_wide1) <- gsub("n.", "", names(a_wide1))
 row.names(a_wide1) <- 1:nrow(a_wide1)
-print(kable(a_wide1, align = "r", caption = "Long Range Plan Summarized by Total Number (n) of Projects", format="html") %>% kable_styling(bootstrap_options=c("striped", "hover")))
+kable(a_wide1, align = "r", caption = "Long Range Plan Summarized by Total Number (n) of Projects", format="html") %>% kable_styling(bootstrap_options=c("striped", "hover"))
 
 ```
 
