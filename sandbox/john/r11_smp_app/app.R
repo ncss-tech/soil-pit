@@ -1,14 +1,22 @@
 library(shinydashboard)
 library(shiny)
+library(data.table)
+library(plotly)
 
 header<-dashboardHeader(
-  title="Soil Moisture Load Data App")
+  title="Soil Moisture Data Processing App", titleWidth=
+    350)
 
 sidebar<-dashboardSidebar(
   sidebarMenu(id="tabs",
               menuItem("Home", tabName="Home", selected=TRUE, icon=icon("home")),
               menuItem("Instructions", tabName="Instructions", icon=icon("info")),
-              menuItem("Soil Moisture Data", tabName="loaddata", icon=icon("map-pin"))
+              menuItem("Soil Moisture Data", tabName="loaddata", icon=icon("map-pin")),
+              menuItem("Soil Moisture Data Analysis", icon=icon("file-code-o"), href="https://hammerly.shinyapps.io/r11_sma_app/"),
+              
+              #Source Code Menu
+              
+              menuItem("Source Code", icon=icon("file-code-o"), href="https://github.com/ncss-tech/soil-pit/blob/master/sandbox/john/r11_smp_app/app.R/")
 
   )
 )
@@ -17,6 +25,7 @@ body<-dashboardBody(
   
   #styling for the progress bar position
   tags$style(type="text/css", ".shiny-notification{position: fixed; top:33%;left:33%;right:33%;}"),
+  # tags$style(HTML(".shiny-output-error-validation {color: green; padding: 5px;}")),
   
   tabItems(
     #Home tab
@@ -44,22 +53,29 @@ body<-dashboardBody(
             verticalLayout(
               infoBox("Process Soil Moisture Monitoring data for upload to NASIS", "This app is designed to process soil moisture monitoring data and properly format it for upload into NASIS.", width=12, icon=icon("info"), color="green"),
               box(p(tags$b("Instructions for Using the Soil Moisture Data Load App")),
-                  p("There is a multitude of variability in monitoring data throughout
-                    the soil science discipline.  Differences in installation, instrumentation, 
-                    and collection frequency are just a few examples.  This document provides 
-                    guidance for loading monitoring data into the National Soil Information 
-                    System (NASIS).  Although there are many different ways to accomplish this task,
-                    the repeatability and versatility of R works well for this purpose."))   
+                  p("Data should be in a common format for processing.  The data should be a .csv file(s) 
+                     with 3 columns."),
+                  p("Column 1: date (mm/dd/YYYY)."),
+                  p("Column 2: time (all formats accepted)."),
+                  p("Column 3: measurement depth (m, cm, ft, in)."),
+                  p("The first row of the data is treated as a header.
+                    Some monitoring devices measure in reference to the sensor installation depth.
+                    In these cases, the measurements need to be adjusted to the reference point.
+                    The calibration point is depth at which the surface of the soil occurs.
+                    The total length is the length of the well (above and below the soil surface."), width= 12)   
               )),    
     
     
     #Analysis Report tab   
     tabItem(tabName="loaddata", class="active",
-            titlePanel("Soil Moisture Data"),
+            titlePanel("Processing Soil Moisture Data is as easy as 1 - 2 - 3"),
             verticalLayout(
               fluidRow(
-                box(uiOutput("sm_inputs"),
-                    uiOutput("sm_office"),
+              column(width=3, tags$h3("1. Load"),
+                box(p("Inputs marked with an asterisk (*) are required."),  p("Click submit button to begin processing."), uiOutput("sm_inputs"),
+                    uiOutput("sm_units"),
+                box(solidHeader = TRUE, title="Measurements already adjusted? Leave these blank", status="primary", uiOutput("pipebelow"), uiOutput("pipelength"),width= 12),
+                uiOutput("sm_office"),
                     uiOutput("sm_usiteid"),
                     uiOutput("sm_project"),
                     uiOutput("sm_projectid"),
@@ -67,10 +83,16 @@ body<-dashboardBody(
                     uiOutput("sm_bottomdepth"),
                     uiOutput("sm_sensordepth"),
                     actionButton("submit","Submit"),
-                 
-                    status = "primary", title="Inputs", solidHeader=TRUE, collapsible=TRUE, width=6),
-                box(DT::dataTableOutput("mon_data"), status="primary", title="Monitoring Data", solidHeader=TRUE, collapsible=TRUE, width=6),
-                box(p("Click  download to save processed file for NASIS upload -"), uiOutput("sm_xlsfile"),  status = "primary", title="Download File", solidHeader=TRUE, collapsible=TRUE, width=6),
+                    status = "primary", title="Inputs", solidHeader=TRUE, collapsible=TRUE, width=12)),
+              column(width=6, tags$h3("2. Review"),
+                     
+                box(plotlyOutput("iniplot"), status="primary", title="Input Plot", solidHeader=TRUE, collapsible=TRUE, width=12),
+                box(DT::dataTableOutput("mon_data"), status="primary", title="Input Table", solidHeader=TRUE, collapsible=TRUE, collapsed=TRUE, width=12),
+                box(plotlyOutput("exportplot"),status="primary", title="Processed Plot", solidHeader=TRUE, collapsible=TRUE, width=12),
+                box(DT::dataTableOutput("exporttable"),status="primary", title="Processed Table", solidHeader=TRUE, collapsible=TRUE, collapsed=TRUE, width=12)
+              ),
+              column(width=3, tags$h3("3. Download"), box(uiOutput("downloadtext"), uiOutput("sm_xlsfile"), status = "primary", title="Download File", solidHeader=TRUE, collapsible=TRUE, width=12)),
+
                 box("This application was developed by John Hammerly.", width=12)
               ))
     )
@@ -83,7 +105,7 @@ server <- function(input, output, session){
   
   output$sm_inputs <-renderUI({
     
-    fileInput("mdatainput", "Monitoring Data File", multiple=TRUE, accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"), buttonLabel="Browse...", placeholder="No file selected")
+    fileInput("mdatainput", "Monitoring Data File(s)*", multiple=TRUE, accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"), buttonLabel="Browse...", placeholder="No file selected")
     
   })
     
@@ -95,7 +117,7 @@ server <- function(input, output, session){
   
   output$sm_usiteid <- renderUI({
     
-    textInput("usiteid", "User Site ID", value="", placeholder="2013IA001001")
+    textInput("usiteid", "User Site ID*", value="", placeholder="2013IA001001")
     
   })
   
@@ -145,16 +167,36 @@ server <- function(input, output, session){
   
   output$sm_bottomdepth <- renderUI({
     
-    textInput("bottomdepth", "Bottom Depth", value="", placeholder="210")
+    textInput("bottomdepth", "Bottom Depth (cm)*", value="", placeholder="210")
     
   })
   
   output$sm_sensordepth <- renderUI({
     
-    textInput("sensordepth", "Sensor Depth", value="", placeholder="210")
+    textInput("sensordepth", "Sensor Depth (cm)", value="", placeholder="210")
     
   })
 
+  output$sm_units <- renderUI({
+    
+    radioButtons("units", "Input Data Unit of Measure*", choices=c("meters", "centimeters", "feet", "inches"), selected="centimeters", inline=TRUE)
+    
+  })
+  
+  output$pipebelow <- renderUI({
+    
+    textInput("pipeb", "Calibration Point (cm)", value="", placeholder="79")
+    
+  })
+  
+  output$pipelength <- renderUI({
+    
+    textInput("pipel", "Total Length (cm)", value="", placeholder="236")
+    
+  })
+  
+  
+  
   
   mon_data<-reactive({
     
@@ -166,28 +208,46 @@ server <- function(input, output, session){
     mdata<-isolate(input$mdatainput)
     
     
-    monitor_data<-read.csv(isolate(mdata$datapath), header=FALSE, skip=1, #skip the rows without observation data 
-                           col.names=c("date","time","depth","units"), as.is=TRUE) #assign column names
-    return(monitor_data)
+    monitor_data<-rbindlist(lapply(isolate(mdata$datapath), fread),
+              use.names=TRUE, fill=TRUE)
+    
+    subset_m_data <- monitor_data[,1:3]
+    
+  colnames(subset_m_data) <-c("date","time","depth")
+    
+        return(subset_m_data)
   })
   
   output$mon_data<- DT::renderDataTable({ monitor_data<-mon_data()
   
-  })
-  output$daily_data<-DT::renderDataTable({
+  }, options = list(pageLength=5, scrollX="100%"))
+  
+  
+  output$daily_data<-DT::renderDataTable({ input$submit
     monitor_data<-mon_data()
+    
+    #check if data is positive or negative reference
+    
+    if(sum(monitor_data$depth)>0) {monitor_data$depth<-monitor_data$depth * 1}
+    else {monitor_data$depth<-monitor_data$depth * -1}
+    
+    # Replace values less than zero
+    monitor_data$depth[monitor_data$depth<0]<-0
     
   monitor_data_daily<-aggregate(cbind(depth)~date,data=monitor_data,FUN=mean)
   
   # convert date column to date type
-  monitor_data_daily_convert<-data.frame(as.Date(monitor_data_daily$date, format="%m/%d/%Y"), round(monitor_data_daily$depth*-1*2.54)) # convert depths to positive centimeters
+  monitor_data_daily_convert<-data.frame(as.Date(monitor_data_daily$date, format="%m/%d/%Y"),
+                                         if(isolate(input$units=="inches")) {round(monitor_data_daily$depth*2.54)}
+                                         else if(isolate(input$units=="meters")) {round(monitor_data_daily$depth*100)}
+                                         else if(isolate(input$units=="feet")) {round(monitor_data_daily$depth*30.48)}
+                                         else (round(monitor_data_daily$depth))
+  )
   
   # rename columns to match NASIS
   names(monitor_data_daily_convert)<-list("obsdate","soimoistdept")
   
-  # Replace values less than zero
-  monitor_data_daily_convert$soimoistdept[monitor_data_daily_convert$soimoistdept<0]<-0
-  
+
   # Order by date
   monitor_data_daily_convert<-monitor_data_daily_convert[order(monitor_data_daily_convert$obsdate),]
   
@@ -204,21 +264,37 @@ server <- function(input, output, session){
   sitesoilmoist_table
 })
   
-  sitesmoist<-reactive({
-  
+  sitesmoist<-reactive({ input$submit
+
   monitor_data<-mon_data()
   
+  if(sum(monitor_data$depth)>0) {monitor_data$depth<-monitor_data$depth * 1}
+  else {monitor_data$depth<-monitor_data$depth * -1}
+  
+  # Replace values less than zero
+  monitor_data$depth[monitor_data$depth<0]<-0
+  
+
   monitor_data_daily<-aggregate(cbind(depth)~date,data=monitor_data,FUN=mean)
   
   # convert date column to date type
-  monitor_data_daily_convert<-data.frame(as.Date(monitor_data_daily$date, format="%m/%d/%Y"), round(monitor_data_daily$depth*-1*2.54)) # convert depths to positive centimeters
+  monitor_data_daily_convert<-data.frame(as.Date(monitor_data_daily$date, format="%m/%d/%Y"),
+                                         if(isolate(input$units=="inches")) {round(monitor_data_daily$depth*2.54)}
+                                         else if(isolate(input$units=="meters")) {round(monitor_data_daily$depth*100)}
+                                         else if(isolate(input$units=="feet")) {round(monitor_data_daily$depth*30.48)}
+                                         else (round(monitor_data_daily$depth))
+  )
+  
+  monitor_data_daily_convert[,2]<-if(isolate(input$pipeb)!="" & isolate(input$pipel)!="") {as.numeric(isolate(input$pipel))-as.numeric(isolate(input$pipeb))-monitor_data_daily_convert[,2]}
+  else {monitor_data_daily_convert[,2]}
   
   # rename columns to match NASIS
   names(monitor_data_daily_convert)<-list("obsdate","soimoistdept")
   
-  # Replace values less than zero
-  monitor_data_daily_convert$soimoistdept[monitor_data_daily_convert$soimoistdept<0]<-0
-  
+
+
+    
+    
   # Order by date
   monitor_data_daily_convert<-monitor_data_daily_convert[order(monitor_data_daily_convert$obsdate),]
   
@@ -235,7 +311,25 @@ server <- function(input, output, session){
   return(sitesoilmoist_table)
   })
   
-  finalsitesmoist<-reactive({
+  output$iniplot <- renderPlotly({ if(input$submit ==0){
+    
+    return()}
+    
+    else if(is.null(isolate(input$mdatainput))){
+      return(NULL)}
+    
+    else({
+    
+    s<-mon_data()
+    # Plot all data
+    rsmmd<-ggplot(s, aes(x= as.Date(date, format="%m/%d/%Y"), y= depth)) + scale_colour_grey() +
+      geom_line(cex=0.5)+scale_x_date() +
+      labs(x="Date (year)", y="Sensor Measurement", title="Input Soil Moisture Monitoring Data")
+    ggplotly(rsmmd)})
+  }
+  )
+  
+  finalsitesmoist<-reactive({ input$submit
   
   sitesoilmoist_table<-sitesmoist()
   
@@ -277,14 +371,38 @@ server <- function(input, output, session){
   
   })
   
-  output$exporttable<-DT::renderDataTable({
+  output$exporttable<-DT::renderDataTable({ if(input$submit ==0)
+    
+    return()
+    
+    else if(is.null(isolate(input$mdatainput)))
+      return(NULL)
+    
+    shiny::validate(need(input$mdatainput, message= "Please Upload a Dataset."))
     
    sitesoiltable<- finalsitesmoist()
    
    sitesoiltable
+  }, options = list(pageLength=5, scrollX="100%"))
+  
+  output$exportplot<-renderPlotly({ if(input$submit ==0)
+    
+    return()
+    
+    else if(is.null(isolate(input$mdatainput)))
+      return(NULL)
+    
+    sitesoiltable<- finalsitesmoist()
+
+    # Plot all data
+    sst<-ggplot(sitesoiltable, aes(x=as.Date(obsdate, format="%Y-%m-%d"), y= soimoistdept)) + scale_colour_grey() +
+      geom_line(cex=0.5)+scale_y_reverse()+scale_x_date() +
+      labs(x="Date (year)", y="Sensor Measurement", title="Processed Soil Moisture Monitoring Data")
+    ggplotly(sst)
+    
   })
   
-output$file<-downloadHandler(
+output$file<-downloadHandler( 
   
   filename= function() {
     paste0("SiteSoilMoisture", Sys.Date(),".xlsx")
@@ -315,11 +433,22 @@ output$file<-downloadHandler(
   })
 
 
-output$sm_xlsfile<-renderUI({
+output$sm_xlsfile<-renderUI({if(input$submit ==0)
+  
+  return()
   
   downloadButton("file", "Download")
   
 })
+
+output$downloadtext<-renderUI({if(input$submit==0)
+  return()
+  
+  shiny::validate(need(input$mdatainput, message= "No file was selected for processing.  Please Upload a Dataset."))
+  
+  tags$p("Click  download to save processed file for NASIS upload -")
+
+  })
 
 }
 
