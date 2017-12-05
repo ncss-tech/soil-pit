@@ -1,6 +1,7 @@
 library(shinydashboard)
 library(shiny)
 library(data.table)
+library(plotly)
 
 header<-dashboardHeader(
   title="Soil Moisture Data Processing App", titleWidth=
@@ -52,24 +53,29 @@ body<-dashboardBody(
             verticalLayout(
               infoBox("Process Soil Moisture Monitoring data for upload to NASIS", "This app is designed to process soil moisture monitoring data and properly format it for upload into NASIS.", width=12, icon=icon("info"), color="green"),
               box(p(tags$b("Instructions for Using the Soil Moisture Data Load App")),
-                  p("There is a multitude of variability in monitoring data throughout
-                    the soil science discipline.  Differences in installation, instrumentation, 
-                    and collection frequency are just a few examples.  This document provides 
-                    guidance for loading monitoring data into the National Soil Information 
-                    System (NASIS).  Although there are many different ways to accomplish this task,
-                    the repeatability and versatility of R works well for this purpose."))   
+                  p("Data should be in a common format for processing.  The data should be a .csv file(s) 
+                     with 3 columns."),
+                  p("Column 1: date (mm/dd/YYYY)."),
+                  p("Column 2: time (all formats accepted)."),
+                  p("Column 3: measurement depth (m, cm, ft, in)."),
+                  p("The first row of the data is treated as a header.
+                    Some monitoring devices measure in reference to the sensor installation depth.
+                    In these cases, the measurements need to be adjusted to the reference point.
+                    The calibration point is depth at which the surface of the soil occurs.
+                    The total length is the length of the well (above and below the soil surface."), width= 12)   
               )),    
     
     
     #Analysis Report tab   
     tabItem(tabName="loaddata", class="active",
-            titlePanel("Soil Moisture Data"),
+            titlePanel("Processing Soil Moisture Data is as easy as 1 - 2 - 3"),
             verticalLayout(
               fluidRow(
-                box(uiOutput("sm_inputs"),
+              column(width=3, tags$h3("1. Load"),
+                box(p("Inputs marked with an asterisk (*) are required."),  p("Click submit button to begin processing."), uiOutput("sm_inputs"),
                     uiOutput("sm_units"),
-                box(solidHeader = TRUE, uiOutput("pipebelow"), uiOutput("pipelength"),width= 12),
-                    uiOutput("sm_office"),
+                box(solidHeader = TRUE, title="Measurements already adjusted? Leave these blank", status="primary", uiOutput("pipebelow"), uiOutput("pipelength"),width= 12),
+                uiOutput("sm_office"),
                     uiOutput("sm_usiteid"),
                     uiOutput("sm_project"),
                     uiOutput("sm_projectid"),
@@ -77,10 +83,16 @@ body<-dashboardBody(
                     uiOutput("sm_bottomdepth"),
                     uiOutput("sm_sensordepth"),
                     actionButton("submit","Submit"),
-                    status = "primary", title="Inputs", solidHeader=TRUE, collapsible=TRUE, width=3),
-                box(DT::dataTableOutput("mon_data"), status="primary", title="Monitoring Data", solidHeader=TRUE, collapsible=TRUE, width=6),
-                box(uiOutput("downloadtext"), uiOutput("sm_xlsfile"), status = "primary", title="Download File", solidHeader=TRUE, collapsible=TRUE, width=3),
-                box(DT::dataTableOutput("exporttable"),status="primary", title="Processed Data Preview", solidHeader=TRUE, collapsible=TRUE, width=6),
+                    status = "primary", title="Inputs", solidHeader=TRUE, collapsible=TRUE, width=12)),
+              column(width=6, tags$h3("2. Review"),
+                     
+                box(plotlyOutput("iniplot"), status="primary", title="Input Plot", solidHeader=TRUE, collapsible=TRUE, width=12),
+                box(DT::dataTableOutput("mon_data"), status="primary", title="Input Table", solidHeader=TRUE, collapsible=TRUE, collapsed=TRUE, width=12),
+                box(plotlyOutput("exportplot"),status="primary", title="Processed Plot", solidHeader=TRUE, collapsible=TRUE, width=12),
+                box(DT::dataTableOutput("exporttable"),status="primary", title="Processed Table", solidHeader=TRUE, collapsible=TRUE, collapsed=TRUE, width=12)
+              ),
+              column(width=3, tags$h3("3. Download"), box(uiOutput("downloadtext"), uiOutput("sm_xlsfile"), status = "primary", title="Download File", solidHeader=TRUE, collapsible=TRUE, width=12)),
+
                 box("This application was developed by John Hammerly.", width=12)
               ))
     )
@@ -93,7 +105,7 @@ server <- function(input, output, session){
   
   output$sm_inputs <-renderUI({
     
-    fileInput("mdatainput", "Monitoring Data File", multiple=TRUE, accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"), buttonLabel="Browse...", placeholder="No file selected")
+    fileInput("mdatainput", "Monitoring Data File(s)*", multiple=TRUE, accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"), buttonLabel="Browse...", placeholder="No file selected")
     
   })
     
@@ -105,7 +117,7 @@ server <- function(input, output, session){
   
   output$sm_usiteid <- renderUI({
     
-    textInput("usiteid", "User Site ID", value="", placeholder="2013IA001001")
+    textInput("usiteid", "User Site ID*", value="", placeholder="2013IA001001")
     
   })
   
@@ -155,19 +167,19 @@ server <- function(input, output, session){
   
   output$sm_bottomdepth <- renderUI({
     
-    textInput("bottomdepth", "Bottom Depth", value="", placeholder="210")
+    textInput("bottomdepth", "Bottom Depth (cm)*", value="", placeholder="210")
     
   })
   
   output$sm_sensordepth <- renderUI({
     
-    textInput("sensordepth", "Sensor Depth", value="", placeholder="210")
+    textInput("sensordepth", "Sensor Depth (cm)", value="", placeholder="210")
     
   })
 
   output$sm_units <- renderUI({
     
-    radioButtons("units", "Unit of Measure", choices=c("meters", "centimeters", "feet", "inches"), selected="centimeters", inline=TRUE)
+    radioButtons("units", "Input Data Unit of Measure*", choices=c("meters", "centimeters", "feet", "inches"), selected="centimeters", inline=TRUE)
     
   })
   
@@ -182,6 +194,8 @@ server <- function(input, output, session){
     textInput("pipel", "Total Length (cm)", value="", placeholder="236")
     
   })
+  
+  
   
   
   mon_data<-reactive({
@@ -212,6 +226,14 @@ server <- function(input, output, session){
   output$daily_data<-DT::renderDataTable({ input$submit
     monitor_data<-mon_data()
     
+    #check if data is positive or negative reference
+    
+    if(sum(monitor_data$depth)>0) {monitor_data$depth<-monitor_data$depth * 1}
+    else {monitor_data$depth<-monitor_data$depth * -1}
+    
+    # Replace values less than zero
+    monitor_data$depth[monitor_data$depth<0]<-0
+    
   monitor_data_daily<-aggregate(cbind(depth)~date,data=monitor_data,FUN=mean)
   
   # convert date column to date type
@@ -225,17 +247,7 @@ server <- function(input, output, session){
   # rename columns to match NASIS
   names(monitor_data_daily_convert)<-list("obsdate","soimoistdept")
   
-  #check if data is positive or negative reference
 
-  if(sum(monitor_data_daily_convert$depth)>0) {monitor_data_daily_convert$soimoistdept<-monitor_data_daily_convert$soimoistdept * 1}
-  else {monitor_data_daily_convert$soimoistdept<-monitor_data_daily_convert$soimoistdept * -1}
-  
-  
-  # Replace values less than zero
-  
-  
-   monitor_data_daily_convert$soimoistdept[monitor_data_daily_convert$soimoistdept<0]<-0
-  
   # Order by date
   monitor_data_daily_convert<-monitor_data_daily_convert[order(monitor_data_daily_convert$obsdate),]
   
@@ -256,6 +268,13 @@ server <- function(input, output, session){
 
   monitor_data<-mon_data()
   
+  if(sum(monitor_data$depth)>0) {monitor_data$depth<-monitor_data$depth * 1}
+  else {monitor_data$depth<-monitor_data$depth * -1}
+  
+  # Replace values less than zero
+  monitor_data$depth[monitor_data$depth<0]<-0
+  
+
   monitor_data_daily<-aggregate(cbind(depth)~date,data=monitor_data,FUN=mean)
   
   # convert date column to date type
@@ -274,11 +293,7 @@ server <- function(input, output, session){
   
 
 
- if(sum(monitor_data_daily_convert$soimoistdept)>0) {monitor_data_daily_convert$soimoistdept<-monitor_data_daily_convert$soimoistdept * 1}
-  else {monitor_data_daily_convert$soimoistdept<-monitor_data_daily_convert$soimoistdept * -1}
     
-    # Replace values less than zero
-    # monitor_data_daily_convert$soimoistdept[monitor_data_daily_convert$soimoistdept<0]<-0
     
   # Order by date
   monitor_data_daily_convert<-monitor_data_daily_convert[order(monitor_data_daily_convert$obsdate),]
@@ -295,6 +310,24 @@ server <- function(input, output, session){
   
   return(sitesoilmoist_table)
   })
+  
+  output$iniplot <- renderPlotly({ if(input$submit ==0){
+    
+    return()}
+    
+    else if(is.null(isolate(input$mdatainput))){
+      return(NULL)}
+    
+    else({
+    
+    s<-mon_data()
+    # Plot all data
+    rsmmd<-ggplot(s, aes(x= as.Date(date, format="%m/%d/%Y"), y= depth)) + scale_colour_grey() +
+      geom_line(cex=0.5)+scale_x_date() +
+      labs(x="Date (year)", y="Sensor Measurement", title="Input Soil Moisture Monitoring Data")
+    ggplotly(rsmmd)})
+  }
+  )
   
   finalsitesmoist<-reactive({ input$submit
   
@@ -345,12 +378,29 @@ server <- function(input, output, session){
     else if(is.null(isolate(input$mdatainput)))
       return(NULL)
     
-    validate(need(input$mdatainput, message= "Please Upload a Dataset."))
+    shiny::validate(need(input$mdatainput, message= "Please Upload a Dataset."))
     
    sitesoiltable<- finalsitesmoist()
    
    sitesoiltable
   }, options = list(pageLength=5, scrollX="100%"))
+  
+  output$exportplot<-renderPlotly({ if(input$submit ==0)
+    
+    return()
+    
+    else if(is.null(isolate(input$mdatainput)))
+      return(NULL)
+    
+    sitesoiltable<- finalsitesmoist()
+
+    # Plot all data
+    sst<-ggplot(sitesoiltable, aes(x=as.Date(obsdate, format="%Y-%m-%d"), y= soimoistdept)) + scale_colour_grey() +
+      geom_line(cex=0.5)+scale_y_reverse()+scale_x_date() +
+      labs(x="Date (year)", y="Sensor Measurement", title="Processed Soil Moisture Monitoring Data")
+    ggplotly(sst)
+    
+  })
   
 output$file<-downloadHandler( 
   
@@ -394,7 +444,7 @@ output$sm_xlsfile<-renderUI({if(input$submit ==0)
 output$downloadtext<-renderUI({if(input$submit==0)
   return()
   
-  validate(need(input$mdatainput, message= "No file was selected for processing.  Please Upload a Dataset."))
+  shiny::validate(need(input$mdatainput, message= "No file was selected for processing.  Please Upload a Dataset."))
   
   tags$p("Click  download to save processed file for NASIS upload -")
 
