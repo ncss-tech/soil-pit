@@ -1,0 +1,321 @@
+---
+title: "SDJR and MLRA Summary"
+author: "Stephen Roecker"
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    keep_md: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+```{r}
+suppressWarnings( {
+  library(soilDB)
+  library(tidyverse)
+  library(sf)
+  library(knitr)
+  })
+```
+
+
+```{r load}
+options(stringsAsFactors = FALSE)
+
+ownCloud <- "C:/Users/stephen.roecker/ownCloud/data/lims_data/"
+ro <- 11
+pt <- c("SDJR (Obsolete)")
+pt2 <- c("SDJR (Obsolete)", "MLRA", "INITIAL", "ES")
+pt3 <- c("SDJR (Obsolete)", "MLRA")
+
+
+# progress
+p <- expand.grid(mlrassoarea = "11-%",
+                 fy    = 2012:2017,
+                 projecttypename = c("CORR (Obsolete)", "DSP", "ES", "EVAL", "INITIAL", "JOIN (Obsolete)", "MLRA", "NEON", "SCS (Obsolete)", "SDJR (Obsolete)",  "SH (Obsolete)", "SPATIAL EDIT", "SPECIAL", "TABULAR EDIT", "TRADITIONAL (Obsolete)"),
+                 stringsAsFactors = FALSE
+                 )
+prg <- {
+  split(p, list(p$mlrassoarea, p$fy, p$projecttypename), drop = TRUE) ->.;
+  lapply(., function(x) {
+    cat("procressing", paste(x$mlrassoarea, x$fy, x$projecttypename), "\n")
+    get_progress_from_LIMS(x$mlrassoarea, x$fy, x$projecttypename)
+    }) ->.;
+  do.call("rbind", .)
+  }
+
+fname <- paste0(ownCloud, "lims_goal_", Sys.Date(), ".csv")
+write.csv(prg, file = fname, row.names = FALSE)
+# prg <- read.csv(file = fname)
+
+
+# project
+
+p <- expand.grid(mlrassoarea = "11-%",
+                 fy    = 2012:2017,
+                 stringsAsFactors = FALSE
+                 )
+prj <- {
+  split(p, list(p$mlrassoarea, p$fy), drop = TRUE) ->.;
+  lapply(., function(x) {
+    cat("procressing", paste(x$mlrassoarea, x$fy), "\n")
+    get_project_from_LIMS(x$mlrassoarea, x$fy)
+    }) ->.;
+  do.call("rbind", .)
+  }
+fname <- paste0(ownCloud, "lims_project_", Sys.Date(), ".csv")
+write.csv(prj, file = fname, row.names = FALSE)
+# prj <- read.csv(file = fname)
+
+
+# reverse correlation
+
+ownership <- read.csv("M:/geodata/soils/SSA_Regional_Ownership_MASTER_fy17.csv")
+names(ownership) <- tolower(names(ownership))
+
+asym <- subset(ownership, region == 11, select = areasymbol)
+asym <- within(asym, {
+  state = paste0(substr(areasymbol, 1, 2), "%")
+  })
+st <- subset(asym, ! duplicated(state), select = state)
+
+p <- expand.grid(state = st$state,
+                 fy    = 2017,
+                 stringsAsFactors = FALSE
+                 )
+rcor <- {
+  split(p, list(p$state, p$fy), drop = TRUE) ->.;
+  lapply(., function(x) {
+    cat("procressing", paste(x$state, x$fy), "\n")
+    get_reverse_correlation_from_LIMS(x$state, x$fy, "%")
+    }) ->.;
+  do.call("rbind", .)
+  }
+
+fname <- paste0("lims_reverse_correlation_fy", Sys.Date(), ".csv")
+write.csv(rcor, file = fname, row.names = FALSE)
+# rcor <- read.csv(file = fname)
+
+```
+
+
+## Estimate Workload
+
+```{r workload, eval=FALSE}
+
+fte <- data.frame(
+  fte = c(2, 2.5, 3, 2.5, 3, 5, 3, 5, 4, 1, 3),
+  office = c("11-ATL", "11-AUR", "11-CLI", "11-FIN", "11-GAL", "11-IND", "11-JUE", "11-MAN", "11-SPR", "11-UNI", "11-WAV")
+  ) # these numbers need to be updated to reflect retirements
+wdays <- (52*5-10-3*5)*.75 # 52 weeks per year, 5 days per week, minus 10 holidays, minus 3 weeks vaction, at 75% an individuals time (i.e. minus 15% for TSS and 10% for miscellaneous)
+# projects per person = 69 projects/ 3.5 fte
+# days per project = workingdays/projects per person 
+
+days_p_person <- function(days, projects, fte){
+  days/(projects/fte)
+}
+
+goals_test <- mutate(goals,
+                     mapunit = ifelse(projectname %in% c("^SDJR"), projectname, NA),
+                     mapunit = sapply(projectname, function(x) unlist(strsplit(x, " - "))[3]),
+                     components = sapply(mapunit, function(x) unlist(strsplit(x, " "))[1])
+                     )
+
+test <- goals_test %>%
+  filter(region %in% ro) %>%
+  group_by(fy = as.character(fy), office) %>%
+  summarize(
+    acres = sum(reported),
+    n_projects = length(unique(projectname)),
+    n_mapunits = length(unique(mapunit)),
+    n_majors = length(unique(sapply(components, function(x) unlist(strsplit(x, "-"))[1])))
+    ) %>% 
+  inner_join(fte, by = "office")
+
+test <- mutate(test,
+               fte = round(fte, 1),
+               days = round(fte*wdays, 0),
+               days_project_fte = round(days / (n_projects / fte), 0), days_major_fte = round(days / (n_majors / fte), 0)
+               ) %>%
+  as.data.frame()
+test2 <- rbind(test, c("2012:2016", "Average",
+                       round(apply(test[3:9], 2, mean), 0))
+               )
+
+kable(test2)
+
+# ggplot(test, aes(x = days_project_fte, y = acres, group = office)) +
+#   geom_point() +
+#   facet_wrap(fy ~ ., scales = "free_y")
+```
+
+
+## Examine Reported Acres
+
+```{r goals, fig.height=8, fig.width=8}
+
+r11 <- subset(prg, grepl(ro, mlrassoarea) & projecttypename != "ES")
+
+ggplot(r11, aes(x = fiscalyear, y = acre_progress, color = projecttypename)) + 
+  geom_line(lwd = 1) +
+  geom_point(cex = 2) +
+  facet_wrap(~ mlrassoarea, scales = "free_y", ncol = 1, strip.position = "right") +
+  scale_x_continuous(breaks = seq(2012, 2017, 2))
+
+```
+
+
+## Compare Project Acres to Goaled Acres
+
+```{r compare}
+
+rcor_g <- group_by(rcor, mlrassoarea, projecttypename, fiscalyear, projectiid, projectname) %>% 
+  summarize(sum_muacres = sum(muacres, na.rm = TRUE),
+            n_spatial = sum(spatial_change, na.rm = TRUE)
+            ) %>% 
+  filter(grepl("11-", mlrassoarea))
+
+test <- left_join(prj, rcor_g, by = "projectiid", all.x = TRUE)
+test_sub <- filter(test,
+                   muacres != sum_muacres & 
+                   projecttypename.x != "ES"
+                   ) %>%
+  select(mlrassoarea.x, projectname.x, n_spatial.y, muacres, sum_muacres, acre_goal)
+
+```
+
+
+## Summarize Spatial Changes
+
+```{r spatial}
+r11_spatial <- rcor %>%
+  filter(region %in% ro & spatial_change == TRUE & projecttypename %in% pt3) %>%
+  group_by(fy, projecttypename, region, office) %>% 
+    summarize(
+      acres = sum(muacres, na.rm = TRUE),
+      n_areasymbol = length(unique(areasymbol)),
+      n_musym = length(unique(musym_orig))
+      ) %>%
+  arrange(desc(acres)) %>%
+  as.data.frame()
+
+filter(r11_spatial, fy == 2017) %>%
+ggplot(aes(x = n_musym, y = n_areasymbol, group = fy, color = office)) + 
+  geom_point(cex = 5) + 
+  scale_colour_brewer(palette="RdYlBu") +
+  facet_grid(projecttypename ~ fy, scales = "free_y")
+```
+
+
+## Map Progress by AREASYMBOL
+
+```{r map_as, fig.height=10, fig.width=8}
+rcor_as <- rcor %>%
+  filter(grepl(ro, mlrassoarea) & projecttypename %in% pt) %>%
+  group_by(fiscalyear, mlrassoarea, projectiid, projecttypename, areasymbol) %>%
+  summarize(
+    n = length(unique(new_mukey)), 
+    muacres = sum(unique(muacres)), 
+    new_muacres = sum(unique(new_muacres))
+  ) %>%
+  group_by(fiscalyear, mlrassoarea, areasymbol) %>%
+  summarize(
+    muacres = sum(muacres),
+    new_muacres = sum(new_muacres)
+  ) %>%
+  as.data.frame()
+
+rcor_as$acres <- cut(rcor_as$new_muacres, 
+                      breaks = c(0, 10000, 50000, 100000, 150000, 200000), 
+                      labels = c("0 - 10,000", "10,000 - 50,000", "50,000 - 100,000", "100,000 - 150,000", "150,000 - 200,000")
+                      )
+
+rcors_as_w <- select(rcor_as, fiscalyear, mlrassoarea, areasymbol, acres) %>% 
+  spread(fiscalyear, acres) # spread recycles non-grouping variables, so it needs to be combined with select, reshape() silently drops them but gives a warning if they vary
+rcors_as_w1 <- reshape(rcor_as, idvar = "areasymbol", v.names = "acres", timevar = "fy", direction = "wide")
+# rcors_as_w2 <- dcast(rcors_as, region + areasymbol ~ fy, value.var = "acres") # converts acres to characters instead of factors
+
+
+ssa3 <- merge(ssa_sf, rcors_as_w, by = "areasymbol", all.x = TRUE)
+temp_sub1 <- subset(ssa3, region == ro, select = FY)
+
+# Use the following code to plot all the county boundaries for states that intersect Region 11
+bb <- st_bbox(temp_sub1)
+ssa3$state <- substr(ssa_sf$areasymbol, 1, 2)
+st <- toupper(c("il"))
+temp_sub2 <- filter(ssa3, state %in% st) %>% select(FY2013, FY2014, FY2015, FY2016, FY2017))
+
+spplot(temp_sub2,
+       main = paste0("Time Series of Updated ", paste0(pt, collapse = " & "), " Acres by County"),
+       xlim = bb[1, ], ylim = bb[2, ],
+       as.table = TRUE, layout = c(2, 2),
+       col.regions = brewer.pal(5, "YlOrRd"),
+       colorkey = list(space = "bottom", height = 1)
+       )
+```
+
+
+## Summarize and plot acres by musym
+
+```{r map_musym, eval=FALSE, echo=FALSE}
+corrs_mukey <- ddply(corrs, .(fy, region), summarize, MUKEY = unique(new_mukey))
+corrs_ssaMusym <- ddply(corrs, .(fy, region), summarize, MUKEY = unique(paste0(areasymbol,"_", old_musym)))
+
+fy12 <- subset(corrs_mukey, fy == 2012 & region == 11)
+fy13 <- subset(corrs_ssaMusym, fy == 2013 & region == 11); 
+fy14 <- subset(corrs_mukey, fy == 2014 & region == 11)
+fy15 <- subset(corrs_mukey, fy == 2015 & region == 11)
+
+fy13_r <- raster("M:/geodata/soils/gssurgo_fy13_250m.tif")
+fy13_r_dbf <- read.dbf("M:/geodata/soils/gssurgo_fy13_30m.tif.vat.dbf")
+fy13_r <- ratify(fy13_r, count=TRUE)
+rat <- levels(fy13_r)[[1]]
+names(fy13_r_dbf)[1] <- "ID"
+names(fy13_r_dbf)[3] <- "MUKEY"
+rat_new <- join(rat, fy13_r_dbf, type = "left", by = "ID")
+rat_new <- join(rat_new, fy13, type = "left", by = "MUKEY")
+fy13_r_2 <- fy13_r
+levels(fy13_r_2) <- rat_new
+# fy13_r_new <- deratify(fy13_r_2, att='fy', filename='gSSURGO_fy13_progress.tif', overwrite=TRUE, datatype='INT4U', format='GTiff', progress = "text")
+
+
+fy14_r <- raster("M:/geodata/soils/gssurgo_fy14_250m.tif")
+fy14_r_dbf <- read.dbf("M:/geodata/soils/gssurgo_fy14_30m.tif.vat.dbf")
+fy14_r <- ratify(fy14_r, count=TRUE)
+rat <- levels(fy14_r)[[1]]
+names(fy14_r_dbf)[1] <- "ID"
+rat_new <- join(rat, fy14_r_dbf, type = "left", by = "ID")
+rat_new <- join(rat_new, fy14, type = "left", by = "MUKEY")
+fy14_r_2 <- fy14_r
+levels(fy14_r_2) <- rat_new
+# fy14_r_new <- deratify(fy14_r_2, att='fy', filename='gSSURGO_fy14_progress.tif', overwrite=TRUE, datatype='INT4U', format='GTiff', progress = "text")
+
+
+fy15_r <- raster("M:/geodata/soils/gssurgo_fy15_250m.tif")
+fy15_r_dbf <- read.dbf("M:/geodata/soils/gssurgo_fy15_30m.tif.vat.dbf")
+fy15_r <- ratify(fy15_r, count=TRUE)
+rat <- levels(fy15_r)[[1]]
+names(fy15_r_dbf)[1] <- "ID"
+rat_new <- join(rat, fy15_r_dbf, type = "left", by = "ID")
+rat_new <- join(rat_new, fy15, type = "left", by = "MUKEY")
+levels(fy15_r) <- rat_new
+# fy15_r_new <- deratify(fy15_r, att='fy', filename='gSSURGO_fy15_progress.tif', overwrite=TRUE, datatype='INT4U', format='GTiff', progress = "text")
+
+fy13_r_new <- raster("C:/workspace/gSSURGO_fy13_progress.tif")
+fy14_r_new <- raster("C:/workspace/gSSURGO_fy14_progress.tif")
+fy15_r_new <- raster("C:/workspace/gSSURGO_fy15_progress.tif")
+ssa <- readOGR(dsn = "M:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs", encoding = "ESRI Shapefile")
+ssa <- spTransform(ssa, CRS("+init=epsg:5070"))
+ssa$state <- substr(ssa$areasymbol, 1, 2)
+wi <- subset(ssa, state == "WI")
+test <- stack(fy13_r_new, fy14_r_new, fy15_r_new)
+names(test) <- c("FY13_SDJR_Progress", "FY14_SDJR_Progress", "FY15_SDJR_Progress")
+spplot(test, sp.layout = wi, maxpixels = 5000000, xlim = bbox(wi)[1, ], ylim = bbox(wi)[2, ], colorkey = FALSE, col.regions = "blue", strip = strip.custom(bg = grey(0.85)))
+
+test_f <- function(x) test = unique(x)
+
+test <- by(corrs, corrs[c("fy", "region")], function(x) cbind(unique(x$new_mukey), unique(x$old_mukey)))
+test2 <- cbind(expand.grid(dimnames(test)), do.call(rbind, test))
+```
