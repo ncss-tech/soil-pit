@@ -26,11 +26,11 @@ suppressWarnings( {
 ```{r load}
 options(stringsAsFactors = FALSE)
 
-ownCloud <- "C:/Users/stephen/ownCloud/data/lims_data/"
+ownCloud <- "C:/Users/stephen.roecker/ownCloud/data/lims_data/"
 ro <- 11
-pt <- c("SDJR (Obsolete)")
-pt2 <- c("SDJR (Obsolete)", "MLRA", "INITIAL", "ES")
-pt3 <- c("SDJR (Obsolete)", "MLRA")
+pt1 <- c("SDJR (Obsolete)", "MLRA", "INITIAL", "ES")
+pt2 <- c("SDJR (Obsolete)", "MLRA")
+pt_sdjr <- c("SDJR (Obsolete)", "EVAL")
 pt_all <- c("CORR (Obsolete)", "DSP", "ES", "EVAL", "INITIAL", "JOIN (Obsolete)", "MLRA", "NEON", "SCS (Obsolete)", "SDJR (Obsolete)",  "SH (Obsolete)", "SPATIAL EDIT", "SPECIAL", "TABULAR EDIT", "TRADITIONAL (Obsolete)")
   
 
@@ -49,8 +49,8 @@ prg <- {
   do.call("rbind", .)
   }
 
-fname <- paste0(ownCloud, "lims_goal_", Sys.Date(), ".csv")
-write.csv(prg, file = fname, row.names = FALSE)
+fname <- paste0(ownCloud, "lims_goal_", "2017-12-05", ".csv")
+# write.csv(prg, file = fname, row.names = FALSE)
 # prg <- read.csv(file = fname)
 
 
@@ -68,24 +68,24 @@ prj <- {
     }) ->.;
   do.call("rbind", .)
   }
-fname <- paste0(ownCloud, "lims_project_", Sys.Date(), ".csv")
+fname <- paste0(ownCloud, "lims_project_", "2017-12-05", ".csv")
 write.csv(prj, file = fname, row.names = FALSE)
-# prj <- read.csv(file = fname)
+prj <- read.csv(file = fname)
 
 
 # reverse correlation
 
 data(state)
-st = data.frame(state = paste0(state.abb, "%"))
+st <- data.frame(state = paste0(state.abb, "%"))
 
-ownership <- read.csv("M:/geodata/soils/SSA_Regional_Ownership_MASTER_fy17.csv")
-names(ownership) <- tolower(names(ownership))
-
-asym <- subset(ownership, region == 11, select = areasymbol)
-asym <- within(asym, {
-  state = paste0(substr(areasymbol, 1, 2), "%")
-  })
-st <- subset(asym, ! duplicated(state), select = state)
+# ownership <- read.csv("M:/geodata/soils/SSA_Regional_Ownership_MASTER_fy17.csv")
+# names(ownership) <- tolower(names(ownership))
+# 
+# asym <- subset(ownership, region == 11, select = areasymbol)
+# asym <- within(asym, {
+#   state = paste0(substr(areasymbol, 1, 2), "%")
+#   })
+# st <- subset(asym, ! duplicated(state), select = state)
 
 p <- expand.grid(state       = st$state,
                  fy          = 2012:2017,
@@ -162,26 +162,35 @@ kable(test2)
 ## Examine Reported Acres
 
 ```{r goals, fig.height=8, fig.width=8}
-prg2 <- prg %>%
-  mutate(region = gsub("-", "", substr(mlrassoarea, 1, 2))) %>%
-  filter(region == ro & ! projecttypename %in% c("ES", "ALL PROJECTS"))
+prg_sub <- prg %>%
+  mutate(region = factor(gsub("-", "", substr(mlrassoarea, 1, 2)), levels = 1:12)) %>%
+  filter(! projecttypename %in% c("ES", "ALL PROJECTS"))
 
-r11 <- prg2 %>%
+regions <- prg_sub %>%
   group_by(region, projecttypename, fiscalyear) %>%
   summarize(mlrassoarea = region[1],
             acre_progress = sum(acre_progress, na.rm = TRUE)
             )
-r11 <- r11[-1]
 
-prg3 <- select(prg2, mlrassoarea, projecttypename, fiscalyear, acre_progress)
-prg4 <- rbind(prg3, r11)
+r11 <- filter(regions, region == 11)[-1]
+r11_sso <- filter(prg_sub, region == 11) %>% select(mlrassoarea, projecttypename, fiscalyear, acre_progress)
+r11_all <- rbind(r11, r11_sso)
 
-ggplot(prg4, aes(x = fiscalyear, y = acre_progress, color = projecttypename)) + 
+# plot of region 11
+ggplot(r11_all, aes(x = fiscalyear, y = acre_progress, color = projecttypename)) + 
   geom_line(lwd = 1) +
   geom_point(cex = 2) +
   facet_wrap(~ mlrassoarea, scales = "free_y", ncol = 1, strip.position = "right") +
-  scale_x_continuous(breaks = seq(2012, 2017, 2))
+  scale_x_continuous(breaks = seq(2012, 2017, 2)) +
+  ggtitle("Region 11 Acre Progress") + ylab("acres") + xlab("fiscal year")
 
+# plot of all regions
+ggplot(regions, aes(x = fiscalyear, y = acre_progress, color = projecttypename)) + 
+  geom_line(lwd = 1) +
+  geom_point(cex = 2) +
+  facet_wrap(~ region, scales = "fixed", ncol = 1, strip.position = "right") +
+  scale_x_continuous(breaks = seq(2012, 2017, 2)) +
+  ggtitle("SSD Acre Progress") + ylab("acres") + xlab("fiscal year")
 ```
 
 
