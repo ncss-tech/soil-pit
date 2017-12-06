@@ -28,8 +28,8 @@ options(stringsAsFactors = FALSE)
 
 ownCloud <- "C:/Users/stephen.roecker/ownCloud/data/lims_data/"
 ro <- 11
-pt1 <- c("SDJR (Obsolete)", "MLRA", "INITIAL", "ES")
-pt2 <- c("SDJR (Obsolete)", "MLRA")
+pt1 <- c("SDJR (Obsolete)", "MLRA", "INITIAL", "ES", "EVAL")
+pt2 <- c("SDJR (Obsolete)", "EVAl", "MLRA")
 pt_sdjr <- c("SDJR (Obsolete)", "EVAL")
 pt_all <- c("CORR (Obsolete)", "DSP", "ES", "EVAL", "INITIAL", "JOIN (Obsolete)", "MLRA", "NEON", "SCS (Obsolete)", "SDJR (Obsolete)",  "SH (Obsolete)", "SPATIAL EDIT", "SPECIAL", "TABULAR EDIT", "TRADITIONAL (Obsolete)")
   
@@ -101,9 +101,9 @@ rcor <- {
   do.call("rbind", .)
   }
 
-fname <- paste0("lims_reverse_correlation_fy", Sys.Date(), ".csv")
-write.csv(rcor, file = fname, row.names = FALSE)
-# rcor <- read.csv(file = fname)
+fname <- paste0(ownCloud, "lims_reverse_correlation_fy_", "2017-12-06.csv")
+# write.csv(rcor, file = fname, row.names = FALSE)
+rcor <- read.csv(file = fname)
 
 ```
 
@@ -164,19 +164,28 @@ kable(test2)
 ```{r goals, fig.height=8, fig.width=8}
 prg_sub <- prg %>%
   mutate(region = factor(gsub("-", "", substr(mlrassoarea, 1, 2)), levels = 1:12)) %>%
-  filter(! projecttypename %in% c("ES", "ALL PROJECTS"))
+  filter(! projecttypename %in% c("ALL PROJECTS"))
 
 regions <- prg_sub %>%
   group_by(region, projecttypename, fiscalyear) %>%
-  summarize(mlrassoarea = region[1],
-            acre_progress = sum(acre_progress, na.rm = TRUE)
+  summarize(mlrassoarea     = as.character(region[1]),
+            n_project       = sum(n_project, na.rm = TRUE),
+            n_areasymbol    = sum(n_areasymbol, na.rm = TRUE),
+            n_nationalmusym = sum(n_nationalmusym, na.rm = TRUE),
+            n_spatial       = sum(n_spatial, na.rm = TRUE),
+            acre_progress   = sum(acre_progress, na.rm = TRUE)
             )
 
-r11 <- filter(regions, region == 11)[-1]
-r11_sso <- filter(prg_sub, region == 11) %>% select(mlrassoarea, projecttypename, fiscalyear, acre_progress)
+r11 <- filter(regions, region == 11 & projecttypename == "ES")[-1]
+r11_sso <- filter(prg_sub, region == 11 & projecttypename == "ES") %>% 
+  select(mlrassoarea, projecttypename, fiscalyear, n_project, n_areasymbol, n_nationalmusym, n_spatial, acre_progress)
 r11_all <- rbind(r11, r11_sso)
+r11_all$n_project_t <- cut(r11_all$n_project,
+                           breaks = c(0, 1, 5, 15, 35, 50, 100),
+                           labels = c("1", "5", "15", "35", "50", "100+")
+                           )
 
-# plot of region 11
+# plot of region 11 acres
 ggplot(r11_all, aes(x = fiscalyear, y = acre_progress, color = projecttypename)) + 
   geom_line(lwd = 1) +
   geom_point(cex = 2) +
@@ -184,32 +193,65 @@ ggplot(r11_all, aes(x = fiscalyear, y = acre_progress, color = projecttypename))
   scale_x_continuous(breaks = seq(2012, 2017, 2)) +
   ggtitle("Region 11 Acre Progress") + ylab("acres") + xlab("fiscal year")
 
+
+# plot of region 11 number of projects
+filter(r11_all, mlrassoarea != 11) %>%
+ggplot(aes(x = n_nationalmusym, y = n_project, color = mlrassoarea)) + 
+  geom_point(cex = 5) +
+  facet_wrap(~ paste(projecttypename, "-", fiscalyear), scales = "free", ncol = 4) +
+  scale_colour_brewer(palette="RdYlBu") +
+  theme(aspect.ratio = 1) +
+  ggtitle("Region 11 Projects")
+
+
 # plot of all regions
-ggplot(regions, aes(x = fiscalyear, y = acre_progress, color = projecttypename)) + 
+filter(regions, projecttypename != "ES") %>%
+ggplot(aes(x = fiscalyear, y = acre_progress, color = projecttypename)) + 
   geom_line(lwd = 1) +
   geom_point(cex = 2) +
-  facet_wrap(~ region, scales = "fixed", ncol = 1, strip.position = "right") +
+  facet_wrap(~ region, scales = "free_y", ncol = 1, strip.position = "right") +
   scale_x_continuous(breaks = seq(2012, 2017, 2)) +
   ggtitle("SSD Acre Progress") + ylab("acres") + xlab("fiscal year")
+
+
+# plot of all regions number of projects
+filter(regions, projecttypename %in% pt1) %>%
+ggplot(aes(x = n_nationalmusym, y = n_project, shape = region)) + 
+  geom_point(cex = 3) +
+  facet_wrap(~ paste(projecttypename, "-", fiscalyear), scale = "free") +
+  scale_shape_manual(values = 1:12) +
+  theme(aspect.ratio = 1) +
+  ggtitle("SSD Projects")
+
+
+# plot of all regions number of spatial changes
+filter(regions, projecttypename %in% c("SDJR (Obsolete)", "EVAL", "MLRA")) %>%
+ggplot(aes(x = n_spatial, y = n_areasymbol, shape = region)) + 
+  geom_point(cex = 3) +
+  facet_wrap(~ paste(projecttypename, "-", fiscalyear), scales = "free") +
+  scale_shape_manual(values = 1:12) +
+  theme(aspect.ratio = 1) +
+  ggtitle("SSD Spatial Changes")
 ```
 
 
-## Compare Project Acres to Goaled Acres
+## Compare muacres to Goaled Acres
 
 ```{r compare}
 
 rcor_g <- group_by(rcor, mlrassoarea, projecttypename, fiscalyear, projectiid, projectname) %>% 
   summarize(sum_muacres = sum(muacres, na.rm = TRUE),
+            sum_new_muacres = sum(new_muacres, na.rm = TRUE),
             n_spatial = sum(spatial_change, na.rm = TRUE)
             ) %>% 
   filter(grepl("11-", mlrassoarea))
 
 test <- left_join(prj, rcor_g, by = "projectiid", all.x = TRUE)
 test_sub <- filter(test,
-                   muacres != sum_muacres & 
+                   muacres != sum_new_muacres & 
                    projecttypename.x != "ES"
                    ) %>%
-  select(mlrassoarea.x, projectname.x, n_spatial.y, muacres, sum_muacres, acre_goal)
+  select(mlrassoarea.x, projectname.x, n_spatial.y, muacres, sum_muacres, sum_new_muacres, acre_goal)
 
 ```
 
@@ -218,21 +260,23 @@ test_sub <- filter(test,
 
 ```{r spatial}
 r11_spatial <- rcor %>%
-  filter(region %in% ro & spatial_change == TRUE & projecttypename %in% pt3) %>%
-  group_by(fy, projecttypename, region, office) %>% 
+  filter(grepl(ro, mlrassoarea) & spatial_change == TRUE & projecttypename %in% pt2) %>%
+  group_by(fiscalyear, projecttypename, mlrassoarea) %>% 
     summarize(
       acres = sum(muacres, na.rm = TRUE),
       n_areasymbol = length(unique(areasymbol)),
-      n_musym = length(unique(musym_orig))
+      n_nationalmusym = length(unique(nationalmusym))
       ) %>%
   arrange(desc(acres)) %>%
   as.data.frame()
 
-filter(r11_spatial, fy == 2017) %>%
-ggplot(aes(x = n_musym, y = n_areasymbol, group = fy, color = office)) + 
+filter(r11_spatial, fiscalyear %in% 2012:2017) %>%
+ggplot(aes(x = n_nationalmusym, y = n_areasymbol, color = mlrassoarea)) + 
   geom_point(cex = 5) + 
   scale_colour_brewer(palette="RdYlBu") +
-  facet_grid(projecttypename ~ fy, scales = "free_y")
+  facet_wrap(~ paste(projecttypename, "-", fiscalyear), scales = "free") +
+  theme(aspect.ratio = 1) +
+  ggtitle("Region 11 Spatial Changes")
 ```
 
 
