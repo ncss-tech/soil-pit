@@ -26,9 +26,9 @@ suppressWarnings( {
 ```{r load}
 options(stringsAsFactors = FALSE)
 
-ownCloud <- "C:/Users/stephen.roecker/ownCloud/data/lims_data/"
+ownCloud <- "C:/Users/stephen/ownCloud/data/lims_data/"
 ro <- 11
-pt1 <- c("SDJR (Obsolete)", "MLRA", "INITIAL", "ES", "EVAL")
+pt1 <- c("SDJR (Obsolete)", "MLRA", "INITIAL", "EVAL")
 pt2 <- c("SDJR (Obsolete)", "EVAl", "MLRA")
 pt_sdjr <- c("SDJR (Obsolete)", "EVAL")
 pt_all <- c("CORR (Obsolete)", "DSP", "ES", "EVAL", "INITIAL", "JOIN (Obsolete)", "MLRA", "NEON", "SCS (Obsolete)", "SDJR (Obsolete)",  "SH (Obsolete)", "SPATIAL EDIT", "SPECIAL", "TABULAR EDIT", "TRADITIONAL (Obsolete)")
@@ -51,7 +51,7 @@ prg <- {
 
 fname <- paste0(ownCloud, "lims_goal_", "2017-12-05", ".csv")
 # write.csv(prg, file = fname, row.names = FALSE)
-# prg <- read.csv(file = fname)
+prg <- read.csv(file = fname)
 
 
 # project
@@ -69,7 +69,7 @@ prj <- {
   do.call("rbind", .)
   }
 fname <- paste0(ownCloud, "lims_project_", "2017-12-05", ".csv")
-write.csv(prj, file = fname, row.names = FALSE)
+# write.csv(prj, file = fname, row.names = FALSE)
 prj <- read.csv(file = fname)
 
 
@@ -162,8 +162,14 @@ kable(test2)
 ## Examine Reported Acres
 
 ```{r goals, fig.height=8, fig.width=8}
+brks <- c(0, 2e5, 5e5, 1e6, 5e6)
+lbls <- c("200k", "500k", "1000k", "5000k")
+
 prg_sub <- prg %>%
-  mutate(region = factor(gsub("-", "", substr(mlrassoarea, 1, 2)), levels = 1:12)) %>%
+  mutate(projecttypename = gsub(" \\(Obsolete\\)", "", projecttypename),
+         region = factor(gsub("-", "", substr(mlrassoarea, 1, 2)), levels = 1:12),
+         muacres_t = cut(muacres, breaks = brks, labels = lbls)
+         ) %>%
   filter(! projecttypename %in% c("ALL PROJECTS"))
 
 regions <- prg_sub %>%
@@ -174,7 +180,8 @@ regions <- prg_sub %>%
             n_nationalmusym = sum(n_nationalmusym, na.rm = TRUE),
             n_spatial       = sum(n_spatial, na.rm = TRUE),
             acre_progress   = sum(acre_progress, na.rm = TRUE)
-            )
+            ) %>%
+  mutate(acre_progress_t = cut(acre_progress, breaks = brks, labels = lbls))
 
 r11 <- filter(regions, region == 11 & projecttypename == "ES")[-1]
 r11_sso <- filter(prg_sub, region == 11 & projecttypename == "ES") %>% 
@@ -215,9 +222,9 @@ ggplot(aes(x = fiscalyear, y = acre_progress, color = projecttypename)) +
 
 
 # plot of all regions number of projects
-filter(regions, projecttypename %in% pt1) %>%
-ggplot(aes(x = n_nationalmusym, y = n_project, shape = region)) + 
-  geom_point(cex = 3) +
+filter(regions, projecttypename %in% c("SDJR", "INITIAL", "MLRA")) %>%
+ggplot(aes(x = n_nationalmusym, y = n_project, shape = region)) + #, size = acre_progress)) + 
+  geom_point(size = 3) +
   facet_wrap(~ paste(projecttypename, "-", fiscalyear), scale = "free") +
   scale_shape_manual(values = 1:12) +
   theme(aspect.ratio = 1) +
