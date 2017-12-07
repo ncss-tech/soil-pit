@@ -9,6 +9,6 @@ get_sitesoilmoist_from_LIMS <- function(usiteid) {
   
   d.site <-uncode(d.site, db="LIMS")
   
-  return(d.component)
+  return(d.site)
   
 }
