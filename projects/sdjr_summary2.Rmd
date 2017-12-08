@@ -87,15 +87,15 @@ st <- data.frame(state = paste0(state.abb, "%"))
 #   })
 # st <- subset(asym, ! duplicated(state), select = state)
 
-p <- expand.grid(state       = st$state,
+p <- expand.grid(mlrassoarea = 1:12,
                  fy          = 2012:2017,
                  projectname = "%",
                  stringsAsFactors = FALSE
                  )
 rcor <- {
-  split(p, list(p$state, p$fy, p$projectname), drop = TRUE) ->.;
+  split(p, list(p$mlrassoarea, p$fy, p$projectname), drop = TRUE) ->.;
   lapply(., function(x) {
-    cat("procressing", paste(x$state, x$fy, x$projectname), "\n")
+    cat("procressing", paste(x$mlrassoarea, x$fy, x$projectname), "\n")
     get_reverse_correlation_from_LIMS(x$state, x$fy, x$projectname)
     }) ->.;
   do.call("rbind", .)
