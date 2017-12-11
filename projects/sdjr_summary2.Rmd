@@ -40,14 +40,14 @@ p <- expand.grid(mlrassoarea      = paste0(1:12, "-%"),
                  projecttypename  = "%25",
                  stringsAsFactors = FALSE
                  )
-prg <- {
-  split(p, list(p$mlrassoarea, p$fy, p$projecttypename), drop = TRUE) ->.;
-  lapply(., function(x) {
-    cat("procressing", paste(x$mlrassoarea, x$fy, x$projecttypename), "\n")
-    get_progress_from_LIMS(x$mlrassoarea, x$fy, x$projecttypename)
-    }) ->.;
-  do.call("rbind", .)
-  }
+# prg <- {
+#   split(p, list(p$mlrassoarea, p$fy, p$projecttypename), drop = TRUE) ->.;
+#   lapply(., function(x) {
+#     cat("procressing", paste(x$mlrassoarea, x$fy, x$projecttypename), "\n")
+#     get_progress_from_LIMS(x$mlrassoarea, x$fy, x$projecttypename)
+#     }) ->.;
+#   do.call("rbind", .)
+#   }
 
 fname <- paste0(ownCloud, "lims_goal_", "2017-12-05", ".csv")
 # write.csv(prg, file = fname, row.names = FALSE)
@@ -60,14 +60,14 @@ p <- expand.grid(mlrassoarea      = paste0(1:12, "-%"),
                  fy               = 2012:2017,
                  stringsAsFactors = FALSE
                  )
-prj <- {
-  split(p, list(p$mlrassoarea, p$fy), drop = TRUE) ->.;
-  lapply(., function(x) {
-    cat("procressing", paste(x$mlrassoarea, x$fy), "\n")
-    get_project_from_LIMS(x$mlrassoarea, x$fy)
-    }) ->.;
-  do.call("rbind", .)
-  }
+# prj <- {
+#   split(p, list(p$mlrassoarea, p$fy), drop = TRUE) ->.;
+#   lapply(., function(x) {
+#     cat("procressing", paste(x$mlrassoarea, x$fy), "\n")
+#     get_project_from_LIMS(x$mlrassoarea, x$fy)
+#     }) ->.;
+#   do.call("rbind", .)
+#   }
 
 fname <- paste0(ownCloud, "lims_project_", "2017-12-05", ".csv")
 # write.csv(prj, file = fname, row.names = FALSE)
@@ -93,14 +93,14 @@ p <- expand.grid(mlrassoarea = paste0(1:12, "-%"),
                  projectname = "%",
                  stringsAsFactors = FALSE
                  )
-rcor <- {
-  split(p, list(p$mlrassoarea, p$fy, p$projectname), drop = TRUE) ->.;
-  lapply(., function(x) {
-    cat("procressing", paste(x$mlrassoarea, x$fy, x$projectname), "\n")
-    get_reverse_correlation_from_LIMS(x$mlrassoarea, x$fy, x$projectname)
-    }) ->.;
-  do.call("rbind", .)
-  }
+# rcor <- {
+#   split(p, list(p$mlrassoarea, p$fy, p$projectname), drop = TRUE) ->.;
+#   lapply(., function(x) {
+#     cat("procressing", paste(x$mlrassoarea, x$fy, x$projectname), "\n")
+#     get_reverse_correlation_from_LIMS(x$mlrassoarea, x$fy, x$projectname)
+#     }) ->.;
+#   do.call("rbind", .)
+#   }
 
 fname <- paste0(ownCloud, "lims_reverse_correlation_fy_", "2017-12-06.csv")
 # write.csv(rcor, file = fname, row.names = FALSE)
@@ -321,7 +321,7 @@ ggplot(aes(x = n_nationalmusym, y = n_areasymbol, color = mlrassoarea)) +
 
 ## Map Progress by AREASYMBOL
 
-```{r map_as, fig.height=10, fig.width=8}
+```{r map_as, fig.height=10, fig.width=8, eval=FALSE}
 rcor_as <- rcor %>%
   filter(grepl(ro, mlrassoarea) & projecttypename %in% pt) %>%
   group_by(fiscalyear, mlrassoarea, projectiid, projecttypename, areasymbol) %>%
@@ -369,7 +369,7 @@ spplot(temp_sub2,
 
 ## Summarize and plot acres by musym
 
-```{r map_musym, eval=FALSE, echo=FALSE}
+```{r map_musym, eval=FALSE, echo=FALSE, eval=FALSE}
 corrs_mukey <- ddply(corrs, .(fy, region), summarize, MUKEY = unique(new_mukey))
 corrs_ssaMusym <- ddply(corrs, .(fy, region), summarize, MUKEY = unique(paste0(areasymbol,"_", old_musym)))
 
