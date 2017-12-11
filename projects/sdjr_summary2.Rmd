@@ -252,7 +252,7 @@ filter(regions, projecttypename %in% c("EVAL", "SDJR", "MLRA", "INITIAL")) %>%
 ggplot(aes(x = acre_progress, y = mlrassoarea)) + 
   geom_point() + 
   facet_grid(projecttypename ~ fiscalyear, scales = "free_x") +
-  ggtitle("Dotplot of Acres Reported by Fiscal Year and Project Type") + ylab("Regions") + xlab("Acres")
+  ggtitle("SSD of Acres Reported by Fiscal Year and Project Type") + ylab("Regions") + xlab("Acres")
 
 
 # plot of all regions number of projects
