@@ -167,8 +167,8 @@ lbls <- c("200k", "500k", "1000k", "5000k")
 
 prg_sub <- prg %>%
   mutate(projecttypename = gsub(" \\(Obsolete\\)", "", projecttypename),
-         region = factor(gsub("-", "", substr(mlrassoarea, 1, 2)), levels = 1:12),
-         muacres_t = cut(muacres, breaks = brks, labels = lbls)
+         region          = factor(gsub("-", "", substr(mlrassoarea, 1, 2)), levels = 1:12),
+         muacres_t       = cut(muacres, breaks = brks, labels = lbls)
          ) %>%
   filter(! projecttypename %in% c("ALL PROJECTS"))
 
@@ -183,16 +183,31 @@ regions <- prg_sub %>%
             ) %>%
   mutate(acre_progress_t = cut(acre_progress, breaks = brks, labels = lbls))
 
-r11 <- filter(regions, region == 11 & projecttypename == "ES")[-1]
-r11_sso <- filter(prg_sub, region == 11 & projecttypename == "ES") %>% 
-  select(mlrassoarea, projecttypename, fiscalyear, n_project, n_areasymbol, n_nationalmusym, n_spatial, acre_progress)
+r11 <- filter(regions, 
+              region == 11 & 
+              projecttypename != "ES"
+              )[-1]
+
+r11_sso <- filter(prg_sub, 
+                  region == 11 & 
+                  projecttypename != "ES"
+                  ) %>%
+  mutate(acre_progress_t = cut(acre_progress, 
+                               breaks = brks, 
+                               labels = lbls)
+         ) %>%
+  select(mlrassoarea, projecttypename, fiscalyear, n_project, n_areasymbol, n_nationalmusym, n_spatial, acre_progress, acre_progress_t)
 r11_all <- rbind(r11, r11_sso)
-r11_all$n_project_t <- cut(r11_all$n_project,
+r11_all <- mutate(r11_all,
+                  n_project_t = cut(r11_all$n_project,
                            breaks = c(0, 1, 5, 15, 35, 50, 100),
                            labels = c("1", "5", "15", "35", "50", "100+")
-                           )
+                           ),
+                  mlrassoarea = factor(mlrassoarea)
+                  )
 
-# plot of region 11 acres
+
+# line plot of region 11 acres
 ggplot(r11_all, aes(x = fiscalyear, y = acre_progress, color = projecttypename)) + 
   geom_line(lwd = 1) +
   geom_point(cex = 2) +
@@ -201,42 +216,58 @@ ggplot(r11_all, aes(x = fiscalyear, y = acre_progress, color = projecttypename))
   ggtitle("Region 11 Acre Progress") + ylab("acres") + xlab("fiscal year")
 
 
+# dotplot of region 11 acres
+filter(r11_all, mlrassoarea != 11) %>% 
+  mutate(mlrassoarea = factor(mlrassoarea, levels = rev(levels(mlrassoarea)))) %>%
+ggplot(aes(x = acre_progress, y = mlrassoarea)) + 
+  geom_point() + 
+  facet_grid(projecttypename ~ fiscalyear, scales = "free_x") +
+  ggtitle("Dotplot of Acres Reported by Fiscal Year and Project Type")
+
+
 # plot of region 11 number of projects
 filter(r11_all, mlrassoarea != 11) %>%
-ggplot(aes(x = n_nationalmusym, y = n_project, color = mlrassoarea)) + 
-  geom_point(cex = 5) +
-  facet_wrap(~ paste(projecttypename, "-", fiscalyear), scales = "free", ncol = 4) +
-  scale_colour_brewer(palette="RdYlBu") +
+ggplot(aes(x = n_nationalmusym, y = n_project)) + 
+  geom_text(aes(label = mlrassoarea), size = 3) +
+  facet_wrap(~ projecttypename + fiscalyear, scales = "free", nrow = 2) +
   theme(aspect.ratio = 1) +
   ggtitle("Region 11 Projects")
 
 
 # plot of all regions
 filter(regions, projecttypename != "ES") %>%
-ggplot(aes(x = fiscalyear, y = acre_progress, color = projecttypename)) + 
-  geom_line(lwd = 1) +
+ggplot(aes(x = fiscalyear, y = acre_progress, color = projecttypename)) +   geom_line(lwd = 1) +
   geom_point(cex = 2) +
   facet_wrap(~ region, scales = "free_y", ncol = 1, strip.position = "right") +
   scale_x_continuous(breaks = seq(2012, 2017, 2)) +
   ggtitle("SSD Acre Progress") + ylab("acres") + xlab("fiscal year")
 
 
+# dotplot of all regions acres
+filter(regions, projecttypename %in% c("EVAL", "SDJR", "MLRA", "INITIAL")) %>% 
+  mutate(mlrassoarea = factor(mlrassoarea, 
+                              levels = rev(1:12))
+         ) %>%
+ggplot(aes(x = acre_progress, y = mlrassoarea)) + 
+  geom_point() + 
+  facet_grid(projecttypename ~ fiscalyear, scales = "free_x") +
+  ggtitle("Dotplot of Acres Reported by Fiscal Year and Project Type")
+
+
 # plot of all regions number of projects
 filter(regions, projecttypename %in% c("SDJR", "INITIAL", "MLRA")) %>%
-ggplot(aes(x = n_nationalmusym, y = n_project, shape = region)) + #, size = acre_progress)) + 
-  geom_point(size = 3) +
-  facet_wrap(~ paste(projecttypename, "-", fiscalyear), scale = "free") +
-  scale_shape_manual(values = 1:12) +
+ggplot(aes(x = n_nationalmusym, y = n_project)) + #, size = acre_progress)) + 
+  geom_text(aes(label = region),size = 4) +
+  facet_wrap(projecttypename ~ fiscalyear, scale = "free", nrow = 3) +
   theme(aspect.ratio = 1) +
   ggtitle("SSD Projects")
 
 
 # plot of all regions number of spatial changes
-filter(regions, projecttypename %in% c("SDJR (Obsolete)", "EVAL", "MLRA")) %>%
-ggplot(aes(x = n_spatial, y = n_areasymbol, shape = region)) + 
-  geom_point(cex = 3) +
-  facet_wrap(~ paste(projecttypename, "-", fiscalyear), scales = "free") +
-  scale_shape_manual(values = 1:12) +
+filter(regions, projecttypename %in% c("SDJR", "MLRA")) %>%
+ggplot(aes(x = n_spatial, y = n_areasymbol)) + 
+  geom_text(aes(label = region), cex = 4) +
+  facet_wrap(~ projecttypename + fiscalyear, scales = "free", nrow = 2) +
   theme(aspect.ratio = 1) +
   ggtitle("SSD Spatial Changes")
 ```
