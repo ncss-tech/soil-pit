@@ -1,0 +1,975 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head><title>
+
+</title><link href="basepage.css" rel="stylesheet" type="text/css" />
+	<title></title>
+</head>
+<body>
+	<form name="aspnetForm" method="post" action="./limsreport.aspx?report_name=WEB-Masterlist" id="aspnetForm">
+<div>
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="/wEPDwUKLTM2NDk4NDg3MA9kFgJmD2QWAgIDD2QWAgIBD2QWAgIDDw8WAh4HVmlzaWJsZWdkZGQm81/j+1gSuXc6jpReP+FS1Y69YP5c62KFMoRnAE+kGA==" />
+</div>
+
+<div>
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="DCF944DC" />
+</div>
+	<div>
+		
+	
+	<div id="ctl00_ContentPlaceHolder1_pnlReportOutput">
+	
+	<div id="ReportData"><html>
+<head>
+<STYLE TYPE="text/css"> <!-- body
+{
+	font-family:Verdana, Arial, Helv, Sans-Serif;
+	font-size: 10pt;
+}
+.soilprop
+{
+    FONT: 10pt Verdana, Helvetica, Arial, sans-serif;
+    COLOR: #000000;
+    TEXT-ALIGN: left;
+    LINE-HEIGHT: 12pt;   
+    MARGIN-LEFT: 12pt;
+    TEXT-INDENT: -12pt;  
+    MARGIN-TOP: 0pt;
+    MARGIN-BOTTOM: 0pt;
+}
+
+div.SoilReport h1
+{
+	font-size: 16px;
+}
+div.SoilReport h2
+{
+	font-size: 14px;
+}
+div.SoilReport h3, div.SoilReport h4, div.SoilReport h5, div.SoilReport h6
+{
+	font-size: 12px;
+}
+div.menu table td
+{
+	font-size: 11px;
+}
+ul.noimage li
+{
+	list-style-type: none;
+	list-style-image: none;
+}
+ul.noimage li p
+{
+	margin-left: 4ex;
+}
+ul.noimage li h1, ul.noimage li h2, ul.noimage li h3, 
+ul.noimage li h4, ul.noimage li h5, ul.noimage li h6 
+{
+	margin-bottom: 0px;
+}
+.first
+{
+	margin-top: 0px !important;
+}
+.numeric, .number
+{
+	text-align: right;
+}
+.bold
+{
+	font-weight: bold;
+	margin-right: 1ex;
+}
+.italic
+{
+	font-style: italic;
+}
+.super
+{
+	vertical-align: super;
+	font-size: smaller;
+}
+.sub
+{
+	vertical-align: sub;
+	font-size: smaller;
+}
+.padded
+{
+	padding: 5px !important;
+}
+.unpadded
+{
+	padding: 0px !important;
+}
+.scrollable
+{
+	overflow-y: auto !important;
+}
+.nowrap
+{
+	white-space: nowrap;
+}
+table
+{
+    border-collapse: collapse;
+}
+table.data th, table.data td 
+{
+	border-width: 1px;
+	border-style: solid;
+	padding: 4px;
+}
+table.data td.begindatagroup
+{
+	border-left-width: 2px;
+	border-left-style: solid;
+}
+table.data td.enddatagroup
+{
+	border-right-width: 2px;
+	border-right-style: solid;
+}
+table.data td.label
+{
+	text-align: right;
+	padding: 5px;
+}
+table.data th
+{
+}
+table.data th.title
+{
+	width: 100%;
+	padding: 2px !important;
+}
+table.data th.title div.title
+{
+	font-weight: bold;
+	padding-left: 1.25em;
+	text-indent: -1em;
+	text-align: left;
+}
+table.data th.control
+{
+	vertical-align: middle;
+	text-align: right;
+}
+table.data td
+{
+	text-align: left;
+	vertical-align: top;
+}
+table.data td.columnhead, table.data tr.columnhead td
+{
+	padding: 2px;
+	font-weight: bold;
+	text-align: center;
+}
+table.data tr.units td
+{
+	font-style: italic;
+	text-align: center;
+}
+table.data td p.mu-name
+{
+	padding-left: 0.5em;
+	text-indent: -0.5em;
+}
+table.data td p.comp-name
+{
+	padding-left: 1em;
+	text-indent: -0.5em;
+}
+table.data td p.class-name
+{
+	text-align: center;
+}
+table.data td p.reason0
+{
+	text-align: left;
+	padding-left: 0.5em;
+	text-indent: -0.5em;
+}
+table.data td p.reason1
+{
+	text-align: left;
+	padding-left: 1em;
+	text-indent: -0.5em;
+}
+table.data td p.reason2
+{
+	text-align: left;
+	padding-left: 1.5em;
+	text-indent: -0.5em;
+}
+table.data td p.hang-list
+{
+	text-align: left;
+	padding-left: 0.5em;
+	text-indent: -0.5em;
+	vertical-align: middle;
+}
+table.data tfoot td
+{
+	font-weight: bold;
+	padding-top: 5px;
+}
+table.data tr.even td
+{
+	background-color: #FDFDEE;
+}
+table.data tr.odd td
+{
+	background-color: #F8F8D8;
+}
+div.menu table
+{
+	color: #000000;
+	background-color: #FBFBE8; 
+}
+div.menu table td
+{
+	border-color: #000000;
+}
+div.menu table td.over
+{
+	background-color: #E5DEBC !important;
+}
+.title, .muname
+{
+    FONT: 14pt bold Helvetica, Arial, sans-serif;
+    COLOR: #000000;
+    TEXT-ALIGN: left;
+    LINE-HEIGHT: 16pt;   
+    MARGIN-TOP: 18pt;
+    MARGIN-BOTTOM: 3pt;
+}
+
+.subtitle
+{
+    FONT: 12pt bold Helvetica, Arial, sans-serif;
+    COLOR: #000000;
+    TEXT-ALIGN: left;
+    LINE-HEIGHT: 14pt;   
+    MARGIN-TOP: 6pt;
+    MARGIN-BOTTOM: 3pt;
+}
+
+.headnote
+{
+    FONT: 8pt Helvetica, Arial, sans-serif;
+    COLOR: #000000;
+    TEXT-ALIGN: center;
+    LINE-HEIGHT: 10pt;   
+    MARGIN: 6pt 8pt 6pt 8pt;
+}
+
+.footnote
+{
+    FONT: 8pt Helvetica, Arial, sans-serif;
+    COLOR: #000000;
+    TEXT-ALIGN: left;
+    LINE-HEIGHT: 10pt;   
+    MARGIN: 6pt 0pt 0pt 0pt;
+}
+
+.reportdesc
+{
+    FONT: 10pt Helvetica, Arial, sans-serif;
+    COLOR: #000000;    
+    LINE-HEIGHT: 12pt;   
+    TEXT-ALIGN: left; 
+    TEXT-INDENT: 12pt;  
+    MARGIN-TOP: 0pt;
+    MARGIN-BOTTOM: 0pt;
+}
+
+P.at4
+{
+    FONT: 10pt Helvetica, Arial, sans-serif;
+    COLOR: #000000;
+    TEXT-ALIGN: left;
+    LINE-HEIGHT: 12pt;   
+    MARGIN-TOP: 0pt;
+    MARGIN-BOTTOM: 0pt;
+}
+
+P.at5
+{
+    FONT: 30pt bold Helvetica, Arial, sans-serif;
+    COLOR: #000000;    
+    TEXT-ALIGN: left;   
+    LINE-HEIGHT: 32pt;   
+    MARGIN-TOP: 0pt;
+    MARGIN-BOTTOM: 0pt;
+}
+
+P.at9
+{
+    FONT: 12pt bold Helvetica, Arial, sans-serif;
+    COLOR: #000000;    
+    TEXT-ALIGN: left;
+    LINE-HEIGHT: 14pt;   
+    MARGIN-TOP: 12pt;
+    MARGIN-BOTTOM: 6pt;
+}
+
+P.at21
+{
+    FONT: 24pt bold Helvetica, Arial, sans-serif;
+    COLOR: #000000;    
+    TEXT-ALIGN: left;   
+    LINE-HEIGHT: 26pt;   
+    MARGIN-TOP: 0pt;
+    MARGIN-BOTTOM: 0pt;
+}
+
+P.at23
+{
+    FONT: 10pt Helvetica, Arial, sans-serif;
+    COLOR: #000000;    
+    TEXT-ALIGN: left; 
+    LINE-HEIGHT: 12pt;   
+    MARGIN-LEFT: 18pt;
+    TEXT-INDENT: -18pt;  
+    MARGIN-TOP: 6pt;
+    MARGIN-BOTTOM: 0pt;
+}
+
+P.at30
+{
+    FONT: 10pt Helvetica, Arial, sans-serif;
+    COLOR: #000000;
+    TEXT-ALIGN: left;   
+    LINE-HEIGHT: 12pt;   
+    MARGIN-TOP: 0pt;
+    MARGIN-BOTTOM: 0pt;
+}
+
+P.at32
+{
+    FONT: 10pt Helvetica, Arial, sans-serif;
+    COLOR: #000000;    
+    LINE-HEIGHT: 12pt;   
+    TEXT-ALIGN: left; 
+    TEXT-INDENT: 12pt;  
+    MARGIN-TOP: 0pt;
+    MARGIN-BOTTOM: 0pt;
+}
+
+P.at33
+{
+    FONT: 10pt Helvetica, Arial, sans-serif;
+    COLOR: #000000;    
+    TEXT-ALIGN: left; 
+    LINE-HEIGHT: 12pt;   
+    MARGIN-LEFT: 18pt;
+    TEXT-INDENT: -18pt;  
+    MARGIN-TOP: 0pt;
+    MARGIN-BOTTOM: 0pt;
+}
+
+P.at41
+{
+    FONT: 10pt Helvetica, Arial, sans-serif;
+    COLOR: #000000;    
+    TEXT-ALIGN: left; 
+    LINE-HEIGHT: 12pt;   
+    MARGIN-LEFT: 18pt;
+    MARGIN-TOP: 0pt;
+    MARGIN-BOTTOM: 0pt;
+}
+
+P.at53
+{
+    FONT: 8pt Helvetica, Arial, sans-serif;
+    COLOR: #000000;    
+    TEXT-ALIGN: left; 
+    LINE-HEIGHT: 10pt;   
+    MARGIN-LEFT: 42pt;
+    MARGIN-RIGHT: 24pt;
+    TEXT-INDENT: -12pt;  
+    MARGIN-TOP: 6pt;
+    MARGIN-BOTTOM: 0pt;
+}
+
+P.at54
+{
+    FONT: 8pt Helvetica, Arial, sans-serif;
+    COLOR: #000000;    
+    TEXT-ALIGN: left; 
+    LINE-HEIGHT: 10pt;   
+    MARGIN-LEFT: 42pt;
+    MARGIN-RIGHT: 24pt;
+    TEXT-INDENT: -12pt;  
+    MARGIN-TOP: 0pt;
+    MARGIN-BOTTOM: 0pt;
+}
+
+TD
+{
+    FONT: 8pt Helvetica, Arial, sans-serif;
+    COLOR: #000000;    
+    LINE-HEIGHT: 10pt;   
+    MARGIN: 0pt 0pt 0pt 0pt;
+    PADDING: 0pt 2pt 0pt 2pt;
+}
+
+THEAD TR TD
+{
+    FONT: bold 8pt Helvetica, Arial, sans-serif;
+    COLOR: #000000;    
+    LINE-HEIGHT: 10pt;   
+    TEXT-ALIGN: center; 
+    MARGIN: 0pt 0pt 0pt 0pt;
+    PADDING: 0pt 0pt 0pt 0pt;
+    BACKGROUND-COLOR: #E8E8E8;
+    /* BORDER: thin solid black */
+}
+
+.mu-name
+{
+    FONT: 8pt Helvetica, Arial, sans-serif;
+    COLOR: #000000;    
+    LINE-HEIGHT: 10pt;   
+    TEXT-ALIGN: left; 
+    MARGIN-LEFT: 6pt;
+    TEXT-INDENT: -6pt;  
+    MARGIN-TOP: 0pt;
+    MARGIN-BOTTOM: 0pt;
+}
+
+.comp-name
+{
+    FONT: 8pt Helvetica, Arial, sans-serif;
+    COLOR: #000000;    
+    LINE-HEIGHT: 10pt;   
+    TEXT-ALIGN: left; 
+    MARGIN-LEFT: 12pt;
+    TEXT-INDENT: -6pt;  
+    MARGIN-TOP: 0pt;
+    MARGIN-BOTTOM: 0pt;
+}
+
+.units
+{
+    FONT: italic 8pt Helvetica, Arial, sans-serif;
+    COLOR: #000000;    
+    LINE-HEIGHT: 10pt;   
+    TEXT-ALIGN: center; 
+    MARGIN-LEFT: 0pt;
+    TEXT-INDENT: 0pt;  
+    MARGIN-TOP: 0pt;
+    MARGIN-BOTTOM: 0pt;
+}
+
+.class-name
+{
+    FONT: 8pt Helvetica, Arial, sans-serif;
+    COLOR: #000000;    
+    LINE-HEIGHT: 10pt;   
+    TEXT-ALIGN: center; 
+    MARGIN-LEFT: 0pt;
+    TEXT-INDENT: 0pt;  
+    MARGIN-TOP: 0pt;
+    MARGIN-BOTTOM: 0pt;
+}
+
+.hang-list
+{
+    FONT: 8pt Helvetica, Arial, sans-serif;
+    COLOR: #000000;    
+    LINE-HEIGHT: 10pt;   
+    TEXT-ALIGN: left; 
+    MARGIN-LEFT: 6pt;
+    TEXT-INDENT: -6pt;  
+    MARGIN-TOP: 0pt;
+    MARGIN-BOTTOM: 0pt;
+}
+
+.reason0
+{
+    FONT: 8pt Helvetica, Arial, sans-serif;
+    COLOR: #000000;    
+    LINE-HEIGHT: 10pt;   
+    TEXT-ALIGN: left; 
+    MARGIN-LEFT: 6pt;
+    TEXT-INDENT: -6pt;  
+    MARGIN-TOP: 0pt;
+    MARGIN-BOTTOM: 0pt;
+}
+
+.reason1
+{
+    FONT: 8pt Helvetica, Arial, sans-serif;
+    COLOR: #000000;    
+    LINE-HEIGHT: 10pt;   
+    TEXT-ALIGN: left; 
+    MARGIN-LEFT: 12pt;
+    TEXT-INDENT: -6pt;  
+    MARGIN-TOP: 0pt;
+    MARGIN-BOTTOM: 0pt;
+}
+
+.reason2
+{
+    FONT: 8pt Helvetica, Arial, sans-serif;
+    COLOR: #000000;    
+    LINE-HEIGHT: 10pt;   
+    TEXT-ALIGN: left; 
+    MARGIN-LEFT: 18pt;
+    TEXT-INDENT: -6pt;  
+    MARGIN-TOP: 0pt;
+    MARGIN-BOTTOM: 0pt;
+}
+
+.reason3
+{
+    FONT: 8pt Helvetica, Arial, sans-serif;
+    COLOR: #000000;    
+    LINE-HEIGHT: 10pt;   
+    TEXT-ALIGN: left; 
+    MARGIN-LEFT:24pt;
+    TEXT-INDENT: -6pt;  
+    MARGIN-TOP: 0pt;
+    MARGIN-BOTTOM: 0pt;
+}
+
+.ratingvalue
+{
+    FONT: 8pt Helvetica, Arial, sans-serif;
+    COLOR: #000000;    
+    LINE-HEIGHT: 10pt;   
+    TEXT-ALIGN: right; 
+    MARGIN-LEFT: 0pt;
+    MARGIN-TOP: 0pt;
+    MARGIN-BOTTOM: 0pt;
+}
+
+.number
+{
+    FONT: 8pt Helvetica, Arial, sans-serif;
+    COLOR: #000000;    
+    LINE-HEIGHT: 10pt;   
+    TEXT-ALIGN: right; 
+    MARGIN-LEFT: 0pt;
+    MARGIN-TOP: 0pt;
+    MARGIN-BOTTOM: 0pt;
+}
+
+.total-line
+{
+    FONT: 8pt Helvetica, Arial, sans-serif;
+    COLOR: #000000;    
+    LINE-HEIGHT: 10pt;   
+    PADDING: 6pt 2pt 0pt 2pt;
+    BORDER-TOP: 1px solid black;
+}
+
+.shade0
+{
+	background-color: #FFEEDD;
+}
+
+.shade1
+{
+	background-color: white;
+}
+
+.descrip-mu
+{
+    FONT: 10pt Helvetica, Arial, sans-serif;
+    COLOR: #000000;    
+    TEXT-ALIGN: left; 
+    LINE-HEIGHT: 12pt;   
+    MARGIN-LEFT: 0pt;
+    MARGIN-TOP: 12pt;
+    MARGIN-BOTTOM: 0pt;
+}
+
+.descrip-text
+{
+    FONT: 10pt Helvetica, Arial, sans-serif;
+    COLOR: #000000;    
+    TEXT-ALIGN: left; 
+    LINE-HEIGHT: 12pt;   
+    MARGIN-LEFT: 18pt;
+    MARGIN-TOP: 12pt;
+    MARGIN-BOTTOM: 0pt;
+}
+.center
+{
+	text-align: center;
+}
+.right
+{
+	text-align: right;
+}
+.bold
+{
+	font-weight: bold;
+} --> </STYLE>
+</head>
+<body>
+<html>
+<body>
+<h1>
+Soil Science Division Management Reports</h1>
+<div>
+<h3>
+TSS reports</h3>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-Technical_Soil_Services_National_Report_FY' target='_blank'>
+TSS Interactive Charts By State and fiscal year</a>
+<br>
+This report prompts for the State Code and FY.  It displays several interactive charts and graphs useful for a State</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WSS-TSS_Region_area_and_FY_Summary' target='_blank'>
+TSS table by Soil Science Region and fiscal year</a>
+<br>
+This report prompts for the Region, Member Title, and Fiscal year.  It is designed to display TSS activities for a region by Position title.</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-TSS_table_by_county_and_FY' target='_blank'>
+TSS table by county and fiscal year</a>
+<br>
+This report prompts for the State Code and FY.  It displays all Tech services sorted by Staff Member, by County name, for the given Fiscal year.</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-TSS_table_by_state_and_FY' target='_blank'>
+TSS table by state and fiscal year</a>
+<br>
+This report prompts for the State Code and FY.  It displays all Tech services sorted by Staff Member for the given Fiscal year</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-TSS_table_by_person_and_FY' target='_blank'>
+TSS table by Soil Scientist and fiscal year</a>
+<br>
+This report prompts for the Soil Scientist Name and FY.  Correct format of name is requried e.g. Smith, John.  It displays all Tech services for the soil scientist and Fiscal year. </br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-TSS_table_by_state_and_FY_national' target='_blank'>
+National TSS Report</a>
+<br>
+This report prompts for the Fiscal Year.  It is a national report showing all Tech services sorted by state for the entered Fiscal year</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-TSS_table_by_state_and_FY_national_RPM' target='_blank'>
+National Summary TSS Report</a>
+<br>
+This report prompts for the Fiscal Year and provides a national summary of all Tech services sorted by state, person, and TSS name with summed Instances and Hours for the entered Fiscal year</br>
+<br>
+</br>
+</div>
+<div>
+<h3>
+State Soil Scientist Reports</h3>
+<a href='https://nrcsbusinessreports.sc.egov.usda.gov/Baf.Reports/Reports.aspx' target='_blank'>
+NRCS Application Reports - Web Soil Survey Metrics</a>
+<br>
+(Eauth)  This is the web link for the WSS metrics page.  Placed here so you will remember to monitor your state metrics. This page requires special permission. If you get a blank page please email soils hotline</br>
+<br>
+</br>
+<a href='https://www.nrcs.usda.gov/Internet/FSE_DOCUMENTS/nrcseprd1338623.html' target='_blank'>
+Prime Farmland by Area Symbol</a>
+<br>
+An SDA-populated select list is used to pick a state and SSA which enables creation of a "Prime and other Important Farmlands" based upon those selections. The data is not static; it hits Soil Data Access Live. To reset the table hit F5 on the keyboard. Once a survey is selected and table appears, if a new survey is selected it will append to the table at the bottom</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-SSS-Correlation_state_fy_id' target='_blank'>
+State Correlation Report</a>
+<br>
+This report identifies the old and new map unit correlation information.  It prompts for the Survey symbol and the percent wildcard must be used.  One area can be choosen e.g. MO123 or all areas in a State MO%. This table can be copied and pasted into Excel where it can be sorted, grouped and subtotaled by any field.</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-PROJECT-LMU_TEXT_METADATA_BY_AREASYMBOL' target='_blank'>
+Legend Export Certification History Report</a>
+<br>
+This is a condensed report from the one above.  This narrative format provides the three columns used to identify the old and new map unit correlation by soil survey area for the entire state.  It prompts for the two character state code and the four digit fiscal year. The information is then copied for each survey area and then pasted into the Legend Export Certification History table prior to the Legend certification and export.  This report provides a minimum set of information for the user - musym, nationalmusym, and map unit name, both old and new.  The state soil scientist can add information in the Legend Export Certification History table to supplement this report.</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-SSS-EFOTG_soils_info' target='_blank'>
+EFOTG soils data</a>
+<br>
+This report gives brief summary soils information for a county or the whole state, it prompts for the Survey symbol.  One area can be choosen e.g. MO123 or all areas in a State MO%. This table can be copied and pasted into Excel where it can be then added to the EFOTOG website.</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-SSS-PROJECT-Counties_with_approved_projects' target='_blank'>
+Identify surveys with projects ready to upload</a>
+<br>
+This report is designed for the State Soil Scientist to identify the Soil Surveys with projects impacting those surveys with all the correlation activity dates populated.</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-SSS-Cales' target='_blank'>
+LESA properties by county FIPS</a>
+<br>
+This report is designed to identify the county map units, symbols, names, percentage, Farmland Classification and NCCPI, Corn, Oats, Soybeans, Grain Sorghum, Cotton, and Bermudagrass as crop indicators.</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-EXPORT-NASIS-Export-to-Stagin-Server-Status-by-Year' target='_blank'>
+Soil Survey Staging Server Status</a>
+<br>
+This report is designed to identify tabular data latest Exports status from NASIS to Staging Server. Identifies Status By Soil Survey Area and Calendar Year. (NASIS to Staging Server)</br>
+<br>
+</br>
+<a href='https://soils-staging.sc.egov.usda.gov/' target='_blank'>
+NRCS Soil Data Warehouse Staging Site</a>
+<br>
+Ensure you belong to these NASIS State groups (Export, Staging, Warehouse) for permissions (Staging Server to Warehouse)</br>
+<br>
+</br>
+<a href='https://wssrulereportmanager.sc.egov.usda.gov/' target='_blank'>
+Web Soil Survey Rule and Report Manager Version 1.0</a>
+<br>
+(Eauth) Must be assigned to the NASIS State Group (Soil Data Viewer). The purpose of the WSS Report and Rule Manager (WSSRRM) application is to allow the State Soil Scientist to develop a suite of Web Soil Survey (WSS) manuscript reports and WSS and Soil Data Viewer (SDV) thematic maps tailored to the needs of the state. W</br>
+<br>
+</br>
+<br>
+</br>
+</div>
+<div>
+<h3>
+Project reports</h3>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-PROJECTS-Long_Range_Plan' target='_blank'>
+Soil Survey Office Long Range Plan Report</a>
+<br>
+This report is the Long Range Plan report for Soil Survey Offices. The report requires that the FUTURE PROJECT milestone be populated in order for the project to appear on this report. The dates you enter will pull from the Scheduled Start Date for the FUTURE PROJECT milestone. It prompts for the types of Projects (MLRA, SDJR, ES, etc.), the ONE office you wish to report, and the scheduled start date range for the FUTURE PROJECT milestone.</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-PROJECT-REPORTS' target='_blank'>
+Project Summary Report</a>
+<br>
+This is the best report for managers to use in monitoring projects. The report prompts for office or region, using % as a wildcard, and provides fourteen summary reports. It is a one stop shop to quickly review projects by providing links to many reports</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-PROJECT-MLRA_Goals_Progress' target='_blank'>
+Project Goals and Progress</a>
+<br>
+(Simple Version) This report prompts for the FY, office, type of project for approved projects.</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-PROJECT-Progr-Goals-Ac-Appr-by-MSSO-FY-Proj' target='_blank'>
+Project Goals and Progress</a>
+<br>
+( Complete Version with several tables) This report prompts for the FY, office, type of project for approved projects.  It delivers the list of  projects by office, SSRO, and summarizes the Total Goal and Total Reported for those projects delivered in the report. It displays the Region, SSO, Approved, Project Name, Goaled User, Goaled Acres, Reported Acres, Reported User.  If a Project does not contain reported acres it is due to the Reported User not being populated</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-PROJECT-PRS_Mining_SQL' target='_blank'>
+PRS 1.02 Soils Mining Reporting</a>
+<br>
+This Soil report is the same SQL that PRS uses to mine data for the PRS 1.0.2 report.  This report provides the Project Name, the reported date, the state assigned, the NRCS acres, and the Cooperator acres.</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-PROJECT-OFFICE_GOALS_PROGRESS_BY_FY' target='_blank'>
+Goals and Progress By Soil Survey Office</a>
+<br>
+Runs on approved projects for Soil Survey Office and Fiscal Year.</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-PROJECT-OFFICE_GOALS_PROGRESS' target='_blank'>
+National Office Report for Goals and Progress</a>
+<br>
+Runs approved projects for the nation by fiscal year</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-PROJECTS-Summary_Project_Plans_national_report' target='_blank'>
+Summary Project Plans national report</a>
+<br>
+This report prompts for the office (5-SAL or 5%) and provides a summary of the SDJR projects.  It includes - the project name, description, acres, SDJR acres, map unit concept</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-PROJECTS-mapunits_by_area_FY' target='_blank'>
+Project Mapunits with recorded acres</a>
+<br>
+This report prompts for the office (6-SPR or 6-%) and Fiscal Year.  The output table is saved to Excel and joined to the Raster soils map to create a Progress Map; the fields need to be formatted to text before being saved.</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-PROJECTS-Summary_Project_Plans_QA_and_QC_milestones' target='_blank'>
+Project QC and QA Milestones</a>
+<br>
+This report prompts for the office (11-IND or 11-%) and Fiscal Year.  The abbreviated report focuses on the QC and QA milestones and Reported acres.</br>
+<br>
+</br>
+</div>
+<div>
+<h3>
+Ecological Site Projects</h3>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-ES-Summary_PES_Project_Plansv2' target='_blank'>
+PES Summary report2</a>
+<br>
+This Provisional Ecological Site report provides a summary progress by MLRA if the Milestone type ES -5- Provisional ESs Identified is populated.  It then summarizes the map unit acres assigned to the ES project in which the newest date on a milestone is dated and provides a percent complete for the MLRA.</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-ES-Summary_PES_Project_Plans' target='_blank'>
+PES Summary report</a>
+<br>
+This Provisional Ecological Site report provides a summary progress by MLRA.  The MLRA is mined from the name, so it is important the MLRA is correctly populated.  It then summarizes the map unit acres assigned to the ES project in which the milestone 5 is dated and provide a percent complete for the MLRA.</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-ES-Summary_PES_Project_Plans_Regional' target='_blank'>
+PES Summary report by Region and by Fiscal Year</a>
+<br>
+This Regional Provisional Ecological Site report provides a summary progress by MLRA.  The MLRA is mined from the name, so it is important the MLRA is correctly populated.  It then summarizes the map unit acres assigned to the ES project in which the milestone 5 is dated and provide a percent complete for the MLRA.</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-ES-Goals_Progress' target='_blank'>
+Project Goals and Progress</a>
+<br>
+This Ecological Site report prompts for the FY, office, type of project, and approval.  It delivers the list of  projects by office, SSRO, and summarizes the Total Goal and Total Reported for those projects delivered in the report. It displays the Region, SSO, Approved, Project Name, Goaled User, Goaled Acres, Reported Acres, Reported User.  If a Project does not contain reported acres it is due to the Reported User not being populated</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-PROJECT-PRS_Mining_SQL_ES' target='_blank'>
+PRS 1.03 ES Mining Reporting</a>
+<br>
+This Ecological Site report is the same SQL that PRS uses to mine data the Ecological Site Projects 1.0.3 for the PRS report.  This report provides the Project Name, the reported date, the state assigned, the NRCS acres, and the Cooperator acres.</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-ES-National_ES_Project_Plans' target='_blank'>
+Ecological Site Projects In NASIS with Goals and Milestones</a>
+<br>
+This national report that prompts for an office (5-SAL or 5* or * for all) and displays all the Ecological Site project plans with goals, acres and reporting dates.</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-ES-National_ES_Projects' target='_blank'>
+All Ecological Site Project In NASIS</a>
+<br>
+This national report that identifies all the Ecological Site project plans populated in NASIS.</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-ES-Summary_Project_Plans_by_milestone' target='_blank'>
+Ecological_Site_Project_Plans_by_milestone</a>
+<br>
+This is the milestone project plan report that prompts for an office (5-SAL or 5* or * for all) and identifies all the Ecological Site project plans and their milestone dates.</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-ES-Project_Plans' target='_blank'>
+Summary_ES_Project_Plans</a>
+<br>
+This is the summary project plan report that prompts for the Fiscal Year and an office (5-SAL or 5* or * for all) and summarizes all the Ecological Site project plans.</br>
+<br>
+</br>
+<br>
+</br>
+</div>
+<div>
+<h3>
+Future Projects</h3>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-Future-Projects_Summary' target='_blank'>
+Managers Summary report of Future Projects</a>
+<br>
+This national report lists those projects with the milestonetypename including Future Project from SDJR.  The report provides the region, state, office, office name, project number, projectname, milestone, approval, scheduled completion date, and summed muacres.</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-Future-Summary_Project_Plans' target='_blank'>
+Future Projects</a>
+<br>
+This report prompts for the Soil Survey Office (11-IND or 11% or %) and lists those projects deemed as Future workload identified in the SDJR initiative and includes the project narrative.</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-Future-Counties_with_approved_projects_DU' target='_blank'>
+Digitizing Unit Report</a>
+<br>
+This report prompts for the FY.  It lists the those map units and surveys deemed in need of DU recertification because of the SDJR initiative.</br>
+<br>
+</br>
+<br>
+</br>
+</div>
+<div>
+<h3>
+Pedon reports</h3>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-Pedon_profiles2&cname=firebaugh&choice=f&m1=2' target='_blank'>
+Create Mini Profiles of pedons in NASIS by soil name</a>
+<br>
+Run this report, then change the soil name or the choice in the URL to choose another soil (f=fragment percentage and t=texture and r=redoximophic feature percentage and m1=1 for dry color and m1=2 for moist) If the color is blank then the color is null or the moisture state is null</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-PEDON_profiles2_no_moiststatus&cname=firebaugh&choice=f' target='_blank'>
+Create Mini Profiles of pedons in NASIS by soil name with no moisture status</a>
+<br>
+Run this report, then change the soil name or the choice in the URL to choose another soil (f=fragment percentage and t=texture and r=redoximophic feature percentage) If the color is blank then the color is null</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-GOOGLE-MAPS-MULTIPLE-POINTS-USERPEDONID&userpedonid=%25TN041%25' target='_blank'>
+plot all KSSL pedons within a county</a>
+<br>
+Run this report as is, then change the county fips code in the URL for a different data set</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=WEB-PEDON-Transect Analysis for MU Composition, Stats' target='_blank'>
+Transect Analysis</a>
+<br>
+Run this report and you will be prompted for the transect IDs to analyze</br>
+<br>
+</br>
+<a href='https://casoilresource.lawr.ucdavis.edu/sde/?series=bluford' target='_blank'>
+Series Data Explorer</a>
+<br>
+Run this reports, then change the name of the series in the URL.</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=PEDON_Color_and_Depth' target='_blank'>
+Recorded locations and color at the depth requested</a>
+<br>
+This report prompts for the west and east longitude and the north and south latitude.  It reports the horizon name, color, and texture at the requested depth.</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=Pedon_Site_Description_current_taxon_name' target='_blank'>
+Pedon description by Taxon name</a>
+<br>
+This report prompts for the current Taxon name.  It displays the pedon description.</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=Pedon_Site_Description_usepedonid' target='_blank'>
+Pedon description by user pedon ID</a>
+<br>
+This report prompts for the current user pedon ID.  It displays the pedon description.</br>
+<br>
+</br>
+<a href='https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=Pedon_Site_Description_sersiteid' target='_blank'>
+Pedon description by user site ID</a>
+<br>
+This report prompts for the current site ID.  It displays the pedon description.</br>
+<br>
+</br>
+</div>
+<div>
+<h3>
+NHQ reports</h3>
+<a href='https://ems-team.usda.gov/sites/NRCS_NSSC/datajoinr/Shared%20Documents/Web-National_Progress_Summary.htm' target='_blank'>
+Program Manager Report</a>
+<br>
+Provides cumulative initial and update mapping by individual land category and percent complete relative to total acres in each category.  Totals for all categories are included.  The report also provides initial and update acres for any fiscal year specified when you run the report.</br>
+<br>
+</br>
+<a href=' https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=ML-NHQ-Projects-Soil-Survey-Area_Reported-Acres_Comparison' target='_blank'>
+Program Manager QA Report for Non-MLRA Soil Survey Areas</a>
+<br>
+This report should contain only the traditional Non-MLRA Soil Survey Areas.  If an SDJR/MLRA/ES/ or any other project appears on this report then that project is to be edited to remove the Non-MLRA Soil Survey Area in the Project table.  In addition, for duplicate Projects (legend) with different legend status, the original Project (legend) should have the LCB acres zeroed out and the Initial acres populated in the Project Mapping Progress table whereas the newer Project (legend) should have the LCB acres populated and no initial acres in the PMP table</br>
+<br>
+</br>
+</div>
+<p>
+Questions, suggestions, or errors with the report
+<a href='mailto:john.hammerly@in.usda.gov?Subject=Shiny_Master_List&body=Name:%0DComments:'>
+Send E-Mail
+</a>
+<php>
+ to: John Hammerly  </php>
+</p>
+</body>
+</html>
+</body></html>
+</div>
+</div>
+	
+
+	</div>
+	</form>	
+</body>
+</html>
