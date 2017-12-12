@@ -19,6 +19,10 @@ sidebar<-dashboardSidebar(
               
               #Home Page Menu    
               menuItem("Home", tabName="Home", selected=TRUE, icon=icon("home")),
+              
+              
+              menuItem("LIMS Reports", tabName="LIMS", icon=icon("flask")),
+              
               #Water Table Menu
               menuItem("Water Table", icon=icon("tint"),
                        menuSubItem("Plot", tabName="WTPlots", icon=icon("area-chart")),
@@ -124,6 +128,13 @@ body<-dashboardBody(
                   p("Project Extent query uses pattern matching.  Anchors (^ or $) may be needed if exact results are needed"), width=12),
               box("This application was developed by John Hammerly, Stephen Roecker, and Dylan Beaudette.", width=12)
             )),
+    
+    #LIMS Reports
+    
+    tabItem(tabName="LIMS",
+            includeHTML("lims.html")),
+    
+    
     #water table plot tab   
     tabItem(tabName="WTPlots", class="active",
             titlePanel("Water Table Plots"),
@@ -404,6 +415,7 @@ library(knitr)
     })
     m
   })
+
 }
 
 #combine the user interface and server to generate the shiny app

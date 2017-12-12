@@ -9,6 +9,7 @@ library(DT)
 library(aqp)
 library(soilReports)
 library(knitr)
+library(plotly)
 
 wt_selectInput <- function(id) {
   ns <- NS(id)
@@ -28,7 +29,7 @@ wt_tabItem <- function(id){
                     uiOutput(ns("muname"), inline= TRUE, container=span),
                     width=12, icon=icon("map"), color="blue"),
             fluidRow(
-              box(plotOutput(ns("result")), width=12)),
+              box(plotlyOutput(ns("result")), width=12)),
             box("This application was developed by John Hammerly and Stephen Roecker.", width=12)
   )
 }
@@ -46,12 +47,12 @@ wt_tabItem2 <- function(id){
 }
 
 wt <- function(input, output, session){
-  output$result <- renderPlot({ input$submit
+  output$result <- renderPlotly({ input$submit
     
     
     wtlevels <- get_cosoilmoist_from_SDA(WHERE = paste0(isolate(input$choice),"='", isolate(input$query), "'"), duplicates = TRUE)
     
-    if (input$filltype=="flooding") {ggplot(wtlevels, aes(x = as.integer(month), y = dept_r, lty = status))+
+    if (input$filltype=="flooding") {wt_plot<-ggplot(wtlevels, aes(x = as.integer(month), y = dept_r, lty = status))+
         geom_rect(aes(xmin = as.integer(month), xmax = as.integer(month)+
                         1, ymin = 0, ymax = max(wtlevels$depb_r),fill = flodfreqcl)) +
         geom_line(cex = 1) +
@@ -60,7 +61,9 @@ wt <- function(input, output, session){
         ylim(max(wtlevels$depb_r), 0) +xlab("month") + ylab("depth (cm)") +
         scale_x_continuous(breaks = 1:12, labels = month.abb, name="Month")+
         facet_wrap(~ paste(compname, comppct_r, "pct", nationalmusym, sep = "-")) +
-        ggtitle("Water Table Levels from Component Soil Moisture Month Data")}
+        ggtitle("Water Table Levels from Component Soil Moisture Month Data")
+      ggplotly(wt_plot)
+      }
     
     else if (input$filltype=="ponding") {ggplot(wtlevels, aes(x = as.integer(month), y = dept_r, lty = status))+
         geom_rect(aes(xmin = as.integer(month), xmax = as.integer(month)+
@@ -71,7 +74,9 @@ wt <- function(input, output, session){
         ylim(max(wtlevels$depb_r), 0) +xlab("month") + ylab("depth (cm)") +
         scale_x_continuous(breaks = 1:12, labels = month.abb, name="Month")+
         facet_wrap(~ paste(compname, comppct_r, "pct", nationalmusym, sep = "-")) +
-        ggtitle("Water Table Levels from Component Soil Moisture Month Data")}})
+        ggtitle("Water Table Levels from Component Soil Moisture Month Data")}
+
+    })
 
 #mapunit name render for water table plot tab
 output$muname<-renderText({    input$submit

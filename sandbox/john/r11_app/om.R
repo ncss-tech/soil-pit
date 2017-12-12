@@ -9,6 +9,7 @@ library(DT)
 library(aqp)
 library(soilReports)
 library(knitr)
+library(plotly)
 
 om_selectInput <- function(id) {
   ns <- NS(id)
@@ -29,9 +30,10 @@ om_tabItem <- function(id){
             uiOutput(ns("muname"), inline= TRUE, container=span),
             width=12, icon=icon("map"), color="blue"),
     fluidRow(
-      box(plotOutput(ns("result")), width=12)),
+      box(plotlyOutput(ns("result")), width=12)),
+    verticalLayout(
     box("This application was developed by John Hammerly and Stephen Roecker.", width=12)
-  )
+  ))
 }
 
 om_tabItem2 <- function(id){
@@ -61,7 +63,7 @@ om <- function(input, output, session){
     wtlevels$muname[1]})
  
   #render organic matter plot
-  output$result<-renderPlot({ input$submit
+  output$result<-renderPlotly({ input$submit
     # import soil data using the fetchSDA_component() function
     omdata = fetchSDA_component(WHERE = paste0(isolate(input$choice),"='", isolate(input$query), "'"), duplicates= TRUE)
     
@@ -71,14 +73,16 @@ om <- function(input, output, session){
     h = merge(h, site(omdata$spc)[c("cokey", "compname", "comppct_r")], by = "cokey", all.x = TRUE)
     
     # plot clay content
-    ggplot(h) +
+    om_plot<-ggplot(h) +
       geom_line(aes(y = om_r, x = hzdept_r)) +
       geom_ribbon(aes(ymin = om_l, ymax = om_h, x = hzdept_r), alpha = 0.2) +
       xlim(200, 0) +
       xlab("depth (cm)") + ylab("organic matter (%)") +
       ggtitle("Depth Plots of Organic Matter by Soil Component") +
       facet_wrap(~ paste(compname, comppct_r, "%")) +
-      coord_flip()})
+      coord_flip()
+    ggplotly(om_plot)
+    })
   
   output$omdatatab<- DT::renderDataTable({input$submit
     omdata <- fetchSDA_component(WHERE = paste0(isolate(input$choice),"='", isolate(input$query), "'"), duplicates= TRUE);    omdata_slice <- aqp::slice(omdata$spc, 0:200 ~ om_l + om_r + om_h)
