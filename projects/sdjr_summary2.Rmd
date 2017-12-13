@@ -35,39 +35,39 @@ pt_all <- c("CORR (Obsolete)", "DSP", "ES", "EVAL", "INITIAL", "JOIN (Obsolete)"
   
 
 # progress
-p <- expand.grid(mlrassoarea      = paste0(1:12, "-%"),
-                 fy               = 2012:2017,
+p <- expand.grid(mlrassoarea      = paste0(11, "-%"),
+                 fy               = 2012:2018,
                  projecttypename  = "%25",
                  stringsAsFactors = FALSE
                  )
-# prg <- {
-#   split(p, list(p$mlrassoarea, p$fy, p$projecttypename), drop = TRUE) ->.;
-#   lapply(., function(x) {
-#     cat("procressing", paste(x$mlrassoarea, x$fy, x$projecttypename), "\n")
-#     get_progress_from_LIMS(x$mlrassoarea, x$fy, x$projecttypename)
-#     }) ->.;
-#   do.call("rbind", .)
-#   }
+prg <- {
+  split(p, list(p$mlrassoarea, p$fy, p$projecttypename), drop = TRUE) ->.;
+  lapply(., function(x) {
+    cat("procressing", paste(x$mlrassoarea, x$fy, x$projecttypename), "\n")
+    get_progress_from_LIMS(x$mlrassoarea, x$fy, x$projecttypename)
+    }) ->.;
+  do.call("rbind", .)
+  }
 
-fname <- paste0(ownCloud, "lims_goal_", "2017-12-05", ".csv")
+fname <- paste0(ownCloud, "lims_goal_", "2017-12-13", ".csv")
 # write.csv(prg, file = fname, row.names = FALSE)
 prg <- read.csv(file = fname)
 
 
 # project
 
-p <- expand.grid(mlrassoarea      = paste0(1:12, "-%"),
-                 fy               = 2012:2017,
+p <- expand.grid(mlrassoarea      = paste0(11, "-%"),
+                 fy               = 2012:2018,
                  stringsAsFactors = FALSE
                  )
-# prj <- {
-#   split(p, list(p$mlrassoarea, p$fy), drop = TRUE) ->.;
-#   lapply(., function(x) {
-#     cat("procressing", paste(x$mlrassoarea, x$fy), "\n")
-#     get_project_from_LIMS(x$mlrassoarea, x$fy)
-#     }) ->.;
-#   do.call("rbind", .)
-#   }
+prj <- {
+  split(p, list(p$mlrassoarea, p$fy), drop = TRUE) ->.;
+  lapply(., function(x) {
+    cat("procressing", paste(x$mlrassoarea, x$fy), "\n")
+    get_project_from_LIMS(x$mlrassoarea, x$fy)
+    }) ->.;
+  do.call("rbind", .)
+  }
 
 fname <- paste0(ownCloud, "lims_project_", "2017-12-05", ".csv")
 # write.csv(prj, file = fname, row.names = FALSE)
@@ -157,6 +157,28 @@ kable(test2)
 # ggplot(test, aes(x = days_project_fte, y = acres, group = office)) +
 #   geom_point() +
 #   facet_wrap(fy ~ ., scales = "free_y")
+```
+
+
+## Examine muacres != acre_landcat
+
+```{r}
+
+prj <- within(prj, {
+  acre_diff = muacres - acre_landcat
+  acre_g20  = muacres * 0.2
+  })
+
+View(test <- subset(prj, projecttypename != "ES" & 
+                      n_spatial < 1 & 
+                      muacres != acre_landcat & 
+                      fiscalyear == 2017
+                    ))
+
+test2 <- get_projectmapunit_from_NASIS()
+test3 <- subset(test2, projectname == "SDJR - MLRA 111B - Pewamo silty clay loam, 0 to 2 percent slopes" & mustatus == "additional")
+sum(test3["muacres"])
+
 ```
 
 
