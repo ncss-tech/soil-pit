@@ -28,9 +28,9 @@ options(stringsAsFactors = FALSE)
 
 ownCloud <- "C:/Users/stephen.roecker/ownCloud/data/lims_data/"
 ro <- 11
-pt1 <- c("SDJR (Obsolete)", "MLRA", "INITIAL", "EVAL")
-pt2 <- c("SDJR (Obsolete)", "EVAl", "MLRA")
-pt_sdjr <- c("SDJR (Obsolete)", "EVAL")
+eval_mlra_initial <- c("SDJR (Obsolete)", "MLRA", "INITIAL", "EVAL")
+eval_mlra <- c("SDJR (Obsolete)", "EVAl", "MLRA")
+eval <- c("SDJR (Obsolete)", "EVAL")
 pt_all <- c("CORR (Obsolete)", "DSP", "ES", "EVAL", "INITIAL", "JOIN (Obsolete)", "MLRA", "NEON", "SCS (Obsolete)", "SDJR (Obsolete)",  "SH (Obsolete)", "SPATIAL EDIT", "SPECIAL", "TABULAR EDIT", "TRADITIONAL (Obsolete)")
   
 
@@ -57,7 +57,7 @@ prg <- read.csv(file = fname)
 # project
 
 p <- expand.grid(mlrassoarea      = paste0(11, "-%"),
-                 fy               = 2012:2018,
+                 fy               = 2018,
                  stringsAsFactors = FALSE
                  )
 prj <- {
@@ -88,19 +88,19 @@ st <- data.frame(state = paste0(state.abb, "%"))
 #   })
 # st <- subset(asym, ! duplicated(state), select = state)
 
-p <- expand.grid(mlrassoarea = paste0(1:12, "-%"),
-                 fy          = 2012:2017,
+p <- expand.grid(mlrassoarea = paste0(11, "-%"),
+                 fy          = 2018,
                  projectname = "%",
                  stringsAsFactors = FALSE
                  )
-# rcor <- {
-#   split(p, list(p$mlrassoarea, p$fy, p$projectname), drop = TRUE) ->.;
-#   lapply(., function(x) {
-#     cat("procressing", paste(x$mlrassoarea, x$fy, x$projectname), "\n")
-#     get_reverse_correlation_from_LIMS(x$mlrassoarea, x$fy, x$projectname)
-#     }) ->.;
-#   do.call("rbind", .)
-#   }
+rcor <- {
+  split(p, list(p$mlrassoarea, p$fy, p$projectname), drop = TRUE) ->.;
+  lapply(., function(x) {
+    cat("procressing", paste(x$mlrassoarea, x$fy, x$projectname), "\n")
+    get_reverse_correlation_from_LIMS(x$mlrassoarea, x$fy, x$projectname)
+    }) ->.;
+  do.call("rbind", .)
+  }
 
 fname <- paste0(ownCloud, "lims_reverse_correlation_fy_", "2017-12-06.csv")
 # write.csv(rcor, file = fname, row.names = FALSE)
@@ -320,8 +320,22 @@ test_sub <- filter(test,
 ## Summarize Spatial Changes
 
 ```{r spatial}
+
+# compare rcor to prj
+
+rcor_sum <- group_by(rcor, mlrassoarea, projectiid) %>% 
+  summarize(n_spatial = sum(spatial_change, na.rm = TRUE))
+prj_sub <- filter(prj, fiscalyear == 2018 & projectapprovedflag == TRUE)
+
+test <- left_join(prj, rcor_sum, by = "projectiid")
+
+View(test2 <- filter(test, n_spatial.y > 0 & n_spatial.x < 1))
+
+
+# plot comparison
+
 r11_spatial <- rcor %>%
-  filter(grepl(ro, mlrassoarea) & spatial_change == TRUE & projecttypename %in% pt2) %>%
+  filter(grepl(ro, mlrassoarea) & spatial_change == TRUE & projecttypename %in% eval_mlra) %>%
   group_by(fiscalyear, projecttypename, mlrassoarea) %>% 
     summarize(
       acres = sum(muacres, na.rm = TRUE),
