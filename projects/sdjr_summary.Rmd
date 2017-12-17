@@ -1,118 +1,103 @@
 ---
 title: "SDJR and MLRA Summary"
-author: "Stephen Roecker"
-date: "December 12, 2016"
+author: "`r Sys.getenv('USERNAME')`"
+date: "`r Sys.Date()`"
 output: 
   html_document: 
     keep_md: yes
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(message = FALSE, warning = FALSE)
-options(stringsAsFactors = FALSE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
 
-library(knitr)
-library(RColorBrewer)
-library(rgdal)
-library(RCurl)
-library(XML)
-library(foreign)
-library(reshape2)
-library(plyr)
-library(tidyverse)
-
-source("C:/workspace2/github/soil-pit/trunk/queries/kssl_queries.R")
+```{r}
+suppressWarnings( {
+  library(soilDB)
+  library(tidyverse)
+  library(viridis)
+  library(sp)
+  library(sf)
+  library(knitr)
+  })
 ```
 
 
 ```{r load}
-setwd("C:/Users/stephen.roecker/ownCloud/data/lims_data")
+options(stringsAsFactors = FALSE)
 
-### Set parameters
+ownCloud <- "C:/Users/stephen/ownCloud/data/lims_data/"
 ro <- 11
-pt <- c("SDJR")
-pt2 <- c("SDJR", "MLRA", "INITIAL", "ES")
-pt3 <- c("SDJR", "MLRA")
+eval_mlra_initial <- c("SDJR (Obsolete)", "MLRA", "INITIAL", "EVAL")
+eval_mlra <- c("SDJR (Obsolete)", "EVAl", "MLRA")
+eval <- c("SDJR (Obsolete)", "EVAL")
+pt_all <- c("CORR (Obsolete)", "DSP", "ES", "EVAL", "INITIAL", "JOIN (Obsolete)", "MLRA", "NEON", "SCS (Obsolete)", "SDJR (Obsolete)",  "SH (Obsolete)", "SPATIAL EDIT", "SPECIAL", "TABULAR EDIT", "TRADITIONAL (Obsolete)")
+  
 
-data(state); st <- tolower(state.abb)
-project_id <- "%25"
+# progress
+p <- expand.grid(mlrassoarea      = paste0(11, "-%"),
+                 fy               = 2012:2018,
+                 projecttypename  = "%25",
+                 stringsAsFactors = FALSE
+                 )
+prg <- {
+  split(p, list(p$mlrassoarea, p$fy, p$projecttypename), drop = TRUE) ->.;
+  lapply(., function(x) {
+    cat("procressing", paste(x$mlrassoarea, x$fy, x$projecttypename), "\n")
+    get_progress_from_LIMS(x$mlrassoarea, x$fy, x$projecttypename)
+    }) ->.;
+  do.call("rbind", .)
+  }
 
-ssa <- read.dbf("M:/geodata/soils/soilsa_a_nrcs.dbf")
-ownership <- read.csv("M:/geodata/soils/SSA_Regional_Ownership_MASTER_fy17.csv")
-
-idx <- ownership$Region == 11
-asymbol2 <- ownership[idx, "AREASYMBOL"]
-asymbol <- paste0(unique(
-  substr(asymbol2, 1, 2)), 
-  "%25")
+fname <- paste0(ownCloud, "lims_goal_", "2017-12-16", ".csv")
+# write.csv(prg, file = fname, row.names = FALSE)
+prg <- read.csv(file = fname)
 
 
-# fetch goals
-years <- 2017
-goals <- ldply(years, function(x){
-  cat("fetching", x, "goal\n")
-  goals_report(x, "%25")
-  })
+# project
+
+p <- expand.grid(mlrassoarea      = paste0(11, "-%"),
+                 fy               = 2012:2018,
+                 stringsAsFactors = FALSE
+                 )
+prj <- {
+  split(p, list(p$mlrassoarea, p$fy), drop = TRUE) ->.;
+  lapply(., function(x) {
+    cat("procressing", paste(x$mlrassoarea, x$fy), "\n")
+    get_project_from_LIMS(x$mlrassoarea, x$fy)
+    }) ->.;
+  do.call("rbind", .)
+  }
+
+fname <- paste0(ownCloud, "lims_project_", "2017-12-16", ".csv")
+# write.csv(prj, file = fname, row.names = FALSE)
+prj <- read.csv(file = fname)
 
 
 # reverse correlation
-years <- 2017
-start_date <- paste0("10/01/", years - 1)
-finish_date <- paste0("09/30/", years)
 
-rcors <- mapply(function(years, start_date, finish_date){
-  cat("fetching", years, "reverse correlation\n")
-  sdjr_correlation(asymbol, project_id, start_date, finish_date)
-  }, years, start_date, finish_date, SIMPLIFY = FALSE); rcors <- do.call("rbind", rcors)
+mlrassoarea <- paste0("11-", c("ATL", "AUR", "CLI", "FIN", "GAL", "IND", "JUE", "MAN", "SPR", "UNI", "WAV"))
 
+p <- expand.grid(mlrassoarea = paste0(11, "-%"),
+                 fy          = 2012:2017,
+                 projectname = "%",
+                 stringsAsFactors = FALSE
+                 )
+rcor <- {
+  split(p, list(p$mlrassoarea, p$fy, p$projectname), drop = TRUE) ->.;
+  lapply(., function(x) {
+    cat("procressing", paste(x$mlrassoarea, x$fy, x$projectname), "\n")
+    get_reverse_correlation_from_LIMS(x$mlrassoarea, x$fy, x$projectname)
+    }) ->.;
+  do.call("rbind", .)
+  }
 
-# fetch legends
-legends <- legends_report(asymbol) 
+fname <- paste0(ownCloud, "lims_reverse_correlation_fy_", "2017-12-16.csv")
+# write.csv(rcor, file = fname, row.names = FALSE)
+rcor <- read.csv(file = fname)
 
-
-## Load data from files
-goal_dates <- "2017_04_17"
-corr_dates <- "2015_09_24"
-
-goal_files <- paste0("lims_goals_fy", substr(2012:2017, 3, 4), "_", goal_dates, ".csv")
-corr_files <- paste0("lims_correlation_fy", 2012:2015, "_", corr_dates, ".csv")
-
-goals <- ldply(goal_files, read.csv)
-
-rcors.. <- ldply(corr_files, read.csv)
-rcors16 <- read.csv("lims_correlation_fy2016_AK%25_WY%25_2016_09_19.csv")
-rcors17 <- read.csv("lims_correlation_fy2017_IA%25_WI%25_2017_04_17.csv")
-rcors16 <- rbind(rcors16, rcors17[!names(rcors17) %in% c("pmu_seqnum", "state")])
-
-
-## House Cleaning
-
-### rcors
-old_names <- c("sso", "old_musym", "old_natsym", "new_natsym", "old_mukey", "old_acres", "new_acres", "old_muname", "old_musym2", "spatial")
-new_names <- c("office", "musym", "nationalmusym", "new_nationalmusym", "mukey", "muacres", "new_muacres", "muname", "musym_orig", "spatial_change")
-names(rcors..) <- tolower(names(rcors..))
-names(rcors..)[which(names(rcors..) %in% old_names)] <- new_names
-rcors.. <- within(rcors.., {
-                  projecttypename = substr(projectname, 1, 4)
-                  state = substr(areasymbol, 1, 2)
-                  })
-rcors17 <- subset(rcors17, !is.na(new_mukey))
-rcors17 <- within(rcors17, {
-                  state = substr(areasymbol, 1, 2)
-                  })
-
-idx <- names(rcors..)[names(rcors..) %in% names(rcors16)]
-rcors <- rbind(rcors..[idx], rcors16[idx])
-
-
-### goals
-old_names <- c("ssoffice", "projecttype")
-new_names <- c("office", "projecttypename")
-names(goals)[which(names(goals) %in% old_names)] <- new_names
-
-### save copy
-save(rcors, file = paste0("rcors_fy_summary_", corr_dates, "_", format(Sys.time(), "%Y_%m_%d.Rdata")))
-save(goals, file = paste0("goals_fy_summary_", goal_dates, "_", format(Sys.time(), "%Y_%m_%d.Rdata")))
 ```
 
 
@@ -167,191 +152,276 @@ kable(test2)
 ```
 
 
-## Examine Reported Acres
+## Examine muacres != acre_landcat
 
-```{r goals, fig.height=8, fig.width=8}
-temp <- goals %>%
-  filter(region == ro & projecttypename %in% pt2) %>%
-  group_by(fy, office, projecttypename) %>%
-  summarize(
-    n_projects = length(unique(projectname)),
-    n_projects_completed = sum(goaled == reported),
-    pct_n_completed = (n_projects_completed / n_projects) * 100,
-    goaled = sum(goaled),
-    reported = sum(reported)
-    ) %>%
-  as.data.frame()
+```{r}
 
-temp <- mutate(temp,
-               office = factor(office, levels = sort(unique(temp$office), decreasing = TRUE)),
-               projecttypename = factor(projecttypename, levels = pt2)
-               )
+prj <- within(prj, {
+  acre_diff = muacres - acre_landcat
+  acre_g20  = muacres * 0.2
+  })
 
-# Dotplot of Office vs Acres by Project Type
-ggplot(temp, aes(x = reported, y = office)) + 
-  geom_point() + 
-  facet_grid(~ projecttypename ~ fy, scales = "free_x") +
-  ggtitle("Dotplot of Acres Reported by Fiscal Year and Project Type")
+View(test <- subset(prj, projecttypename != "ES" & 
+                      n_spatial < 1 & 
+                      muacres != acre_landcat & 
+                      fiscalyear == 2017
+                    ))
 
-# Scatterplot of n_projects vs n_projects_completed by Office and Project Type
-# filter(temp, fy %in% 2012:2016) %>%
-# ggplot(aes(x = n_projects, y = n_projects_completed, color = office)) +
-#   geom_point(cex = 5) +
-#   scale_colour_brewer(palette="RdYlBu") +
-#   facet_grid(projecttypename ~ fy) +
-#   coord_fixed()
-#   ggtitle("Scatterplot of Projects Reported by Fiscal Year and Project Type")
+test2 <- get_projectmapunit_from_NASIS()
+test3 <- subset(test2, projectname == "SDJR - MLRA 111B - Pewamo silty clay loam, 0 to 2 percent slopes" & mustatus == "additional")
+sum(test3["muacres"])
 
-filter(temp, fy == 2017) %>%
-ggplot(aes(x = pct_n_completed, y = n_projects, color = office)) +
-  geom_point(cex = 5) +
-  scale_colour_brewer(palette="RdYlBu") +
-  xlim(0, 100) +
-  facet_grid(projecttypename ~ fy, scales = "free_y") +
-  coord_fixed()
-  ggtitle("Scatterplot of Projects Reported by Fiscal Year and Project Type")
-
-# Time Series of Acres Reported by Office and Project Type
-ggplot(temp, aes(x = fy, y = reported, group = office, linetype = office, shape = office)) + 
-  geom_line(size = 0.7) + 
-  geom_point(size = 2.5) +
-  scale_shape_manual(values=1:nlevels(temp$office)) +
-  facet_grid(projecttypename ~ ., scales = "free_y")
-  ggtitle("Time Series of Acres Reported by Fiscal Year and Project Type")
-
-# Time Series of n_projects_completed Reported by Office and Project Type
-ggplot(temp, aes(x = fy, y = n_projects_completed, group = office, linetype = office, shape = office)) + 
-  geom_line(size = 0.7) + 
-  geom_point(size = 2.5) +
-  scale_shape_manual(values=1:nlevels(temp$office)) +
-  facet_grid(projecttypename ~ ., scales = "free_y") +
-  ggtitle("Time Series of n_projects_completed Reported by Fiscal Year and Project Type")
-
-temp <- filter(temp, projecttypename %in% pt3)
-rank_acres <- group_by(temp, office) %>%
-  summarize(acres = sum(reported)) %>%
-  arrange(- acres) %>%
-  mutate(acres = formatC(acres, format = "E", digits = 1)) %>%
-  t() %>% as.data.frame()
-rank_projects <- group_by(temp, office) %>%
-  summarize(projects = sum(n_projects_completed)) %>%
-  arrange(- projects) %>%
-  t() %>% as.data.frame()
-kable(rank_acres)
-kable(rank_projects)
 ```
 
 
-## Compare Project Acres to Goaled Acres
+## Examine Reported Acres
+
+```{r goals, fig.height=8, fig.width=8}
+brks <- c(0, 2e5, 5e5, 1e6, 5e6)
+lbls <- c("200k", "500k", "1000k", "5000k")
+
+prg_sub <- prg %>%
+  mutate(projecttypename = gsub(" \\(Obsolete\\)", "", projecttypename),
+         region          = factor(gsub("-", "", substr(mlrassoarea, 1, 2)), levels = 1:12),
+         muacres_t       = cut(muacres, breaks = brks, labels = lbls)
+         ) %>%
+  filter(! projecttypename %in% c("ALL PROJECTS"))
+
+regions <- prg_sub %>%
+  group_by(region, projecttypename, fiscalyear) %>%
+  summarize(mlrassoarea     = as.character(region[1]),
+            n_project       = sum(n_project, na.rm = TRUE),
+            n_areasymbol    = sum(n_areasymbol, na.rm = TRUE),
+            n_nationalmusym = sum(n_nationalmusym, na.rm = TRUE),
+            n_spatial       = sum(n_spatial, na.rm = TRUE),
+            acre_progress   = sum(acre_progress, na.rm = TRUE)
+            ) %>%
+  mutate(acre_progress_t = cut(acre_progress, breaks = brks, labels = lbls))
+
+r11 <- filter(regions, 
+              region == 11
+              )[-1]
+
+r11_sso <- filter(prg_sub, 
+                  region == 11
+                  ) %>%
+  mutate(acre_progress_t = cut(acre_progress, 
+                               breaks = brks, 
+                               labels = lbls)
+         ) %>%
+  select(mlrassoarea, projecttypename, fiscalyear, n_project, n_areasymbol, n_nationalmusym, n_spatial, acre_progress, acre_progress_t)
+
+r11_all <- rbind(r11, r11_sso)
+r11_all <- mutate(r11_all,
+                  n_project_t = cut(r11_all$n_project,
+                           breaks = c(0, 1, 5, 15, 35, 50, 100),
+                           labels = c("1", "5", "15", "35", "50", "100+")
+                           ),
+                  mlrassoarea = factor(mlrassoarea)
+                  )
+
+
+# line plot of region 11 acres
+filter(r11_all, projecttypename != "ES") %>%
+ggplot(aes(x = fiscalyear, y = acre_progress, color = projecttypename)) + 
+  geom_line(lwd = 1) +
+  geom_point(cex = 2) +
+  facet_wrap(~ mlrassoarea, scales = "free_y", ncol = 1, strip.position = "right") +
+  scale_x_continuous(breaks = seq(2012, 2017, 2)) +
+  ggtitle("Region 11 Acre Progress") + ylab("acres") + xlab("fiscal year")
+
+
+# dotplot of region 11 acres
+filter(r11_all, mlrassoarea != 11 & projecttypename != "ES") %>% 
+  mutate(mlrassoarea = factor(mlrassoarea, levels = rev(levels(mlrassoarea)))) %>%
+ggplot(aes(x = acre_progress, y = mlrassoarea)) + 
+  geom_point() + 
+  facet_grid(projecttypename ~ fiscalyear, scales = "free_x") +
+  ggtitle("Dotplot of Acres Reported by Fiscal Year and Project Type")
+
+
+# plot of region 11 number of projects
+filter(r11_all, mlrassoarea != 11 & projecttypename != "ES") %>%
+ggplot(aes(x = n_nationalmusym, y = n_project)) + 
+  geom_text(aes(label = mlrassoarea), size = 3) +
+  facet_wrap(~ projecttypename + fiscalyear, scales = "free", nrow = 2) +
+  theme(aspect.ratio = 1) +
+  ggtitle("Region 11 Projects")
+
+
+# plot of all regions
+filter(regions, projecttypename != "ES") %>%
+ggplot(aes(x = fiscalyear, y = acre_progress, color = projecttypename)) +   geom_line(lwd = 1) +
+  geom_point(cex = 2) +
+  facet_wrap(~ region, scales = "free_y", ncol = 1, strip.position = "right") +
+  scale_x_continuous(breaks = seq(2012, 2017, 2)) +
+  ggtitle("SSD Acre Progress") + ylab("Acres") + xlab("Fiscal Year")
+
+
+# dotplot of all regions acres
+filter(regions, projecttypename %in% c("EVAL", "SDJR", "MLRA", "INITIAL")) %>% 
+  mutate(mlrassoarea = factor(mlrassoarea, 
+                              levels = rev(1:12))
+         ) %>%
+ggplot(aes(x = acre_progress, y = mlrassoarea)) + 
+  geom_point() + 
+  facet_grid(projecttypename ~ fiscalyear, scales = "free_x") +
+  ggtitle("SSD of Acres Reported by Fiscal Year and Project Type") + ylab("Regions") + xlab("Acres")
+
+
+# plot of all regions number of projects
+filter(regions, projecttypename %in% c("SDJR", "INITIAL", "MLRA")) %>%
+ggplot(aes(x = n_nationalmusym, y = n_project)) + #, size = acre_progress)) + 
+  geom_text(aes(label = region),size = 4) +
+  facet_wrap(projecttypename ~ fiscalyear, scale = "free", nrow = 3) +
+  theme(aspect.ratio = 1) +
+  ggtitle("Scatter Plot of Regions") + ylab("Number of Projects") + xlab("Number of Map Units")
+
+
+# plot of all regions number of spatial changes
+filter(regions, projecttypename %in% c("SDJR", "MLRA")) %>%
+ggplot(aes(x = n_spatial, y = n_areasymbol)) + 
+  geom_text(aes(label = region), cex = 4) +
+  facet_wrap(~ projecttypename + fiscalyear, scales = "free", nrow = 2) +
+  theme(aspect.ratio = 1) +
+  ggtitle("SSD Spatial Changes")
+```
+
+
+## Compare muacres to Goaled Acres
 
 ```{r compare}
 
-rcors_acres <- rcors %>% 
-  filter(region == ro & projecttypename %in% pt) %>%
-  group_by(fy, region, office, projectname, projectiid, areasymbol) %>%
-  summarize(
-    n = length(unique(musym_orig)), 
-    old_acres = sum(unique(muacres)), 
-    new_acres = sum(unique(new_muacres))
-    ) %>%
-  group_by(fy, region, office, projectname) %>% 
-  summarize(
-    n = sum(n),
-    old_acres = sum(old_acres),
-    new_acres = sum(new_acres)
-    )
+rcor_g <- group_by(rcor, mlrassoarea, projecttypename, fiscalyear, projectiid, projectname) %>% 
+  summarize(sum_muacres = sum(muacres, na.rm = TRUE),
+            sum_new_muacres = sum(new_muacres, na.rm = TRUE),
+            n_spatial = sum(spatial_change, na.rm = TRUE)
+            ) %>% 
+  filter(grepl(ro, mlrassoarea))
 
-temp <- left_join(goals, rcors_acres, by = "projectname")
+test <- left_join(prj, rcor_g, by = "projectiid", all.x = TRUE)
+test_sub <- filter(test,
+                   muacres != sum_muacres &
+                   n_spatial.y < 1 &
+                   projecttypename.x != "ES"
+                   ) %>%
+  select(mlrassoarea.x, projectname.x, n_spatial.y, muacres, sum_muacres, sum_new_muacres, acre_goal)
 
-progress <- temp %>%
-  filter(region.x == ro & projecttypename %in% pt) %>%
-  group_by(region.x, fy.x, projecttypename) %>% 
-  summarize(reported = sum(reported) / 0.2,
-            new_acres = sum(new_acres, na.rm = TRUE),
-            dif_acres = sum(reported - new_acres, na.rm = TRUE),
-            dif_pct = 100 - round(reported / new_acres * 100)
-            ) 
-
-kable(progress)
 ```
 
 
 ## Summarize Spatial Changes
 
 ```{r spatial}
-r11_spatial <- rcors %>%
-  filter(region %in% ro & spatial_change == TRUE & projecttypename %in% pt3) %>%
-  group_by(fy, projecttypename, region, office) %>% 
+
+# compare rcor to prj
+
+rcor_sum <- group_by(rcor, mlrassoarea, projecttypename, fiscalyear, projectiid, projectname) %>% 
+  summarize(n_spatial = sum(spatial_change, na.rm = TRUE))
+prj_sub <- filter(prj, fiscalyear == 2018 & projectapprovedflag == TRUE)
+
+test <- left_join(prj, rcor_sum, by = "projectiid")
+
+View(test2 <- filter(test, n_spatial.y > 0 & n_spatial.x < 1))
+
+
+# plot comparison
+
+r11_spatial <- rcor %>%
+  filter(grepl(ro, mlrassoarea) & spatial_change == TRUE & projecttypename %in% eval_mlra) %>%
+  group_by(fiscalyear, projecttypename, mlrassoarea) %>% 
     summarize(
       acres = sum(muacres, na.rm = TRUE),
       n_areasymbol = length(unique(areasymbol)),
-      n_musym = length(unique(musym_orig))
+      n_nationalmusym = length(unique(nationalmusym))
       ) %>%
   arrange(desc(acres)) %>%
   as.data.frame()
 
-filter(r11_spatial, fy == 2017) %>%
-ggplot(aes(x = n_musym, y = n_areasymbol, group = fy, color = office)) + 
-  geom_point(cex = 5) + 
-  scale_colour_brewer(palette="RdYlBu") +
-  facet_grid(projecttypename ~ fy, scales = "free_y")
+filter(r11_spatial, fiscalyear %in% 2012:2017) %>%
+ggplot(aes(x = n_nationalmusym, y = n_areasymbol)) + 
+  geom_text(aes(label = mlrassoarea), cex = 2.5) +
+  facet_wrap(~ paste(projecttypename, "-", fiscalyear), scales = "free") +
+  theme(aspect.ratio = 1) +
+  ggtitle("Region 11 Spatial Changes")
 ```
 
 
 ## Map Progress by AREASYMBOL
 
-```{r map_as, fig.height=10, fig.width=8}
-rcors_as <- rcors %>%
-  filter(region == ro & projecttypename %in% pt & substr(areasymbol, 1, 2) == "IL") %>%
-  group_by(fy, region, projectiid, projecttypename, areasymbol) %>%
+```{r map_as, fig.height=10, fig.width=8, eval=FALSE}
+
+rcor_as <- rcor %>%
+  filter(grepl(ro, mlrassoarea) & 
+         projecttypename %in% eval_mlra &
+         fiscalyear %in% 2012:2017
+         ) %>%
+  group_by(mlrassoarea, projecttypename, fiscalyear, projectiid, projectname, areasymbol) %>%
   summarize(
-    n = length(unique(new_mukey)), 
-    muacres = sum(unique(muacres)), 
-    new_muacres = sum(unique(new_muacres))
-  ) %>%
-  group_by(fy, region, areasymbol) %>%
+    muacres     = sum(muacres    , na.rm = TRUE),
+    new_muacres = sum(new_muacres, na.rm = TRUE)
+    ) %>%
+  group_by(fiscalyear, areasymbol) %>%
   summarize(
-    muacres = sum(muacres),
-    new_muacres = sum(new_muacres)
-  ) %>%
+    muacres     = sum(muacres    , na.rm = TRUE),
+    new_muacres = sum(new_muacres, na.rm = TRUE)
+    ) %>%
   as.data.frame()
 
-rcors_as$acres <- cut(rcors_as$new_muacres, 
-                      breaks = c(0, 10000, 50000, 100000, 150000, 200000), 
-                      labels = c("0 - 10,000", "10,000 - 50,000", "50,000 - 100,000", "100,000 - 150,000", "150,000 - 200,000")
+rcor_as$acres <- cut(rcor_as$muacres, 
+                     breaks = c(0, 10000, 50000, 100000, 150000, 500000), 
+                     labels = c("0 - 10,000", "10,000 - 50,000", "50,000 - 100,000", "100,000 - 150,000", "150,000 - 500,000")
+                     )
+
+rcor_as_w <- select(rcor_as, fiscalyear, areasymbol, acres) %>% 
+  spread(fiscalyear, acres) # spread recycles non-grouping variables, so it needs to be combined with select, reshape() silently drops them but gives a warning if they vary
+
+params <- expand.grid(fiscalyear = 2012:2017,
+                      areasymbol = sort(unique(rcor_as$areasymbol)),
+                      stringsAsFactors = FALSE
                       )
+rcor_as_l <- left_join(params, rcor_as, by = c("fiscalyear", "areasymbol"))
 
-rcors_as_w <- select(rcors_as, fy, region, areasymbol, acres) %>% 
-  spread(fy, acres) # spread recycles non-grouping variables, so it needs to be combined with select, reshape() silently drops them but gives a warning if they vary
-rcors_as_w1 <- reshape(rcors_as, idvar = "areasymbol", v.names = "acres", timevar = "fy", direction = "wide")
-# rcors_as_w2 <- dcast(rcors_as, region + areasymbol ~ fy, value.var = "acres") # converts acres to characters instead of factors
 
-fy <- paste0(sort(unique(rcors_as$fy)))
-FY <- paste0("FY", sort(unique(rcors_as$fy)))
-names(rcors_as_w)[which(names(rcors_as_w) %in% fy)] <- FY
+# load spatial data
+ssa_sf <- read_sf(dsn = "D:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs")
+ssa_w <- inner_join(ssa_sf, rcor_as_w, by = "areasymbol")
+ssa_l <- inner_join(ssa_sf, rcor_as_l, by = "areasymbol")
 
-ssa3 <- merge(ssa_sf, rcors_as_w, by = "areasymbol", all.x = TRUE)
-temp_sub1 <- subset(ssa3, region == ro, select = FY)
 
-# Use the following code to plot all the county boundaries for states that intersect Region 11
-bb <- st_bbox(temp_sub1)
-ssa3$state <- substr(ssa_sf$areasymbol, 1, 2)
-st <- toupper(c("il"))
-temp_sub2 <- filter(ssa3, state %in% st) %>% select(FY2013, FY2014, FY2015, FY2016, FY2017))
+# ggplot2 (require github version)
 
-spplot(temp_sub2,
-       main = paste0("Time Series of Updated ", paste0(pt, collapse = " & "), " Acres by County"),
-       xlim = bb[1, ], ylim = bb[2, ],
-       as.table = TRUE, layout = c(2, 2),
-       col.regions = brewer.pal(5, "YlOrRd"),
-       colorkey = list(space = "bottom", height = 1)
+ggplot(ssa_l) +
+  geom_sf(aes(fill = acres)) +
+  scale_fill_viridis(discrete = TRUE) +
+  facet_wrap(~ fiscalyear) +
+  ggtitle("Time Series of Updated Acres by County")
+
+
+# spplot example
+
+idx <- names(ssa_w) %in% 2012:2017
+names(ssa_w)[idx] <- paste0("FY", names(ssa_w)[idx]) 
+ssa_w_sp <- as(ssa_w, "Spatial")
+
+bb <- bbox(ssa_w_sp)
+# ssa3$state <- substr(ssa_sf$areasymbol, 1, 2)
+# st <- toupper(c("ia", "il", "in", "mn", "mo", "wi"))
+# st_sub <- filter(ssa3, state %in% st) %>% select(FY2012, FY2013, FY2014, FY2015, FY2016, FY2017))
+
+spplot(ssa_w_sp, paste0("FY", 2012:2017),
+       main = "Time Series of Updated Acres by County",
+       xlim = bb[1, ] + c(-0.2, 0.2), ylim = bb[2, ] + c(-0.2, 0.2),
+       as.table = TRUE,
+       colorkey = list(space = "right"), #, height = 1),
+       scales = list(draw = TRUE, alternating = FALSE)
        )
 ```
 
 
 ## Summarize and plot acres by musym
 
-```{r map_musym, eval=FALSE, echo=FALSE}
+```{r map_musym, eval=FALSE, echo=FALSE, eval=FALSE}
 corrs_mukey <- ddply(corrs, .(fy, region), summarize, MUKEY = unique(new_mukey))
 corrs_ssaMusym <- ddply(corrs, .(fy, region), summarize, MUKEY = unique(paste0(areasymbol,"_", old_musym)))
 
