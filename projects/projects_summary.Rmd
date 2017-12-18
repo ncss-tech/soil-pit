@@ -4,7 +4,10 @@ author: "`r Sys.getenv('USERNAME')`"
 date: "`r Sys.Date()`"
 output: 
   html_document: 
-    keep_md: yes
+    toc: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: no
 editor_options: 
   chunk_output_type: console
 ---
@@ -37,19 +40,19 @@ pt_all <- c("CORR (Obsolete)", "DSP", "ES", "EVAL", "INITIAL", "JOIN (Obsolete)"
   
 
 # progress
-p <- expand.grid(mlrassoarea      = paste0(11, "-%"),
-                 fy               = 2012:2018,
-                 projecttypename  = "%25",
-                 stringsAsFactors = FALSE
-                 )
-prg <- {
-  split(p, list(p$mlrassoarea, p$fy, p$projecttypename), drop = TRUE) ->.;
-  lapply(., function(x) {
-    cat("procressing", paste(x$mlrassoarea, x$fy, x$projecttypename), "\n")
-    get_progress_from_LIMS(x$mlrassoarea, x$fy, x$projecttypename)
-    }) ->.;
-  do.call("rbind", .)
-  }
+# p <- expand.grid(mlrassoarea      = paste0(11, "-%"),
+#                  fy               = 2012:2018,
+#                  projecttypename  = "%25",
+#                  stringsAsFactors = FALSE
+#                  )
+# prg <- {
+#   split(p, list(p$mlrassoarea, p$fy, p$projecttypename), drop = TRUE) ->.;
+#   lapply(., function(x) {
+#     cat("procressing", paste(x$mlrassoarea, x$fy, x$projecttypename), "\n")
+#     get_progress_from_LIMS(x$mlrassoarea, x$fy, x$projecttypename)
+#     }) ->.;
+#   do.call("rbind", .)
+#   }
 
 fname <- paste0(ownCloud, "lims_goal_", "2017-12-16", ".csv")
 # write.csv(prg, file = fname, row.names = FALSE)
@@ -58,18 +61,18 @@ prg <- read.csv(file = fname)
 
 # project
 
-p <- expand.grid(mlrassoarea      = paste0(11, "-%"),
-                 fy               = 2012:2018,
-                 stringsAsFactors = FALSE
-                 )
-prj <- {
-  split(p, list(p$mlrassoarea, p$fy), drop = TRUE) ->.;
-  lapply(., function(x) {
-    cat("procressing", paste(x$mlrassoarea, x$fy), "\n")
-    get_project_from_LIMS(x$mlrassoarea, x$fy)
-    }) ->.;
-  do.call("rbind", .)
-  }
+# p <- expand.grid(mlrassoarea      = paste0(11, "-%"),
+#                  fy               = 2012:2018,
+#                  stringsAsFactors = FALSE
+#                  )
+# prj <- {
+#   split(p, list(p$mlrassoarea, p$fy), drop = TRUE) ->.;
+#   lapply(., function(x) {
+#     cat("procressing", paste(x$mlrassoarea, x$fy), "\n")
+#     get_project_from_LIMS(x$mlrassoarea, x$fy)
+#     }) ->.;
+#   do.call("rbind", .)
+#   }
 
 fname <- paste0(ownCloud, "lims_project_", "2017-12-16", ".csv")
 # write.csv(prj, file = fname, row.names = FALSE)
@@ -78,21 +81,21 @@ prj <- read.csv(file = fname)
 
 # reverse correlation
 
-mlrassoarea <- paste0("11-", c("ATL", "AUR", "CLI", "FIN", "GAL", "IND", "JUE", "MAN", "SPR", "UNI", "WAV"))
-
-p <- expand.grid(mlrassoarea = paste0(11, "-%"),
-                 fy          = 2012:2017,
-                 projectname = "%",
-                 stringsAsFactors = FALSE
-                 )
-rcor <- {
-  split(p, list(p$mlrassoarea, p$fy, p$projectname), drop = TRUE) ->.;
-  lapply(., function(x) {
-    cat("procressing", paste(x$mlrassoarea, x$fy, x$projectname), "\n")
-    get_reverse_correlation_from_LIMS(x$mlrassoarea, x$fy, x$projectname)
-    }) ->.;
-  do.call("rbind", .)
-  }
+# mlrassoarea <- paste0("11-", c("ATL", "AUR", "CLI", "FIN", "GAL", "IND", "JUE", "MAN", "SPR", "UNI", "WAV"))
+# 
+# p <- expand.grid(mlrassoarea = paste0(11, "-%"),
+#                  fy          = 2012:2017,
+#                  projectname = "%",
+#                  stringsAsFactors = FALSE
+#                  )
+# rcor <- {
+#   split(p, list(p$mlrassoarea, p$fy, p$projectname), drop = TRUE) ->.;
+#   lapply(., function(x) {
+#     cat("procressing", paste(x$mlrassoarea, x$fy, x$projectname), "\n")
+#     get_reverse_correlation_from_LIMS(x$mlrassoarea, x$fy, x$projectname)
+#     }) ->.;
+#   do.call("rbind", .)
+#   }
 
 fname <- paste0(ownCloud, "lims_reverse_correlation_fy_", "2017-12-16.csv")
 # write.csv(rcor, file = fname, row.names = FALSE)
@@ -154,7 +157,7 @@ kable(test2)
 
 ## Examine muacres != acre_landcat
 
-```{r}
+```{r, eval=FALSE}
 
 prj <- within(prj, {
   acre_diff = muacres - acre_landcat
@@ -174,7 +177,7 @@ sum(test3["muacres"])
 ```
 
 
-## Examine Reported Acres
+## Region 11 Acres
 
 ```{r goals, fig.height=8, fig.width=8}
 brks <- c(0, 2e5, 5e5, 1e6, 5e6)
@@ -232,7 +235,7 @@ ggplot(aes(x = fiscalyear, y = acre_progress, color = projecttypename)) +
 
 
 # dotplot of region 11 acres
-filter(r11_all, mlrassoarea != 11 & projecttypename != "ES") %>% 
+filter(r11_all, mlrassoarea != 11 & projecttypename %in% eval_mlra) %>% 
   mutate(mlrassoarea = factor(mlrassoarea, levels = rev(levels(mlrassoarea)))) %>%
 ggplot(aes(x = acre_progress, y = mlrassoarea)) + 
   geom_point() + 
@@ -241,14 +244,19 @@ ggplot(aes(x = acre_progress, y = mlrassoarea)) +
 
 
 # plot of region 11 number of projects
-filter(r11_all, mlrassoarea != 11 & projecttypename != "ES") %>%
+filter(r11_all, mlrassoarea != 11 & projecttypename %in% eval_mlra) %>%
 ggplot(aes(x = n_nationalmusym, y = n_project)) + 
-  geom_text(aes(label = mlrassoarea), size = 3) +
-  facet_wrap(~ projecttypename + fiscalyear, scales = "free", nrow = 2) +
+  geom_text(aes(label = mlrassoarea), size = 2) +
+  facet_wrap(~ projecttypename + fiscalyear, scales = "free", nrow = 4) +
   theme(aspect.ratio = 1) +
   ggtitle("Region 11 Projects")
 
+```
 
+
+## SSD Acres
+
+```{r, eval=FALSE}
 # plot of all regions
 filter(regions, projecttypename != "ES") %>%
 ggplot(aes(x = fiscalyear, y = acre_progress, color = projecttypename)) +   geom_line(lwd = 1) +
@@ -347,9 +355,9 @@ ggplot(aes(x = n_nationalmusym, y = n_areasymbol)) +
 ```
 
 
-## Map Progress by AREASYMBOL
+## Map Progress by AREASYMBOL (ggplot2)
 
-```{r map_as, fig.height=10, fig.width=8, eval=FALSE}
+```{r map_as, fig.height=10, fig.width=8, eval=TRUE}
 
 rcor_as <- rcor %>%
   filter(grepl(ro, mlrassoarea) & 
@@ -397,7 +405,12 @@ ggplot(ssa_l) +
   facet_wrap(~ fiscalyear) +
   ggtitle("Time Series of Updated Acres by County")
 
+```
 
+
+## Map Progress by AREASYMBOL (spplot)
+
+```{r, eval=FALSE}
 # spplot example
 
 idx <- names(ssa_w) %in% 2012:2017
