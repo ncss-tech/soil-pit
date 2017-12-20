@@ -41,7 +41,7 @@ pt_all <- c("CORR (Obsolete)", "DSP", "ES", "EVAL", "INITIAL", "JOIN (Obsolete)"
 
 # progress
 p <- expand.grid(mlrassoarea      = paste0(1:12, "-%"),
-                 fy               = 2012:2018,
+                 fy               = 2012:2017,
                  projecttypename  = "%25",
                  stringsAsFactors = FALSE
                  )
@@ -54,7 +54,7 @@ prg <- {
   do.call("rbind", .)
   }
 
-fname <- paste0(ownCloud, "lims_goal_", "2017-12-17_us_2012_2017", ".csv")
+fname <- paste0(ownCloud, "lims_goal_", "2017-12-20_us_2012_2017", ".csv")
 # write.csv(prg, file = fname, row.names = FALSE)
 prg <- read.csv(file = fname)
 
@@ -74,30 +74,30 @@ prj <- {
   do.call("rbind", .)
   }
 
-fname <- paste0(ownCloud, "lims_project_", "2017-12-17_us_2012_2017", ".csv")
+fname <- paste0(ownCloud, "lims_project_", "2017-12-20_us_2012_2017", ".csv")
 # write.csv(prj, file = fname, row.names = FALSE)
 prj <- read.csv(file = fname)
 
 
 # reverse correlation
 
-# mlrassoarea <- paste0("11-", c("ATL", "AUR", "CLI", "FIN", "GAL", "IND", "JUE", "MAN", "SPR", "UNI", "WAV"))
-# 
-# p <- expand.grid(mlrassoarea = paste0(11, "-%"),
-#                  fy          = 2012:2017,
-#                  projectname = "%",
-#                  stringsAsFactors = FALSE
-#                  )
-# rcor <- {
-#   split(p, list(p$mlrassoarea, p$fy, p$projectname), drop = TRUE) ->.;
-#   lapply(., function(x) {
-#     cat("procressing", paste(x$mlrassoarea, x$fy, x$projectname), "\n")
-#     get_reverse_correlation_from_LIMS(x$mlrassoarea, x$fy, x$projectname)
-#     }) ->.;
-#   do.call("rbind", .)
-#   }
+mlrassoarea <- paste0("11-", c("ATL", "AUR", "CLI", "FIN", "GAL", "IND", "JUE", "MAN", "SPR", "UNI", "WAV"))
 
-fname <- paste0(ownCloud, "lims_reverse_correlation_fy_", "2017-12-17_us_2012_2017.csv")
+p <- expand.grid(mlrassoarea = paste0(1:12, "-%"),
+                 fy          = 2012:2017,
+                 projectname = "%",
+                 stringsAsFactors = FALSE
+                 )
+rcor <- {
+  split(p, list(p$mlrassoarea, p$fy, p$projectname), drop = TRUE) ->.;
+  lapply(., function(x) {
+    cat("procressing", paste(x$mlrassoarea, x$fy, x$projectname), "\n")
+    get_reverse_correlation_from_LIMS(x$mlrassoarea, x$fy, x$projectname)
+    }) ->.;
+  do.call("rbind", .)
+  }
+
+fname <- paste0(ownCloud, "lims_reverse_correlation_fy_", "2017-12-20_us_2012_2017.csv")
 # write.csv(rcor, file = fname, row.names = FALSE)
 rcor <- read.csv(file = fname)
 
@@ -360,6 +360,7 @@ ggplot(aes(x = n_nationalmusym, y = n_areasymbol)) +
 
 ```{r map_as, fig.height=10, fig.width=8, eval=TRUE}
 
+# correct muacres for goal percent = acre_progress / acre_landcat
 vars <- c("projectiid", "fiscalyear", "acre_landcat", "acre_progress")
 rcor2 <- left_join(rcor, prj[vars], by = c("projectiid", "fiscalyear")) %>%
   filter(musym != "NOTCOM")
@@ -370,8 +371,14 @@ rcor3 <- mutate(rcor2,
                 acre_pct = ifelse(acre_pct > 100, 100, acre_pct),
                 muacres2  = muacres * acre_pct
                 )
+# filter out records for non-INITIAL projects
+rcor4 <- filter(rcor3, 
+                ! projecttypename %in% c("INITIAL", "TRADITIONAL (Obsolete)") &
+                is.na(nonmlrassaarea)
+                )
 
-rcor_as <- rcor3 %>%
+# aggregate muacres by areasymbol for non-INITIAL projects
+rcor_as1 <- rcor4 %>%
   filter(#grepl(ro, mlrassoarea) &
          projecttypename != "ES" &
          fiscalyear %in% 2012:2017
@@ -387,10 +394,25 @@ rcor_as <- rcor3 %>%
     new_muacres = sum(new_muacres, na.rm = TRUE)
     ) %>%
   as.data.frame()
+# INITIAL projects
+rcor_as2 <- filter(prj,
+                   projecttypename %in% c("INITIAL", "TRADITIONAL (Obsolete)") &
+                   ! is.na(nonmlrassaarea)
+                   ) %>%
+  select(fiscalyear, nonmlrassaarea, acre_progress) %>%
+  rename(areasymbol = nonmlrassaarea, muacres = acre_progress) %>%
+  mutate(new_muacres = 0)
+rcor_as <- rbind(rcor_as1, rcor_as2)
+rcor_as <- group_by(rcor_as, fiscalyear, areasymbol) %>%
+  summarize(
+    muacres     = sum(muacres    , na.rm = TRUE),
+    new_muacres = sum(new_muacres, na.rm = TRUE)
+    ) %>%
+  filter(areasymbol != "")
 
 rcor_as$acres <- cut(rcor_as$muacres, 
-                     breaks = c(0, 10000, 50000, 100000, 150000, 500000, 1000000), 
-                     labels = c("0-10k", "10-50k", "50-100k", "100-150k", "150-500k", "500k-1000k")
+                     breaks = c(0, 10000, 50000, 100000, 500000, 1000000), 
+                     labels = c("0-10k", "10-50k", "50-100k", "100-500k", "500k-1000k")
                      )
 
 rcor_as_w <- select(rcor_as, fiscalyear, areasymbol, acres) %>% 
@@ -404,11 +426,16 @@ rcor_as_l <- left_join(params, rcor_as, by = c("fiscalyear", "areasymbol"))
 
 
 # load spatial data
-# ssa_sf <- read_sf(dsn = "M:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs")
-ssa_sf <- read_sf(dsn = "M:/geodata/soils/SSURGO_CONUS_FY2016.gdb", layer = "SAPOLYGON")
-st_crs(ssa_sf) <- "+init=epsg:5070"
-names(ssa_sf)[c(1, 6)] <- c("areasymbol", "geometry")
-states <- read_sf(dsn = "M:/geodata/government_units/state_nrcs_a_mbr.shp", layer = "state_nrcs_a_mbr")
+ssa_sf <- read_sf(dsn = "D:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs")
+ssa_sf <- st_transform(ssa_sf, crs = "+init=epsg:5070")
+data(state)
+st <- state.abb[-c(11, 2)]
+ssa_sf$state <- substr(ssa_sf$areasymbol, 1, 2)
+ssa_sf <- ssa_sf[ssa_sf$state %in% st, ]
+# ssa_sf <- read_sf(dsn = "M:/geodata/soils/SSURGO_CONUS_FY2016.gdb", layer = "SAPOLYGON")
+# names(ssa_sf)[c(1, 6)] <- c("areasymbol", "geometry")
+# st_crs(ssa_sf) <- "+init=epsg:5070"
+states <- read_sf(dsn = "D:/geodata/government_units/state_nrcs_a_mbr.shp", layer = "state_nrcs_a_mbr")
 states <- st_transform(states, crs = "+init=epsg:5070")
 
 ssa_w <- inner_join(ssa_sf, rcor_as_w, by = "areasymbol")
@@ -428,7 +455,7 @@ acres_gg <- # filter(ssa_l, grepl("OH", areasymbol)) %>%
 acres_gg <- acres_gg +
   geom_sf(data = states, aes(fill = NA))
 
-png(file = "acres_gg.png", width = 17, height = 11, units = "in", res = 400)
+png(file = "acres_gg2.png", width = 17, height = 11, units = "in", res = 400)
 plot(acres_gg)
 dev.off()
 
