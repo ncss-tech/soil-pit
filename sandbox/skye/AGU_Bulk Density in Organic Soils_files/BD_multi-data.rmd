@@ -1,0 +1,166 @@
+---
+title: "BD Datasets - Combine and Eval"
+author: "Skye Wills et al"
+date: "October 24, 2017"
+output: html_document
+---
+
+##Setup
+load necessary library and set path to working directlry
+This file is available in the online folder - https://www.cloudvault.usda.gov/index.php/s/nbBSsnNCFguRyht.
+This folder can be browsed for more information.
+
+**This sets the loction for file dowload - edit BD_data or setwd()**
+
+```{r setup}
+#A large amount of data is read in, clear and check first
+rm(list = ls() ) #clear environment
+memory.limit(size=NA)
+
+#load necessary libraries
+#library(randomForest) #Bagging random forest models
+library(tidyverse) #adds other packages - like dplyr for piping and tidy editing
+#library(RCurl) #allows you to set a web connection
+library(RCurl) #to download web data
+
+
+#point to folder I have synced with this cloudvault folder
+#https://www.cloudvault.usda.gov/index.php/s/nbBSsnNCFguRyht
+
+
+BD_data <- "C:/Users/skye.wills/ownCloud/BD_eval/"
+#BD_data("C:/Users/skyew/ownCloud/BD_eval")
+
+
+```
+
+## Bulk Density data
+
+###Bring in datasets used to model bulk density.
+
+**NCSS** - National Cooperative Soil Survey Characterization dataset.  Prepped from the public dataset (Access) from August 2015  http://ncsslabdatamart.sc.egov.usda.gov/following the methods in Prep SOC and BD data.doc.
+https://www.cloudvault.usda.gov/index.php/s/7tieyXcVLaAjlW8
+
+**RaCA** - Rapid Carbon Assessment sample dataset.  Full description online. https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/survey/?cid=nrcs142p2_054164
+All data shared.https://www.nrcs.usda.gov/Internet/FSE_MANUSCRIPTS/alabama/RaCA_Download/RaCA_Download.zip
+
+**NWCA** - National Wetland Condition Assessment (2016) see NWCA.pred.meta.xlsx for more information - https://www.cloudvault.usda.gov/index.php/s/Pd6qlwRFIib3bCN
+
+**ISCN** - International Soil Carbon Network (2016) - filled missing Bulk Density for Luke Nave. See BDfill_wMeta.xlsx for more information https://www.cloudvault.usda.gov/index.php/s/wsVysIYqZa3YIbu
+
+**this code chunk downloads data into the folder you set to BD_data - uncomment to run**
+
+```{r dataDownload}
+# 
+# #download file to the working directory - creates new folder data
+# #will save raw data into this folder
+# ifelse(!dir.exists(paste0(BD_data,'/data')), dir.create(paste0(BD_data,'/data')), FALSE)  #True means the file was created, FALSE means it alread exsists
+# 
+# ncss.url <- 'https://www.cloudvault.usda.gov/index.php/s/7tieyXcVLaAjlW8/download'
+# #if file does not exsist, download
+# ifelse(!file.exists('data/ncss.w.bd.csv'),download.file(ncss.url, destfile = paste0(BD_data,'/data/ncss.w.bd.csv')), "File already downloaded")
+# 
+# 
+# raca.url <- 'https://www.cloudvault.usda.gov/index.php/s/OuKFMmVDG3B0eYG/download'
+# ifelse(!file.exists('data/RaCA_samples.csv'), download.file(raca.url, destfile = paste0(BD_data,'/data/RaCA_samples.csv') )
+#        , "File already downloaded")
+# 
+# nwca.url <- 'https://www.cloudvault.usda.gov/index.php/s/z0no9LVguqWFX1t/download'
+# ifelse(!file.exists('data/nwca.SOCsamples_5-10.csv'), download.file(nwca.url, destfile = paste0(BD_data,'/data/nwca.SOCsamples_5-10.csv')), "File already downloaded")
+# 
+# iscn.url <- 'https://www.cloudvault.usda.gov/index.php/s/QXNDDCwVSPd3Snw/download'
+# ifelse(!file.exists('data/ISCN_BDfill_pred_wMEtA.csv'),download.file(iscn.url, destfile = paste0(BD_data,'/data/ISCN_BDfill_pred_wMEtA.csv')), "File already downloaded")
+
+```
+
+
+##Read Data into R and Prep
+### Combine dataset into one
+
+* check field names
+* Select rows that have BD measurement
+* choose same set for each dataset
+  + Add any missing fields
+* rename to same field names
+  + Add SET to denote dataset
+  + LU - to match RaCA W- wetland, C- cropland, P- pastureland, F - Forestland, X- CRP, U added for unknown
+  
+_Texture labels need to be assessed in ensure the same abbreviations are being used_
+_wpg for ISCN needs to be converted to volumetric fragment content_
+
+
+```{r combine}
+
+ncss <- read.csv(paste0(BD_data, 'data/ncss.w.bd.csv'))
+names(ncss)
+n <- ncss[!is.na(ncss$BD), c("sample_id", "top", "bottom", "Model_desg", "M", "tex_psda", "CLAY", "SOC", "CF", "BD")]
+names(n) <- c("samp_id", "Top", "Bottom", "Model_desg", "M", "Texture", "Clay", "SOC", "CourseFrag", "BD" )
+n$LU <- "U" #U for unknown landuse
+n$SET <- "NCSS"
+
+raca <- read.csv(paste0(BD_data,'data/RaCA_samples.csv'))
+names(raca)
+raca$CALC_SOC <- ifelse(!is.na(raca$caco3),
+                        ifelse(raca$caco3>0,raca$c_tot_ncs-(raca$caco3*0.12),raca$c_tot_ncs), raca$c_tot_ncs)
+raca$SOC <- ifelse(raca$CALC_SOC<0, 0, raca$CALC_SOC)
+r <- raca[!is.na(raca$Measure_BD), c("samp", "TOP", "BOT", "Model_desg", "M", "texture", "fragvolc", "SOC", "Measure_BD", "LU")]
+names(r) <- c("samp_id", "Top", "Bottom", "Model_desg", "M", "Texture",  "CourseFrag", "SOC", "BD", "LU" )
+r$SET <- "RaCA"
+r$Clay <- NA
+
+nwca <- read.csv(paste0(BD_data,'/data/nwca.SOCsamples_5-10.csv'))
+names(nwca)
+w <- nwca[!is.na(nwca$BD), c( "samp", "top", "bottom", "Model_desg" , "M", "TEXTURE_CLASS", "CLAY", "ROCK_FRAGMENTS", "SOC", "BD")]
+names(w) <- c("samp_id", "Top", "Bottom", "Model_desg", "M", "Texture", "Clay", "CourseFrag", "SOC", "BD")
+w$LU <- "W"
+w$SET <- "NWCA"
+
+iscn <- read.csv(paste0(BD_data,'data/ISCN_BDfill_pred_wMEtA.csv'))
+names(iscn)
+#need to convert weight coarse frag to volume
+i <- iscn[!is.na(iscn$BD), c("layer_name", "layer_top", "layer_bot", "model_desg" , "M", "CLAY", "wpg2", "SOC", "BD") ]
+names(i) <- c("samp_id", "Top", "Bottom", "Model_desg", "M", "Clay", "CourseFrag", "SOC", "BD")
+i$Clay <- as.numeric(i$Clay)
+i$Texture <- "U"
+i$LU <- "U"
+i$SET <- "ISCN"
+
+
+#combine dataset into one - missing values are filled with NA
+combo <- rbind(n,r,w,i)
+```
+
+##Compare Datasets
+Use dplyr (with piping) to format and ggplot to create graphs
+
+```{r graphs}
+D <- combo %>%
+  ggplot(aes(BD)) + geom_density(aes(fill = SET), alpha=.5) + scale_x_continuous(limits = c(0,3)) +
+  facet_wrap(~M) + ggtitle('Bulk density by Master Horizon')
+D
+
+B <- combo %>%
+  filter(!is.na(BD)) %>%
+  ggplot(aes(y = BD, x=SET)) + geom_boxplot(aes(fill=LU)) +
+  facet_wrap(~M) + ggtitle('Bulk density by Master Horizon and Land Use/Cover Class')
+B
+
+O <- combo %>%
+  filter(!is.na(BD) & M == "O") %>%
+  ggplot(aes(y = BD, x=SET)) + geom_boxplot(aes(fill=LU)) +
+  ggtitle('For O (organic) horizons only \n Bulk density by Master Horizon and Land Use/Cover Class')
+O
+
+S <- combo %>%
+  filter(!is.na(BD) & M == "O") %>%
+  ggplot(aes(y = 1/BD, x=SOC)) + geom_point(aes(color=LU, shape = SET)) +
+  ggtitle('For O (organic) horizons only \n Bulk density and SOC')
+S
+
+Sw <- combo %>%
+  filter(!is.na(BD) & M == "O" & LU == "W") %>%
+  ggplot(aes(y = 1/BD, x=SOC)) + geom_point(aes(color=SET, shape = SET)) +
+  ggtitle('For O (organic) horizons in Wetlands only \n Bulk density and SOC')
+Sw
+
+```
