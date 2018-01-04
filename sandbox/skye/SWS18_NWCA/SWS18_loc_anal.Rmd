@@ -2,7 +2,9 @@
 title: "SWS_NWCA"
 author: "Wills et al"
 date: "January 4, 2018"
-output: html_document
+output: 
+  md_document:
+  variant: markdown_github
 ---
 
 comparing datasets
@@ -358,7 +360,7 @@ c <- combo %>%
   group_by(Pedon_ID) %>%
  summarize_all('min')
   
-#creat spatial object 
+#create spatial object 
 
  
 ```
