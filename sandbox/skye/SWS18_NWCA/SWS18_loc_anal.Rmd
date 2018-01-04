@@ -1,0 +1,366 @@
+---
+title: "SWS_NWCA"
+author: "Wills et al"
+date: "January 4, 2018"
+output: html_document
+---
+
+comparing datasets
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+rm(list=ls()) #clear previous data
+
+require("knitr")
+knitr::opts_chunk$set(echo = TRUE, comment = "#", warning = FALSE, message = FALSE, error =FALSE, tidy.opts=list(width.cutoff=60),tidy=TRUE)
+
+opts_knit$set(root.dir = "C:/Users/skye.wills/ownCloud/AGU_BD-OM")
+workdir <- setwd(getwd()) # personalize the working directory for each user.
+opts_knit$set(root.dir = workdir)
+
+list.of.packages <- c("ggplot2", "plyr", "Rcpp", "RColorBrewer", "lattice", "aqp", "stringr", "reshape2", "ggthemes", "tidyverse", "RCurl", "Hmisc", "gridExtra", 'ggmosaic', 'ggpmisc', 'png','rstan','lme4', 'printr', "dplyr","tidyr",  "hexbin", "ggbeeswarm", "viridis", "gridExtra", "cetcolor", "ggjoy", "readxl", "sp")
+
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+library(tidyverse)
+library(Rcpp)
+library(RColorBrewer)
+library(lattice)
+library(stringr)
+library(ggthemes)
+library(RCurl)
+library(rstan)
+library(lme4)
+library(printr)
+library(hexbin)
+library(ggbeeswarm)
+library(viridis)
+library(gridExtra)
+library(cetcolor)
+library(ggjoy)
+library(ggpmisc)
+library(readxl)
+library(sp)
+
+# when ggjoy is decomisioned replace with  "ggridge", 
+
+```
+
+
+
+###Bring NWCA and RaCA datasets with SOC and bulk density from publicly availalbe data.  Add location information which is sensitve and only shared with permission.
+
+**RaCA** - Rapid Carbon Assessment Project.  Information and data available at https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/survey/?cid=nrcs142p2_054164
+
+**NWCA** -  National Wetland Condition Assessment. Information and data available at: https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/survey/?cid=nrcs142p2_054164
+Data for this project was made available as part of the soil property cooperation with Kellogg Soil Survey Laboratory.
+
+**this code chunk downloads data into the folder with this project - uncomment to run**
+
+```{r dataDownload}
+
+raca.url <- 'https://nrcs.box.com/shared/static/nivz52qvsgyalx5zir8sgcu7lpp048pl.csv'
+ifelse(!file.exists('RaCA_samples.csv'), download.file(raca.url, destfile = paste0('RaCA_samples.csv') )
+       , "File already downloaded")
+
+nwca.url <- 'https://nrcs.box.com/shared/static/u3qahrgycjzenwxykiabh93cnmk4r1e6.csv'
+ifelse(!file.exists('nwca.SOCsamples_5-10.csv'), download.file(nwca.url, destfile = paste0('nwca.SOCsamples_5-10.csv')), "File already downloaded")
+
+
+```
+
+
+##Read Data into R and Prep
+#### Combine dataset into one
+
+* Add location data
+* Check field names
+* Select relevant fields
+* Harmonize datasets
+  + Rename to same field names
+  + Add SET to denote dataset
+  + Add any missing fields (assign values or unknown)
+      + LU - to match RaCA W- wetland, C- cropland, P- pastureland, F - Forestland, X- CRP, U added for unknown
+  
+_Master Horizons (M) set for each dataset in previous data management_
+_Texture labels need to be assessed in ensure the same abbreviations are being used_
+_wpg for ISCN needs to be converted to volumetric fragment content_
+
+
+```{r dataPrep}
+
+raca <- read.csv(paste0('RaCA_samples.csv'))
+
+raca.loc <- read.csv('RaCA_data_loc.csv')
+
+raca <- left_join(raca, raca.loc, by =c("rcasiteid" = "RaCA_site"))
+
+raca$CALC_SOC <- ifelse(!is.na(raca$caco3),                      ifelse(raca$caco3>0,raca$c_tot_ncs-(raca$caco3*0.12),raca$c_tot_ncs), raca$c_tot_ncs)
+raca$SOC <- ifelse(raca$CALC_SOC<0, 0, raca$CALC_SOC)
+r <- raca[!is.na(raca$Measure_BD), c("samp", "upedon", "TOP", "BOT", "Model_desg", "M", "texture", "fragvolc", "SOC", "Measure_BD", "Model_BD", "LU", "Lat", "Lon")]
+names(r) <- c("samp_id", "Pedon_ID", "Top", "Bottom", "Model_desg", "M", "Texture",  "CoarseFrag", "SOC", "BD", "RF.BD","LU","Lat", "Lon" )
+r$SET <- "RaCA"
+r$Clay <- NA
+
+
+
+nwca <- read.csv('nwca.SOCsamples_5-10.csv')
+nwca.loc <- read.csv('NWCA2011_SITEINFO_081315.csv')
+
+nwca <- left_join(nwca, nwca.loc, by = "UID")
+
+w <- nwca[!is.na(nwca$BD), c( "samp", "Pedon", "top", "bottom", "Model_desg" , "M", "TEXTURE_CLASS", "CLAY", "ROCK_FRAGMENTS", "SOC", "BD", "Model", "AA_CENTER_LAT", "AA_CENTER_LON")]
+names(w) <- c("samp_id", "Pedon_ID" ,"Top", "Bottom", "Model_desg", "M", "Texture", "Clay", "CoarseFrag", "SOC", "BD", "RF.BD", "Lat", "Lon")
+w$LU <- "W"
+w$SET <- "NWCA"
+w$Pedon_ID <- as.factor(w$Pedon_ID)
+
+#combine dataset into one - missing values are filled with NA
+combo <- rbind(r,w)
+
+#there are a number of really high bulk density numbers - primarily in the ISCN set - need to investigate further
+combo <- combo %>% filter(BD<2) 
+
+#knitr::kable(n_M),digits = 1, col.names =names(n_S), caption = "Number of Samples in each Dataset", row.names =F, padding= 2)
+
+```
+
+
+##Compare Datasets
+Use dplyr (with piping) to format and ggplot to create graphs
+
+```{r graphs}
+d <- combo %>%
+  ggplot(aes(BD)) + geom_density(aes(fill = SET), alpha=.5) + scale_x_continuous(limits = c(0,3)) +
+  facet_wrap(~M) + ggtitle('Bulk density by Master Horizon')
+d
+
+b <- combo %>%
+  #filter(!is.na(BD)) %>%
+  ggplot(aes(y = BD, x=SET)) + geom_boxplot(aes(fill=LU)) +
+  facet_wrap(~M) + ggtitle('Bulk density by Dataset and Land Use/Cover Class')
+b
+
+o <- combo %>%
+  filter(!is.na(BD) & M == "O") %>%
+  ggplot(aes(y = BD, x=SET)) + geom_boxplot(aes(fill=LU)) +
+  ggtitle('For O (organic) horizons only \n Bulk density by Master Horizon and Land Use/Cover Class')
+o
+
+s <- combo %>%
+  filter(!is.na(BD) & M == "O") %>%
+  ggplot(aes(y = BD, x=SOC)) + geom_point(aes(color=LU, shape = SET)) +
+  ggtitle('For O (organic) horizons only \n Bulk density and SOC')
+s
+
+S <- combo %>%
+  filter(!is.na(BD) & M == "O") %>%
+  ggplot(aes(y = 1/BD, x=SOC)) + geom_point(aes(color=LU, shape = SET)) +
+  ggtitle('For O (organic) horizons only \n Bulk density and SOC')
+S
+
+Sw <- combo %>%
+  filter(!is.na(BD) & M == "O" & LU == "W") %>%
+  ggplot(aes(y = 1/BD, x=SOC)) + geom_point(aes(color=SET, shape = SET)) +
+  ggtitle('For O (organic) horizons in Wetlands only \n Bulk density and SOC')
+Sw
+```
+
+
+```{r r-plots}
+
+#joy plot with continuous fill
+R <- combo %>%
+      filter(!is.na(BD)) %>%
+      ggplot(aes(x=BD, y = SET, fill = ..x..)) +  
+    geom_joy_gradient()  + 
+    scale_fill_gradientn(colours = cet_pal(5, name = "fire"), name = "BD")+
+    theme_joy() +
+    theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+    labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title="Ridgeplot of BD by Dataset")
+
+R
+
+
+#bee swarm
+B <- combo %>%
+      filter(!is.na(BD)) %>%
+  ggplot(aes(x=BD, y = SET, color = BD)) +  
+  geom_quasirandom(alpha=0.82, groupOnX=FALSE) + 
+  scale_color_gradientn(colours = cet_pal(10, name = "cyclic_mrybm_35-75_c68_n256"), name = "BD")+
+  theme_joy() +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+  labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title="Beeswarm Plot of BD by Dataset")
+
+B
+
+#add SOC measurement for visulaization
+B_C <- combo %>%
+      filter(!is.na(BD)&!is.na(SOC) ) %>%
+  ggplot(aes(x=BD, y = SET, color = SOC)) +  
+  geom_quasirandom(alpha=0.82, groupOnX=FALSE) + 
+  scale_color_viridis()+
+  theme_joy() +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+  labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title="Beeswarm Plot of BD by Dataset")
+
+B_C
+
+#limit to organic horizons
+#bee swarm
+Bo <- combo %>%
+      filter(!is.na(BD) & M =='O') %>%
+  ggplot(aes(x=BD, y = SET, color = BD)) +  
+  geom_quasirandom(alpha=0.82, groupOnX=FALSE) + 
+  scale_color_gradientn(colours = cet_pal(10, name = "cyclic_mrybm_35-75_c68_n256"), name = "BD")+
+  theme_joy() +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+  labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title="Bulk Density of Organic Horizons \n by Dataset")
+
+Bo
+
+Bow <- combo %>%
+      filter(!is.na(BD) & M =='O' & LU =='W') %>%
+  ggplot(aes(x=BD, y = SET, color = BD)) +  
+  geom_quasirandom(alpha=0.82, groupOnX=FALSE) + 
+  scale_color_gradientn(colours = cet_pal(10, name = "cyclic_mrybm_35-75_c68_n256"), name = "BD")+
+  theme_joy() +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+  labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title="Bulk Density of O Horizons \n in Wetlands by Dataset")
+
+Bow
+
+#with SOC measurement
+BoC <- combo %>%
+      filter(!is.na(BD) &!is.na(SOC) & M =='O') %>%
+  ggplot(aes(x=BD, y = SET, color = SOC)) +  
+  geom_quasirandom(alpha=0.82, groupOnX=FALSE) + 
+  scale_color_viridis(option = "viridis")+
+  theme_joy() +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+  labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title="Bulk Density of O Horizons \n by Dataset")
+
+BoC
+
+BowC <- combo %>%
+      filter(!is.na(BD) &!is.na(SOC) & M =='O' & LU =='W') %>%
+  ggplot(aes(x=BD, y = SET, color = SOC)) +  
+  geom_quasirandom(alpha=0.82, groupOnX=FALSE) + 
+  scale_color_viridis(option = "viridis")+
+  theme_joy() +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+  labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title="Bulk Density of O Horizons \n in Wetlands by Dataset")
+
+BowC
+
+BowCc <- combo %>%
+      filter(!is.na(BD) &!is.na(SOC) & M =='O' & LU =='W' & SOC>20) %>%
+  ggplot(aes(x=BD, y = SET, color = SOC)) +  
+  geom_quasirandom(alpha=0.82, groupOnX=FALSE) + 
+  scale_color_viridis(option = "viridis")+
+  theme_joy() +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=14))+
+  labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title="Bulk Density of O Horizons with SOC > 20% \n in Wetlands by Dataset")
+
+BowCc
+
+BowT <- combo %>%
+      filter(!is.na(BD) &!is.na(SOC) & M =='O' & LU =='W') %>%
+  ggplot(aes(x=BD, y = SET, color = Top)) +  
+  geom_quasirandom(alpha=0.5, groupOnX=FALSE) + 
+  scale_color_viridis(option = "magma")+
+  theme_joy() +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+  labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title="Bulk Density of O Horizons \n in Wetlands by Dataset")
+
+BowT
+
+BowTc <- combo %>%
+      filter(!is.na(BD) &!is.na(SOC) & M =='O' & LU =='W' & SOC > 20) %>%
+  ggplot(aes(x=BD, y = SET, color = Top)) +  
+  geom_quasirandom(alpha=0.5, groupOnX=FALSE) + 
+  scale_color_viridis(option = "magma")+
+  theme_joy() +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+  labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title="Bulk Density of O Horizons \n in Wetlands by Dataset")
+
+BowTc
+
+#prep select graphs for export
+B <- combo %>%
+      filter(!is.na(BD)) %>%
+  ggplot(aes(x=BD, y = SET, color = BD)) +  
+  geom_quasirandom(alpha=0.82, groupOnX=FALSE) + 
+  scale_color_gradientn(colours = cet_pal(10, name = "cyclic_mrybm_35-75_c68_n256"), guide = FALSE)+
+  theme_joy() +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+  #labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title="Beeswarm Plot of BD by Dataset")
+ labs(x =expression(paste('Bulk Density (g cm'^-3,')')), y='Dataset')
+
+B
+
+# ggsave('BDswarm_all.png', plot = B, device = "png", path = 'C:/Users/skye.wills/ownCloud/AGU_BD-OMgraphs/poster', scale = 1, width = 6, height = 3, units = "in", dpi = 600, limitsize = TRUE)
+
+
+BowC <- combo %>%
+      filter(!is.na(BD) &!is.na(SOC) & M =='O' & LU =='W') %>%
+  ggplot(aes(x=BD, y = SET, color = SOC)) +  
+  geom_quasirandom(alpha=0.82, groupOnX=FALSE) + 
+  scale_color_viridis(option = "viridis")+
+  theme_joy() +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+#labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title="Bulk Density of O Horizons \n in Wetlands by Dataset")
+ labs(x =expression(paste('Bulk Density (g cm'^-3,')')), y='Dataset', color = 'SOC (%)')
+
+BowC
+
+
+
+
+```
+##Locations
+Summarize by pedons, select all wetlands and plot locations
+How do we co-locate?
+
+
+```{r loc}
+
+#one location per observation/pedon
+c <- combo %>%
+  filter(LU == "W") %>%
+  select(Pedon_ID, Lat, Lon) %>%
+  group_by(Pedon_ID) %>%
+ summarize_all('min')
+  
+#creat spatial object 
+
+ 
+```
+
+  
