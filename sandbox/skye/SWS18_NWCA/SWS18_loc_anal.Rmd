@@ -4,7 +4,7 @@ author: "Wills et al"
 date: "January 4, 2018"
 output: 
   md_document:
-  variant: markdown_github
+    variant: markdown_github
 ---
 
 comparing datasets
@@ -21,7 +21,7 @@ opts_knit$set(root.dir = "C:/Users/skye.wills/ownCloud/AGU_BD-OM")
 workdir <- setwd(getwd()) # personalize the working directory for each user.
 opts_knit$set(root.dir = workdir)
 
-list.of.packages <- c("ggplot2", "plyr", "Rcpp", "RColorBrewer", "lattice", "aqp", "stringr", "reshape2", "ggthemes", "tidyverse", "RCurl", "Hmisc", "gridExtra", 'ggmosaic', 'ggpmisc', 'png','rstan','lme4', 'printr', "dplyr","tidyr",  "hexbin", "ggbeeswarm", "viridis", "gridExtra", "cetcolor", "ggjoy", "readxl", "sp")
+list.of.packages <- c("ggplot2", "plyr", "Rcpp", "RColorBrewer", "lattice", "aqp", "stringr", "reshape2", "ggthemes", "tidyverse", "RCurl", "Hmisc", "gridExtra", 'ggmosaic', 'ggpmisc', 'png','rstan','lme4', 'printr', "dplyr","tidyr",  "hexbin", "ggbeeswarm", "viridis", "gridExtra", "cetcolor", "ggjoy", "readxl", "sp", "maps", "maptools", "rgdal")
 
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
@@ -45,6 +45,9 @@ library(ggjoy)
 library(ggpmisc)
 library(readxl)
 library(sp)
+library(maps)
+library(maptools)
+library(rgdal)
 
 # when ggjoy is decomisioned replace with  "ggridge", 
 
@@ -346,6 +349,7 @@ BowC
 
 
 ```
+
 ##Locations
 Summarize by pedons, select all wetlands and plot locations
 How do we co-locate?
@@ -354,7 +358,7 @@ How do we co-locate?
 ```{r loc}
 
 #one location per observation/pedon
-c <- combo %>%
+C <- combo %>%
   filter(LU == "W") %>%
   select(Pedon_ID, Lat, Lon) %>%
   group_by(Pedon_ID) %>%
@@ -362,6 +366,33 @@ c <- combo %>%
   
 #create spatial object 
 
+#xy cooridanates
+sp_C <- C[complete.cases(C),]
+
+xy <-sp_C[,2:3]
+
+sp.C <- SpatialPointsDataFrame(coords = xy, data = C,
+        proj4string = CRS("+proj=longlat +datum=WGS84 +init=epsg:5070"))
+
+
+# from https://github.com/smroecker/raca/blob/master/stephen/explore_stocks.Rmd
+#us <- map("state", plot = FALSE)
+# us_sp <- {map2SpatialLines(us, proj4string = CRS("+init=epsg:4326")) ->.;
+#   spTransform(., CRS("+init=epsg:5070"))
+#   }
+#cols <- brewer.pal(4, "RdYlBu")
+# 
+# spplot(soc_sp, zcol = c("soc5cm", "soc30cm", "soc100cm"), main = "SOC Pedon Stocks",
+#        col.regions = cols, cex = 0.5, alpha = 0.5,
+#        as.table = TRUE, layout = c(2, 2), sp.layout = list(us_sp), scales = list(draw = TRUE),
+#        key.space = list(
+#          space = "right",
+#          title = expression(Mg/ha^-1),
+#          cex.title = 1.25)
+#         )
+
+plot(sp.C)
+mapview(sp.C)
  
 ```
 
