@@ -2,10 +2,13 @@
 
 library(shinydashboard)
 library(leaflet)
+library(rmarkdown)
 
 source("wt.R")
 source("om.R")
 #source("c:/workspace2/pr.R")
+jsfile<- "https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"
+
 
 #create a dashboard header
 
@@ -109,7 +112,7 @@ body<-dashboardBody(
   tags$style(type="text/css", "#projectextentmap {height: calc(100vh - 200px) !important;}"),
   #styling for the progress bar position
   tags$style(type="text/css", ".shiny-notification{position: fixed; top:33%;left:33%;right:33%;}"),
-  
+  tags$head(tags$script(src = jsfile),tags$link(rel="stylesheet", type="text/css",href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css")),
   
   #create tabs to match the menu items
   tabItems(
@@ -158,13 +161,10 @@ body<-dashboardBody(
     
     tabItem(
       tabName="projectreport",
-      titlePanel("Component Report from LIMS"),
       verticalLayout(
-        infoBox("Project Name:",
-                uiOutput("prjname", inline=TRUE, container=span),width=12, icon=icon("map"), color="blue"),
         fluidRow(
-          box(tags$div(uiOutput("projectreport", inline=TRUE, container=span), style="width:100%; overflow-x: scroll"), width=12),
-          box("This application was developed by John Hammerly and Stephen Roecker.", width=12))
+          box(uiOutput("projectreport"), width=12),
+          box("This application was developed by John Hammerly, and Stephen Roecker.", width=12))
       )),
     
     #project extent tab
@@ -248,9 +248,22 @@ om_plot <- callModule(om, "om_query")
 
 library(knitr)
   #render project report markdown
-  output$projectreport<-renderUI({
+
+observeEvent(input$reportsubmit,{
+  updateTabItems(session, "tabs", "projectreport")
+})
+
+  output$projectreport<-renderUI({ input$reportsubmit
+
     
-    withProgress(message="Generating Report", detail="Please Wait", value=1, {includeMarkdown(knit("report.Rmd"))})})
+    withProgress(message="Generating Report", detail="Please Wait", value=1, {
+      
+      params<- list(projectname = isolate(input$projectreport))
+      
+      includeHTML(rmarkdown::render("report.Rmd", html_fragment(number_sections=TRUE, params = params, pandoc_args = "--toc")))
+      
+      })
+    })
   
   #render long range plan report markdown
   
@@ -260,16 +273,7 @@ library(knitr)
   output$lrp<-renderUI({ input$lrpsubmit
     withProgress(message="Generating Report", detail="Please Wait", value=1, {includeMarkdown(knit("r11_long_range_plan.Rmd"))})
   })
-  
-  #render project name text for project report tab
-  
-  observeEvent(input$reportsubmit,{
-    updateTabItems(session, "tabs", "projectreport")
-  })
-  output$prjname<-renderText({input$reportsubmit
-    prjname<-fetchLIMS_component(isolate(input$projectreport), fill = TRUE)
-    prjname$mapunit[1,3]})
-  
+
   #render project extent map
   
   observeEvent(input$extentsubmit,{

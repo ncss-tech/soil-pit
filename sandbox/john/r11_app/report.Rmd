@@ -9,8 +9,6 @@ output:
     toc_float:
       collapsed: yes
       smooth_scroll: no
-params:
-  projectname: !r as.character("EVAL - MLRA 111A - Ross loam, 0 to 2 percent slopes, frequently flooded;EVAL - MLRA 111A - Ross silt loam, 0 to 2 percent slopes, frequently flooded;EVAL - MLRA 111A - Ross silt loam, 0 to 2 percent slopes, occasionally flooded")
 ---
 
 ```{r setup, echo = FALSE}
@@ -216,7 +214,7 @@ vars <- c("claytotal", "fragvoltot", "om", "dbthirdbar", "ksat", "awc", "ph1to1h
 comp <- subsetProfiles(comp, h = "!is.na(hzdept_r)")
 
 # convert the data for depth plot
-vars_slice = horizons(slice(comp, seq(0, 200, 2) ~ hzname + dep +
+vars_slice = horizons(aqp::slice(comp, seq(0, 200, 2) ~ hzname + dep +
                               claytotal_l + claytotal_r + claytotal_h +
                               fragvoltot_l + fragvoltot_r + fragvoltot_h +
                               om_l + om_r + om_h +
