@@ -19,7 +19,7 @@ header<-dashboardHeader(
 
 sidebar<-dashboardSidebar(
   sidebarMenu(id="tabs",
-              
+            
               #Home Page Menu    
               menuItem("Home", tabName="Home", selected=TRUE, icon=icon("home")),
               
@@ -52,10 +52,10 @@ sidebar<-dashboardSidebar(
                        menuSubItem("Report", tabName="projectreport", icon=icon("file-text")),
                        textAreaInput(
                          inputId="projectreport",
-                         label="Enter Project Name -", "EVAL - MLRA 111A - Ross silt loam, 0 to 2 percent slopes, frequently flooded",
+                         label="Enter Project Name(s) -", "EVAL - MLRA 111A - Ross silt loam, 0 to 2 percent slopes, frequently flooded",
                          resize="none",
                          rows=5),
-                       actionButton("reportsubmit", "Submit"), br(),p()),
+                       actionButton("reportsubmit", "Submit"), p(downloadLink("projectreportdownload", "Save a copy of this Report")), br(),p()),
               
                             
               #Project Extent Menu
@@ -96,9 +96,14 @@ sidebar<-dashboardSidebar(
               
               menuItem("Source Code", icon=icon("file-code-o"), href="https://github.com/ncss-tech/soil-pit/blob/master/sandbox/john/r11_app/"),
               
+              # Submit Issues on GitHub
+              menuItem("Submit App Issues", icon=icon("bug"), href="https://github.com/ncss-tech/soil-pit/issues"),
+              
               #Help Menu
               
               menuItem("Help", tabName="help", icon=icon("question"))
+              
+
   )
 )
 
@@ -120,15 +125,16 @@ body<-dashboardBody(
     tabItem(tabName="Home",
             titlePanel("Welcome to the Region 11 Web App"),
             verticalLayout(
-              infoBox("About this App", "The Region 11 Web App is a tool for USDA soil scientists to get soils information on the web.", width=12, icon=icon("university"), color="blue"),
+              infoBox("About this App", "The Region 11 Web App is a tool for soil scientists, geographers, and ecologists to get soils information on the web.", width=12, icon=icon("university"), color="blue"),
               box(p(tags$b("Get started using the Region 11 Web App by selecting a menu item on the left.")),
-                  p("Remember to click on a sub-menu item in order to view the results of a query."),
+                  p("If a menu has multiple sub-menu items, remember to choose a sub-menu item in order to view the results of a query.  The Water Table and Organic Matter have both plots and tables in separate sub-menu items."),
                   p("Once the sub-menu item is active it will begin loading an example query unless you have already changed the query inputs."),
                   p("The submit button can be used to submit another query after the sub-menu item has already been selected."),
-                  p("This Application is viewed best in a browser such as Google Chrome or Mozilla Firefox"),
+                  p("This application is viewed best in a browser such as Google Chrome or Mozilla Firefox"),
                   p("Wildcards can be used in the project extent query.  Use a percent symbol % for office.  Use an asterisk * for the project name."),
                   p("Maximum number of records returned from Soil Data Access is 100,000."),
-                  p("Project Extent query uses pattern matching.  Anchors (^ or $) may be needed if exact results are needed"), width=12),
+                  p("Project Extent query uses pattern matching.  Anchors (^ or $) may be needed if exact results are needed"),
+                  p("The Project Report can accept multiple projects.  Use the semicolon (;) as a separator."), width=12),
               box("This application was developed by John Hammerly, Stephen Roecker, and Dylan Beaudette.", width=12)
             )),
     
@@ -161,10 +167,11 @@ body<-dashboardBody(
     
     tabItem(
       tabName="projectreport",
+      titlePanel("Project Report"),
       verticalLayout(
         fluidRow(
-          box(uiOutput("projectreport"), width=12),
-          box("This application was developed by John Hammerly, and Stephen Roecker.", width=12))
+          box(tags$div(uiOutput("projectreport", inline=TRUE, container=span), style="width:100%; overflow-x: scroll"), width=12),
+          box("This application was developed by John Hammerly and Stephen Roecker.", width=12))
       )),
     
     #project extent tab
@@ -226,7 +233,9 @@ body<-dashboardBody(
                       icon=icon("file-text"), color="orange", width=12),
               infoBox("Source Code",
                       box("This menu item provides a link to a GitHub repository containing the computer code used in this application", width=12),
-                      width=12, icon=icon("file-code-o"), color="red")
+                      width=12, icon=icon("file-code-o"), color="red"),
+              infoBox("Submit App Issues",
+                      box("This menu item provides a link to the GitHub Repository issues page of the web app.  Submit an issue if one does not already exist by clicking the the green new issue button.  You can also submit an issue by sending an email to john.hammerly@in.usda.gov.", width=12), width=12, icon=icon("bug"))
               )
               )
 
@@ -265,13 +274,28 @@ observeEvent(input$reportsubmit,{
       })
     })
   
+  output$projectreportdownload<- downloadHandler(      
+    filename = function() {input$reportsubmit
+      paste("projectreport", Sys.Date(), ".html", sep="")
+    },
+    content= function(file) {
+      tempReport <-file.path(tempdir(), "report.Rmd")
+      file.copy("report.Rmd", tempReport, overwrite=TRUE)
+
+      withProgress(message="Preparing Report for Saving", detail="Please Wait", value=1, {
+      params<- list(projectname = isolate(input$projectreport))
+      rmarkdown::render(tempReport, output_file=file, html_document(number_sections=TRUE, toc=TRUE, toc_float=TRUE, params = params))
+      }
+    )}
+  )
+  
   #render long range plan report markdown
   
   observeEvent(input$lrpsubmit,{
     updateTabItems(session, "tabs", "lrp")
   })
   output$lrp<-renderUI({ input$lrpsubmit
-    withProgress(message="Generating Report", detail="Please Wait", value=1, {includeMarkdown(knit("r11_long_range_plan.Rmd"))})
+    withProgress(message="Generating Report", detail="Please Wait", value=1, {includeHTML(rmarkdown::render("r11_long_range_plan.Rmd", html_fragment(number_sections=TRUE, toc=TRUE)))})
   })
 
   #render project extent map

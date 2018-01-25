@@ -25,8 +25,7 @@ options(stringsAsFactors = FALSE)
 suppressWarnings( {
   library(soilDB)
   library(ggplot2)
-  library(knitr)
-  library(kableExtra)
+  library(DT)
   })
 ```
 
@@ -134,7 +133,7 @@ gg_acres
 gg_n
 ```
 
-```{r, results='asis'}
+```{r}
 ## table
 
 # by acreage of projects
@@ -148,7 +147,7 @@ a_wide2 <- reshape(a2[names(a2) != "n"],
                    )
 names(a_wide2) <- gsub("acres.", "", names(a_wide2))
 row.names(a_wide2) <- 1:nrow(a_wide2)
-kable(a_wide2, align = "r", caption = "Long Range Plan Summarized by Acreage of Projects", format="html") %>% kable_styling(bootstrap_options=c("striped", "hover"))
+DT::datatable(a_wide2)
 
 
 # by number of projects
@@ -160,8 +159,7 @@ a_wide1 <- reshape(a[names(a) != "acres"],
                   )
 names(a_wide1) <- gsub("n.", "", names(a_wide1))
 row.names(a_wide1) <- 1:nrow(a_wide1)
-kable(a_wide1, align = "r", caption = "Long Range Plan Summarized by Total Number (n) of Projects", format="html") %>% kable_styling(bootstrap_options=c("striped", "hover"))
-
+DT::datatable(a_wide1)
 ```
 
 
