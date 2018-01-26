@@ -1,1 +1,0 @@
-"0","ggplot(bd2, aes(y = BulkDensity, x= Tot_C))+ geom_jitter(aes(color = Clay), size = 8) +    theme(axis.text.x=element_text(angle=-45, hjust = .1)) + scale_colour_gradient2(low = ""red"", mid = ""grey"", high = ""green"", midpoint = 22)"

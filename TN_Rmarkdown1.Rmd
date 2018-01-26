@@ -479,7 +479,7 @@ surf.n <- Msurf %>%
 
 #function for glm model 
 fit_mod <- function(data){
-    mod <- lm(Value ~ Comp + Soil, random=~1|Comp, data = data)
+    mod <- lm(Value ~ Comp * Soil, data = data)
     return(anova(mod))
   }
 
@@ -510,6 +510,51 @@ surf.m
 
 
 write_csv(surf.m, file.path(Rout,"Test.surface.csv"))
+
+
+#remove soil with no comparison
+#include depth as a factor
+
+d.s <- Wd %>% 
+  filter(Prop %in% Properties & Soil != "Feliciana")%>%
+  mutate(Depth = as.factor(hor_top))
+
+ds.n <- d.s %>%
+   group_by(Prop)%>%
+  nest()
+
+
+#function for glm model 
+fit_mod <- function(data){
+    mod <- lm(Value ~ Comp * Soil * Depth, data = data)
+    return(anova(mod))
+  }
+
+#check that output is appropriate
+# 
+ fit_mod(ds.n$data[[1]])
+# #
+depth.soil.n <- ds.n %>%
+   mutate(mod = purrr::map(data, fit_mod))
+# #
+#surf.n$mod[[1]]
+# #
+#   broom::glance(surf.n$mod[[1]])
+#   broom::tidy(surf.n$mod[[1]])
+  
+depth.soil <- depth.soil.n %>%
+                 dplyr::mutate(tidy = purrr::map(mod, broom::tidy),
+                               n = purrr::map(data, nrow) %>% simplify())
+
+
+  
+depth.soil.m <- depth.soil %>%
+                   tidyr::unnest(tidy) 
+                  # dplyr::select(-(std.error:p.value)) %>%
+                  # tidyr::spread(term, estimate)
+                
+write_csv(surf.m, file.path(Rout,"Test.Depth_Soil.csv"))
+
 
 
 # A.M <- Wd %>% 
