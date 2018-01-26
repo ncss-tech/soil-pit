@@ -80,7 +80,6 @@ tnsh <- read_csv('TN_kssl_data.csv')
 labels <- read_csv('TN_labels.csv')
 
 
-
 ```
 
 
@@ -480,7 +479,7 @@ surf.n <- Msurf %>%
 
 #function for glm model 
 fit_mod <- function(data){
-    mod <- lm(Value ~ Comp, random=~1|Comp, data = data)
+    mod <- lm(Value ~ Comp + Soil, random=~1|Comp, data = data)
     return(anova(mod))
   }
 

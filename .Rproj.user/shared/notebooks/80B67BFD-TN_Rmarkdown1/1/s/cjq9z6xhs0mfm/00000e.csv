@@ -1,8 +1,0 @@
-"0","tn <- tnsh %>%
-  select(-(matches(""X""))) %>%
-  rename(Cover = Comp) %>%
-  mutate(Comp = paste(Cover, Till, sep = ""-""))
-"
-"2","Error in mutate_impl(.data, dots) : 
-  Evaluation error: object 'Till' not found.
-"
