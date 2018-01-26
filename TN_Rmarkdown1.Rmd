@@ -556,7 +556,7 @@ depth.soil.m <- depth.soil %>%
 write_csv(surf.m, file.path(Rout,"Test.Depth_Soil.csv"))
 
 
-
+###should really do this with mixed moedl
 # A.M <- Wd %>% 
 #   filter(Prop %in% Properties) %>%
 #   mutate(Comp = factor(Comp, levels = c('CT-C/S', 'RT-C/S', 'Grass'))) %>%
