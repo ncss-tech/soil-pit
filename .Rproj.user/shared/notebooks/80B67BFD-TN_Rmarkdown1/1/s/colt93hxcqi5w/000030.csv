@@ -1,0 +1,2 @@
+"0","                                                               "
+"0","ggplot(bd2, aes(y = BulkDensity, x = bd_source)) + geom_jitter(aes(color = Tot_C), size = 8) + facet_grid(Comp~Soil) +     theme(axis.text.x=element_text(angle=-45, hjust = .1)) + scale_colour_gradient2(low = ""green"", mid = ""grey"", high = ""blue"", midpoint = 2)"

@@ -1,0 +1,5 @@
+"0","BDo <- tn %>%"
+"0","  select(hor_desg, hor_top, hor_bot, Comp, Prop, Value) %>%"
+"0","  filter(str_detect(Prop, ""BD"")) %>%"
+"0","  ggplot(aes(Comp, Value, color = Prop)) + geom_boxplot() + geom_point()"
+"0","BDo"

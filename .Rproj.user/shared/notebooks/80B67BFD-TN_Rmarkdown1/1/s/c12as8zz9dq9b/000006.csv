@@ -1,0 +1,15 @@
+"0","depth.soil.n <- ds.n %>%
+   mutate(mod = purrr::map(data, fit_mod))
+# #
+#surf.n$mod[[1]]
+# #
+#   broom::glance(surf.n$mod[[1]])
+#   broom::tidy(surf.n$mod[[1]])
+  
+depth.soil.n <- ds.n %>%
+                 dplyr::mutate(tidy = purrr::map(mod, broom::tidy),
+                               n = purrr::map(data, nrow) %>% simplify())
+"
+"2","Error in mutate_impl(.data, dots) : 
+  Evaluation error: object 'mod' not found.
+"
