@@ -1,0 +1,4 @@
+"0","Rout = paste0(getwd() ""/Rout/"")
+"
+"2","Error: unexpected string constant in ""Rout = paste0(getwd() ""/Rout/""""
+"

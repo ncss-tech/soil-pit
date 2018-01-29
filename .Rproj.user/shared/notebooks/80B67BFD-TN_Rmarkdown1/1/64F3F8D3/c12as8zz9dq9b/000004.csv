@@ -1,0 +1,7 @@
+"0","  "
+"0","surf.m <- surf.n %>%"
+"0","                   tidyr::unnest(tidy) "
+"0","                  # dplyr::select(-(std.error:p.value)) %>%"
+"0","                  # tidyr::spread(term, estimate)"
+"0","                  # "
+"0","surf.m"

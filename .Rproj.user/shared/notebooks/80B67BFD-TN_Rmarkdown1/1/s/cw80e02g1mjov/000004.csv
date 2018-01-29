@@ -1,0 +1,4 @@
+"0","Properties2 <- c('AggStab', 'Bgluc',  'Pom_C')"
+"0","ggplot(Wd %>% filter(Prop %in% Properties2 & hor_top == 0), aes(y = Value, x = Soil)) + geom_boxplot(aes(fill = Comp), alpha = .5)   +   facet_wrap(~Prop, ncol=3, scales = ""free_y"") +"
+"0","  theme(legend.position=""top"",  axis.text.x=element_text(angle=-45, hjust = -.01), strip.text.y=element_text(size=4)) +"
+"0","  ggtitle(""Surface Sample"") # need to add labeller = nameProp"

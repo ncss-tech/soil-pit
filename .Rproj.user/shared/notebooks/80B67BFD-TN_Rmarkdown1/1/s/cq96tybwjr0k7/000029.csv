@@ -1,0 +1,5 @@
+"0","  "
+"0","tn %>%"
+"0","  select(hor_desg, hor_top, hor_bot, Comp, Prop, Value, Cover_kind) %>%"
+"0","  filter(str_detect(Prop, ""BD"")) %>%"
+"0","  ggplot(aes(Comp, Value)) + geom_boxplot(aes(color = Prop)) + geom_point(aes(color = Prop)) + facet_wrap(~Cover_kind)"

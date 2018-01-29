@@ -1,0 +1,4 @@
+"0","#input files "
+"0","# "
+"0","tnsh <- read_csv('TN_kssl_data.csv')"
+"0","labels <- read_csv('TN_labels.csv')"
