@@ -98,7 +98,7 @@ _wpg for ISCN needs to be converted to volumetric fragment content_
 
 raca <- read.csv(paste0('RaCA_samples.csv'))
 
-raca.loc <- read.csv('RaCA_data_loc.csv')
+raca.loc <- read.csv('RaCA_xy.csv')
 
 raca <- left_join(raca, raca.loc, by =c("rcasiteid" = "RaCA_site"))
 
@@ -138,7 +138,7 @@ Use dplyr (with piping) to format and ggplot to create graphs
 
 ```{r graphs}
 d <- combo %>%
-  ggplot(aes(BD)) + geom_density(aes(fill = SET), alpha=.5) + scale_x_continuous(limits = c(0,3)) +
+  ggplot(aes(BD)) + geom_density(aes(fill = SET), alpha=.5) + scale_x_continuous(limits = c(0,3))+
   facet_wrap(~M) + ggtitle('Bulk density by Master Horizon')
 d
 
@@ -359,40 +359,49 @@ How do we co-locate?
 
 #one location per observation/pedon
 C <- combo %>%
-  filter(LU == "W") %>%
-  select(Pedon_ID, Lat, Lon) %>%
+  filter(LU == "W" & Lat != 0) %>%
+  select(SET, Pedon_ID, Lat, Lon) %>%
   group_by(Pedon_ID) %>%
  summarize_all('min')
   
 #create spatial object 
 
+
+sp.C <- C[complete.cases(C),]
+
 #xy cooridanates
-sp_C <- C[complete.cases(C),]
+xy <-sp.C[,3:4]
 
-xy <-sp_C[,2:3]
-
-sp.C <- SpatialPointsDataFrame(coords = xy, data = C,
+C.sp <- SpatialPointsDataFrame(coords = xy, data = sp.C,
         proj4string = CRS("+proj=longlat +datum=WGS84 +init=epsg:5070"))
 
-
-# from https://github.com/smroecker/raca/blob/master/stephen/explore_stocks.Rmd
-#us <- map("state", plot = FALSE)
+# 
+# #from https://github.com/smroecker/raca/blob/master/stephen/explore_stocks.Rmd
+# us <- map("state", plot = FALSE)
 # us_sp <- {map2SpatialLines(us, proj4string = CRS("+init=epsg:4326")) ->.;
 #   spTransform(., CRS("+init=epsg:5070"))
 #   }
-#cols <- brewer.pal(4, "RdYlBu")
+# cols <- brewer.pal(2, "RdYlBu")
 # 
-# spplot(soc_sp, zcol = c("soc5cm", "soc30cm", "soc100cm"), main = "SOC Pedon Stocks",
+# spplot(C.sp, zcol = "SET", main = "SOC Pedon Stocks",
 #        col.regions = cols, cex = 0.5, alpha = 0.5,
 #        as.table = TRUE, layout = c(2, 2), sp.layout = list(us_sp), scales = list(draw = TRUE),
 #        key.space = list(
 #          space = "right",
 #          title = expression(Mg/ha^-1),
 #          cex.title = 1.25)
-#         )
+        )
 
-plot(sp.C)
-mapview(sp.C)
+plot(C.sp) # this doesn not look right - I need to check the projection of the NWCA points
+plot(C.sp)[C.sp$SET=='RaCA']
+
+par(mar=c(0,0,0,0))
+
+map('state')
+points(C.sp, cex=0.5, pch=3, col='red'))
+
+
+#mapview(C.sp)
  
 ```
 
