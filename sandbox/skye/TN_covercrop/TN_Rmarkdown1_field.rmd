@@ -1,0 +1,937 @@
+---
+title: "TN - SH Project - Williams"
+author: 'Skye Wills'
+
+
+output: 
+  word_document: default
+---
+
+**TN soil Health project - KSSL Data, Data Analysis**
+
+##R SetUp
+This setup 'chunk' loads needed This portion may need to be modified with updated info for your
+file locations - alter path inside quotations, note that the backslash is used instead of the forward slash.
+This ensures that input and output files come from the correct locations
+
+
+Required packages
+----------------
+```{r setup, message=FALSE, warnings=FALSE}
+
+knitr::opts_chunk$set(echo = FALSE, comment = "#", warning = FALSE, message = FALSE, error =FALSE, tidy.opts=list(width.cutoff=60),tidy=TRUE)
+
+rm(list=ls()) #clear previous data
+ 
+list.of.packages <- c("knitr", "fastmatch", "ggplot2", "Rcpp", "RColorBrewer", "lattice", "maps", "aqp", "soilDB", "tidyr", "tidyverse", "ggthemes", "ggmosaic", "RCurl", "ggjoy", "broom", "lme4", "ggjoy", "ggbeeswarm", "viridis", 'cetcolor')
+
+ 
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+ 
+library(cetcolor)
+library(knitr)
+library(fastmatch)
+library(ggplot2)
+library(Rcpp)
+library(RColorBrewer)
+library(lattice)
+library(maps)
+library(aqp)
+library(soilDB)
+library(stringr)
+library(tidyverse)
+library(tidyr)
+library(ggthemes)
+library(ggmosaic)
+library(RCurl)
+library(broom)
+library(lme4)
+library(ggjoy)
+library(ggbeeswarm)
+library(viridis)
+
+
+
+#create subfolders to save output
+Rout <- paste0(getwd(), "/Rout/")
+ifelse(!dir.exists(file.path(Rout)), dir.create(Rout), FALSE)
+
+
+```
+ 
+##Inputs
+-------------
+Then relabels some columns with simpler labels. 
+ 
+**ADD links to data** 
+ 
+```{r data}
+#input files 
+# 
+
+tnsh <- read_csv('TN_kssl_data.csv')
+
+labels <- read_csv('TN_labels.csv')
+
+
+```
+
+
+#### Data prep
+TN_labels file has been used to rename columns from LIMS with simple labels.
+
+Use dplyr to filter data so that only columns that we want to analyze are kept - the extras are currently labeled with X - then they are reorganized into
+ 
+```{r DataPrep}
+
+tn <- tnsh %>%
+  select(-(matches("X"))) %>%
+   gather(Prop, Value, -c(KSSL.Project.lab, KSSL.Project.name, UserPedonID, labsampno, layerID, Comp, Cover_kind, Field, Crop,  Mgmt, Soil, hor_desg, hor_top, hor_bot)) %>%
+  mutate(Value = as.numeric(Value), hor_top = as.numeric(hor_top), hor_bot = as.numeric(hor_bot))
+
+```
+
+
+####Bulk Density
+Evaluate bulk density to inform combining methods in dataprep phase
+```{r bd}
+ 
+#get data count for each type of bulk density
+#apply(tn[, grep("^BD", names(tn))], 2, function(x) length(which(!is.na(x))))
+tn %>%
+  select(Comp, Prop, Value) %>%
+  filter(str_detect(Prop, "BD")) %>%
+  group_by(Comp, Prop)  %>%
+  summarise (N = sum(!is.na(Value))) %>%
+spread(Comp, N) 
+
+
+BDo <- tn %>%
+  select(hor_desg, hor_top, hor_bot, Comp, Prop, Value) %>%
+  filter(str_detect(Prop, "BD")) %>%
+  ggplot(aes(Comp, Value, color = Prop)) + geom_boxplot() + geom_point()
+
+BDo
+  
+tn %>%
+  select(hor_desg, hor_top, hor_bot, Field, Comp, Prop, Value, Cover_kind) %>%
+  filter(str_detect(Prop, "BD")) %>%
+  ggplot(aes(Comp, Value)) + geom_boxplot(aes(color = Prop)) + geom_point(aes(color = Prop)) + facet_wrap(~Cover_kind)
+
+# 
+# very few non A horizons - taking mutate for comparable layers out
+# tn %>%
+#   select(hor_desg, hor_top, hor_bot, Comp, Prop, Value) %>%
+#   filter(str_detect(Prop, "BD")) %>%
+#   mutate(comp = factor(case_when(grepl("O", hor_desg) ~ "O Horizons",
+#                           grepl("A", hor_desg) ~ "A Horizons",
+#                           grepl("B", hor_desg) ~ "B Horizons",
+#                           grepl("C", hor_desg) ~ "C Horizons"), 
+#                        c("O Horizons", "A Horizons", "B Horizons", "C Horizons")    
+#   )) %>%
+#   ggplot(aes(Comp, Value)) + geom_boxplot(aes(color = Prop)) + geom_point(aes(color = Prop)) + facet_wrap(~comp)
+
+
+tn %>%
+  select(hor_desg, hor_top, hor_bot, Comp, Prop, Value) %>%
+  filter(str_detect(Prop, "BD")) %>%
+    ggplot(aes(hor_top, Value)) + geom_jitter(aes(color = Prop, shape = Comp)) + 
+    ylab("Bulk Density g/cm3") + xlab("Horizon Top (cm)")
+
+
+tn %>%
+  select(hor_desg, hor_top, hor_bot, Field, Comp, Prop, Value) %>%
+  filter(str_detect(Prop, "BD")) %>%
+    ggplot(aes(hor_top, Value)) + geom_point(aes(color = Prop)) + facet_grid(Comp~.) +
+    ylab("Bulk Density g/cm3") + xlab("Horizon Top (cm)")
+
+tn %>%
+  select(hor_desg, hor_top, hor_bot, Soil,  Field, Comp, Prop, Value) %>%
+  filter(str_detect(Prop, "BD")) %>%
+    ggplot(aes(Soil, Value)) + geom_point(aes(color = Prop, shape = Field)) +  
+  facet_grid(Comp~.) + ylab("Bulk Density g/cm3") + xlab("Horizon Top (cm)")
+
+
+```
+
+
+
+####Db Data Prep
+Input data.  
+Create standardized properties when multiple methods are used, such as bulk density
+  -change rank of methods to alter the way multiple methods are analyzed
+  -Currently, 2015 samples use compliant cavity because it was done on all samples (__really a core__).  For 2014, core bulk density was favored because it was done on nearly all samples
+
+Add comparable layers to allow for 
+ 
+```{r bdPrep}
+
+bd <- tn %>%
+  select(KSSL.Project.lab, KSSL.Project.name, UserPedonID, labsampno, layerID, Comp, Cover_kind, Crop,  Mgmt, Soil, hor_desg, hor_top, hor_bot, Prop, Value) %>%
+  filter(str_detect(Prop, "BD")) %>%
+  spread(Prop, Value) 
+
+bd2 <- bd %>%
+  left_join(
+    tn %>% 
+        select(KSSL.Project.lab, KSSL.Project.name, UserPedonID, labsampno, layerID, Field, Comp, Cover_kind, Crop,  Mgmt, Soil, hor_desg, hor_top, hor_bot, Prop, Value)%>% 
+      filter(Prop %in% c("Clay", "Tot_C", "CaCarb")) %>%  spread(Prop, Value))
+    
+
+#Order of bulk density selection - change order if desired
+bd_1 <- "BD_Clod_13"
+bd_2 <- "BD_3inCore"
+bd_4 <- "BD_compcav"
+bd_3 <- "BD_4inCore"
+
+
+#create new data element that combines all bulk density methods'
+bd2 <- bd2 %>%
+  mutate(BD = ifelse(!is.na(get(bd_1)), get(bd_1),
+    ifelse(!is.na(get(bd_2)), get(bd_2), 
+      ifelse(!is.na(get(bd_3)),get(bd_3),           
+        ifelse(!is.na(get(bd_4)), get(bd_4),             
+           NA))))
+    )
+  
+
+
+#if you need to seperate by year
+# bd2$BD <- ifelse(bd2$Date == "2015", 
+#                               as.numeric(
+#   ifelse(!is.na(bd2[,bd_1]), bd2[,bd_1],
+#     ifelse(!is.na(bd2[,bd_2]), bd2[,bd_2],
+#     ifelse(!is.na(bd2[,bd_3]), bd2[,bd_3],           
+#     ifelse(!is.na(bd2[,bd_4]), bd2[,bd_4],             
+#            NA
+#   ))))), 
+#       as.numeric(
+#       ifelse(!is.na(bd2[,bd_1]), bd2[,bd_1],
+#         ifelse(!is.na(bd2[,bd_2]), bd2[,bd_2],
+#         ifelse(!is.na(bd2[,bd_3]), bd2[,bd_3],           
+#         ifelse(!is.na(bd2[,bd_4]), bd2[,bd_4],             
+#                NA
+#       )))))
+# )
+
+
+#pedon bd avg
+pedBD <- bd2 %>%
+  group_by(UserPedonID) %>%
+  summarise(ped_avg = mean(BD, na.rm=T))
+
+# add ped avg bd
+bd2 <- left_join(bd2, pedBD) %>%
+  mutate(BulkDensity = as.numeric(ifelse(is.na(BD), ped_avg, BD) ))
+ 
+#add source description Comp
+bd2 <- bd2 %>%
+  mutate(bd_source =ifelse(!is.na(get(bd_1)), bd_1,
+    ifelse(!is.na(get(bd_2)), bd_2,
+      ifelse(!is.na(get(bd_3)),bd_3,           
+        ifelse(!is.na(get(bd_4)), bd_4,             
+     "ped_avg"))))
+  )
+ 
+table(bd2$bd_source)
+summary(bd2$BulkDensity)
+
+
+
+ggplot(bd2, aes(y = BulkDensity, x = Comp)) + geom_boxplot(aes(fill = bd_source))
+
+ggplot(bd2, aes(y = BulkDensity, x = bd_source)) + geom_jitter(aes(color = Clay, shape = Comp))
+                                                               
+ggplot(bd2, aes(y = BulkDensity, x = bd_source)) + geom_jitter(aes(color = Tot_C), size = 8) + facet_grid(Comp~Soil) +     theme(axis.text.x=element_text(angle=-45, hjust = .1)) + scale_colour_gradient2(low = "green", mid = "grey", high = "blue", midpoint = 2)
+
+ggplot(bd2, aes(y = BulkDensity, x= Clay))+ geom_jitter(aes(color = Tot_C), size = 8) +    theme(axis.text.x=element_text(angle=-45, hjust = .1)) + scale_colour_gradient2(low = "green", mid = "grey", high = "blue", midpoint = 1.5)
+
+ggplot(bd2 %>% mutate(Top = as.factor(hor_top)), aes(y = BulkDensity, x= Tot_C))+ geom_point(aes(color = Clay, shape = Top), size = 8) +    theme(axis.text.x=element_text(angle=-45, hjust = .1)) + scale_colour_gradient2(low = "red", mid = "grey", high = "green", midpoint = 22) 
+
+#change na's to zero for Calcium carbonate
+bd2$CaCarb[is.na(bd2$CaCarb)]<- 0
+ 
+summary(bd2$CaCarb)
+
+#calculate SOC and change anything less than 0 to 0 
+bd2$CALC_SOC <- bd2$Tot_C - (bd2$CaCarb*0.12)
+
+bd2$CALC_SOC[bd2$CALC_SOC<0] <- 0
+
+summary(bd2$CALC_SOC)
+
+
+#join back to original data
+
+wd <- tn %>%
+  mutate_if(is.factor, as.character) %>%
+  mutate_if(is.integer, as.numeric) %>%
+  bind_rows(bd2 %>%
+              select(KSSL.Project.lab, KSSL.Project.name, UserPedonID, labsampno, layerID, Comp, Cover_kind, Crop,  Mgmt, Soil, hor_desg, hor_top, hor_bot, BulkDensity, CALC_SOC) %>%
+              mutate_if(is.factor, as.character) %>%
+              mutate_if(is.integer, as.numeric) %>%
+              gather(Prop, Value, -c(KSSL.Project.lab, KSSL.Project.name, UserPedonID, labsampno, layerID, Comp, Cover_kind, Crop,  Mgmt, Soil, hor_desg, hor_top, hor_bot))
+  
+  )
+
+ 
+```
+ 
+Removed this section - didn't include coarse fragments
+<!-- ##Pedon stocks/totals -->
+
+<!-- ```{r stocks} -->
+<!-- #filter to remove replicates -->
+<!-- Wd <- wd #past analysis filtered at this stage -->
+
+<!-- Wd %>% -->
+<!--      filter(Prop %in% c('CALC_SOC', 'BulkDensity'))%>% -->
+<!--      spread(Prop, Value) -->
+
+<!-- #simplify variables and calculate SOC density for each sample -->
+<!-- W_ped <- Wd %>%  -->
+<!--      filter(Prop %in% c('CALC_SOC', 'Tot_N', 'Tot_C', 'CF_labvol', 'BulkDensity')) %>% -->
+<!--      spread(Prop, Value) %>% -->
+<!--     mutate(SOC = ifelse(CALC_SOC<0, 0, CALC_SOC), -->
+<!--            bd = BulkDensity, TN=Tot_N,  -->
+<!--            TOP = hor_top, BOT = hor_bot, -->
+<!--            CF = ifelse(CF_labvol==0,0,CF_labvol/100)) %>%  -->
+<!--     mutate(thick = BOT - TOP, SOCden = SOC*bd*(1 - CF), TNden = TN*bd*(1 - CF)) %>% -->
+<!--     mutate(d5  = ifelse(BOT <=5, thick, ifelse(TOP<5, 5-TOP,0 )), -->
+<!--            d30 = ifelse(BOT <=30, thick, ifelse(TOP<30, 30-TOP,0 ))) %>% -->
+
+<!--   #check values for on pedon with NA values   -->
+<!--     # filter(Date=="2014" & Comp=="GR1" & Pedon =="A" & Soil_abbrev == "O") %>% -->
+<!--     #   select(UserPedonID, Date, Comp, Pedon, Veg, Till, MGMT, Soil_abbrev, TOP, BOT, SOC, BD, bd, CF, SOCden, TNden, d5, d30, d50, d100) %>% -->
+
+<!--     select(UserPedonID, Date, Comp, Pedon, Veg, Till, MGMT, Soil_abbrev, SOCden, TNden, d5, d30, d50, d100) %>% -->
+<!--     group_by(UserPedonID, Date, Comp, Pedon, Veg, Till, MGMT, Soil_abbrev) %>% -->
+<!--     summarise(SOCstock5 = sum(SOCden*d5, na.rm = T), -->
+<!--                   SOCstock30 = sum(SOCden*d30, na.rm = T), -->
+<!--                   SOCstock50 = sum(SOCden*d50, na.rm = T), -->
+<!--                   TNstock5 = sum(TNden*d5, na.rm = T), -->
+<!--                   TNstock30 = sum(TNden*d30, na.rm = T), -->
+<!--                   TNstock50 = sum(TNden*d50, na.rm = T) -->
+<!--         ) -->
+
+
+<!-- ```  -->
+
+
+###Exploratory plots
+<!-- #### stocks -->
+<!-- ```{r graphs} -->
+<!-- names(W_ped) #check names for gather function (list labels - everything else goes into the var and stock columns) -->
+
+<!-- # columns that will be combined in order you want them displayed -->
+<!-- col <- c("SOCstock5",  "SOCstock30", "SOCstock50", "TNstock5", "TNstock30",  "TNstock50" ) -->
+
+
+<!--   W_ped %>%  -->
+<!--   gather(key = var , value = stock, -c(UserPedonID, Date, Comp, Pedon, Veg, Till, MGMT, Soil_abbrev))%>% -->
+<!--   ggplot(aes(y = stock, x = Soil_abbrev)) + geom_boxplot(aes(fill = MGMT), alpha = .5)  + facet_wrap(~var, nrow = 4, scales = "free_y") -->
+
+<!--     #free_y allows he y axis to change between plots (remove to better compare between plots) -->
+
+
+
+<!-- ``` -->
+
+
+
+#### Surface Properties
+
+
+```{r graphs2 }
+Wd <-wd #recreate skipped steps
+
+Properties <- c('WaterSol_P', 'Mehlich3_P', ' Tot_P', 'NewZ_P') #list of properties that will be graphed
+
+ggplot(Wd %>% filter(Prop %in% Properties & hor_top == 0), aes(y = Value, x = Soil)) + geom_boxplot(aes(fill = Comp), alpha = .5) +  facet_wrap(~Prop, ncol=5, scales = "free_y") +
+  theme(legend.position="top",  axis.text.x=element_text(angle=-45, hjust = -.01), strip.text.y=element_text(size=4)) +
+  ggtitle("Surface Sample") # need to add labeller = nameProp
+
+Properties2 <- c('AggStab', 'Bgluc',  'Pom_C')
+
+ggplot(Wd %>% filter(Prop %in% Properties2 & hor_top == 0), aes(y = Value, x = Soil)) + geom_boxplot(aes(fill = Comp), alpha = .5)   +   facet_wrap(~Prop, ncol=3, scales = "free_y") +
+  theme(legend.position="top",  axis.text.x=element_text(angle=-45, hjust = -.01), strip.text.y=element_text(size=4)) +
+  ggtitle("Surface Sample") # need to add labeller = nameProp
+
+
+Properties3 <- c('Tot_N', 'Pom_N','BulkDensity', 'ph_h20', 'CEC_ph7')
+
+ggplot(Wd %>% filter(Prop %in% Properties3 & hor_top == 0), aes(y = Value, x = Soil)) + geom_boxplot(aes(fill = Comp), alpha = .5)   +   facet_wrap(~Prop, ncol=5, scales = "free_y") +
+  theme(legend.position="top",  axis.text.x=element_text(angle=-45, hjust = -.01), strip.text.y=element_text(size=4)) +
+  ggtitle("Surface Sample") # need to add labeller = nameProp
+
+
+```
+
+##Exploratory Plots
+Individual 
+```{r joyplots}
+
+
+
+lev <- as.factor(Wd$Prop)
+
+
+#pdf(file = 'explore_plots.pdf')
+for(i in unique(lev)){
+print(i)
+ b <- ggplot(Wd %>% filter(Prop == i) , aes(y = Value, x = Comp)) + 
+  geom_boxplot(aes(fill = Comp), alpha = .5) +
+  theme(legend.position="none")  +  ylab(paste(i)) + xlab(" ") +
+   ggtitle(paste0(i, " for all Samples")) 
+print(b)
+
+j <- Wd%>% filter(Prop == i )%>%
+  ggplot(aes(x=Value, y = Comp, color = hor_top)) +  
+  geom_quasirandom(alpha=0.82, groupOnX=FALSE, size = 10) + 
+  theme_joy() +
+    scale_color_gradient(name = "Top") +
+  theme(plot.caption=element_text(hjust=0,size=10),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+  labs(x= i ,y="",caption="@wills_skye")
+
+print(j)
+
+}
+#dev.off()
+
+#joy plot example
+# https://stackoverflow.com/questions/45384281/ggjoy-facet-with-ggtree
+
+
+
+```
+
+
+
+##Summary by comparable
+```{r summary, message=FALSE, warnings=FALSE}
+
+
+Properties <- c('WaterSol_P', 'Mehlich3_P', 'Tot_P', 'NewZ_P', 'AggStab', 'Bgluc',  'Pom_C', 'CALC_SOC', 'Tot_N', 'Pom_N','BulkDensity', 'ph_h20', 'CEC_ph7')
+
+Field.avg <- as.data.frame(Wd %>% 
+  filter(Prop %in% Properties) %>%
+  select(Comp, Field, Soil, Prop, Value, hor_top, hor_bot) %>%
+  mutate(thick = hor_bot - hor_top) %>%
+   group_by(Comp, Soil, Field, Prop)%>%
+   summarise(N= sum(!is.na(Value)),
+             wt.mean = weighted.mean(x= Value, w = thick, na.rm=TRUE),
+             min = min(Value, na.rm=T), 
+             max = max(Value, na.rm=T)))
+
+Comp.SOIL <- as.data.frame(Wd %>% 
+  filter(Prop %in% Properties) %>%
+  select(Comp, Field, Soil, Prop, Value, hor_top, hor_bot) %>%
+  mutate(thick = hor_bot - hor_top) %>%
+   group_by(Comp, Soil, Prop)%>%
+   summarise(N= sum(!is.na(Value)),
+             wt.mean = weighted.mean(x= Value, w = thick, na.rm=TRUE),
+             min = min(Value, na.rm=T), 
+             max = max(Value, na.rm=T)))
+    
+Comp <- as.data.frame(Wd %>% 
+  filter(Prop %in% Properties) %>%
+  select(Comp, Soil, Prop, Value, hor_top, hor_bot) %>%
+  mutate(thick = hor_bot - hor_top) %>%
+   group_by(Comp, Prop)%>%
+   summarise(N= sum(!is.na(Value)),
+             w.mean = weighted.mean(x= Value, w = thick, na.rm=TRUE),
+             min = min(Value, na.rm=T), 
+             max = max(Value, na.rm=T)))
+    
+Field.surf <- as.data.frame(Wd %>% 
+  filter(Prop %in% Properties & hor_top ==0) %>%
+  select(Comp, Soil, Prop, Value, hor_top, hor_bot) %>%
+  mutate(thick = hor_bot - hor_top) %>%
+   group_by(Comp, Soil, Prop)%>%
+   summarise(N= sum(!is.na(Value)),
+             wt.mean = weighted.mean(x= Value, w = thick, na.rm=TRUE),
+             min = min(Value, na.rm=T), 
+             max = max(Value, na.rm=T)))
+
+Comp.SOIL.surf <- as.data.frame(Wd %>% 
+  filter(Prop %in% Properties & hor_top ==0) %>%
+  select(Comp, Soil, Prop, Value, hor_top, hor_bot) %>%
+  mutate(thick = hor_bot - hor_top) %>%
+   group_by(Comp, Soil, Prop)%>%
+   summarise(N= sum(!is.na(Value)),
+             wt.mean = weighted.mean(x= Value, w = thick, na.rm=TRUE),
+             min = min(Value, na.rm=T), 
+             max = max(Value, na.rm=T)))
+    
+Comp.surf <- as.data.frame(Wd %>% 
+  filter(Prop %in% Properties& hor_top ==0) %>%
+  select(Comp, Soil, Prop, Value, hor_top, hor_bot) %>%
+  mutate(thick = hor_bot - hor_top) %>%
+   group_by(Comp, Prop)%>%
+   summarise(N= sum(!is.na(Value)),
+             w.mean = weighted.mean(x= Value, w = thick, na.rm=TRUE),
+             min = min(Value, na.rm=T), 
+             max = max(Value, na.rm=T)))
+
+write_csv(Comp.SOIL, file.path(Rout, "Comp_soil.csv"))
+write_csv(Comp, file.path(Rout, "Comp.csv"))
+write_csv(Comp.SOIL.surf, file.path(Rout, "Comp_soil_surf.csv"))
+write_csv(Comp.surf, file.path(Rout, "Comp_surf.csv"))
+write_csv(Field.surf, file.path(Rout, "Field_surf.csv"))
+write_csv(Field.avg, file.path(Rout, "Field_avg.csv"))
+
+```
+
+#Test for diff
+###by Surface, A horizons, and then B horizons
+```{r test}
+
+Properties <- c('WaterSol_P', 'Mehlich3_P', 'Tot_P', 'NewZ_P', 'AggStab', 'Bgluc',  'Pom_C', 'CALC_SOC', 'Tot_N', 'Pom_N','BulkDensity', 'pH_H20', 'CEC_ph7')
+
+wd <- Field.surf %>%
+  mutate_if(is.factor, as.character) %>%
+  mutate_if(is.integer, as.numeric) %>%
+  bind_rows(bd2 %>%
+              select(KSSL.Project.lab, KSSL.Project.name, UserPedonID, labsampno, layerID, Comp, Cover_kind, Crop,  Mgmt, Soil, hor_desg, hor_top, hor_bot, BulkDensity, CALC_SOC) %>%
+              mutate_if(is.factor, as.character) %>%
+              mutate_if(is.integer, as.numeric) %>%
+              gather(Prop, Value, -c(KSSL.Project.lab, KSSL.Project.name, UserPedonID, labsampno, layerID, Comp, Cover_kind, Crop,  Mgmt, Soil, hor_desg, hor_top, hor_bot))
+  
+  )
+
+Msurf <- Field.surf %>% 
+  mutate(Value = wt.mean)%>%
+  filter(Prop %in% Properties)
+
+surf.n <- Msurf %>%
+   group_by(Prop)%>%
+  nest()
+
+
+#function for glm model 665061
+fit_mod <- function(data){
+    mod <- lm(Value ~ Comp +Soil, data = data)
+    return(anova(mod))
+  }
+
+#check that output is appropriate
+# 
+ fit_mod(surf.n$data[[1]])
+# #
+ surf.n <- surf.n %>%
+   mutate(mod = purrr::map(data, fit_mod))
+
+ 
+ library(lme4)
+ 
+ #fit <- lmer(length ~ treatment + organ + tissue + (1|tree/organ/sample), data = trees) 
+fit_lmer <- function(data){
+  fit <- lmer(Value ~ Comp, data = data)
+  return()
+ 
+ # #
+#surf.n$mod[[1]]
+# #
+#   broom::glance(surf.n$mod[[1]])
+#   broom::tidy(surf.n$mod[[1]])
+  
+surf.n <- surf.n %>%
+                 dplyr::mutate(tidy = purrr::map(mod, broom::tidy),
+                               n = purrr::map(data, nrow) %>% simplify())
+
+surf.n
+  
+surf.m <- surf.n %>%
+                   tidyr::unnest(tidy) 
+                  # dplyr::select(-(std.error:p.value)) %>%
+                  # tidyr::spread(term, estimate)
+                  # 
+surf.m
+
+
+write_csv(surf.m, file.path(Rout,"Test.surface.csv"))
+
+
+#remove soil with no comparison
+#include depth as a factor
+
+d.s <- Wd %>% 
+  filter(Prop %in% Properties & Soil != "Feliciana")%>%
+  mutate(Depth = as.factor(hor_top))
+
+ds.n <- d.s %>%
+   group_by(Prop)%>%
+  nest()
+
+
+#function for glm model 
+#this one tells it to evaluate Comp, Depth and Soil - but that fields are 
+fit_mod <- function(data){
+    mod <- lm(Value ~ Comp * Depth + Soil*Depth + Soil/Field, data = data)
+    return(anova(mod))
+  }
+
+#check that output is appropriate
+# 
+ fit_mod(ds.n$data[[1]]) 
+ 
+depth.soil.n <- ds.n %>%
+   mutate(mod = purrr::map(data, fit_mod))
+# #
+#surf.n$mod[[1]]
+# #
+#   broom::glance(surf.n$mod[[1]])
+#   broom::tidy(surf.n$mod[[1]])
+  
+depth.soil <- depth.soil.n %>%
+                 dplyr::mutate(tidy = purrr::map(mod, broom::tidy),
+                               n = purrr::map(data, nrow) %>% simplify())
+
+
+  
+depth.soil.m <- depth.soil %>%
+                   tidyr::unnest(tidy) 
+                  # dplyr::select(-(std.error:p.value)) %>%
+                  # tidyr::spread(term, estimate)
+                
+write_csv(depth.soil.m, file.path(Rout,"Test.Depth_Soil.csv"))
+
+
+###should really do this with mixed moedl
+# A.M <- Wd %>% 
+#   filter(Prop %in% Properties) %>%
+#   mutate(Comp = factor(Comp, levels = c('CT-C/S', 'RT-C/S', 'Grass'))) %>%
+#   filter(Soil == "Leen" & comp %in% c("A Horizons", "B Horizons")) %>%
+#   group_by(Comp, Comp, Prop, comp) %>%
+#   summarise(Value = mean(Value, na.rm=TRUE))
+# 
+
+# 
+# A.lm.mc <- A.M %>%  filter(comp %in% c("A Horizons"))%>%
+#    group_by(Prop)%>%
+#   nest()
+# 
+# #function for glm model 
+# fit_mod <- function(data){
+#     mod <- lm(Value ~ Comp, random=~1|Comp, data = data)
+#     return(anova(mod))
+# }
+# 
+# 
+# #check that output is appropriate
+# 
+# fit_mod(A.lm.mc$data[[1]])
+#  
+# A.lm.mc <- A.lm.mc %>%
+#    mutate(mod = purrr::map(data, fit_mod))
+# 
+# A.lm.mc$mod[[1]]
+#  
+#    # broom::glance(surf.n$mod[[1]])
+#    # broom::tidy(surf.n$mod[[1]])
+# 
+# 
+# comp.A <- A.lm.mc %>%
+#                  dplyr::mutate(tidy = purrr::map(mod, broom::tidy),
+#                                n = purrr::map(data, nrow) %>% simplify())
+# 
+# comp.A
+#   
+# comp.A <- comp.A %>%
+#                    tidyr::unnest(tidy) 
+#                   # dplyr::select(-(std.error:p.value)) %>%
+#                   # tidyr::spread(term, estimate)
+#                   # 
+# comp.A
+# 
+# PropertiesB <- c('WaterSol_P', 'Mehlich3_P', 'Tot_P', 'NewZ_P', 'Pom_C', 'CALC_SOC', 'Tot_N', 'Pom_N','BulkDensity', 'pH_H20', 'CEC_ph7')
+# 
+# B.M <- Wd %>% 
+#   filter(Prop %in% PropertiesB) %>%
+#   mutate(Comp = factor(Comp, levels = c('CT-C/S', 'RT-C/S', 'Grass'))) %>%
+#   filter(Soil == "Leen" & comp %in% c("A Horizons", "B Horizons")) %>%
+#   group_by(Comp, Comp, Prop, comp) %>%
+#   summarise(Value = mean(Value, na.rm=TRUE))
+# 
+# 
+# B.lm.mc <- B.M %>%  filter(comp %in% c("B Horizons"))%>%
+#    group_by(Prop)%>%
+#   nest()
+# 
+# #function for glm model 
+# fit_mod <- function(data){
+#     mod <- lm(Value ~ Comp, random=~1|Comp, data = data)
+#     return(anova(mod))
+# }
+# 
+# 
+# #check that output is appropriate
+# 
+# fit_mod(B.lm.mc$data[[1]])
+#  
+# B.lm.mc <- B.lm.mc %>%
+#    mutate(mod = purrr::map(data, fit_mod))
+# 
+# B.lm.mc$mod[[1]]
+#  
+#    # broom::glance(surf.n$mod[[1]])
+#    # broom::tidy(surf.n$mod[[1]])
+# 
+# 
+# comp.B <- B.lm.mc %>%
+#                  dplyr::mutate(tidy = purrr::map(mod, broom::tidy),
+#                                n = purrr::map(data, nrow) %>% simplify())
+# 
+# comp.B
+#   
+# comp.B <- comp.B %>%
+#                    tidyr::unnest(tidy) 
+#                   # dplyr::select(-(std.error:p.value)) %>%
+#                   # tidyr::spread(term, estimate)
+#                   # 
+# comp.B
+
+
+   
+```
+
+##Alternate tests
+###Surface Sample Tests
+####using mixed models
+
+<!-- ``` {r mixedmodel} -->
+
+<!-- library(lme4) -->
+
+<!-- Msurf <- Wd %>%  -->
+<!--   filter(Prop %in% Properties) %>% -->
+<!--   select(Comp, Comp, Soil, comp, Prop, Value, hor_top) %>% -->
+<!--   mutate(Comp = factor(Comp, levels = c('CT-C/S', 'RT-C/S', 'Grass'))) %>% -->
+<!--   filter(Soil == "Leen" & hor_top == 0) -->
+
+
+<!-- lev <- as.factor(Msurf$Prop) -->
+
+<!-- for(i in unique(lev)){ -->
+<!-- print(i) -->
+<!-- Msurf_i <- Msurf[Msurf$Prop %in% i,]    -->
+<!-- Comp <- with(Msurf_i, lmer(Value~Comp+ (1|Comp:Comp))) -->
+<!-- Comp<- with(Msurf_i, lmer(Value~(1|Mgmt:Comp))) -->
+<!-- a <- anova(MGMT, Comp) -->
+<!-- print(a) -->
+
+
+<!-- model = lmer(Value ~ Mgmt + (1|Mgmt:Comp), -->
+<!--               data=Msurf_i, -->
+<!--               REML=TRUE) -->
+
+<!--  anova(model) -->
+
+
+<!--  difflsmeans(model, -->
+<!--              test.effs="Mgmt") -->
+
+
+<!--  posthoc = glht(model, -->
+
+<!--                linfct = mcp(Mgmt="Tukey")) -->
+
+<!--  mcs = summary(posthoc, -->
+
+<!--               test=adjusted("single-step")) -->
+
+<!--  mcs -->
+
+
+<!-- } -->
+
+
+
+
+<!-- } -->
+
+
+<!-- ``` -->
+
+<!-- ##test for multiple comparisons -->
+<!-- test for sig diff -->
+
+
+<!-- ```{r compare} -->
+
+
+<!-- #from https://rcompanion.org/rcompanion/d_07.html -->
+
+<!-- if(!require(nlme)){install.packages("nlme")} -->
+<!--  if(!require(multcomp)){install.packages("multcomp")} -->
+<!--  if(!require(multcompView)){install.packages("multcompView")} -->
+<!--  if(!require(lsmeans)){install.packages("lsmeans")} -->
+<!--  if(!require(lme4)){install.packages("lme4")} -->
+<!--  if(!require(lmerTest)){install.packages("lmerTest")} -->
+<!--  if(!require(TukeyC)){install.packages("TukeyC")} -->
+
+<!-- library(nlme) -->
+<!-- library(multcomp) -->
+
+<!--  library(multcompView) -->
+<!--  library(lsmeans) -->
+
+<!-- library(lme4) -->
+<!--  library(lmerTest) -->
+
+<!--  library(TukeyC) -->
+
+<!-- # change inputs to Msurf to look at different layers or properties -->
+
+<!-- lev <- as.factor(Msurf$Prop) -->
+
+<!-- for(i in unique(lev)){ -->
+<!-- print(i) -->
+<!-- Msurf_i <- Msurf[Msurf$Prop %in% i,]  -->
+
+<!-- #simple boxplot for sanity check -->
+<!-- ggplot(Msurf_i, aes(y = Value, x= MGMT)) + geom_boxplot(aes(fill = MGMT))  -->
+
+<!-- a <- aov(Value ~ Mgmt + Error(Mgmt:Comp), data=Msurf_i) -->
+<!-- summary(a) -->
+
+
+<!--  model = lme(Value ~ Mgmt, random=~1|Comp, #Linear mixed-effects model (allows for netsted random effects) -->
+<!--              data=Msurf_i,  -->
+<!--              method="REML") -->
+
+<!--  al <- anova.lme(model,  -->
+<!--            type="sequential",  -->
+<!--            adjustSigma = FALSE) -->
+<!-- print(al) -->
+
+
+<!--  posthoc = glht(model, -->
+<!--                 linfct = mcp(Mgmt="Tukey"))  # compare all means (not adjustment of multiple comparisons) -->
+
+<!--  mcs = summary(posthoc, -->
+<!--                test=adjusted("single-step")) -->
+
+<!--  print(mcs) -->
+
+<!--  m <- lm(Value ~ Mgmt, random=~1|Comp, #Linear mixed-effects model (allows for netsted random effects) -->
+<!--              data=Msurf_i) -->
+
+<!--  anova(m) -->
+
+<!--  leastsquare = lsmeans(m,  -->
+<!--                        pairwise ~ Mgmt,  -->
+<!--                        adjust="tukey")       ###  Tukey-adjusted comparisons -->
+
+<!-- print(leastsquare) -->
+
+<!-- cld(leastsquare, -->
+<!--      alpha=0.05, -->
+<!--      Letters=letters,      ### Use lower-case letters for .group -->
+<!--      adjust="tukey")       ### Tukey-adjusted comparisons -->
+
+
+<!-- model.fixed = gls(Value ~ Mgmt,  -->
+<!--                    data=Msurf_i,  -->
+<!--                    method="REML") -->
+
+<!-- a2 <-  anova(model,  -->
+<!--        model.fixed) -->
+
+<!-- print(a2)  -->
+
+<!-- hist(residuals(model),  -->
+<!--       col="darkgray") -->
+
+<!-- plot(fitted(model),  -->
+<!--       residuals(model))  -->
+
+<!-- fit = aov(Value ~ Mgmt + Error(Comp), data=Msurf_i) -->
+<!--  summary(fit) -->
+
+
+<!--  # tuk = TukeyC(Msurf_i, -->
+<!--  #              model = 'Value ~ Mgmt + Error(Comp)', -->
+<!--  #              error = 'Comp', -->
+<!--  #              which = 'Mgmt', -->
+<!--  #              fl1=1, -->
+<!--  #              sig.level = 0.05) -->
+<!--  #  -->
+<!--  # summary(tuk) -->
+
+
+<!-- } -->
+<!-- ``` -->
+
+
+
+
+
+
+
+
+<!-- ``` -->
+
+
+
+<!-- ##Depth plots -->
+
+<!-- # ```{r depthplotPrep, eval=T} -->
+<!-- #  -->
+<!-- # require(aqp) -->
+<!-- #  -->
+<!-- # # select soil and properties of interest -->
+<!-- #  -->
+<!-- #  -->
+<!-- # wfbc <- Wd %>%  -->
+<!-- #     #select(Soil, MGMT, hor_top, hor_bot, Prop, Value)%>% -->
+<!-- #     filter(Soil == "Leen" & Prop %in% c('CALC_SOC', 'AggStab', 'BulkDensity', 'WaterSol_P', 'Mehlich3_P', 'Tot_P', 'NewZ_P', 'ph_h20')) %>%  -->
+<!-- #  spread(Prop, Value)  -->
+<!-- #    -->
+<!-- #  -->
+<!-- #  -->
+<!-- # #use aqp package to treat groups of samples as pedons with locations and depths -->
+<!-- # # promote to soil profile  -->
+<!-- #  -->
+<!-- #  -->
+<!-- # depths(wfbc) <- UserPedonID  ~ hor_top + hor_bot -->
+<!-- #  -->
+<!-- # # move some site-level data to site slot -->
+<!-- # site(wfbc) <- ~ MGMT -->
+<!-- #  -->
+<!-- #   CALC_SOC + AggStab + BulkDensity + WaterSol_P + Mehlich3_P + Tot_P + NewZ_P + ph_h20 -->
+<!-- #  -->
+<!-- # # slice horizon samples into individual 1cm depth slices for calculation -->
+<!-- # # depth-wise quantiles, by LU -->
+<!-- # #because all pedons had a 0 -5cm sample collect and other depths were allowed to flucuate, this creates some artifacts -->
+<!-- #  -->
+<!-- # a <- slab(wfbc, MGMT ~ Value) -->
+<!-- # b <- slab(wfbc, Prop ~Value) -->
+<!-- #  -->
+<!-- # D <- cbind(a,b[2]) -->
+<!-- #  -->
+<!-- #  -->
+<!-- # # custom colors -->
+<!-- # tps <- list(superpose.line=list(col=c( 'DarkGreen', "LightGreen",'DarkRed'), lwd=3)) -->
+<!-- #  -->
+<!-- #  -->
+<!-- # devAskNewPage(ask=T) -->
+<!-- # xyplot(top ~ p.q50 | Prop, groups=MGMT, data=D, ylab=list('Depth (cm)', cex= 1.5), -->
+<!-- #                 xlab=list(' \n Median (line) bounded by 25th and 75th percentiles (shaded)', cex = 1), -->
+<!-- #                 lower=a$p.q25, upper=a$p.q75, ylim=c(100,0), -->
+<!-- #                 panel=panel.depth_function, alpha=0.25, sync.colors=TRUE, -->
+<!-- #                 prepanel=prepanel.depth_function, -->
+<!-- #                 strip=strip.custom(bg=grey(0.85)), -->
+<!-- #                 scales=list(x=list(alternating=1)), -->
+<!-- #                subset=variable == 'CALC_SOC', -->
+<!-- #                 auto.key=list(columns=3,   -->
+<!-- #                               space = "top", just = .005,  lines=TRUE, points=FALSE, cex=.6), -->
+<!-- #                 xlim=c(0,10) -->
+<!-- # ) -->
+<!-- # #reset page ask -->
+<!-- #  devAskNewPage(ask=NULL) -->
+<!-- #  -->
+<!-- # ``` -->
