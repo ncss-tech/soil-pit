@@ -87,7 +87,7 @@ Use dplyr to filter data so that only columns that we want to analyze are kept -
 
 tn <- tnsh %>%
   select(-(matches("X"))) %>%
-   gather(Prop, Value, -c(KSSL.Project.lab, KSSL.Project.name, UserPedonID, labsampno, layerID, Comp, Cover_kind, Field, Crop,  Mgmt, Soil, hor_desg, hor_top, hor_bot)) %>%
+   gather(Prop, Value, -c(KSSL.Project.lab, KSSL.Project.name, UserPedonID, labsampno, layerID, Comp, Cover_kind, Field, Crop,  Mgmt, Soil, Site, hor_desg, hor_top, hor_bot)) %>%
   mutate(Value = as.numeric(Value), hor_top = as.numeric(hor_top), hor_bot = as.numeric(hor_bot))
 
 ```
@@ -168,7 +168,7 @@ Add comparable layers to allow for
 ```{r bdPrep}
 
 bd <- tn %>%
-  select(KSSL.Project.lab, KSSL.Project.name, UserPedonID, labsampno, layerID, Comp, Cover_kind, Crop,  Mgmt, Soil, hor_desg, hor_top, hor_bot, Prop, Value) %>%
+  select(KSSL.Project.lab, KSSL.Project.name, UserPedonID, labsampno, layerID, Comp, Cover_kind, Crop,  Mgmt, Soil, Field, hor_desg, hor_top, hor_bot, Prop, Value) %>%
   filter(str_detect(Prop, "BD")) %>%
   spread(Prop, Value) 
 
@@ -268,10 +268,10 @@ wd <- tn %>%
   mutate_if(is.factor, as.character) %>%
   mutate_if(is.integer, as.numeric) %>%
   bind_rows(bd2 %>%
-              select(KSSL.Project.lab, KSSL.Project.name, UserPedonID, labsampno, layerID, Comp, Cover_kind, Crop,  Mgmt, Soil, hor_desg, hor_top, hor_bot, BulkDensity, CALC_SOC) %>%
+              select(KSSL.Project.lab, KSSL.Project.name, UserPedonID, labsampno, layerID, Comp,    Cover_kind, Crop,  Mgmt, Soil, hor_desg, hor_top, hor_bot, BulkDensity, CALC_SOC) %>%
               mutate_if(is.factor, as.character) %>%
               mutate_if(is.integer, as.numeric) %>%
-              gather(Prop, Value, -c(KSSL.Project.lab, KSSL.Project.name, UserPedonID, labsampno, layerID, Comp, Cover_kind, Crop,  Mgmt, Soil, hor_desg, hor_top, hor_bot))
+              gather(Prop, Value, -c(KSSL.Project.lab, KSSL.Project.name, UserPedonID, labsampno, layerID, Comp, Cover_kind, Crop,  Mgmt, Soil,  hor_desg, hor_top, hor_bot))
   
   )
 
@@ -491,46 +491,49 @@ write_csv(Field.avg, file.path(Rout, "Field_avg.csv"))
 
 Properties <- c('WaterSol_P', 'Mehlich3_P', 'Tot_P', 'NewZ_P', 'AggStab', 'Bgluc',  'Pom_C', 'CALC_SOC', 'Tot_N', 'Pom_N','BulkDensity', 'pH_H20', 'CEC_ph7')
 
-wd <- Field.surf %>%
-  mutate_if(is.factor, as.character) %>%
-  mutate_if(is.integer, as.numeric) %>%
-  bind_rows(bd2 %>%
-              select(KSSL.Project.lab, KSSL.Project.name, UserPedonID, labsampno, layerID, Comp, Cover_kind, Crop,  Mgmt, Soil, hor_desg, hor_top, hor_bot, BulkDensity, CALC_SOC) %>%
-              mutate_if(is.factor, as.character) %>%
-              mutate_if(is.integer, as.numeric) %>%
-              gather(Prop, Value, -c(KSSL.Project.lab, KSSL.Project.name, UserPedonID, labsampno, layerID, Comp, Cover_kind, Crop,  Mgmt, Soil, hor_desg, hor_top, hor_bot))
-  
-  )
+Msurf <- Wd %>% 
+  filter(Prop %in% Properties & hor_top == 0)
 
-Msurf <- Field.surf %>% 
-  mutate(Value = wt.mean)%>%
-  filter(Prop %in% Properties)
-
-surf.n <- Msurf %>%
+surf <- Msurf %>%
    group_by(Prop)%>%
   nest()
 
-
-#function for glm model 665061
+#function for glm model 
 fit_mod <- function(data){
-    mod <- lm(Value ~ Comp +Soil, data = data)
+    mod <- lm(Value ~ Comp + Soil/Field, data = data)
     return(anova(mod))
   }
 
 #check that output is appropriate
 # 
- fit_mod(surf.n$data[[1]])
-# #
- surf.n <- surf.n %>%
+ fit_mod(surf$data[[1]])
+
+  surf.n <- surf %>%
    mutate(mod = purrr::map(data, fit_mod))
 
  
+ ################################# Rtools and nlme don't want to load with R 3.4.0
+# #nlme: Linear and Nonlinear Mixed Effects Models
+#  library(nmle)
+# 
+# #fit model; treat Soil as a block since we aren't tryin to compare them; fields are inlcuded to correctly deal with pedons that are sub-samples of the replicate 
+#  
+# fit_lmod <- function(data){
+#   lmod <- lme(Value ~ Comp + Soil, random = ~1|Field) 
+#   return(anova(lmod))
+# }
+# 
+# fit_lmod(surf.n$data[[1]])
+###############################
+
+  
+ #mixed model
  library(lme4)
  
- #fit <- lmer(length ~ treatment + organ + tissue + (1|tree/organ/sample), data = trees) 
 fit_lmer <- function(data){
-  fit <- lmer(Value ~ Comp, data = data)
-  return()
+  fit <- lmer(Value ~ Comp + 1|Soil/Field, data = data)
+  fit2 <- lmer(Value ~  1|Soil/Field, data = data)
+    return(aov(fit,fit2))
  
  # #
 #surf.n$mod[[1]]
@@ -599,6 +602,37 @@ depth.soil.m <- depth.soil %>%
                 
 write_csv(depth.soil.m, file.path(Rout,"Test.Depth_Soil.csv"))
 
+### Attempted  
+# wd <- Field.surf %>%
+#   mutate_if(is.factor, as.character) %>%
+#   mutate_if(is.integer, as.numeric) %>%
+#   bind_rows(bd2 %>%
+#               select(KSSL.Project.lab, KSSL.Project.name, UserPedonID, labsampno, layerID, Comp, Cover_kind, Crop,  Mgmt, Soil, hor_desg, hor_top, hor_bot, BulkDensity, CALC_SOC) %>%
+#               mutate_if(is.factor, as.character) %>%
+#               mutate_if(is.integer, as.numeric) %>%
+#               gather(Prop, Value, -c(KSSL.Project.lab, KSSL.Project.name, UserPedonID, labsampno, layerID, Comp, Cover_kind, Crop,  Mgmt, Soil, hor_desg, hor_top, hor_bot))
+#   
+#   )
+# 
+# Msurf <- Field.surf %>% 
+#   mutate(Value = wt.mean)%>%
+#   filter(Prop %in% Properties)
+# 
+# surf.n <- Msurf %>%
+#    group_by(Prop)%>%
+#   nest()
+# 
+# 
+# #function for glm model 665061
+# fit_mod <- function(data){
+#     mod <- lm(Value ~ Comp +Soil, data = data)
+#     return(anova(mod))
+#   }
+# 
+# #check that output is appropriate
+# # 
+#  fit_mod(surf.n$data[[1]])
+# #
 
 ###should really do this with mixed moedl
 # A.M <- Wd %>% 
