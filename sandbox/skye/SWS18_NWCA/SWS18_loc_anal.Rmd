@@ -356,44 +356,58 @@ How do we co-locate?
 
 
 ```{r loc}
+library(png)
+library(grid)
 
-#one location per observation/pedon
+#one location per observation/pedon and clean lat/lon
 C <- combo %>%
   filter(LU == "W" & Lat != 0) %>%
-  select(SET, Pedon_ID, Lat, Lon) %>%
+  select(SET, Pedon_ID, Lat, Lon, BD) %>%
   group_by(Pedon_ID) %>%
+  mutate(Lat = ifelse(Lat == 0, NA, Lat), Lon = ifelse(Lon == 0, NA, Lon)) %>%
  summarize_all('min')
+ 
+C_sp  <- C
   
 #create spatial object 
-
-
-sp.C <- C[complete.cases(C),]
+names(C_sp) <- tolower(names(C_sp))
+C_sp <- C_sp[complete.cases(C_sp),]
 
 #xy cooridanates
-xy <-sp.C[,3:4]
+coordinates(C_sp) <- ~ lon + lat
+proj4string(C_sp) <- CRS("+proj=longlat +datum=WGS84")
+C_sp <- spTransform(C_sp, CRS("+init=epsg:5070"))
 
-C.sp <- SpatialPointsDataFrame(coords = xy, data = sp.C,
-        proj4string = CRS("+proj=longlat +datum=WGS84 +init=epsg:5070"))
 
-# 
-# #from https://github.com/smroecker/raca/blob/master/stephen/explore_stocks.Rmd
-# us <- map("state", plot = FALSE)
-# us_sp <- {map2SpatialLines(us, proj4string = CRS("+init=epsg:4326")) ->.;
-#   spTransform(., CRS("+init=epsg:5070"))
-#   }
-# cols <- brewer.pal(2, "RdYlBu")
-# 
-# spplot(C.sp, zcol = "SET", main = "SOC Pedon Stocks",
-#        col.regions = cols, cex = 0.5, alpha = 0.5,
-#        as.table = TRUE, layout = c(2, 2), sp.layout = list(us_sp), scales = list(draw = TRUE),
-#        key.space = list(
-#          space = "right",
-#          title = expression(Mg/ha^-1),
-#          cex.title = 1.25)
-        )
 
-plot(C.sp) # this doesn not look right - I need to check the projection of the NWCA points
-plot(C.sp)[C.sp$SET=='RaCA']
+us <- map("state", plot = FALSE)
+us_sp <- {map2SpatialLines(us, proj4string = CRS("+init=epsg:4326")) ->.;
+  spTransform(., CRS("+init=epsg:5070"))
+}
+
+
+#plot all
+plot(C_sp, col = "lightgrey") # plot all points
+
+#change color of NWCA points
+setN <- C_sp$set =="NWCA"
+plot(C_sp[setN, ], col = "turquoise") # add selected zones to map
+
+#chang color of RACA points (wetlands)
+plot(C_sp[C_sp$set =="RaCA", ], col = "grey")
+
+
+plot(us_sp)
+
+
+####
+
+cols <- brewer.pal(2, "RdYlBu")
+
+C_sp$SET <- as.factor(C_sp$set)
+
+plot(C_sp) 
+plot(C_sp[C_sp$SET=='RaCA',])
 
 par(mar=c(0,0,0,0))
 
@@ -404,5 +418,26 @@ points(C.sp, cex=0.5, pch=3, col='red'))
 #mapview(C.sp)
  
 ```
+use sf to create spatial stuff
+``` {r spatial_sf}
+library(sf)
+# devtools::install_github("tidyverse/ggplot2")
+# require(ggplot2)
+
+Csf <- st_as_sf(
+  C, 
+  coords = c("Lon", "Lat"),
+    crs = "+proj=longlat +datum=WGS84")
+
+plot(Csf)
+
+# NOt working 
+# ggplot(Csf) + geom_sf(aes(color = SET))
+
+plot(Csf['SET'])
+
+
+```
+
 
   
