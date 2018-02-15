@@ -398,7 +398,11 @@ plot(C_sp[C_sp$set =="RaCA", ], col = "grey")
 
 
 plot(us_sp)
+<<<<<<< HEAD
 
+=======
+spplot.points(C_sp)
+>>>>>>> c217e7f428b1cecf9008cf7c057c46165f6db4a3
 
 ####
 
@@ -434,7 +438,10 @@ plot(Csf)
 # NOt working 
 # ggplot(Csf) + geom_sf(aes(color = SET))
 
+<<<<<<< HEAD
 plot(Csf['SET'])
+=======
+>>>>>>> c217e7f428b1cecf9008cf7c057c46165f6db4a3
 
 
 ```
