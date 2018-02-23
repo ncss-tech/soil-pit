@@ -345,6 +345,19 @@ BowC <- combo %>%
 
 BowC
 
+Den <- combo %>%
+  mutate(SOCden = BD*SOC/100) %>%    
+  filter(!is.na(BD) &!is.na(SOC) & M =='O' & LU =='W') %>%
+      
+  ggplot(aes(x=SOCden, y = Top, color = SET)) +  geom_point(size =6, alpha = 0.5) +
+theme_joy() + scale_y_reverse() +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+#labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title="Bulk Density of O Horizons \n in Wetlands by Dataset")
+ labs(x =expression(paste('SOC Density (g cm'^-3,')')), y='Top Depth (cm)', color = 'Dataset', title = 'Wetland field described O horizons')
+
+Den
 
 
 
@@ -398,11 +411,9 @@ plot(C_sp[C_sp$set =="RaCA", ], col = "grey")
 
 
 plot(us_sp)
-<<<<<<< HEAD
 
-=======
-spplot.points(C_sp)
->>>>>>> c217e7f428b1cecf9008cf7c057c46165f6db4a3
+#=======
+#spplot.points(C_sp)
 
 ####
 
@@ -416,7 +427,7 @@ plot(C_sp[C_sp$SET=='RaCA',])
 par(mar=c(0,0,0,0))
 
 map('state')
-points(C.sp, cex=0.5, pch=3, col='red'))
+#points(C.sp, cex=0.5, pch=3, col='red'))
 
 
 #mapview(C.sp)
@@ -438,11 +449,9 @@ plot(Csf)
 # NOt working 
 # ggplot(Csf) + geom_sf(aes(color = SET))
 
-<<<<<<< HEAD
-plot(Csf['SET'])
-=======
->>>>>>> c217e7f428b1cecf9008cf7c057c46165f6db4a3
 
+plot(Csf['SET'])
+plot(Csf['BD'])
 
 ```
 
