@@ -438,7 +438,176 @@ BowC <- combo %>%
 
 BowC
 
+Den <- combo %>%
+  mutate(SOCden = BD*SOC/100) %>%    
+  filter(!is.na(BD) &!is.na(SOC) & M == "O" & LU == "W" ) %>%
+      
+  ggplot(aes(x=SOCden, y = Top, color = SET)) +  geom_point(size =6, alpha = 0.5) +
+theme_joy() + scale_y_reverse() +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+#labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title="Bulk Density of O Horizons \n in Wetlands by Dataset")
+ labs(x =expression(paste('SOC Density (g cm'^-3,')')), y='Top Depth (cm)', color = 'Dataset', title = 'All horizons')
 
+Den
+
+Den1 <- combo %>%
+  mutate(SOCden = BD*SOC/100) %>%    
+  filter(!is.na(BD) &!is.na(SOC)) %>%
+      
+  ggplot(aes(x=SOCden, y = Top, color = SET)) +  geom_point(size =6, alpha = 0.5) +
+theme_joy() + scale_y_reverse() +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+#labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title="Bulk Density of O Horizons \n in Wetlands by Dataset")
+ labs(x =expression(paste('SOC Density (g cm'^-3,')')), y='Top Depth (cm)', color = 'Dataset', title = 'All horizons')
+
+Den1
+
+
+#
+
+Den2 <- combo %>%
+   filter(!is.na(BD) &!is.na(SOC)) %>%
+  mutate(SOCden = BD*SOC/100) %>% 
+   mutate(D = cut(Top, breaks = c(0,10,25,50,100), labels = c('0 - 10cm', '10 - 25cm','25 - 50cm', '50 - 100cm'))) %>%
+  mutate(D = factor(D, levels = rev(levels(D))))%>%
+    filter(!is.na(D)) %>% 
+  group_by(samp_id, M, LU,SET,D )  %>%
+  summarize(SD = mean(SOCden, na.rm=T)) %>%
+ ggplot(sata= DD2, aes(y=SD, x =D)) +     geom_jitter(aes(color = M), size =4, alpha = 0.5) + 
+  geom_boxplot(color = "grey", alpha = 0.5)  +  
+  theme_joy() +  scale_y_continuous(limits = c(0,0.5) ) +coord_flip()  +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+#labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title = ' Carbon Density of all horizons)
+ labs(x =expression(paste('SOC Density (g cm'^-3,')')), y='Depth Class (cm)', color = 'Master Horizon', title = 'All horizons') +
+  facet_wrap(~SET)
+
+Den2
+
+Den2O <- combo %>%
+   filter(!is.na(BD) &!is.na(SOC) & M == "O") %>%
+  mutate(SOCden = BD*SOC/100) %>% 
+   mutate(D = cut(Top, breaks = c(0,10,25,50,100), labels = c('0 - 10cm', '10 - 25cm','25 - 50cm', '50 - 100cm'))) %>%
+  mutate(D = factor(D, levels = rev(levels(D))))%>%
+    filter(!is.na(D)) %>% 
+  group_by(samp_id, M, LU,SET,D )  %>%
+  summarize(SD = mean(SOCden, na.rm=T)) %>%
+ ggplot(sata= DD2, aes(y=SD, x =D)) +     geom_jitter(color = "lightblue", size =4, alpha = 0.75) + 
+  geom_boxplot(color = "grey", alpha = 0.75)  +  
+  theme_joy() +  scale_y_continuous(limits = c(0,0.5) ) +coord_flip()  +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+#labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title = ' Carbon Density of all horizons)
+ labs(y =expression(paste('SOC Density (g cm'^-3,')')), x='Depth Class (cm)', color = 'Master Horizon', title = 'Organic horizons (field Described)') +
+  facet_wrap(~SET)
+
+Den2O
+
+Den2Oc <- combo %>%
+   filter(!is.na(BD) &!is.na(SOC) & M == "O") %>%
+  mutate(SOCden = BD*SOC/100) %>% 
+   mutate(D = cut(Top, breaks = c(0,10,25,50,100), labels = c('0 - 10cm', '10 - 25cm','25 - 50cm', '50 - 100cm'))) %>%
+  mutate(D = factor(D, levels = rev(levels(D))))%>%
+    filter(!is.na(D)) %>% 
+  group_by(samp_id, M, LU,SET,D )  %>%
+  summarize(SD = mean(SOCden, na.rm=T), SOCm  = mean(SOC)) %>%
+ ggplot(sata= DD2, aes(y=SD, x =D)) +     geom_jitter(aes(color = SOCm), size =4, alpha = 0.95) + 
+  geom_boxplot(color = "grey", alpha = 0.75)  +  
+  theme_joy() +  scale_color_gradient2(low = "dark blue", mid = "white", high = "green", midpoint = 20) +    scale_y_continuous(limits = c(0,0.5) ) +coord_flip()  +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+#labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title = ' Carbon Density of all horizons)
+ labs(y =expression(paste('SOC Density (g cm'^-3,')')), x='Depth Class (cm)', color = '% SOC', title = 'Organic horizons, field described') +
+  facet_wrap(~SET)
+
+Den2Oc
+
+Den2O
+
+Den2Od <- combo %>%
+   filter(!is.na(BD) &!is.na(SOC) & M == "O") %>%
+  mutate(SOCden = BD*SOC/100) %>% 
+   mutate(D = cut(Top, breaks = c(0,10,25,50,100), labels = c('0 - 10cm', '10 - 25cm','25 - 50cm', '50 - 100cm'))) %>%
+  mutate(D = factor(D, levels = rev(levels(D))))%>%
+    filter(!is.na(D)) %>% 
+  group_by(samp_id, M, LU,SET,D )  %>%
+  summarize(SD = mean(SOCden, na.rm=T), SOCm  = mean(SOC), BDm = mean(BD)) %>%
+ ggplot(sata= DD2, aes(y=SD, x =D)) +     geom_jitter(aes(color = BDm), size =4, alpha = 0.95) + 
+  geom_boxplot(color = "grey", alpha = 0.75)  +  
+  theme_joy() +  scale_color_gradient2(low = "black", mid = "white", high = "red", midpoint = 0.5) +    scale_y_continuous(limits = c(0,0.5) ) +coord_flip()  +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+#labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title = ' Carbon Density of all horizons)
+ labs(y =expression(paste('SOC Density (g cm'^-3,')')), x='Depth Class (cm)', color = 'Bulk Density \n g/cm3', title = 'Organic horizons, field described') +
+  facet_wrap(~SET)
+
+Den2Od
+
+Den2OdW <- combo %>%
+   filter(!is.na(BD) &!is.na(SOC) & M == "O"& LU =="W") %>%
+  mutate(SOCden = BD*SOC/100) %>% 
+   mutate(D = cut(Top, breaks = c(0,10,25,50,100), labels = c('0 - 10cm', '10 - 25cm','25 - 50cm', '50 - 100cm'))) %>%
+  mutate(D = factor(D, levels = rev(levels(D))))%>%
+    filter(!is.na(D)) %>% 
+  group_by(samp_id, M, LU,SET,D )  %>%
+  summarize(SD = mean(SOCden, na.rm=T), SOCm  = mean(SOC), BDm = mean(BD)) %>%
+ ggplot(sata= DD2, aes(y=SD, x =D)) +     geom_jitter(aes(color = BDm), size =4, alpha = 0.95) + 
+  geom_boxplot(color = "grey", alpha = 0.75)  +  
+  theme_joy() +  scale_color_gradient2(low = "black", mid = "white", high = "red", midpoint = 0.5) +    scale_y_continuous(limits = c(0,0.5) ) +coord_flip()  +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+#labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title = ' Carbon Density of all horizons)
+ labs(y =expression(paste('SOC Density (g cm'^-3,')')), x='Depth Class (cm)', color = 'Bulk Density \n g/cm3', title = 'Organic horizons, field described, in Wetlands') +
+  facet_wrap(~SET)
+
+Den2OdW
+
+#find samples that are high in OM, but also have high bulk density
+sample_flag <- combo %>%
+   filter(!is.na(BD) &!is.na(SOC) & M == "O"& LU =="W") %>%
+  mutate(SOCden = BD*SOC/100) %>% 
+  filter(SOC > 10, BD > 0.5) 
+
+
+#find unique pedon id
+Ped_flag <-  sample_flag %>%
+  group_by(Pedon_ID) %>%
+  summarize(SOCdenM = mean(SOCden, na.rm=T), SOCm  = mean(SOC), BDm = mean(BD),
+            SDmax = max(SOCden), SOCmax =max(SOC), BDmax = max(BD))
+
+raca_flag <- Ped_flag %>%
+ right_join(raca %>% filter(!is.na(SOC)) %>% mutate(Pedon_ID = upedonid)) %>%
+  filter(!is.na(SDmax))
+
+raca_pedon_flag <- raca_flag %>%
+  select(rcasiteid) %>%
+  group_by(rcasiteid) %>%
+  summarise()
+
+write.csv(sample_flag, 'sample_flag.csv')
+write.csv(Ped_flag, 'Ped_flag.csv')
+write.csv(raca_flag, 'raca_flag.csv')
+write.csv(raca_pedon_flag, 'raca_pedon_flag.csv')
+
+
+
+#example
+# rld <- range %>%
+#   mutate(OM = CALC_SOC*1.724) %>%
+#   mutate(D = cut(TOP, breaks = c(0,10,25,50,100), labels = c('0 - 10cm', '10 - 25cm','25 - 50cm', '50 - 100cm'))) %>%
+#   filter(!is.na(D))%>%
+#   ggplot( aes(x = OM, y=)) + geom_boxplot() + geom_jitter(aes(colour = TOP), size = 5) + facet_wrap(~D, ncol = 1) + labs(x = '% Organic Matter', title= 'Sandhill RaCA Sample by depth and landuse  with top depth as color') + scale_x_continuous(breaks = seq(0,6,1))+ scale_colour_gradient2(low = "dark blue", mid = "white", high = "green", midpoint = 5)
+# 
+# rld
 
 
 ```

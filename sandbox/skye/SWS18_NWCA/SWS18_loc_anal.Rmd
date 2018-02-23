@@ -2,7 +2,7 @@
 title: "SWS_NWCA"
 author: "Wills et al"
 date: "January 4, 2018"
-output: 
+output: html_document
   md_document:
     variant: markdown_github
 ---
@@ -347,6 +347,178 @@ BowC
 
 
 
+```
+
+
+```{r SOCden}
+Den <- combo %>%
+  mutate(SOCden = BD*SOC/100) %>%    
+  filter(!is.na(BD) &!is.na(SOC) & M =='O' & LU =='W') %>%
+      
+  ggplot(aes(x=SOCden, y = Top, color = SET)) +  geom_point(size =6, alpha = 0.5) +
+theme_joy() + scale_y_reverse() +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+#labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title="Bulk Density of O Horizons \n in Wetlands by Dataset")
+ labs(x =expression(paste('SOC Density (g cm'^-3,')')), y='Top Depth (cm)', color = 'Dataset', title = 'Wetland field described O horizons')
+
+Den
+
+Den <- combo %>%
+  mutate(SOCden = BD*SOC/100) %>%    
+  filter(!is.na(BD) &!is.na(SOC) & M == "O" & LU == "W" ) %>%
+      
+  ggplot(aes(x=SOCden, y = Top, color = SET)) +  geom_point(size =6, alpha = 0.5) +
+theme_joy() + scale_y_reverse() +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+#labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title="Bulk Density of O Horizons \n in Wetlands by Dataset")
+ labs(x =expression(paste('SOC Density (g cm'^-3,')')), y='Top Depth (cm)', color = 'Dataset', title = 'All horizons')
+
+Den
+
+Den1 <- combo %>%
+  mutate(SOCden = BD*SOC/100) %>%    
+  filter(!is.na(BD) &!is.na(SOC)) %>%
+      
+  ggplot(aes(x=SOCden, y = Top, color = SET)) +  geom_point(size =6, alpha = 0.5) +
+theme_joy() + scale_y_reverse() +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+#labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title="Bulk Density of O Horizons \n in Wetlands by Dataset")
+ labs(x =expression(paste('SOC Density (g cm'^-3,')')), y='Top Depth (cm)', color = 'Dataset', title = 'All horizons')
+
+Den1
+
+
+#
+
+Den2 <- combo %>%
+   filter(!is.na(BD) &!is.na(SOC)) %>%
+  mutate(SOCden = BD*SOC/100) %>% 
+   mutate(D = cut(Top, breaks = c(0,10,25,50,100), labels = c('0 - 10cm', '10 - 25cm','25 - 50cm', '50 - 100cm'))) %>%
+  mutate(D = factor(D, levels = rev(levels(D))))%>%
+    filter(!is.na(D)) %>% 
+  group_by(samp_id, M, LU,SET,D )  %>%
+  summarize(SD = mean(SOCden, na.rm=T)) %>%
+ ggplot(sata= DD2, aes(y=SD, x =D)) +     geom_jitter(aes(color = M), size =4, alpha = 0.5) + 
+  geom_boxplot(color = "grey", alpha = 0.5)  +  
+  theme_joy() +  scale_y_continuous(limits = c(0,0.5) ) +coord_flip()  +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+#labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title = ' Carbon Density of all horizons)
+ labs(x =expression(paste('SOC Density (g cm'^-3,')')), y='Depth Class (cm)', color = 'Master Horizon', title = 'All horizons') +
+  facet_wrap(~SET)
+
+Den2
+
+Den2O <- combo %>%
+   filter(!is.na(BD) &!is.na(SOC) & M == "O") %>%
+  mutate(SOCden = BD*SOC/100) %>% 
+   mutate(D = cut(Top, breaks = c(0,10,25,50,100), labels = c('0 - 10cm', '10 - 25cm','25 - 50cm', '50 - 100cm'))) %>%
+  mutate(D = factor(D, levels = rev(levels(D))))%>%
+    filter(!is.na(D)) %>% 
+  group_by(samp_id, M, LU,SET,D )  %>%
+  summarize(SD = mean(SOCden, na.rm=T)) %>%
+ ggplot(sata= DD2, aes(y=SD, x =D)) +     geom_jitter(color = "lightblue", size =4, alpha = 0.75) + 
+  geom_boxplot(color = "grey", alpha = 0.75)  +  
+  theme_joy() +  scale_y_continuous(limits = c(0,0.5) ) +coord_flip()  +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+#labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title = ' Carbon Density of all horizons)
+ labs(y =expression(paste('SOC Density (g cm'^-3,')')), x='Depth Class (cm)', color = 'Master Horizon', title = 'Organic horizons (field Described)') +
+  facet_wrap(~SET)
+
+Den2O
+
+Den2Oc <- combo %>%
+   filter(!is.na(BD) &!is.na(SOC) & M == "O") %>%
+  mutate(SOCden = BD*SOC/100) %>% 
+   mutate(D = cut(Top, breaks = c(0,10,25,50,100), labels = c('0 - 10cm', '10 - 25cm','25 - 50cm', '50 - 100cm'))) %>%
+  mutate(D = factor(D, levels = rev(levels(D))))%>%
+    filter(!is.na(D)) %>% 
+  group_by(samp_id, M, LU,SET,D )  %>%
+  summarize(SD = mean(SOCden, na.rm=T), SOCm  = mean(SOC)) %>%
+ ggplot(sata= DD2, aes(y=SD, x =D)) +     geom_jitter(aes(color = SOCm), size =4, alpha = 0.95) + 
+  geom_boxplot(color = "grey", alpha = 0.75)  +  
+  theme_joy() +  scale_color_gradient2(low = "dark blue", mid = "white", high = "green", midpoint = 20) +    scale_y_continuous(limits = c(0,0.5) ) +coord_flip()  +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+#labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title = ' Carbon Density of all horizons)
+ labs(y =expression(paste('SOC Density (g cm'^-3,')')), x='Depth Class (cm)', color = '% SOC', title = 'Organic horizons, field described') +
+  facet_wrap(~SET)
+
+Den2Oc
+
+Den2O
+
+Den2Od <- combo %>%
+   filter(!is.na(BD) &!is.na(SOC) & M == "O") %>%
+  mutate(SOCden = BD*SOC/100) %>% 
+   mutate(D = cut(Top, breaks = c(0,10,25,50,100), labels = c('0 - 10cm', '10 - 25cm','25 - 50cm', '50 - 100cm'))) %>%
+  mutate(D = factor(D, levels = rev(levels(D))))%>%
+    filter(!is.na(D)) %>% 
+  group_by(samp_id, M, LU,SET,D )  %>%
+  summarize(SD = mean(SOCden, na.rm=T), SOCm  = mean(SOC), BDm = mean(BD)) %>%
+ ggplot(sata= DD2, aes(y=SD, x =D)) +     geom_jitter(aes(color = BDm), size =4, alpha = 0.95) + 
+  geom_boxplot(color = "grey", alpha = 0.75)  +  
+  theme_joy() +  scale_color_gradient2(low = "black", mid = "white", high = "red", midpoint = 0.5) +    scale_y_continuous(limits = c(0,0.5) ) +coord_flip()  +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+#labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title = ' Carbon Density of all horizons)
+ labs(y =expression(paste('SOC Density (g cm'^-3,')')), x='Depth Class (cm)', color = 'Bulk Density \n g/cm3', title = 'Organic horizons, field described') +
+  facet_wrap(~SET)
+
+Den2Od
+
+Den2OdW <- combo %>%
+   filter(!is.na(BD) &!is.na(SOC) & M == "O"& LU =="W") %>%
+  mutate(SOCden = BD*SOC/100) %>% 
+   mutate(D = cut(Top, breaks = c(0,10,25,50,100), labels = c('0 - 10cm', '10 - 25cm','25 - 50cm', '50 - 100cm'))) %>%
+  mutate(D = factor(D, levels = rev(levels(D))))%>%
+    filter(!is.na(D)) %>% 
+  group_by(samp_id, M, LU,SET,D )  %>%
+  summarize(SD = mean(SOCden, na.rm=T), SOCm  = mean(SOC), BDm = mean(BD)) %>%
+ ggplot(sata= DD2, aes(y=SD, x =D)) +     geom_jitter(aes(color = BDm), size =4, alpha = 0.95) + 
+  geom_boxplot(color = "grey", alpha = 0.75)  +  
+  theme_joy() +  scale_color_gradient2(low = "black", mid = "white", high = "red", midpoint = 0.5) +    scale_y_continuous(limits = c(0,0.5) ) +coord_flip()  +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+#labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title = ' Carbon Density of all horizons)
+ labs(y =expression(paste('SOC Density (g cm'^-3,')')), x='Depth Class (cm)', color = 'Bulk Density \n g/cm3', title = 'Organic horizons, field described, in Wetlands') +
+  facet_wrap(~SET)
+
+Den2OdW
+
+#find samples that are high in OM, but also have high bulk density
+sample_flag <- combo %>%
+   filter(!is.na(BD) &!is.na(SOC) & M == "O"& LU =="W") %>%
+  mutate(SOCden = BD*SOC/100) %>% 
+  filter(SOC > 10, BD > 0.5) 
+
+
+#find unique pedon id
+Ped_flag <-  sample_flag %>%
+  group_by(Pedon_ID) %>%
+  summarize(SOCdenM = mean(SOCden, na.rm=T), SOCm  = mean(SOC), BDm = mean(BD),
+            SDmax = max(SOCden), SOCmax =max(SOC), BDmax = max(BD))
+
+raca_flag <- Ped_flag %>%
+ right_join(raca %>% filter(!is.na(SOC)) %>% mutate(Pedon_ID = upedonid)) %>%
+  filter(!is.na(SDmax))
+
+raca_pedon_flag <- raca_flag %>%
+  select(rcasiteid) %>%
+  group_by(rcasiteid) %>%
+  summarise()
 
 ```
 
@@ -398,11 +570,9 @@ plot(C_sp[C_sp$set =="RaCA", ], col = "grey")
 
 
 plot(us_sp)
-<<<<<<< HEAD
 
-=======
-spplot.points(C_sp)
->>>>>>> c217e7f428b1cecf9008cf7c057c46165f6db4a3
+#=======
+#spplot.points(C_sp)
 
 ####
 
@@ -416,7 +586,7 @@ plot(C_sp[C_sp$SET=='RaCA',])
 par(mar=c(0,0,0,0))
 
 map('state')
-points(C.sp, cex=0.5, pch=3, col='red'))
+#points(C.sp, cex=0.5, pch=3, col='red'))
 
 
 #mapview(C.sp)
@@ -438,16 +608,154 @@ plot(Csf)
 # NOt working 
 # ggplot(Csf) + geom_sf(aes(color = SET))
 
-<<<<<<< HEAD
-plot(Csf['SET'])
-=======
->>>>>>> c217e7f428b1cecf9008cf7c057c46165f6db4a3
 
+plot(Csf['SET'])
+plot(Csf['BD'])
 
 ```
 
 
 #pairs to look into
 uid - 4958 and RaCAsite C1606W04
+uid - 4366 and RaCAsite C1201C08 (RI island?)
+uid 4354 and 5211 and C1212W06 and C1206F04
 
+
+#calculate SOC stocks
+```{r Ped_stock, eval=T, warning = F, message = F, error = F }
+
+#dataprep - label calculations with modeled BD
+combo_pedcalc <- combo %>% mutate(BDmix = ifelse(!is.na(BD), BD, BD.RF), thick = Bottom - Top)
+
+#SOCdensity
+combo_pedcalc <- combo %>% mutate(SOCden = BD*SOC/100, SOCden_mix = BDmix*SOC/100, SOCden_MODEL = BD.RF*SOC/100) 
+
+
+#SOC density with course fragments
+  combo_pedcalc <- combo_pedcalc %>% mutate(SOCden_CF = SOC*BD*(1 - ifelse(CoarseFrag == 0, 0, CoarseFrag/100)),                                                                        SOCden_CF_MODEL = SOC*BD.RF*(1 - ifelse(CoarseFrag == 0, 0, CoarseFrag/100)),                                                               SOCden_CF_mix = SOC*BDmix*(1 - ifelse(CoarseFrag == 0, 0, CoarseFrag/100))
+                                             )
+
+
+#assign how layers are counted in stock calculations
+#puts a number on the amount (cm) of each layer used in calculation
+
+combo_pedcalc <- combo_pedcalc %>% mutate(thick = BOT - TOP) 
+# 
+# samp$SOC_5 <- ifelse(samp$bottom<=5, samp$thick,ifelse(samp$top<5, 5-samp$top,0))
+# 
+# samp$SOC_30 <- ifelse(samp$bottom<=30, samp$thick,
+#                     ifelse(samp$top<30, 30-samp$top,0))
+# 
+# samp$SOC_100 <- ifelse(samp$bottom<=100, samp$thick,
+#                     ifelse(samp$top<100, 100-samp$top,0))
+# 
+# #calculate layer stocks - assigned depth * SOCden 
+# #native units are Mg/ha
+# samp$SOCstock5 <- with(samp, SOCden*SOC_5)
+# samp$SOCstock30 <- with(samp, SOCden*SOC_30)
+# samp$SOCstock100 <- with(samp, SOCden*SOC_100)
+# 
+# #sum SOC by pedon
+# SOC_5 <- aggregate(SOCstock5~MO + MOGr + LU + MOGrLU + rcasiteid + upedonid + upedon, data=samp, FUN=sum)
+# SOC_30 <- aggregate(SOCstock30~upedonid, data=samp, FUN=sum)
+# SOC_100 <-aggregate(SOCstock100~upedonid, data=samp, FUN=sum) 
+# 
+# 
+# #additional information about pedons used to screen for pedons that do not meet depth requirements
+# #pedon id info
+# ped <- aggregate(sample.id ~MO + MOGr + LU + MOGrLU + rcasiteid + upedonid + upedon, data=samp, FUN=length)
+# names(ped)[8] <- "Sample_count"
+# 
+# #pedon information
+# pedon_thick <- aggregate(thick  ~ upedonid, data=samp, FUN=sum)
+# names(pedon_thick)[2] <- "total_thickness"
+# ped_bott <- aggregate(bottom~upedonid, data=samp, FUN=max)
+# lab_no <- aggregate(natural_key~upedonid, data=samp, FUN=length)
+# names(lab_no)[2] <- "Lab_count"
+# 
+# sample_notR <- aggregate(sample.id~upedonid, data=samp[grep("R", samp$model_desg, invert=T, ignore.case=T),] , FUN=length)
+# names(sample_notR)[2] <- "Non-R_SampleCount"
+# 
+# SOC_no <- aggregate(SOC~upedonid, data=samp[!is.na(samp$SOC), ], FUN=length)
+# names(SOC_no)[2] <- "SOC_count"
+# 
+# SOC_thick <- aggregate(thick~upedonid, data=samp[!is.na(samp$SOC), ], FUN=sum)
+# names(SOC_thick)[2] <- "SOC_thickness"
+# 
+# top <- aggregate(top~upedonid, data=samp, FUN=min)
+# names(top)[2] <- "Pedon_top"
+# 
+# #depth of R or other restrictive layer (assumed to have negligble SOC at this depth and below)
+# 
+# hard <- c("Bkm", "Bkmm", "Bqm", "R", "Cr", "m")
+# depthR <- aggregate(top~upedonid, data=samp[grepl(paste(hard, collapse='|'),  samp$model_desg, ignore.case=T),], FUN=min)
+# names(depthR)[2] <- "Depth_to_R"
+# 
+# depth_O <- aggregate(thick~upedonid, data=samp[samp$M == "O",], FUN=min)
+# names(depth_O)[2] <- "Depth_of_O"
+# depth_O$Depth_of_O <- ifelse(is.na(depth_O$Depth_of_O), 0, depth_O$Depth_of_O)
+# 
+# #combine pedon information
+# 
+# SOC5 <- join(ped, SOC_5, by="upedonid", type="full", match="first")
+# SOC30 <- join(SOC5, SOC_30, by="upedonid", type="full", match="first")
+# SOC100 <- join(SOC30,SOC_100, by="upedonid", type="full", match="first")
+# SOCp <- join(SOC100, pedon_thick, by="upedonid", type="full", match="first")
+# SOCn <- join(SOCp, SOC_no, by="upedonid", type="full", match="first")
+# SOCnn <- join(SOCn, lab_no, by="upedonid", type="full", match="first")
+# SOCpn <- join(SOCnn, depthR, by="upedonid", type="full", match="first")
+# SOCpp <- join(SOCpn, sample_notR, by="upedonid", type="full", match="first")
+# SOCpo <- join(SOCpp, depth_O, by="upedonid", type="full", match="first")
+# SOCpedons <- join(SOCpo, SOC_thick, by="upedonid", type="full", match="first")
+# 
+# #remove unneeded tables
+# rm(SOC5,SOC30, SOC100, SOCp, SOCn, SOCnn, SOCpp, SOCpo)
+# 
+#                                                       
+# SOCpedons$USE <-ifelse(SOCpedons$SOCstock5 == 0, 
+#                                                 ifelse(SOCpedons$SOC_count<SOCpedons$Lab_count,"MISS_anal", "MISS_labsamp"), 
+#                        ifelse(is.na(SOCpedons$total_thickness), 'NA',
+#                               ifelse(SOCpedons$SOC_thickness >= SOCpedons$total_thickness, '100',
+#                                      ifelse(!is.na(SOCpedons$Depth_to_R),  
+#                                             ifelse(SOCpedons$Depth_to_R <= SOCpedons$SOC_thickness , '100', 
+#                                                    ifelse(SOCpedons$SOC_thickness >= 100, '100',
+#                                                           ifelse(SOCpedons$SOC_thickness >= 30, '30',
+#                                                                  ifelse(SOCpedons$SOC_thickness >= 5, '5', 'NA')))),
+#                                             ifelse(SOCpedons$SOC_thickness >= 100, '100',
+#                                                    ifelse(SOCpedons$SOC_thickness >= 30, '30',
+#                                                           ifelse(SOCpedons$SOC_thickness >= 5, '5', 'NA'))))
+#                               )))
+#                         
+# 
+# # check NAs and missing samples
+# kable( table(SOCpedons$MO,SOCpedons$USE, useNA= "ifany"), caption = "Table S2. Counts of missing samples by depth")
+# Use.pedons <- ddply(SOCpedons, .(MO), summarise, 
+#                           N_5= sum(!is.na(SOCstock5)),
+#                           N_30= sum(!is.na(SOCstock30)),
+#                           N_100= sum(!is.na(SOCstock100))
+# )
+# 
+# #kable(Use.pedons, caption = "Count of Pedons with all SOC Data")
+#   
+# 
+# #keep ones with values
+# SOCpedons <- SOCpedons[!is.na(SOCpedons$SOCstock5),]
+# SOCpedons <- SOCpedons[SOCpedons$SOCstock5 != 0,]
+# 
+# #remove stocks based on Use field 
+# SOCpedons$SOCstock5 <- as.numeric(ifelse(SOCpedons$USE %in% c(5, 30, 100), SOCpedons$SOCstock5, ""))
+# SOCpedons$SOCstock30 <- as.numeric(ifelse(SOCpedons$USE %in% c(30, 100), SOCpedons$SOCstock30, ""))
+# SOCpedons$SOCstock100 <- as.numeric(ifelse(SOCpedons$USE %in% c(100), SOCpedons$SOCstock100, ""))
+# 
+# #limit pedon file to those that have useable data
+# SOCpedons <- SOCpedons[!is.na(SOCpedons$USE),]
+# 
+# #remove unwanted objects
+# rm(hard, depth_O, depthR, lab_no,ped, ped_bott, pedon_thick, sample_notR, SOC_thick, SOC_100, SOC_30, SOC_5, SOC_no, SOCpn, top )
+# 
+# #export pedon (site) level SOC stocks
+# #############
+# write.table(SOCpedons,"RaCA_SOC_pedons.csv", sep=",", row.names=F)
+
+```
   

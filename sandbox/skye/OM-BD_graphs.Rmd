@@ -1047,7 +1047,7 @@ Throop, H. L., Archer, S. R., Monger, H. C., & Waltman, S. (2012). When bulk den
 
 Goidts, Esther, Bas Van Wesemael, and Michel Crucifix. "Magnitude and sources of uncertainties in soil organic carbon (SOC) stock assessments at various scales." European Journal of Soil Science 60, no. 5 (2009): 723-739.
 
-Köchy, M., R. Hiederer, and A. Freibauer. "Global distribution of soil organic carbon-Part 1: Masses and frequency distributions of SOC stocks for the tropics, permafrost regions, wetlands, and the world." Soil 1, no. 1 (2015): 351-365.
+K?chy, M., R. Hiederer, and A. Freibauer. "Global distribution of soil organic carbon-Part 1: Masses and frequency distributions of SOC stocks for the tropics, permafrost regions, wetlands, and the world." Soil 1, no. 1 (2015): 351-365.
 
 
 #Later
