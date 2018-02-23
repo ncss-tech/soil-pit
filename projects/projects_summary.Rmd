@@ -33,10 +33,7 @@ options(stringsAsFactors = FALSE)
 
 ownCloud <- "C:/Users/stephen.roecker/ownCloud/data/lims_data/"
 ro <- 11
-eval_mlra_initial <- c("SDJR (Obsolete)", "MLRA", "INITIAL", "EVAL")
-eval_mlra <- c("SDJR (Obsolete)", "EVAl", "MLRA")
-eval <- c("SDJR (Obsolete)", "EVAL")
-pt_all <- c("CORR (Obsolete)", "DSP", "ES", "EVAL", "INITIAL", "JOIN (Obsolete)", "MLRA", "NEON", "SCS (Obsolete)", "SDJR (Obsolete)",  "SH (Obsolete)", "SPATIAL EDIT", "SPECIAL", "TABULAR EDIT", "TRADITIONAL (Obsolete)")
+ptypes <- c("CORR (Obsolete)", "DSP", "ES", "EVAL", "INITIAL", "JOIN (Obsolete)", "MLRA", "NEON", "SCS (Obsolete)", "SDJR (Obsolete)",  "SH (Obsolete)", "SPATIAL EDIT", "SPECIAL", "TABULAR EDIT", "TRADITIONAL (Obsolete)")
   
 
 # progress
@@ -62,7 +59,7 @@ prg <- read.csv(file = fname)
 # project
 
 p <- expand.grid(mlrassoarea      = paste0(1:12, "-%"),
-                 fy               = 2012:2017,
+                 fy               = 2012:2027,
                  stringsAsFactors = FALSE
                  )
 prj <- {
@@ -74,9 +71,9 @@ prj <- {
   do.call("rbind", .)
   }
 
-fname <- paste0(ownCloud, "lims_project_", "2017-12-20_us_2012_2017", ".csv")
+fname <- paste0(ownCloud, "lims_project_", "2018-02-14_us_2012_2028", ".csv")
 # write.csv(prj, file = fname, row.names = FALSE)
-prj <- read.csv(file = fname)
+prj <- read.csv(file = fname, stringsAsFactors = FALSE)
 
 
 # reverse correlation
@@ -99,7 +96,7 @@ rcor <- {
 
 fname <- paste0(ownCloud, "lims_reverse_correlation_fy_", "2017-12-20_us_2012_2017.csv")
 # write.csv(rcor, file = fname, row.names = FALSE)
-rcor <- read.csv(file = fname)
+rcor <- read.csv(file = fname, stringsAsFactors = FALSE)
 
 ```
 
@@ -380,7 +377,7 @@ rcor4 <- filter(rcor3,
 # aggregate muacres by areasymbol for non-INITIAL projects
 rcor_as1 <- rcor4 %>%
   filter(#grepl(ro, mlrassoarea) &
-         projecttypename != "ES" &
+         projecttypename %in% c("MLRA", "SDJR (Obsolete)") &
          fiscalyear %in% 2012:2017
          ) %>%
   group_by(mlrassoarea, projecttypename, fiscalyear, projectiid, projectname, areasymbol) %>%
@@ -426,7 +423,7 @@ rcor_as_l <- left_join(params, rcor_as, by = c("fiscalyear", "areasymbol"))
 
 
 # load spatial data
-ssa_sf <- read_sf(dsn = "D:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs")
+ssa_sf <- read_sf(dsn = "M:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs")
 ssa_sf <- st_transform(ssa_sf, crs = "+init=epsg:5070")
 data(state)
 st <- state.abb[-c(11, 2)]
@@ -435,11 +432,13 @@ ssa_sf <- ssa_sf[ssa_sf$state %in% st, ]
 # ssa_sf <- read_sf(dsn = "M:/geodata/soils/SSURGO_CONUS_FY2016.gdb", layer = "SAPOLYGON")
 # names(ssa_sf)[c(1, 6)] <- c("areasymbol", "geometry")
 # st_crs(ssa_sf) <- "+init=epsg:5070"
-states <- read_sf(dsn = "D:/geodata/government_units/state_nrcs_a_mbr.shp", layer = "state_nrcs_a_mbr")
+states <- read_sf(dsn = "M:/geodata/government_units/state_nrcs_a_mbr.shp", layer = "state_nrcs_a_mbr")
 states <- st_transform(states, crs = "+init=epsg:5070")
 
 ssa_w <- inner_join(ssa_sf, rcor_as_w, by = "areasymbol")
 ssa_l <- inner_join(ssa_sf, rcor_as_l, by = "areasymbol")
+
+save(ssa_l, states, rcor, file = paste0(ownCloud, "ssa_l_2012_2017.RData"))
 
 
 # ggplot2 (requires github version)
@@ -451,7 +450,7 @@ acres_gg <- # filter(ssa_l, grepl("OH", areasymbol)) %>%
   geom_sf(aes(fill = acres, linetype = NA)) +
   scale_fill_viridis(discrete = TRUE) +
   facet_wrap(~ fiscalyear) +
-  ggtitle("Time Series of Reported Acres by County")
+  ggtitle("Time Series of ES Reported Acres by County")
 acres_gg <- acres_gg +
   geom_sf(data = states, aes(fill = NA))
 

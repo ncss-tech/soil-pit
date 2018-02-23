@@ -1,128 +1,95 @@
 ---
 output:
-  html_document: default
   word_document: default
+  html_document: default
 ---
 
 For the past several years Soil Survey Offices in the East Central Glaciated Region (11) have focused their work on the Soil Data Join and Recorrelation (SDJR) National Initiative. The goal of this Initiative has been to increase the consistency of the Soil SURvey GeOgraphic database (SSURGO) across political boundaries. A summary of the affected areas in Wisconsin are presented below. Fiscal year (FY) 2016 will be the last official year of the SDJR Initiative. After FY2016, MLRA projects will become the main focus of Soil Survey Offices in Region 11.
 
+```{r, echo=FALSE}
+png_dplots <- function(file, width, height) Cairo(file, type = "png", width = width, height = height, units = "in", res=200, pointsize = 15)
+```
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=3.75, fig.width=7.5}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.dim = c(8, 7), fig.ext = "png", dev = "png_dplots"}
 options(stringsAsFactors = FALSE)
 
 library(rmarkdown)
 library(knitr)
 library(tidyverse)
+library(viridis)
 library(foreign)
+library(Cairo)
 library(rgdal)
 library(raster)
 library(lattice)
 library(RColorBrewer)
 
-setwd("C:/Users/stephen.roecker/ownCloud/data/lims_data")
+setwd("C:/Users/stephen.roecker/ownCloud/data/lims_data/")
 
-st <- c("IN")
-ro <- c(11)
-pt <- "SDJR"
+st <- c("WI")
+pt <- c("MLRA", "SDJR (Obsolete)")
 
-load(file = "rcors_fy_summary_2015_09_24_2017_05_10.Rdata")
-load(file = "goals_fy_summary_2017_04_17_2017_05_10.Rdata")
-load(file = "ssa.Rdata")
+load(file = "ssa_l_2012_2017.RData")
 
-# fy13_r_new <- raster("C:/workspace/gSSURGO_fy13_progress.tif")
-# fy14_r_new <- raster("C:/workspace/gSSURGO_fy14_progress.tif")
-# fy15_r_new <- raster("C:/workspace/gSSURGO_fy15_progress.tif")
+rcor$state <- substr(rcor$areasymbol, 1, 2)
 
-rcors$state <- substr(rcors$areasymbol, 1, 2)
+rcor_sub <- subset(rcor,
+                   state %in% st & 
+                   projecttypename %in% pt
+                   )
 
-rcors_sub <- subset(rcors,
-                    state %in% st & 
-                    projecttypename == pt & 
-                    region %in% ro &
-                    fy != 2017
-                    )
-
-rcors2<- group_by(rcors_sub, fy, state, projectname, new_muname) %>% 
+rcors2<- group_by(rcor_sub, fiscalyear, state, projectname, new_muname) %>% 
   summarize(
     n = length(unique(new_muacres)), 
     acres = paste0(unique(new_muacres), collapse = ", ")
     ) %>%
-  group_by(fy, state, projectname, new_muname, n) %>% 
+  group_by(fiscalyear, state, projectname, new_muname, n) %>% 
   summarize(
     acres = sum(as.numeric(strsplit(acres, ", ")[[1]]))
     )
 rcors2 <- subset(rcors2, !is.na(acres))
 
-test <- group_by(rcors2, fy) %>% 
+test <- group_by(rcors2, fiscalyear) %>% 
   summarize(
     acres = formatC(sum(acres), format = "fg", big.mark = ",")
     )
-# test2 <- reshape(test, idvar = "state", v.names = "acres", timevar = "fy", direction = "wide")
-# fy <- c("FY2013", "FY2014", "FY2015")
-# names(test2)[2:4] <- fy
 
-
-test2 <- group_by(rcors2, fy, state, projectname, acres) %>% summarize(
+test2 <- group_by(rcors2, fiscalyear, state, projectname, acres) %>% summarize(
   comp = strsplit(new_muname, ", ")[[1]][1],
   comp = strsplit(comp, " ")[[1]][1],
   comp = strsplit(comp, "-")[[1]][1]
   )
-test2 <- group_by(test2, fy, comp) %>% 
+test2 <- group_by(test2, fiscalyear, comp) %>% 
   summarize(acres = sum(as.numeric(acres))
             )
-test3 <- group_by(test2, fy) %>%  
+test3 <- group_by(test2, fiscalyear) %>%  
   summarize(
-    soil_series = na.exclude(c(list(comp[order(acres, decreasing = T)][1:5])))
-    )
-
-test3 <- inner_join(test, test3, by = "fy")
-names(test3) <- c("Fiscal Year", "Updated Acres", "Top 5 Soil Series Updated in Region 11")
-kable(test3, align = "c")
-
-
-### Summarize acres by areasymbol
-
-rcors2 <- group_by(rcors_sub, fy, region, projectname, projecttypename, office, areasymbol) %>% 
-  summarize(
-    n = length(unique(new_muacres)), 
-    acres = paste0(unique(new_muacres), collapse = ", ")
+    soil_series = paste0(na.exclude(c(comp[order(acres, decreasing = T)][1:5])), collapse = ", ")
     ) %>%
-  group_by(fy, region, office, projectname, projecttypename, areasymbol, n) %>% 
-  summarize(
-    acres = sum(as.numeric(strsplit(acres, ", ")[[1]]))
-    )
+  as.data.frame()
 
-rcors_sub <- subset(rcors2, projecttypename == pt)
-rcors_sub$st <- substr(rcors_sub$areasymbol, 1, 2)
-goals_sub <- subset(goals, projecttypename == pt)
-#test3 <- ddply(goals_sub, .(fy), summarize, acres = sum(Reported))
+test3 <- inner_join(test, test3, by = "fiscalyear")
+names(test3) <- c("Fiscal Year", "Updated Acres", "Top 5 Soil Series Updated in Region 11")
+kable(test3, align = "l")
 
-
-test <- group_by(rcors_sub, fy, areasymbol) %>% 
-  summarize(acres = sum(acres)
-            )
-test$acres <- cut(test$acres, breaks = c(0, 10000, 50000, 100000, 150000, 200000), labels = c("0 - 10,000", "10,000 - 50,000", "50,000 - 100,000", "100,000 - 150,000", "150,000 - 200,000"))
-test2 <- reshape(as.data.frame(test), idvar = "areasymbol", v.names = "acres", timevar = "fy", direction = "wide")
-fy <- paste0("FY", sort(unique(test$fy)))
-names(test2)[2:(length(fy)+1)] <- fy
 
 
 
 # Map of progress by sapolygon
-FY <- paste0("FY", sort(unique(test$fy)))
 
-# test2 <- subset(test2, select = - FY2012)
-ssa$state <- substr(ssa$areasymbol, 1, 2)
-ssa2 <- merge(ssa, test2, by = "areasymbol")
-temp <- subset(ssa2, state %in% st, select = FY)
-spplot(temp, main = "Time Series of Updated Acres by County", col.regions = brewer.pal(5, "YlOrRd"), layout = c(length(FY), 1), colorkey = list(space = "bottom", height = 1))
+acres_gg <- filter(ssa_l, grepl("WI", areasymbol)) %>% 
+  ggplot() +
+  geom_sf(aes(fill = acres)) +
+  scale_fill_viridis(discrete = TRUE) +
+  facet_wrap(~ fiscalyear) +
+  theme(axis.text = element_blank(), 
+        axis.ticks = element_blank(),
+        panel.grid.major = element_line(colour = 'transparent')
+        ) +
+  ggtitle("Time Series of Updated Acres by County")
+# acres_gg <- acres_gg +
+#   geom_sf(data = states, aes(fill = NA))
 
-
-# Map of progress by mupolygon
-# ssa$state <- substr(ssa$areasymbol, 1, 2)
-# ssa_sub <- subset(ssa, state == st)
-# fy_r <- stack(fy13_r_new, fy14_r_new, fy15_r_new)
-# names(fy_r) <- c("FY13", "FY14", "FY15")
-# spplot(fy_r, sp.layout = ssa_sub, maxpixels = 5000000, xlim = bbox(ssa_sub)[1, ] + c(-1e4, 1e4), ylim = # bbox(ssa_sub)[2, ] + c(-1e4, 1e4), colorkey = FALSE, col.regions = "blue", strip = strip.custom(bg = grey(0.85)), main = "Time series of SDJR Progress", fontsize = 12, )
+plot(acres_gg)
 
 ```
