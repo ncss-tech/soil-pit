@@ -447,4 +447,7 @@ plot(Csf['SET'])
 ```
 
 
+#pairs to look into
+uid - 4958 and RaCAsite C1606W04
+
   
