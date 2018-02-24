@@ -625,21 +625,24 @@ uid 4354 and 5211 and C1212W06 and C1206F04
 ```{r Ped_stock, eval=T, warning = F, message = F, error = F }
 
 #dataprep - label calculations with modeled BD
-combo_pedcalc <- combo %>% mutate(BDmix = ifelse(!is.na(BD), BD, BD.RF), thick = Bottom - Top)
+combo_pedcalc <- combo %>% mutate(BDmix = ifelse(!is.na(BD), BD, RF.BD), thick = Bottom - Top)
 
 #SOCdensity
-combo_pedcalc <- combo %>% mutate(SOCden = BD*SOC/100, SOCden_mix = BDmix*SOC/100, SOCden_MODEL = BD.RF*SOC/100) 
+combo_pedcalc <- combo_pedcalc %>% mutate(SOCden = BD*SOC/100, SOCden_mix = BDmix*SOC/100, SOCden_MODEL = RF.BD*SOC/100) 
 
 
 #SOC density with course fragments
-  combo_pedcalc <- combo_pedcalc %>% mutate(SOCden_CF = SOC*BD*(1 - ifelse(CoarseFrag == 0, 0, CoarseFrag/100)),                                                                        SOCden_CF_MODEL = SOC*BD.RF*(1 - ifelse(CoarseFrag == 0, 0, CoarseFrag/100)),                                                               SOCden_CF_mix = SOC*BDmix*(1 - ifelse(CoarseFrag == 0, 0, CoarseFrag/100))
+  combo_pedcalc <- combo_pedcalc %>% mutate(SOCden_CF = SOC*BD*(1 - ifelse(CoarseFrag == 0, 0, CoarseFrag/100)),                                                                        SOCden_CF_MODEL = SOC*RF.BD*(1 - ifelse(CoarseFrag == 0, 0, CoarseFrag/100)),                                                               SOCden_CF_mix = SOC*BDmix*(1 - ifelse(CoarseFrag == 0, 0, CoarseFrag/100))
                                              )
 
-
-#assign how layers are counted in stock calculations
+  
+  
+  #assign how layers are counted in stock calculations
 #puts a number on the amount (cm) of each layer used in calculation
 
-combo_pedcalc <- combo_pedcalc %>% mutate(thick = BOT - TOP) 
+  #old SOC_5 - the cm within each depth 
+combo_pedcalc <-  combo_pedcalc %>% mutate(samp_in_5 = ifelse(Bottom <=5, thick, ifelse(Top,5, 5 - Top ))
+  
 # 
 # samp$SOC_5 <- ifelse(samp$bottom<=5, samp$thick,ifelse(samp$top<5, 5-samp$top,0))
 # 
