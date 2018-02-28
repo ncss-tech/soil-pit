@@ -25,7 +25,7 @@ knitr::opts_chunk$set(echo = TRUE, comment = "#", warning = FALSE, message = FAL
 workdir <- setwd(getwd()) # personalize the working directory for each user.
 opts_knit$set(root.dir = workdir)
 
-list.of.packages <- c("ggplot2", "plyr", "Rcpp", "RColorBrewer", "lattice", "aqp", "stringr", "reshape2", "ggthemes", "tidyverse", "RCurl", "Hmisc", "gridExtra", 'ggmosaic', 'png','rstan','lme4', 'printr', "dplyr","tidyr",  "hexbin",  "ggridge", "ggbeeswarm", "viridis", "gridExtra", "cetcolor", "ggjoy", "readxl")
+list.of.packages <- c("ggplot2", "plyr", "Rcpp", "RColorBrewer", "lattice", "aqp", "stringr", "reshape2", "ggthemes", "tidyverse", "RCurl", "Hmisc", "gridExtra", 'ggmosaic', 'png','rstan','lme4', 'printr', "dplyr","tidyr",  "hexbin",  "ggridge", "ggbeeswarm", "viridis", "gridExtra", "cetcolor", "ggjoy", "readxl", "GGally")
 
 # new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 # if(length(new.packages)) install.packages(new.packages)
@@ -104,19 +104,35 @@ names(bio) <- gsub("/", "per", names(bio)) #fix names so that there are no /(spe
 
 
 #select relevant fields and join descriptors             
-grnt <- site %>% select(SiteID, Date, Elev = Elevation_m, lat = Latitude_decimal_deg, lon = Longitude_decimal_deg, 
-                             Spatial_Description, Native_Veg, MAP = MAP_mm, MAT = MAT_degC) %>%
-              left_join(units %>% select(SiteID, Treatment_ID, Exp_Unit_ID, Field_ID, Slope_pct, lat_unit = Latitude, lon_unit = Longitude, 
-                                         Soil.taxa = Soil_Classification, size_unit = Exp_Unit_Size_m2) %>% 
-                left_join(trt %>%  select(SiteID, Treatment_ID, Treatment_Descriptor, till = Tillage_Descriptor, Cover_Crop) %>%
+                                                                                                         
+grnt <- site %>% select(SiteID, Elev = Elevation_m, MLRA, lat = Latitude_decimal_deg, 
+                        lon = Longitude_decimal_deg, Spatial_Description, Native_Veg, 
+                        MAP = MAP_mm, MAT = MAT_degC) %>%
+             inner_join(units %>% select(SiteID, Treatment_ID, Exp_Unit_ID, Field_ID, Slope_pct,
+                                         lat_unit = Latitude, lon_unit = Longitude, 
+                                      Soil.taxa = Soil_Classification, size_unit = Exp_Unit_Size_m2) %>%                 inner_join(trt %>%  select(SiteID, Treatment_ID, Treatment_Descriptor,                                                           Rotation_Descriptor, Tillage_Descriptor, Cover_Crop) %>%
          #join to soil measurements
-                  left_join(phys %>% select(SiteID, Exp_Unit_ID, Treatment_ID, Upper_cm, Lower_cm, Sand = Sand_pct, Silt = Silt_pct, Clay = Clay_pct,
-                                        BD = Bulk_Density_gpercm3, AggStab = H2O_Stable_Aggregates_pct) %>%
-                    left_join(chem %>% select(SiteID, Exp_Unit_ID, Treatment_ID, SOC = Organic_C_gCperkg, TSC_gCperkg, pH) %>%
-                        left_join(bio %>% select(SiteID, Exp_Unit_ID, Treatment_ID, bg = Glucosidase_mgperkgperhr, POM_gCperkg)
-                        )))))
-  
+                  full_join(phys %>% select(SiteID, Exp_Unit_ID, Date, Treatment_ID, Upper_cm, Lower_cm,                                             Sand_pct, Silt_pct, Clay_pct, Bulk_Density_gpercm3, 
+                                            H2O_Stable_Aggregates_pct) %>%
+                    full_join(chem %>% select(SiteID, Exp_Unit_ID, Date, Treatment_ID, Upper_cm, Lower_cm,
+                                              Organic_C_gCperkg, TSC_gCperkg, pH) %>%
+                        full_join(bio %>% select(SiteID, Exp_Unit_ID, Date, Treatment_ID, Upper_cm, Lower_cm,
+                                                 Glucosidase_mgperkgperhr, POM_gCperkg)
+                            ))))) %>%
+        mutate(Top = Upper_cm, Bottom = Lower_cm,  till = Tillage_Descriptor,Sand = Sand_pct, 
+               Silt = Silt_pct, Clay = Clay_pct, BD = Bulk_Density_gpercm3, 
+               AggStab = as.numeric(H2O_Stable_Aggregates_pct), SOC = Organic_C_gCperkg/10, 
+               bg = as.numeric(Glucosidase_mgperkgperhr), POM = POM_gCperkg)
 
+
+                                                                                                                                                                                                                            
+                                                                                                                                                                                                                            #only keep distinct records (no duplicates)
+GRNT <- distinct(grnt)
+
+
+
+
+rm(grnt, bio,chem,phys,site, trt, units)
 ```
 
 ```{r graphs}
@@ -124,7 +140,7 @@ grnt <- site %>% select(SiteID, Date, Elev = Elevation_m, lat = Latitude_decimal
 # Graphs of BD and SOC
 
 #limit to surface horizons
-G <- grnt %>% filter(!is.na(BD) & !is.na(SOC) & Upper_cm == 0)
+G <- GRNT %>% filter(!is.na(BD) & !is.na(SOC) & Upper_cm == 0)
 
 
 G %>% ggplot(aes(x = SOC)) + geom_density()
@@ -209,7 +225,93 @@ BowT <- G  %>%
         plot.title=element_text(size=24))+
   labs(x="Bulk Density",y="Tillage",caption="GRACEnet by @wills_skye", title="Surface SOC by Tillage")
 
-BowT                  
+BowT  
+
+
+```
+
+
+```{r SOCden}
+
+#create an ordered factor of tillage system to graph with
+G <- G %>% 
+  filter(!is.na(BD) &!is.na(SOC)) %>%
+  mutate(TILL = factor(till, levels = c('Conventional Till', 'Conservation Till', 'Strip Till', 'No Till', 'None')))%>%
+  mutate(SOCden = BD*SOC/100, Top = as.numeric(Top), Bottom = as.numeric(Bottom)) 
+
+SOC_BD <- G %>%
+ggplot(aes(x=SOC, y = BD, color =TILL)) +  geom_point(size =6, alpha = 0.5) +
+theme_joy() + 
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+#labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title="Bulk Density of O Horizons \n in Wetlands by Dataset")
+ labs(x ='% SOC', y=expression(paste('Bulk Density (g cm'^-3,')')), color = 'Tillage System', title = 'SOC by BD')
+
+SOC_BD
+
+
+SOCden <- G  %>%
+  ggplot(aes(x=SOCden, y = TILL, color =BD)) +  
+  geom_quasirandom(alpha=0.5, groupOnX=FALSE) + 
+  scale_color_viridis(option = "magma")+
+  theme_joy() +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+  labs(x="Bulk Density",y="Tillage",caption="GRACEnet by @wills_skye", title="SOC Density by Tillage")
+
+SOCden 
+
+
+Den <- G %>%
+ ggplot(aes(x=SOCden, y = Bottom, color =TILL)) +  geom_point(size =6, alpha = 0.5) +
+theme_joy() + scale_y_reverse() +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+#labs(x="Bulk Density",y="Dataset",caption="@wills_skye")
+ labs(x =expression(paste('SOC Density (g cm'^-3,')')), y='Bottom Depth (cm)', color = 'Tillage System', title = 'SOC Density by Sample bottom and tillage system')
+
+Den
+
+
+Den1 <- G %>%
+  mutate(SOCden = BD*SOC/100) %>%    
+  filter(!is.na(BD) &!is.na(SOC)) %>%
+  ggplot(aes(x=SOCden, y = Clay, color = TILL)) +  geom_point(size =6, alpha = 0.5) +
+theme_joy() + 
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+#labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title="SOCDensity")
+ labs(x =expression(paste('SOC Density (g cm'^-3,')')), y='Clay %', color = 'Tillage Type', title = 'Gracenet Samples')
+
+Den1
+
+```
+
+
+
+```{r otherprop}
+library(GGally)
+
+SOCBD <- G  %>%
+  ggplot(aes(x=SOC, y = BD)) +  geom_point(aes(color = TILL), alpha = 0.5) +facet_wrap(~TILL)
+SOCBD
+
+SOC_clay <- G  %>%
+  ggplot(aes(x=SOC, y = Clay)) +  geom_point(aes(color = TILL), alpha = 0.5) +facet_wrap(~TILL)
+SOC_clay
+
+SOC_bg <- G  %>%
+  ggplot(aes(x=SOC, y = bg)) +  geom_point(aes(color = TILL), alpha = 0.5) +facet_wrap(~TILL)
+SOC_bg
+
+ggcorr(G %>% select(Sand, Silt, Clay, BD, AggStab, SOC, bg, POM, SOCden))
+
+ggpairs(G%>% select(Clay, BD, AggStab, SOC, bg, POM))
+
 ```
 
 ##more analysis
