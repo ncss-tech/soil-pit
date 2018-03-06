@@ -573,6 +573,9 @@ Den2O <- combo %>%
  labs(y =expression(paste('SOC Density (g cm'^-3,')')), x='Depth Class (cm)', color = 'Master Horizon', title = 'Organic horizons (field Described)') +
   facet_wrap(~SET)
 
+#check O horizons
+combo %>% filter(grepl("O", Model_desg, ignore.case= FALSE)) %>%group_by(SET,Model_desg) %>% summarize( n = n_distinct(samp_id)) %>% spread(SET,Model_desg)
+
 
 
 Den2Oc <- combo %>%
@@ -614,13 +617,12 @@ Den2Od <- combo %>%
   facet_wrap(~SET)
 
 
-
-Den2OdW <- combo %>%
+ CO <- combo %>%
    filter(!is.na(BD) &!is.na(SOC) & M == "O"& LU =="W") %>%
   mutate(SOCden = BD*SOC/100) %>% 
    mutate(D = cut(Top, breaks = c(0,10,25,50,100), labels = c('0 - 10cm', '10 - 25cm','25 - 50cm', '50 - 100cm'))) %>%
-  mutate(D = factor(D, levels = rev(levels(D))))%>%
-    filter(!is.na(D)) %>% 
+  mutate(D = factor(D, levels = rev(levels(D))))
+Den2OdW <-  CO %>%  filter(!is.na(D)) %>% 
   group_by(samp_id, M, LU,SET,D )  %>%
   summarize(SD = mean(SOCden, na.rm=T), SOCm  = mean(SOC), BDm = mean(BD)) %>%
  ggplot(sata= DD2, aes(y=SD, x =D)) +     geom_jitter(aes(color = BDm), size =4, alpha = 0.95) + 
@@ -633,36 +635,58 @@ Den2OdW <- combo %>%
  labs(y =expression(paste('SOC Density (g cm'^-3,')')), x='Depth Class (cm)', color = 'Bulk Density \n g/cm3', title = 'Organic horizons, field described, \n in Wetlands') +
   facet_wrap(~SET)
 
-
-
-#find samples that are high in OM, but also have high bulk density
-sample_flag <- combo %>%
+CO <-combo %>%
    filter(!is.na(BD) &!is.na(SOC) & M == "O"& LU =="W") %>%
+  mutate(hz_O <- as.factor(Model_desg))%>%
   mutate(SOCden = BD*SOC/100) %>% 
-  filter(SOC > 10, BD > 0.5) 
+   mutate(D = cut(Top, breaks = c(0,10,25,50,100), labels = c('0 - 10cm', '10 - 25cm','25 - 50cm', '50 - 100cm'))) %>%
+    mutate(Model_desg = droplevels(Model_desg)) %>%
+  mutate(D = factor(D, levels = rev(levels(D))))%>%
+    filter(!is.na(D)) %>% 
+  group_by(samp_id, M, LU,SET,D,Model_desg  ) %>%
+  summarize(SD = mean(SOCden, na.rm=T), SOCm  = mean(SOC), BDm = mean(BD)) 
+
+DenOTYPE <- CO %>% ggplot(sata= DD2, aes(y=SD, x =D)) +     geom_jitter(aes(color = BDm), size =4, alpha = 0.95) + 
+  geom_boxplot(color = "grey", alpha = 0.75)  +  
+  theme_joy() +  scale_color_gradient2(low = "black", mid = "white", high = "red", midpoint = 0.5) +    scale_y_continuous(limits = c(0,0.5) ) +coord_flip()  +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+#labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title = ' Carbon Density of all horizons)
+ labs(y =expression(paste('SOC Density (g cm'^-3,')')), x='Depth Class (cm)', color = 'Bulk Density \n g/cm3', title = 'Organic horizons, field described, \n in Wetlands') +
+  facet_wrap(SET ~ Model_desg)
 
 
-#find unique pedon id
-Ped_flag <-  sample_flag %>%
-  group_by(Pedon_ID) %>%
-  summarize(SOCdenM = mean(SOCden, na.rm=T), SOCm  = mean(SOC), BDm = mean(BD),
-            SDmax = max(SOCden), SOCmax =max(SOC), BDmax = max(BD))
 
-raca_flag <- Ped_flag %>%
- right_join(raca %>% filter(!is.na(SOC)) %>% mutate(Pedon_ID = upedonid)) %>%
-  filter(!is.na(SDmax))
 
-raca_pedon_flag <- raca_flag %>%
-  select(rcasiteid) %>%
-  group_by(rcasiteid) %>%
-  summarise()
+# #find samples that are high in OM, but also have high bulk density
+# sample_flag <- combo %>%
+#    filter(!is.na(BD) &!is.na(SOC) & M == "O"& LU =="W") %>%
+#   mutate(SOCden = BD*SOC/100) %>% 
+#   filter(SOC > 10, BD > 0.5) 
+
+
+# #find unique pedon id
+# Ped_flag <-  sample_flag %>%
+#   group_by(Pedon_ID) %>%
+#   summarize(SOCdenM = mean(SOCden, na.rm=T), SOCm  = mean(SOC), BDm = mean(BD),
+#             SDmax = max(SOCden), SOCmax =max(SOC), BDmax = max(BD))
+# 
+# raca_flag <- Ped_flag %>%
+#  right_join(raca %>% filter(!is.na(SOC)) %>% mutate(Pedon_ID = upedonid)) %>%
+#   filter(!is.na(SDmax))
+# 
+# raca_pedon_flag <- raca_flag %>%
+#   select(rcasiteid) %>%
+#   group_by(rcasiteid) %>%
+#   summarise()
 
 
 grid.arrange(Den1, Den, ncol = 2)
 grid.arrange(Den2,Den2O, ncol =2)
 grid.arrange(Den2Oc,Den2Od)
 Den2OdW
-
+DenOTYPE
 ```
 
 use sf to create spatial stuff
