@@ -19,7 +19,7 @@ opts_knit$set(root.dir = "C:/Users/skye.wills/ownCloud/AGU_BD-OM")
 workdir <- setwd(getwd()) # personalize the working directory for each user.
 opts_knit$set(root.dir = workdir)
 
-list.of.packages <- c("ggplot2", "plyr", "Rcpp", "RColorBrewer", "lattice", "aqp", "stringr", "reshape2", "ggthemes", "tidyverse", "RCurl", "Hmisc", "gridExtra", 'ggmosaic', 'ggpmisc', 'png','rstan','lme4', 'printr', "dplyr","tidyr",  "hexbin", "ggbeeswarm", "viridis", "gridExtra", "cetcolor", "ggjoy", "readxl", "sp", "maps", "maptools", "rgdal")
+list.of.packages <- c("ggplot2", "plyr", "Rcpp", "RColorBrewer", "lattice", "aqp", "stringr", "reshape2", "ggthemes", "tidyverse", "RCurl", "Hmisc", "gridExtra", 'ggmosaic', 'ggpmisc', 'png','rstan','lme4', 'printr', "dplyr","tidyr",  "hexbin", "ggbeeswarm", "viridis", "gridExtra", "cetcolor", "ggjoy", "readxl", "sp", "maps", "maptools", "rgdal", "soilDB", "GGally")
 
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
@@ -46,6 +46,8 @@ library(sp)
 library(maps)
 library(maptools)
 library(rgdal)
+library(soilDB)
+library(GGally)
 
 # when ggjoy is decomisioned replace with  "ggridge", 
 
@@ -637,25 +639,27 @@ Den2OdW <-  CO %>%  filter(!is.na(D)) %>%
 
 CO <-combo %>%
    filter(!is.na(BD) &!is.na(SOC) & M == "O"& LU =="W") %>%
-  mutate(hz_O <- as.factor(Model_desg))%>%
+  mutate(hz_O <- as.factor(as.character(Model_desg))%>%
   mutate(SOCden = BD*SOC/100) %>% 
    mutate(D = cut(Top, breaks = c(0,10,25,50,100), labels = c('0 - 10cm', '10 - 25cm','25 - 50cm', '50 - 100cm'))) %>%
     mutate(Model_desg = droplevels(Model_desg)) %>%
   mutate(D = factor(D, levels = rev(levels(D))))%>%
     filter(!is.na(D)) %>% 
   group_by(samp_id, M, LU,SET,D,Model_desg  ) %>%
-  summarize(SD = mean(SOCden, na.rm=T), SOCm  = mean(SOC), BDm = mean(BD)) 
+  summarize(SD = mean(SOCden, na.rm=T), SOCm  = mean(SOC), BDm = mean(BD), CF = mean(CoarseFrag)) 
 
-DenOTYPE <- CO %>% ggplot(sata= DD2, aes(y=SD, x =D)) +     geom_jitter(aes(color = BDm), size =4, alpha = 0.95) + 
-  geom_boxplot(color = "grey", alpha = 0.75)  +  
-  theme_joy() +  scale_color_gradient2(low = "black", mid = "white", high = "red", midpoint = 0.5) +    scale_y_continuous(limits = c(0,0.5) ) +coord_flip()  +
+DenOTYPE <- CO %>% ggplot(sata= DD2, aes(y=SD, x =D)) +  geom_jitter(aes(color = CF), size =4, alpha = 0.75)+ 
+  geom_boxplot(aes(fill = Model_desg), alpha = 0.75)  +  
+  scale_fill_brewer(palette = "Set1") + 
+  theme_joy() +  scale_color_gradient2(low = "white", mid = "black", high = "green", midpoint = 10) +    scale_y_continuous(limits = c(0,0.5) ) +coord_flip()  +
   theme(plot.caption=element_text(hjust=0,size=9),
         axis.title=element_text(size=12),
         plot.title=element_text(size=24))+
 #labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title = ' Carbon Density of all horizons)
- labs(y =expression(paste('SOC Density (g cm'^-3,')')), x='Depth Class (cm)', color = 'Bulk Density \n g/cm3', title = 'Organic horizons, field described, \n in Wetlands') +
-  facet_wrap(SET ~ Model_desg)
-
+ labs(y =expression(paste('SOC Density (g cm'^-3,')')), x='Depth Class (cm)', color = 'Coarse Fragments, %', title = 'Organic horizons, field described, \n in Wetlands') 
+  
+DenOTYPE +  facet_grid( Model_desg ~ SET)
+DenOTYPE +  facet_grid( ~ SET)
 
 
 
@@ -729,13 +733,13 @@ from Rob Tunstead - C1305W06 should be a good coastal tidal marsh from NJ
 ``` {r reps}
 
 #recreate with fewer restrictions
-COMBO<- rbind(r,w)
+#COMBO<- rbind(r,w)
 
 
 pair1 <- COMBO %>% filter(Pedon_ID == 'C1606W041' | Pedon_ID == '4958' ) %>% mutate(SOCden = SOC*BD)
 #only one NWCA sample
-pair1 %>% ggplot(aes(SOCden, Top)) + geom_point(aes(color = SET)) %>%
-ggplot(aes(SOC, TOP)) + geom_point() + scale_y_reverse()
+pair1 %>% ggplot(aes(SOCden, Top)) + geom_point(aes(color = SET))
+pair1 %>% ggplot(aes(SOC, Top)) + geom_point() + scale_y_reverse()
 
 pair2 <- COMBO %>% filter(Pedon_ID == 'C1201C081' | Pedon_ID == '4366' ) %>% mutate(SOCden = SOC*BD)
 pair2 %>% ggplot(aes(SOC, Top)) + geom_point(aes(color = SET), size = 8) + scale_y_reverse()
@@ -751,7 +755,7 @@ p3c <-pair3 %>% ggplot(aes(SOC, BD)) + geom_point(aes(color = SET, shape = Pedon
 p3c
 gp3 <- grid.arrange(p3a, p3b, ncol=2)
 gp3
-write_csv(pair3, 'pair3.csv')
+#write_csv(pair3, 'pair3.csv')
 
 
 #pair 3 look similar but probobaly aren't the same soil
@@ -760,12 +764,6 @@ write_csv(pair3, 'pair3.csv')
 
 #C1209W121 - no measured bd
 
-r <- raca[, c("samp", "upedon", "TOP", "BOT", "hzn_desgn", "Model_desg", "M", "texture", "fragvolc", "SOC", "Measure_BD", "Model_BD", "LU", "Lat", "Lon")]
-names(r) <- c("samp_id", "Pedon_ID", "Top", "Bottom", "Hzn_name","Model_desg", "M", "Texture",  "CoarseFrag", "SOC", "BD", "RF.BD","LU","Lat", "Lon" )
-r$SET <- "RaCA"
-r$Clay <- NA
-
-COMBO<- rbind(r,w)
 
 pair4 <- COMBO %>% filter(Pedon_ID %in% c('4689', '4686', '4353', 'C1206W051', 'C1209W121')) %>% mutate(SOCden = SOC*BD)
 p4a <- pair3 %>% ggplot(aes(SOC, Top)) + geom_point(aes(color = SET, shape = Pedon_ID), size = 8) + scale_y_reverse()
@@ -775,10 +773,7 @@ p4c <-pair4 %>% ggplot(aes(SOC, BD)) + geom_point(aes(color = SET, shape = Pedon
 p4c
 gp4 <- grid.arrange(p4a, p4b, ncol=2)
 gp4
-write_csv(pair4, 'pair4.csv')
-
-
-
+#write_csv(pair4, 'pair4.csv')
 
 p4 <- raca %>% filter(rcasiteid == 'C1209W12') %>% mutate(SOCden = SOC*Measure_BD)
 
@@ -848,9 +843,9 @@ x <- as.data.frame(distinct(PEDS))
 depths(x) <- Pedon_ID  ~ Top + Bottom
 
 # move some site-level data to site slot
-site(x) <- ~ Pedon_ID + aLT_id + SET + LU + Lat + Lon
+site(x) <- ~ Pedon_ID + Alt_ID + SET + LU + Lat + Lon
 
-a <- slab(x, LU ~ SOC + BD + SOCden)
+a <- slab(x, Alt_ID ~ SOC + BD + SOCden)
 
 
 ## fit a spline:
@@ -892,6 +887,66 @@ a <- slab(x, LU ~ SOC + BD + SOCden)
   #old SOC_5 - the cm within each depth 
 combo_pedcalc <-  combo_pedcalc %>% mutate(samp_in_5 = ifelse(Bottom <=5, thick, ifelse(Top,5, 5 - Top ))
 ```
+#pull in Rhode Island Data - From Jim Turenne
+
+```{r uri_data}
+URI <- read_csv("D:/Disk 2/NWCA/URI_tidal_marsh_data_MASTER.csv")
+
+
+
+#generalize horizon name
+n <- c('Oe','Oa', 'A', 'C')
+#horizons names that will be matched
+p <- c("Oe", "Oa", "A","Cg")
+
+URI$genhz <- generalize.hz(URI$Horizon,n,p)
+
+SOCBD <- URI  %>%
+  ggplot(aes(x=SOC, y = BD)) +  geom_point(aes(color = genhz), alpha = 0.5) + facet_wrap(~marsh_setting)
+SOCBD
+
+SOMBD <- URI  %>%
+  ggplot(aes(x=SOM, y = BD)) +  geom_point(aes(color = SOC)) + facet_wrap(~marsh_setting) +
+  scale_color_gradient2(low = "dark green", mid = "light green", high = "blue", midpoint = 15)
+SOMBD
+
+SOCden <- URI  %>%
+   mutate(SOCden = BD*SOC/100)%>%
+  ggplot(aes(x=SOCden, y = upper)) +  geom_point(aes(color = Dist_ditch), alpha = 0.5)
+SOCden
+
+
+ggcorr(URI %>% select(Dist_ditch, upper, SOC, SOM, Fiber_Content, Rubbed_Fibers, BD, Initial_pH, Incubation_pH ) %>% mutate(Fiber_Content = as.numeric(Fiber_Content), Rubbed_Fibers = as.numeric(Rubbed_Fibers)), palette = "PuOr") 
+
+ggpairs(URI %>% mutate(Fiber_Content = as.numeric(Fiber_Content), Rubbed_Fibers = as.numeric(Rubbed_Fibers)) %>% select(Dist_ditch, upper, SOC, SOM, Fiber_Content, Rubbed_Fibers, BD, Initial_pH, Incubation_pH))
+
+
+URId <-URI %>%
+   filter(!is.na(BD) &!is.na(SOC)) %>%
+   mutate(SOCden = BD*SOC/100) %>% 
+   mutate(D = cut(upper, breaks = c(0,10,25,50,100), labels = c('0 - 10cm', '10 - 25cm','25 - 50cm', '50 - 100cm'))) %>%
+  mutate(D = factor(D, levels = rev(levels(D))))%>%
+    filter(!is.na(D))
+
+
+DenOTYPE <- URId %>% ggplot(aes(y=SOCden, x =D)) +  geom_jitter(color = "grey", size =4, alpha = 0.75)+ 
+  geom_boxplot(aes(fill = genhz), alpha = 0.75)  +  
+  scale_fill_brewer(palette = "Set1") + 
+  theme_joy() +  scale_color_gradient2(low = "white", mid = "black", high = "green", midpoint = 10) +    scale_y_continuous(limits = c(0,0.5) ) +coord_flip()  +
+  theme(plot.caption=element_text(hjust=0,size=9),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=24))+
+#labs(x="Bulk Density",y="Dataset",caption="@wills_skye", title = ' Carbon Density of all horizons)
+ labs(y =expression(paste('SOC Density (g cm'^-3,')')), x='Depth Class (cm)', fill = 'Generalized \n Horizon', title = 'SOC density and Horizon type') 
+
+DenOTYPE
+DenOTYPE + facet_wrap(~marsh_setting)
+
+
+```
+
+
+
 
 
 ##Locations

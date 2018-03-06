@@ -50,7 +50,7 @@ wt <- function(input, output, session){
   output$result <- renderPlotly({ input$submit
     
     
-    wtlevels <- get_cosoilmoist_from_SDA(WHERE = paste0(isolate(input$choice),"='", isolate(input$query), "'"), duplicates = TRUE)
+    wtlevels <- get_cosoilmoist_from_SDA(WHERE = paste0(isolate(input$choice),"='", isolate(input$query), "'"), duplicates = TRUE, impute = FALSE)
     
     if (input$filltype=="flooding") {wt_plot<-ggplot(wtlevels, aes(x = as.integer(month), y = dept_r, lty = status))+
         geom_rect(aes(xmin = as.integer(month), xmax = as.integer(month)+
