@@ -1,0 +1,51 @@
+---
+title: "Interpretation Report"
+author: "`r Sys.getenv('USERNAME')`"
+date: "`r Sys.Date()`"
+output: html_document
+params:
+  qnatsym: "2xbld"
+---
+
+```{r, fig.width=8, fig.height=16, echo=FALSE, message=FALSE, warning=FALSE}
+library(soilDB)
+library(ggplot2)
+library(plotly)
+library(DT)
+
+f<-source("https://github.com/ncss-tech/soil-pit/raw/master/sandbox/john/interp_query/get_interp_from_SDA.R")
+
+get_interp_from_SDA <- f[[1]]
+
+test <- get_interp_from_SDA(WHERE = paste0("nationalmusym = '", isolate(input$irinput),"'"))
+
+test$cat <- sub(' - ', '.', test$mrulename)
+test$cat <- sub('\\..*', '', test$cat)
+
+test$ruletype <- test$ruledesign
+
+test[test$ruletype=="1", "ruletype"] <- "limitation"
+test[test$ruletype=="2", "ruletype"] <- "suitability"
+test[test$ruletype=="3", "ruletype"] <- "class"
+
+test0<-test[test$seqnum==0,]
+
+test1<-test0[test0$ruledesign!=3,]
+
+test1$ruleno<-as.numeric(factor(test1$mrulename, ordered =FALSE))
+
+test1$interprv <- rowMeans(test1[c("interplr", "interphr")], na.rm = TRUE)
+
+p <- ggplot(test1, aes(x=interprv, y=ruleno, xmin= interpll, xmax= interphh, color=factor(compname), shape=factor(compname))) + geom_point(size=2, alpha= 1/5) + geom_errorbarh(height = 0, alpha=1/5)  + facet_grid(cat ~ ruletype, scales="free_y", space = "free_y") + theme( strip.text.y=element_text(size=8, angle=0, margin=margin(t=3,r=3,b=3,l=3)),legend.position="top") + labs(y = "Interpretations", x="Overall Rating Value", title=paste0(test$muname," - ", test$nationalmusym), color="Component Name", shape="Component Name") + scale_y_continuous(trans="reverse",breaks=(unique(test1$ruleno)))
+
+p
+
+ptl<-datatable(unique(test1[,c(29,28,16)]), rownames=FALSE, colnames=c("Rule Number","Rule Type","Rule Name"))
+
+
+pt<-datatable(unique(test1[,c(29,28,16,12,20,22,30,25,24)]), rownames=FALSE, colnames=c("Rule Number","Rule Type","Rule Name","Component", "Low", "Low RV", "Mid RV", "High RV", "High"))
+
+ptl
+
+pt
+```

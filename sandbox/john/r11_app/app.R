@@ -13,11 +13,11 @@ jsfile<- "https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"
 #create a dashboard header
 
 header<-dashboardHeader(
-  title="Region 11 Web App")
+  title= span(tagList(img(src="logo.png"), "Region 11 Web App")), titleWidth=250)
 
 #create a sidebar and menu structure
 
-sidebar<-dashboardSidebar(
+sidebar<-dashboardSidebar( width = 250,
   sidebarMenu(id="tabs",
             
               #Home Page Menu    
@@ -81,7 +81,7 @@ sidebar<-dashboardSidebar(
                          label="Enter Project Name -","EVAL - MLRA 112 - Bates and Dennis soils, 3 to 5 percent slopes, eroded",
                          resize="none",
                          rows=5),
-                       actionButton("extentsubmit", "Submit"), br(),p()
+                       actionButton("extentsubmit", "Submit"), p(downloadLink("projectextentdownload", "Save spatial data")), br(),p()
               ),
               
               #Long Range Plan
@@ -92,6 +92,13 @@ sidebar<-dashboardSidebar(
                        actionButton("lrpsubmit", "Submit"), br(),p()
               ),
               
+              #Interpretations
+              
+              menuItem("Interpretations", icon=icon("archive"),
+                       menuSubItem("Report", tabName="ir", icon=icon("file-text")),
+                       textInput(inputId="irinput", label="Enter NATSYM -", "2xbld"),
+                       actionButton("irsubmit", "Submit"), br(),p()
+              ),
               #Source Code Menu
               
               menuItem("Source Code", icon=icon("file-code-o"), href="https://github.com/ncss-tech/soil-pit/blob/master/sandbox/john/r11_app/"),
@@ -125,7 +132,7 @@ body<-dashboardBody(
     tabItem(tabName="Home",
             titlePanel("Welcome to the Region 11 Web App"),
             verticalLayout(
-              infoBox("About this App", "The Region 11 Web App is a tool for soil scientists, geographers, and ecologists to get soils information on the web.", width=12, icon=icon("university"), color="blue"),
+              infoBox("About this App", "The Region 11 Web App is a tool for soil scientists, geographers, and ecologists to get soils information on the web.", width=12, icon=icon("users"), color="blue"),
               box(p(tags$b("Get started using the Region 11 Web App by selecting a menu item on the left.")),
                   p("If a menu has multiple sub-menu items, remember to choose a sub-menu item in order to view the results of a query.  The Water Table and Organic Matter have both plots and tables in separate sub-menu items."),
                   p("Once the sub-menu item is active it will begin loading an example query unless you have already changed the query inputs."),
@@ -193,6 +200,16 @@ body<-dashboardBody(
           box("This application was developed by John Hammerly and Stephen Roecker.", width=12)))
     ),
     
+    #Interpretation Report tab
+    tabItem(
+      tabName="ir",
+      titlePanel("Interpretation Report"),
+      verticalLayout(
+        fluidRow(
+          box(tags$div(uiOutput("ir", inline=TRUE, container=span), style="width:100%; overflow-x: scroll"), width=12),
+          box("This application was developed by John Hammerly and Stephen Roecker.", width=12)))
+    ),
+    
     #Organic Matter Plot Tab
     tabItem(
       tabName="OMPlots",
@@ -242,7 +259,7 @@ body<-dashboardBody(
   ))
 
 #combine the header, sidebar, and body into a complete page for the user interface
-ui <- dashboardPage(header, sidebar, body)
+ui <- dashboardPage(header, sidebar, body, title = "Region 11 Web App")
 
 #create a function for the server
 server <- function(input, output, session){
@@ -297,13 +314,23 @@ observeEvent(input$reportsubmit,{
   output$lrp<-renderUI({ input$lrpsubmit
     withProgress(message="Generating Report", detail="Please Wait", value=1, {includeHTML(rmarkdown::render("r11_long_range_plan.Rmd", html_fragment(number_sections=TRUE, toc=TRUE)))})
   })
+  
+  #render interpretation report markdown
+  
+  observeEvent(input$irsubmit,{
+    updateTabItems(session, "tabs", "ir")
+  })
+  output$ir<-renderUI({ input$irsubmit
+    withProgress(message="Generating Report", detail="Please Wait", value=1, {includeHTML(rmarkdown::render("interp_report.Rmd", html_fragment(number_sections=TRUE, toc=TRUE)))})
+  })
 
   #render project extent map
   
   observeEvent(input$extentsubmit,{
     updateTabItems(session, "tabs", "projectextent")
   })
-  output$projectextentmap<-renderLeaflet({ input$extentsubmit
+  
+  extentdata <- reactive({ input$extentsubmit
     
     #load required libraries  
     library(rmarkdown)
@@ -317,8 +344,6 @@ observeEvent(input$reportsubmit,{
     library(leaflet.esri)
     library(leaflet.extras)
     
-    withProgress(message="Generating Map", value=0,{
-      
       ##### The following code is mostly from Dylan Beaudette #####
       
       # NASIS WebReport
@@ -327,23 +352,20 @@ observeEvent(input$reportsubmit,{
       
       ##### swap comment marks on the next 2 lines when testing the app locally#####
       args <- list(msso=paste0(isolate(input$office)), fy=paste0(isolate(input$fyinput)), asym='%', proj='0')
-      #args <- list(msso="11-WAV", fy=2018, asym='%', proj='0')
-      
-      incProgress(1/10, detail =paste("Loading Data from Web Report"))
+      # args <- list(msso="11-WAV", fy=2018, asym='%', proj='0')
+
       
       # this is now implemented in soilDB
       # get first table
       d <- parseWebReport(url, args, index=1)
-      
-      incProgress(1/10, detail =paste("Please Wait"))  
+
       
       # make names legal
       names(d) <- make.names(names(d))
       
       # remove Description column
       d$Description <- NULL
-      
-      incProgress(1/10, detail =paste("Please Wait")) 
+
       
       # check: OK
       str(d)
@@ -352,11 +374,10 @@ observeEvent(input$reportsubmit,{
       
       ##### swap comment marks on the next 2 lines when testing the app locally#####
       idx <- grep(paste0(isolate(input$projectextent)), d$Project.Name)
-      #idx <- grep(paste0('MLRA 104 - Readlyn soils texture and slope phases'), d$Project.Name)
+      # idx <- grep(paste0('MLRA 104 - Readlyn soils texture and slope phases'), d$Project.Name)
       
       d <- d[idx, ]
-      
-      incProgress(1/10, detail =paste("Please Wait")) 
+
       
       # get geometry associated with a specific project
       # note: requests for the full geometry will fail when results are too large for JSON serializer
@@ -388,19 +409,14 @@ observeEvent(input$reportsubmit,{
       }
       
       # get / process features by mapunit
-      
-      
-      incProgress(1/10, detail =paste("Computing Feature Envelope")) 
+
       
       sp <- dlply(d, 'Project.Name', getFeatures, .progress='text')
-      
-      incProgress(1/10, detail =paste("Please Wait")) 
+
       
       # remove NULL features
       idx <- which(! sapply(sp, is.null))
       sp <- sp[idx]
-      
-      incProgress(1/10, detail =paste("Please Wait"))
       
       # convert into single SPDF
       sp.final <- do.call('rbind', sp)
@@ -408,9 +424,17 @@ observeEvent(input$reportsubmit,{
       # sanity check: any projects missing from the results?
       # no, they are all there
       setdiff(unique(sp.final$projectiid), unique(d$projectiid))
-      
-      incProgress(1/10, detail =paste("Please Wait"))
+
       ##### End of Dylan's code #####
+      
+      return(sp.final)
+  })
+  
+  output$projectextentmap<-renderLeaflet({ input$extentsubmit
+    
+    withProgress(message="Preparing Extent viewing", detail="Please Wait", value=1, {
+    
+      sp.final <- extentdata()
       
       pal<- colorFactor(palette="viridis", domain=sp.final$muname)
       
@@ -444,6 +468,25 @@ observeEvent(input$reportsubmit,{
     m
   })
 
+  output$projectextentdownload<- downloadHandler(      
+    filename = function() {input$extentsubmit
+      paste("projectextent", Sys.Date(), ".zip", sep="")
+    },
+    content= function(file) {
+
+      withProgress(message="Preparing Extent for Saving", detail="Please Wait", value=1, {
+        sp.final <- extentdata()
+        writeOGR(sp.final, ".", "extent", driver = "ESRI Shapefile", overwrite_layer=TRUE)
+        
+        tempExtentzip <-file.path(tempdir(), "extent.zip")
+        file.copy("extent.zip", tempExtentzip, overwrite=TRUE)
+        
+        # zip(file, c("extent.dbf","extent.prj","extent.shp","extent.shx"), zip = "C:/RBuildTools/3.4/bin/zip.exe")
+        zip(file, c("extent.dbf","extent.prj","extent.shp","extent.shx"))
+      }
+      )}
+  )
+  
 }
 
 #combine the user interface and server to generate the shiny app

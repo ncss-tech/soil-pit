@@ -68,9 +68,9 @@ om <- function(input, output, session){
     omdata = fetchSDA_component(WHERE = paste0(isolate(input$choice),"='", isolate(input$query), "'"), duplicates= TRUE)
     
     # Convert the data for plotting
-    omdata_slice <- aqp::slice(omdata$spc, 0:200 ~ om_l + om_r + om_h)
+    omdata_slice <- aqp::slice(omdata, 0:200 ~ om_l + om_r + om_h)
     h = horizons(omdata_slice)
-    h = merge(h, site(omdata$spc)[c("cokey", "compname", "comppct_r")], by = "cokey", all.x = TRUE)
+    h = merge(h, site(omdata)[c("cokey", "compname", "comppct_r")], by = "cokey", all.x = TRUE)
     
     # plot clay content
     om_plot<-ggplot(h) +
@@ -85,9 +85,9 @@ om <- function(input, output, session){
     })
   
   output$omdatatab<- DT::renderDataTable({input$submit
-    omdata <- fetchSDA_component(WHERE = paste0(isolate(input$choice),"='", isolate(input$query), "'"), duplicates= TRUE);    omdata_slice <- aqp::slice(omdata$spc, 0:200 ~ om_l + om_r + om_h)
+    omdata <- fetchSDA_component(WHERE = paste0(isolate(input$choice),"='", isolate(input$query), "'"), duplicates= TRUE);    omdata_slice <- aqp::slice(omdata, 0:200 ~ om_l + om_r + om_h)
     h = horizons(omdata_slice)
-    h = merge(h, site(omdata$spc)[c("cokey", "compname", "comppct_r")], by = "cokey", all.x = TRUE)}, options = list(paging=FALSE))
+    h = merge(h, site(omdata)[c("cokey", "compname", "comppct_r")], by = "cokey", all.x = TRUE)}, options = list(paging=FALSE))
   
   
    
