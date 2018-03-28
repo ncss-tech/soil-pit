@@ -21,7 +21,7 @@ Minasny, B., and A.B. McBratney. 2006. A conditioned Latin hypercube method for 
 
 Roudier, P. 2011. clhs: a R package for conditioned Latin hypercube sampling. R package version 0.5-1. R Found. Vienna Available HttpCRAN R-Proj. Orgpackage Clhs Accessed Febr. 2016.
 
-Roudier, P., A.E. Hewitt, and D.E. Beaudette. A conditioned Latin hypercube sampling algorithm incorporating operational constraints.
+Roudier, P., A.E. Hewitt, and D.E. Beaudette. 2012. A conditioned Latin hypercube sampling algorithm incorporating operational constraints.
 
 
 # Setup
@@ -37,7 +37,7 @@ library(clhs)
 Set working directory and download data
 ```{r data}
 # create a new directory to store the data
-dir.create("C:/workspace2/clhs")
+dir.create("C:/workspace2/clhs", recursive = TRUE)
 
 # setting the working directory
 setwd("C:/workspace2/clhs/")
@@ -46,12 +46,12 @@ setwd("C:/workspace2/clhs/")
 download.file(url = "http://github.com/dave-white2/data/raw/master/clhs/clhs_data.zip", destfile = "clhs.zip", method = "auto")
 
 # unzip data
-unzip(zipfile = "C:/workspace2/clhs/clhs.zip")
+unzip(zipfile = "C:/workspace2/clhs/clhs.zip", overwrite = TRUE)
 ```
    
 
 
-Load Raster Data   
+# Load Raster Data   
 
 Data needs to be of the same extent and resolution
 ```{r loadraster}
@@ -80,16 +80,16 @@ r.stack <- readAll(r.stack)
 
 # cLHS - Basic Method    
 
-Convert the raster stack to a SpatialPointsDataFrame   
+Convert the raster stack to a `SpatialPointsDataFrame`
 
-During this process every pixel becomes a point in a dataframe. WARINING: if you have a very large dataset this might not be appropriate as it could take a long time.
+During this process every pixel becomes a row in the resulting `data.frame`. WARINING: if you have a very large dataset this might not be appropriate as it could take a long time or exceed available memory.
 ```{r rtop}
 s <- rasterToPoints(r.stack, spatial=TRUE)
 ```
    
 
 
-Apply cLHS to entire raster stack - this process takes a bit of time (size: number of sample points/bins) - result is as a cLHS_result object. To see a progress bar of how long it takes to run cLHS, set progress = TRUE.
+Apply cLHS to entire raster stack - this process takes a bit of time (size: number of sample points/bins) - result is as a `cLHS_result` object. To see a progress bar of how long it takes to run `cLHS`, set `progress = TRUE`.
 ```{r clhs}
 s.clhs <- clhs(s, size = 10, progress = FALSE, iter = 1000, simple = FALSE)
 ```
@@ -97,7 +97,7 @@ s.clhs <- clhs(s, size = 10, progress = FALSE, iter = 1000, simple = FALSE)
 
 
 Diagnostic plots
-You can produce plots illustrating the result of the cLHS sampling procedure. For more info type :??plot.cLHS_result into your console.
+You can produce plots illustrating the result of the cLHS sampling procedure. For more info type `?plot.cLHS_result` into your console.
 ```{r plots}
 plot(s.clhs, mode=c("obj", "box"))
 ```
@@ -112,9 +112,9 @@ subset.idx <- s.clhs$index_samples
 Plot points to inspect and save to shp file
 ```{r points}
 # check visually:
-par(mar = c(0,0,0,0))
-plot(r.sagawi, cex = 0.05, pch = '.')
-points(s[subset.idx, ], col = 'red')
+par(mar = c(1,1,1,1))
+plot(r.sagawi, axes=FALSE)
+points(s[subset.idx, ], bg = 'red', pch=21)
 
 # save cLHS points to shp
 writeOGR(s[subset.idx, ], dsn = 'C:/workspace2/clhs', layer='clhs_points', driver = 'ESRI Shapefile', overwrite_layer = TRUE)
@@ -127,10 +127,12 @@ Sometimes, you may have a large raster stack, both in number of rasters and in s
 ```{r regularsample}
 # result is a SpatialPointsDataFrame
 # size is the number of points to generate
-s <- sampleRegular(r.stack, size = 100, sp = TRUE)
+s <- sampleRegular(r.stack, size = 500, sp = TRUE)
 
 # plot s to see the grid of points
-plot(s)
+par(mar = c(1,1,1,1))
+plot(r.sagawi, axes=FALSE)
+plot(s, add=TRUE)
 ```
    
 
@@ -143,7 +145,6 @@ s.clhs <- clhs(s, size = 10, progress = FALSE, iter = 1000, simple = FALSE)
 Diagnostic plots
 ```{r plots2}
 plot(s.clhs, mode=c("obj", "box"))
-
 ```
    
 
@@ -156,9 +157,9 @@ subset.idx <- s.clhs$index_samples
 Plot points to inspect and save to shp file
 ```{r points2}
 # check visually:
-par(mar = c(0,0,0,0))
-plot(r.sagawi, cex = 0.05, pch='.')
-points(s[subset.idx, ], col = 'red')
+par(mar = c(1,1,1,1))
+plot(r.sagawi, axes=FALSE)
+points(s[subset.idx, ], bg = 'red', pch=21)
 
 # save cLHS points to shp
 writeOGR(s[subset.idx, ], dsn = 'C:/workspace2/clhs', layer = 'clhs_points_rgrd', driver = 'ESRI Shapefile', overwrite_layer = TRUE)
@@ -171,31 +172,33 @@ cLHS has a built in cost function. Using cost, you can constrain the points to p
 This cost raster was created in SAGA using the Accumulated Cost (Anisotropic) function with slope as the cost grid, aspect as the direction grid, and a roads grid as the destination points. The accumulated cost raster created from this process is shown below.
 ```{r costRaster}
 # plot the cost raster
-plot(r.cost)
+par(mar = c(1,1,1,1))
+plot(r.cost, axes=FALSE)
 ```
    
 
 The cost raster needs to be combined with the raster stack for this to work
 ```{r stackCost}
-# add the cost raster to the stack
-r.stack$cost <- r.cost
+r.stack <- stack(r.claymin, r.mrrtf, r.mrvbf, r.ndvi, r.sagawi, r.cost)
+names(r.stack) <- c('claymin', 'mrrtf', 'mrvbf', 'ndvi', 'sagawi', 'cost')
+r.stack <- readAll(r.stack)
 ```
    
 
-Convert the raster stack to a SpatialPointsDataFrame   
-During this process every pixel becomes a point in a dataframe. WARINING: if you have a very large dataset this might not be appropriate as it could take a long time.
+Convert the raster stack to a `SpatialPointsDataFrame` by sampling along a regular grid.
 ```{r rtop3}
-s <- rasterToPoints(r.stack, spatial = TRUE)
+s <- sampleRegular(r.stack, size = 10000, sp=TRUE)
 ```
    
 
 To implement the cost function in cLHS, there are a few changes to the code.   
 Apply cLHS to entire raster stack - this process takes a bit of time (size: number of sample points/bins) - result is as a cLHS_result object.
 ```{r clhscost}
-# this line is needed to implement the cost function
-r.stack$cost <- runif(nrow(r.stack))
+# pending a fix in clhs package (https://github.com/pierreroudier/clhs/issues/3)
+# NA cost values must be filtered from the samples
+s <- s[which(!is.na(s$cost)), ]
 
-# notice cost is set to 'cost'
+# cost surface is activated via `cost` argument
 s.clhs <- clhs(s, size = 10, progress = FALSE, iter = 1000, cost = 'cost', simple = FALSE)
 ```
    
@@ -203,7 +206,6 @@ s.clhs <- clhs(s, size = 10, progress = FALSE, iter = 1000, cost = 'cost', simpl
 Diagnostic plots
 ```{r plots3}
 plot(s.clhs, mode = c("obj", "box"))
-
 ```
    
 
@@ -216,16 +218,21 @@ subset.idx <- s.clhs$index_samples
 Plot points to inspect and save to shp file
 ```{r points3}
 # check visually on the sagawi raster
-par(mar = c(0,0,0,0))
-plot(r.sagawi, cex = 0.05, pch = '.')
-points(s[subset.idx, ], col = 'red')
+par(mar = c(1,1,1,1))
+plot(r.sagawi, axes=FALSE)
+contour(r.cost, nlevels=10, col='black', add=TRUE)
+points(s[subset.idx, ], bg = 'red', pch=21)
+
 
 # check visualy on the cost raster
 par(mar = c(0,0,0,0))
-plot(r.cost, cex = 0.05, pch = '.')
-points(s[subset.idx, ], col = 'red')
+plot(r.cost, axes=FALSE)
+points(s[subset.idx, ], bg = 'red', pch=21)
 
 # save cLHS points to shp
 writeOGR(s[subset.idx, ], dsn = 'C:/workspace2/clhs', layer = 'clhs_points_cost', driver = 'ESRI Shapefile', overwrite_layer = TRUE)
 ```
+
+
+
 
