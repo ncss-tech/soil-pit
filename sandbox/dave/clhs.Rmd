@@ -164,6 +164,43 @@ points(s[subset.idx, ], bg = 'red', pch=21)
 # save cLHS points to shp
 writeOGR(s[subset.idx, ], dsn = 'C:/workspace2/clhs', layer = 'clhs_points_rgrd', driver = 'ESRI Shapefile', overwrite_layer = TRUE)
 ```
+
+
+## Investigate Alternatives
+This requires the latest `clhs` package. Subject to change.
+
+```{r eval=FALSE}
+library(cluster)
+
+# keep cLHS samples
+s.sub <- s[subset.idx, ]
+
+# make an ID that will always be sorted correctly
+s.sub$ID <- sprintf("%06d", 1:nrow(s.sub))
+
+## TODO: this should output a vector of file names
+GS(rstack = r.stack, samps = s.sub, buffer = 200, fac = NA)
+
+# locate resulting raster layers, one for each sample location
+r <- list.files(path='.', pattern = 'SimilarityIndex*')
+# init raster stack
+rs <- stack(r)
+
+# check
+par(mar = c(1,1,1,1))
+plot(rs, axes=FALSE)
+
+# reduce stack to single raster via summation of Gowers distance
+g <- stackApply(rs, indices=rep(1, times=nlayers(rs)), fun = sum)
+
+# all samples
+plot(g, axes=FALSE)
+points(s.sub)
+
+# zoom in and check
+plot(rs[[1]], ext=extent(s.sub[1, ]), axes=FALSE)
+points(s.sub[1, ])
+```
    
 
 # cLHS - Cost Implementation    
