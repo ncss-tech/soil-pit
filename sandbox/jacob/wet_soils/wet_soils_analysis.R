@@ -1,7 +1,7 @@
 # Author: Jacob Isleib
 # Soil taxonomy "wet" soil order data analysis
 
-setwd("C:/workspace/wet_soils/plusmidatlantic")
+setwd("C:/workspace/wet_soils")
 .pardefault <- par()
 
 #check for SAS pedons to be added; these are known sampled SAS pedons originating from Stolt lab
