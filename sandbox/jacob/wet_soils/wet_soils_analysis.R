@@ -1,7 +1,7 @@
 # Author: Jacob Isleib
 # Soil taxonomy "wet" soil order data analysis
 
-setwd("C:/workspace/wet_soils")
+setwd("C:/workspace/sandbox/jacob/wet_soils")
 .pardefault <- par()
 
 #check for SAS pedons to be added; these are known sampled SAS pedons originating from Stolt lab
@@ -18,6 +18,8 @@ ksslraw <- read.csv("access_export.csv", header=TRUE, na.strings ="")
 #remove R horizons
 ksslraw <- ksslraw[ksslraw$hzn_master != "R", ]
 ksslraw <- unique(ksslraw)
+
+library(plyr)
 
 # Remove histosols (histosols would not key out into a wet soils order)
 
@@ -40,7 +42,7 @@ length(unique(sas.pedons.qc$pedlabsampnum1))
 # export phorizon color data from NASIS using report 'Pedon Horizon Color and Lab Sample Number, comma delim v2'
 phcolor <- read.csv("phcolor.csv", header=TRUE)
 #change color percentage type from integer to double
-as.double(phcolor$color_pct)
+phcolor$color_pct <- as.double(phcolor$color_pct)
 # change blanks to NA
 phcolor[phcolor==""] <- NA
 # remove erroneous data with NA Hue
@@ -318,6 +320,7 @@ drainagecl.notna <- drainagecl[!(is.na(drainagecl$drainage_cl)), ]
 ### Fix missing drainage classes
 #load master list of taxon_name and drainage class, exported from NASIS using *all* pedons.sites
 #use MLRA12_Office report 'Drainage class, master dataframe, ALL nasis sites and pedons'
+
 library(data.table)
 master.drainagecl <-read.csv("masterdrainagcl.csv", header=TRUE, na.strings ="")
 master.drainagecl$taxon_name <- as.character(master.drainagecl$taxon_name)
