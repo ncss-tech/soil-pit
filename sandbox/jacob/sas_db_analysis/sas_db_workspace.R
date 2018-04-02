@@ -245,6 +245,7 @@ datamutant.summary <- ddply(datamutant, ~texgrp, summarise,
                             median=median(db_satiated),
                             max2sigma=round(((mean(db_satiated))+(2*(sd(db_satiated)))), 2),
                             max=max(db_satiated))
+datamutant.summary
 
 # plot histograms to analyse ddistribution by new texture groups
 
