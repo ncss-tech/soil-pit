@@ -501,7 +501,12 @@ col.set <- brewer.pal(9, 'Set1')
 
 # Combine K-medoids and category data and box plot
 combinek2 <- data.frame(datacomplete.cat, data.res.2$clustering)
-boxplot(data.res.2.clustering ~ datacomplete.cat, data=combinek2)
+par(cex.axis=.5)
+boxplot(data.res.2.clustering ~ datacomplete.cat, data=combinek2, axes = FALSE)
+box()
+axis(side = 1, at = combinek2$datacomplete.cat, labels= combinek2$datacomplete.cat)
+axis(side = 2, at = c(1,2, -1))
+title(ylab = "cluster", xlab="drainage class")
 
 library(plyr)
 
@@ -516,8 +521,13 @@ ggplot(combinek2, aes(x=data.res.2.clustering)) +
 # With 2 clusters, Poorly, Very Poorly (without histosols), and Subaqueous drainage class pedons have a strong membership in the same cluster (cluster 2).  The plot suggests that Poorly and Very Poorly pedons that were assigned to cluster 1  are outliers in the distribution.
 
 # Combine K-medoids and category data and box plot
+par(cex.axis=.5)
 combinek3 <- data.frame(datacomplete.cat, data.res.3$clustering)
-boxplot(data.res.3.clustering ~ datacomplete.cat, data=combinek3)
+boxplot(data.res.3.clustering ~ datacomplete.cat, data=combinek3, axes = FALSE)
+box()
+axis(side = 1, at = combinek3$datacomplete.cat, labels= combinek3$datacomplete.cat)
+axis(side = 2, at = c(1,2,3))
+title(ylab = "cluster", xlab="drainage class")
 
 ggplot(combinek3, aes(x=data.res.3.clustering)) +
   geom_histogram(aes(y=..density..),      # Histogram with density instead of count on y-axis
@@ -528,7 +538,12 @@ ggplot(combinek3, aes(x=data.res.3.clustering)) +
   scale_x_continuous(breaks=c(1,2,3))
 
 # Combine K-medoids and category data and box plot
+par(cex.axis=.5)
 combinek4 <- data.frame(datacomplete.cat, data.res.4$clustering)
-boxplot(data.res.4.clustering ~ datacomplete.cat, data=combinek4)
+boxplot(data.res.4.clustering ~ datacomplete.cat, data=combinek4, axes = FALSE)
+box()
+axis(side = 1, at = combinek4$datacomplete.cat, labels= combinek4$datacomplete.cat)
+axis(side = 2, at = c(1,2,3,4))
+title(ylab = "cluster", xlab="drainage class")
 
 # With 3 clusters, distribution of drainage class by cluster number agrees with the silhouette width analysis suggesting that 3+ clusters lack cohesion 
