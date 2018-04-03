@@ -1,0 +1,131 @@
+---
+title: "Map unit list of Aaron"
+author: "Stephen Roecker"
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    number_sections: yes
+    toc: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: no
+---
+
+```{r setup, echo = FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```
+
+
+## Dominant component by map unit
+
+```{r majcomp}
+
+library(soilDB)
+library(plyr)
+
+
+# get components from SDA
+
+data(state)
+st <- paste0(c(state.abb, "PR", "DC", "VI", "PB"))
+
+co <- ldply(st, function(x) {
+  cat("getting", x, "\n")
+  df = data.frame(NULL)
+  df <- get_component_from_SDA(
+    WHERE = paste0("areasymbol LIKE '",  x, "%' AND majcompflag = 'Yes'"), 
+    childs = FALSE
+    )
+  if (!is.null(df)) {
+    df$st <- x
+    return(df) 
+    } else NULL
+  })
+
+vars <- c("nationalmusym", "compname", "comppct_r", "compkind", "localphase", "drainagecl")
+dc <- ddply(co, .(nationalmusym), function(x) {
+  x[which.max(x$comppct), vars]
+  })
+dc <- arrange(dc, nationalmusym, - comppct_r, compname)
+
+```
+
+
+## Approved vs correlated map units
+
+```{r mapunits}
+
+library(soilDB)
+library(plyr)
+
+ownCloud <- "C:/Users/stephen.roecker/ownCloud/data/lims_data/"
+
+# get map units from LIMS
+
+data(state)
+st <- paste0(c(state.abb, "PR", "DC", "VI", "PB"))
+
+mu_lims <- get_mapunit_from_LIMS(paste0(st, "%"))
+
+# write.csv(mu_lims, paste0(ownCloud, "nasis_legends_20180329.csv"), 
+#           row.names = FALSE
+#           )
+mu_lims <- read.csv(paste0(ownCloud, "nasis_legends_20180329.csv"),
+               stringsAsFactors = FALSE
+               )
+mu_lims$cordate <- as.Date(mu_lims$cordate)
+
+# plot correlation dates
+idx <- duplicated(mu_lims$areasymbol)
+vars <- c("mlraoffice", "areasymbol", "areaacres", "cordate", "ssastatus", "projectscale")
+mu_cor <- mu_lims[!idx, vars]
+mu_cor$year <- format(mu_cor$cordate, "%Y")
+
+View(mu_cor[order(mu_cor$cordate, decreasing = TRUE), ])
+
+plot(table(mu_cor$year), 
+     ylab = "Count", 
+     xlab = "Year",
+     main = "Number of Published Soil Surveys by Year"
+     )
+
+
+# get map units from SDA
+
+st2 <- paste0(st, "%")
+
+mu_sda <- ldply(st2, function(x) {
+  cat(x, "\n") 
+  get_mapunit_from_SDA(WHERE = paste0("areasymbol LIKE '", x, "'"))
+  })
+
+# write.csv(mu_sda, paste0(ownCloud, "sda_legends_20180403.csv"),
+#           row.names = FALSE
+#           )
+mu_sda <- read.csv(paste0(ownCloud, "sda_legends_20180403.csv"),
+               stringsAsFactors = FALSE
+               )
+
+vars <- c("mukey", "ssastatus")
+mu <- merge(mu_lims, mu_sda[vars], by.x = "lmapunitiid", by.y = "mukey", all.y = TRUE)
+
+vars <- c("areasymbol", "musym", "mukey")
+mu2 <- merge(mu_lims, mu_sda[vars], by = c("areasymbol", "musym"), all.y = TRUE)
+
+mu3 <- merge(mu2, dc, by = "nationalmusym", all.x = TRUE)
+mu3$state <- substr(mu3$areasymbol, 1, 2)
+
+vars <- c("state", "areasymbol", "mukey", "musym", "nationalmusym", "muname", "mukind", "mustatus", "muacres", "compname", "compkind")
+write.csv(mu3[vars], file = paste0(ownCloud, "mapunit_list_for_afriend_20180403.csv"), row.names = FALSE)
+
+
+# explore
+test12 <- subset(test1, !grepl("NOT", musym))
+with(test12, table(mlraoffice, mustatus))
+View(subset(test12, mustatus == "approved"))
+
+test3 <- table(subset(test12, mustatus == "approved", select = areaname)$areaname)
+idx <- test3 > 1
+View(sort(test3[idx], decreasing = TRUE))
+
+```
