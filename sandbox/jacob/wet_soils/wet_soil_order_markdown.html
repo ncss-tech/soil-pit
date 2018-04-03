@@ -11,7 +11,7 @@
 
 <meta name="author" content="Jacob Isleib and Mark Stolt" />
 
-<meta name="date" content="2018-04-02" />
+<meta name="date" content="2018-04-03" />
 
 <title>Analysis of selected Pedon-level soil properties for Wet Soils groupings</title>
 
@@ -219,7 +219,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Analysis of selected Pedon-level soil properties for Wet Soils groupings</h1>
 <h4 class="author"><em>Jacob Isleib and Mark Stolt</em></h4>
-<h4 class="date"><em>2018-04-02</em></h4>
+<h4 class="date"><em>2018-04-03</em></h4>
 
 </div>
 
@@ -230,13 +230,116 @@ div.tocify {
 </div>
 <div id="research-question" class="section level1">
 <h1>Research question</h1>
-<p>Are there objective groups of pedons based on soil color, DCB-extractable Fe, and clay content change that could be used to support criteria for a new “wet soil” order in Soil Taxonomy?</p>
+<p>Are there objective groups of pedons based on morphology, physical and chemical properties that could be used to support criteria for a new “wet soil” order in Soil Taxonomy?</p>
 </div>
 <div id="method" class="section level1">
 <h1>Method</h1>
 <p>Gather pedon lab data and morphologic data from KSSL MSAccess export and NASIS, respectively. Use R to format and perform quality control on the raw data including aggregating pedon horizon-level data to the pedon-level property summaries. Use Principle Components Analysis, clustering, ordination, and other methods of analysis to answer the research question.</p>
-<p>Selected pedon-level properties: 1. average chroma in upper 50 cm <del>2. depth to a gleyed horizon</del> <em>[author’s note: this property was dropped from the analysis after it was determined that too few pedons contained a non-null value]</em> 3. average DCB extractable Fe in upper 50 cm; 4. difference in clay content between upper-most horizon of pedon with measured clay and upper-most horizon with a ‘B’, ‘BC’, ‘CB’, or ‘C’ master horizon designation 5. average hue in upper 50 cm by assigning hue a number as follows: hue hue_num 5R 9 7.5R 8 10R 7 2.5YR 6 5YR 5 7.5YR 4 10YR 3 2.5Y 2 5Y 1 10Y 0 5GY 0 10GY 0 5G 0 10G 0 5BG 0 10BG 0 5B 0 10B 0 5PB 0 N 0 6. carbon content at 30 cm 7. depth to a depleted matrix (i.e., horizon with matrix color (&gt;=50% color percentage) with high value (&gt;=4) and low chroma (&lt;=2))</p>
-<p>Excluded pedons: * Pedons meeting general histosols order criteria were excluded from the dataset (i.e., pedons with &gt;=40cm of O master horizon thickness within 130cm)</p>
+<p>Selected pedon-level properties:</p>
+<ol style="list-style-type: decimal">
+<li>average chroma in upper 50 cm<br />
+</li>
+<li><del>depth to a gleyed horizon</del> <em>[author’s note: this property was dropped from the analysis after it was determined that too few pedons contained a non-null value]</em><br />
+</li>
+<li><del>average DCB extractable Fe in upper 50 cm</del> <em>[author’s note: this property was dropped from the analysis after it was determined that too few pedons contained a non-null value]</em></li>
+<li>difference in clay content between upper-most horizon of pedon with measured clay and upper-most horizon with a ‘B’, ‘BC’, ‘CB’, or ‘C’ master horizon designation<br />
+</li>
+<li><p>average hue in upper 50 cm by assigning hue a number as follows:</p>
+<table>
+<thead>
+<tr class="header">
+<th>hue</th>
+<th>hue_num</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>5R</td>
+<td>9</td>
+</tr>
+<tr class="even">
+<td>7.5R</td>
+<td>8</td>
+</tr>
+<tr class="odd">
+<td>10R</td>
+<td>7</td>
+</tr>
+<tr class="even">
+<td>2.5YR</td>
+<td>6</td>
+</tr>
+<tr class="odd">
+<td>5YR</td>
+<td>5</td>
+</tr>
+<tr class="even">
+<td>7.5YR</td>
+<td>4</td>
+</tr>
+<tr class="odd">
+<td>10YR</td>
+<td>3</td>
+</tr>
+<tr class="even">
+<td>2.5Y</td>
+<td>2</td>
+</tr>
+<tr class="odd">
+<td>5Y</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td>10Y</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td>5GY</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td>10GY</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td>5G</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td>10G</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td>5BG</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td>10BG</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td>5B</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td>10B</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td>5PB</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td>N</td>
+<td>0</td>
+</tr>
+</tbody>
+</table></li>
+<li>carbon content at 30 cm<br />
+</li>
+<li><p>depth to a depleted matrix (i.e., horizon with matrix color (&gt;=50% color percentage) with high value (&gt;=4) and low chroma (&lt;=2))</p></li>
+</ol>
+<p><strong>Excluded pedons:</strong> <strong>Pedons meeting general histosols order criteria were excluded from the dataset (i.e., pedons with &gt;=40cm of O master horizon thickness within 130cm)</strong></p>
 </div>
 <div id="r-analysis-script" class="section level1">
 <h1>R analysis script</h1>
@@ -913,9 +1016,9 @@ title(ylab = &quot;cluster&quot;, xlab=&quot;drainage class&quot;)</code></pre>
 </div>
 <div id="discussion" class="section level1">
 <h1>Discussion</h1>
-<p>The PCA Biplot (Figure 3) illustrates general relationships of drainage class groupings (visible using Normal probability ellipses) to the first two principal components and individual variable eigenvectors. PC1 appears related to soil moisture or “wetness”. The plot shows that there is quite a bit of comingling between excessively, somewhat excessively, well, moderately well, and somewhat poorly drainage classe suggesting that the chemical and morphologic properties we used to summarize the pedons does not do a good job at distinguishing wetness for these drainage classes. Poorly, very poorly, and subaqueous normal distribution ellipses appear to have more distinct ranges along PC1. PC2 appears to be very related to organic carbon content at 30cm. There is an observable increase in the range of PC2 values for Very Poorly drained pedons from Poorly drained pedons, which agrees with general understanding about carbon content between these drainage classes (i.e., very poorly drained series are often in Humic or Histic subgroups or related taxons reflecting significant accumulations of organic carbon). Subaqeuous soils have a much narrower range of PC2, which also agrees with tacit knowledge based on summaries of measured OC content for subaqueous pedon horizons.</p>
+<p>The PCA Biplot (Figure 3) illustrates general relationships of drainage class groupings (visible using Normal probability ellipses) to the first two principal components and individual variable eigenvectors. PC1 appears related to soil moisture or “wetness”. The plot shows that there is quite a bit of comingling between excessively, somewhat excessively, well, moderately well, and somewhat poorly drainage classe suggesting that the chemical and morphologic properties we used to summarize the pedons does not do a good job at distinguishing wetness for these drainage classes. Poorly, very poorly, and subaqueous normal distribution ellipses appear to have more distinct ranges along PC1. PC2 appears to be very related to organic carbon content at 30cm. There is an observable increase in the range of PC2 values for Very Poorly drained pedons from Poorly drained pedons, which agrees with general understanding about carbon content between these drainage classes (i.e., very poorly drained series are often in Humic or Histic subgroups or related taxons reflecting significant accumulations of organic carbon). Subaqueous soils have a much narrower range of PC2, which also agrees with tacit knowledge based on summaries of measured OC content for subaqueous pedon horizons.</p>
 <p>Using different methods of evaluating the silhouette widths of clustering (Figures 4-7) yields that 2 cohesive clusters of data exist in this dataset. Figures 8 is a plot of K-medoids clustering with 2 clusters. This plot shows that one of the clusters occupies space that corresponds to Poorly, Very Poorly, and Subaqueous drainage ellipses in the PCA biplot. This result suggests that given the selected soil properties used in this analysis, these three drainage classes are members of a single group of data. Figures 11 and 12 summarize the distribution of cluster assignments by drainage class. These agree with the observation from Figure 8 that Poorly, Very Poorly, and Subaqueous drainage classes cohere to a single cluster. Applying 3+ clusters was explored but Figures 13 through 15 illustrate how greater number of clusters produce groups that lack cohesion.</p>
-<p>Further analysis is suggested using a larger, more geographically varied dataset. We limited our dataset to regions that have available sampled subaqueous pedons so that we have a somewhat balanced dataset with a complete range of drainage classes. The lack of subaqeuous pedon data in other regions is a limitation to expanding the geographic area as of this writing. Also, it may be interesting to subset the dataset by only Somewhat Poorly and wetter drainage classes, as the less-wet drainage classes appear to be very comingled in respect to the analysis covariates and principle components.</p>
+<p>Further analysis is suggested using a larger, more geographically varied dataset. We limited our dataset to regions that have available sampled subaqueous pedons so that we have a somewhat balanced dataset with a complete range of drainage classes. The lack of subaqueous pedon data in other regions is a limitation to expanding the geographic area as of this writing. Also, it may be interesting to subset the dataset by only Somewhat Poorly and wetter drainage classes, as the less-wet drainage classes appear to be very comingled in respect to the analysis covariates and principle components.</p>
 <p><strong>Update 02/24/2018: A review by Dylan Beaudette suggests exploring use of CIE LAB coordinates (coverting color from Munsell), KSSL+morphology, and slice(), slab(), and related functions for weighted averages over depth intervals. These functions will be explored in future iterations of this analysis.</strong></p>
 </div>
 
