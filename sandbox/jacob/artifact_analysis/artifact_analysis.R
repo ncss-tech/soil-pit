@@ -1,7 +1,7 @@
 # Author:Jacob Isleib
 # Data exploration of artifacts and trace elements in pedon data from NYC and Hudson Co NJ
 
-setwd("C:/workspace/artifact_analysis")
+setwd("C:/workspace/sandbox/jacob/artifact_analysis")
 
 # Import table queried from KSSL MSAccess database with select measured soil physical and chemical data (including major and trace element geochemistry data).
 
@@ -54,7 +54,7 @@ phhuartsagg <- ddply(phhuarts1, ~Lab.Sample.., summarise, totartvol=sum(Vol..))
 #write.csv(phhuartsagg, file = "phhuartsagg.csv", col.names = TRUE)
 
 #Quality control: find na cases of lab sample numbers
-qc1 <- nasismerge[!complete.cases(nasismerge$Lab.Sample..), ]
+qc1 <- merge[!complete.cases(merge$Lab.Sample..), ]
 qc1uniq <- unique(qc1$User.Site.ID)
 dput(qc1uniq, file="qc1uniq.txt")
 #Review of na values confirms that these are partially sampled pedons.  NA rows can be dropped as there's no geochemistry data to join them to

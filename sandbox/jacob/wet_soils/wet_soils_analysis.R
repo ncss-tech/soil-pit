@@ -1,7 +1,7 @@
 # Author: Jacob Isleib
 # Soil taxonomy "wet" soil order data analysis
 
-setwd("C:/workspace/wet_soils")
+setwd("C:/workspace/sandbox/jacob/wet_soils")
 .pardefault <- par()
 
 #check for SAS pedons to be added; these are known sampled SAS pedons originating from Stolt lab
@@ -18,6 +18,8 @@ ksslraw <- read.csv("access_export.csv", header=TRUE, na.strings ="")
 #remove R horizons
 ksslraw <- ksslraw[ksslraw$hzn_master != "R", ]
 ksslraw <- unique(ksslraw)
+
+library(plyr)
 
 # Remove histosols (histosols would not key out into a wet soils order)
 
@@ -40,7 +42,7 @@ length(unique(sas.pedons.qc$pedlabsampnum1))
 # export phorizon color data from NASIS using report 'Pedon Horizon Color and Lab Sample Number, comma delim v2'
 phcolor <- read.csv("phcolor.csv", header=TRUE)
 #change color percentage type from integer to double
-as.double(phcolor$color_pct)
+phcolor$color_pct <- as.double(phcolor$color_pct)
 # change blanks to NA
 phcolor[phcolor==""] <- NA
 # remove erroneous data with NA Hue
@@ -318,6 +320,7 @@ drainagecl.notna <- drainagecl[!(is.na(drainagecl$drainage_cl)), ]
 ### Fix missing drainage classes
 #load master list of taxon_name and drainage class, exported from NASIS using *all* pedons.sites
 #use MLRA12_Office report 'Drainage class, master dataframe, ALL nasis sites and pedons'
+
 library(data.table)
 master.drainagecl <-read.csv("masterdrainagcl.csv", header=TRUE, na.strings ="")
 master.drainagecl$taxon_name <- as.character(master.drainagecl$taxon_name)
@@ -498,7 +501,12 @@ col.set <- brewer.pal(9, 'Set1')
 
 # Combine K-medoids and category data and box plot
 combinek2 <- data.frame(datacomplete.cat, data.res.2$clustering)
-boxplot(data.res.2.clustering ~ datacomplete.cat, data=combinek2)
+par(cex.axis=.5)
+boxplot(data.res.2.clustering ~ datacomplete.cat, data=combinek2, axes = FALSE)
+box()
+axis(side = 1, at = combinek2$datacomplete.cat, labels= combinek2$datacomplete.cat)
+axis(side = 2, at = c(1,2, -1))
+title(ylab = "cluster", xlab="drainage class")
 
 library(plyr)
 
@@ -513,8 +521,13 @@ ggplot(combinek2, aes(x=data.res.2.clustering)) +
 # With 2 clusters, Poorly, Very Poorly (without histosols), and Subaqueous drainage class pedons have a strong membership in the same cluster (cluster 2).  The plot suggests that Poorly and Very Poorly pedons that were assigned to cluster 1  are outliers in the distribution.
 
 # Combine K-medoids and category data and box plot
+par(cex.axis=.5)
 combinek3 <- data.frame(datacomplete.cat, data.res.3$clustering)
-boxplot(data.res.3.clustering ~ datacomplete.cat, data=combinek3)
+boxplot(data.res.3.clustering ~ datacomplete.cat, data=combinek3, axes = FALSE)
+box()
+axis(side = 1, at = combinek3$datacomplete.cat, labels= combinek3$datacomplete.cat)
+axis(side = 2, at = c(1,2,3))
+title(ylab = "cluster", xlab="drainage class")
 
 ggplot(combinek3, aes(x=data.res.3.clustering)) +
   geom_histogram(aes(y=..density..),      # Histogram with density instead of count on y-axis
@@ -525,7 +538,12 @@ ggplot(combinek3, aes(x=data.res.3.clustering)) +
   scale_x_continuous(breaks=c(1,2,3))
 
 # Combine K-medoids and category data and box plot
+par(cex.axis=.5)
 combinek4 <- data.frame(datacomplete.cat, data.res.4$clustering)
-boxplot(data.res.4.clustering ~ datacomplete.cat, data=combinek4)
+boxplot(data.res.4.clustering ~ datacomplete.cat, data=combinek4, axes = FALSE)
+box()
+axis(side = 1, at = combinek4$datacomplete.cat, labels= combinek4$datacomplete.cat)
+axis(side = 2, at = c(1,2,3,4))
+title(ylab = "cluster", xlab="drainage class")
 
 # With 3 clusters, distribution of drainage class by cluster number agrees with the silhouette width analysis suggesting that 3+ clusters lack cohesion 

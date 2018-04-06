@@ -2,7 +2,7 @@
 # Objective: Explore existing SAS soil property data to determine statistically significant groupings of soil properties that explain the variability in bulk density.  We will only use SAS data from marine and estuarine areas and will exclude freshwater SAS data.
 # Research question: To explain variability in bulk density, should SAS data be summarized by individual USDA texture classes or other soil properties?
 
-setwd("C:/workspace/sas_db_analysis")
+setwd("C:/workspace/sandbox/jacob/sas_db_analysis")
 
 library(ggplot2)
 library(car)
@@ -15,17 +15,6 @@ data <- read.csv("C:/workspace/sas_db_analysis/sas_db_analysis.csv")
 data1 <- subset(data[ which(data$oc_qc!="organic"),c(7, 9:14)])
 ## subset data1 for complete cases
 datacomplete <- data1[complete.cases(data1),]
-
-#estimate number of samples needed
-#data.min <- min(datacomplete$db_satiated)
-#data.max <- max(datacomplete$db_satiated)
-#data.delta <- data.max-data.min
-#data.sd <-sd(datacomplete$db_satiated)
-#median <- 
-#data.2sigmamin <- 
-#data.2sigmamax <- 
-
-#power.t.test(power = 0.95, sd= data.sd, delta =data.delta )
 
 # Create scatterplot matrix of subset data
 spm(datacomplete)
@@ -45,6 +34,7 @@ x <- predict(datapca, datacomplete.cont)
 
 library(plyr)
 library(dplyr)
+datacomplete2 <- datacomplete[, c(2,3:7)]
 data.tex.sum <- ddply(datacomplete2, ~texture, summarise, 
                       n=n(),
                       min=min(db_satiated), 
@@ -55,10 +45,7 @@ data.tex.sum <- ddply(datacomplete2, ~texture, summarise,
                       max2sigma=round(((mean(db_satiated))+(2*(sd(db_satiated)))), 2),
                       max=max(db_satiated),
                       range=((max(db_satiated))-(min(db_satiated))))
-                      #powerttest=(power.t.test(power=0.95, sd = (sd(db_satiated)), delta = ((max(db_satiated))-(min(db_satiated))))))
-
-power.t.test(power = 0.95, sd= data.sd, delta= .13 - .259)
-
+                      
 ## Basic histogram from the vector "db_satiated".
 # Draw with black outline, white fill
 
@@ -131,7 +118,6 @@ fviz_nbclust(data.std, hcut, method = "silhouette",
 
 # More plotting k-medoids clusters
 
-datacomplete2 <- datacomplete[, c(2,3:7)]
 data.res.2 <- pam(scale(datacomplete2[,-1]), 2)
 data.res.2$medoids
 clusplot(data.res.2, main = "Cluster plot, k = 2", 
@@ -259,6 +245,7 @@ datamutant.summary <- ddply(datamutant, ~texgrp, summarise,
                             median=median(db_satiated),
                             max2sigma=round(((mean(db_satiated))+(2*(sd(db_satiated)))), 2),
                             max=max(db_satiated))
+datamutant.summary
 
 # plot histograms to analyse ddistribution by new texture groups
 
