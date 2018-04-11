@@ -1,5 +1,5 @@
 ---
-title: "DSP POX-C Supplement"
+title: "POX-C Supplement"
 author: "Wills et al"
 date: "March 12, 2018"
 output: html_document
