@@ -141,6 +141,7 @@ dsp <- dsp %>%
 dsp <- dsp %>% 
   left_join(cond, by = c('COND', 'Name'))
 
+<<<<<<< HEAD
 
 
 
@@ -159,6 +160,21 @@ ggplot(dsp, aes(log(Pom_C)))+ geom_histogram(),
 ggplot(dsp, aes(log10(AggStab)))+ geom_histogram(),
 ncol = 2)
 
+=======
+grid.arrange(
+hist(dsp$POX_C),
+hist(dsp$Bgluc),
+hist(dsp$Pom_C),
+hist(dsp$AggStab),
+ncol = 2)
+     
+grid.arrange(
+hist(log(dsp$POX_C)),
+hist(log(dsp$Bgluc)),
+hist(log(dsp$Pom_C)),
+hist(log(dsp$AggStab)),
+ncol = 2)
+>>>>>>> 9d1965525c77178337ef910557ed49799cc43fe6
 
 POX <- log(dsp$POX_C)
 Bgluc <- log(dsp$Bgluc)
@@ -252,6 +268,7 @@ dsp %>% filter(Master == "A", !is.na(Master)) %>% ggplot(aes(x=POX_C, y = SOC, c
         plot.title=element_text(size=24))+
   labs(x="POX C",y="SOC",caption="by @wills_skye", title="A horizons")
 
+<<<<<<< HEAD
 
 
 dsp %>% filter(Master == "A", !is.na(Master)) %>% ggplot(aes(x=POX_C, y = SOC, color = Soil)) + geom_point(aes(color = LU)) +    theme(plot.caption=element_text(hjust=0,size=9),
@@ -259,6 +276,16 @@ dsp %>% filter(Master == "A", !is.na(Master)) %>% ggplot(aes(x=POX_C, y = SOC, c
         plot.title=element_text(size=24))+
   labs(x="POX C",y="SOC",caption="by @wills_skye", title="A horizons")
 
+=======
+#Condition is a little messy - add in some general information based on the COND table for better sorting and analysis
+dsp <- dsp %>% 
+  left_join(cond, by = c('COND', 'Name')
+
+
+dsp %>% filter(Hor_sequ ==1, Name != "MI_org", Master != "O") %>% ggplot(aes(x = POX_C)) + geom_density(aes(fill = Ref)) + facet_wrap(~Master)
+
+dsp %>% filter(Hor_sequ ==1, Name != "MI_org", Master != "O") %>% ggplot(aes(x = logPOX)) + geom_density(aes(fill = LU))+ facet_wrap(~Master)
+>>>>>>> 9d1965525c77178337ef910557ed49799cc43fe6
 
 dsp %>% filter(Master == "A", !is.na(Master)) %>% ggplot(aes(x=POX_C, y = SOC, color = Soil)) + geom_point(aes(color = Ref)) +    theme(plot.caption=element_text(hjust=0,size=9),
         axis.title=element_text(size=12),
