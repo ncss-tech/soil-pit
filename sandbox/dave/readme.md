@@ -24,7 +24,15 @@ Iterative Principal Component Analisys (iPCA) - Method of iterating through PCAs
 polypedon_points_v0.3.R   
 A method I developed to generate model training points based on the concept of the polypedon.
 
+Questions or Comments contact:
 
+Dave White
+USDA-Natural Resources Conservation Service
+Las Cruces Soil Survey Office
+760 Stern Drive, Suite 124
+Las Cruces, NM 88005
+575-522-8775x136 (Phone)
+david.white@nm.usda.gov
 
 
 
