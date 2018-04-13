@@ -25,6 +25,9 @@ Iterative Principal Component Analysis (iPCA) - Method of iterating through PCAs
 A method I developed to generate model training points based on the concept of the polypedon.   
 
 <br>
+<b>Stats_Project_DW</b>
+My final project for Stat for SS part 1
+http://ncss-tech.github.io/soil-pit/sandbox/dave/Stats_Project_DW.html
 <br>
 Questions or Comments contact:   
 
