@@ -26,8 +26,9 @@ A method I developed to generate model training points based on the concept of t
 
 <br>
 <b>Stats_Project_DW</b>
-My final project for Stat for SS part 1
-http://ncss-tech.github.io/soil-pit/sandbox/dave/Stats_Project_DW.html
+My final project for Stat for SS part 1   
+http://ncss-tech.github.io/soil-pit/sandbox/dave/Stats_Project_DW.html   
+   
 <br>
 Questions or Comments contact:   
 
