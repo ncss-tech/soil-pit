@@ -3,7 +3,7 @@ title: Summary of Long Range Plan (10-year)
 author: "`r Sys.getenv('USERNAME')`"
 date: "`r Sys.Date()`"
 output:
-  html_fragment:
+  html_document:
     keep_md: no
     number_sections: yes
     toc: yes
@@ -31,7 +31,7 @@ suppressWarnings( {
 
 r <- lapply(2018:2027, function(x) {
   url = "https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=get_project2_from_LIMS"
-  #p = list(p_mlrassoarea = "11-%", p_fy = x)
+  # p = list(p_mlrassoarea = "11-%", p_fy = x)
   p = list(p_mlrassoarea = paste0(isolate(input$lrpinput), "%"), p_fy = x)
   r = parseWebReport(url, args = p)
   })
@@ -53,6 +53,7 @@ r <- within(r, {
 
 # figure height for timeline plot
 
+# n_tp <- length(unique(r$mlrassoarea)) / 2 * 5
 n_tp <- length(unique(r$mlrassoarea[grepl(paste0("^", isolate(input$lrpinput)), r$mlrassoarea)])) / 2 * 5
 
 ```
@@ -97,17 +98,18 @@ gg_n <- ggplot(r_new[idx, ], aes(x = fiscalyear, y = n_project)) +
   
 # figure height of plots
 
-n_offices <- length(unique(a$office)) + 1
+n_offices <- length(unique(r_new$mlrassoarea)) + 1
 
 ```
 
-```{r}
+
+```{r plot-lrp}
 plot(gg_acres)
 plot(gg_n)
 ```
 
-```{r}
-## table
+
+```{r print-lrp}
 
 # acreage of projects
 r_new$acres <- prettyNum(r_new$acre_goal, big.mark = ",", preserve.width = "common")
@@ -122,14 +124,19 @@ ac_wide <- reshape(r_new[c(vars, "fiscalyear", "acres")],
 names(ac_wide) <- gsub("acres\\.", "", names(ac_wide))
 row.names(ac_wide) <- 1:nrow(ac_wide)
 
-test <- data.frame(matrix(vector(), nrow = 1, ncol = 12, dimnames = list(c("1"), names(a_wide))), check.names = FALSE)
+test <- data.frame(matrix(vector(), 
+                          nrow = 1, ncol = 12, 
+                          dimnames = list(c("1"), names(ac_wide))), 
+                   check.names = FALSE
+                   )
 test <- within(test, {
   mlrassoarea = "ALL MLRASSOAREA"
   projecttypename = "ALL PROJECTS"
   })
 vars <- as.character(2018:2027)
 test[vars] <- apply(ac_wide[vars], 2, function(x) prettyNum(sum(as.numeric(gsub(",", "", x)), na.rm = TRUE), 
-                                                            big.mark = ",", preserve.width = "common"
+                                                            big.mark = ",", 
+                                                            preserve.width = "common"
                                                             ))
 
 ac_wide <- rbind(ac_wide,
@@ -150,7 +157,7 @@ n_wide <- reshape(r_new[c(vars, "fiscalyear", "n_project")],
 names(n_wide) <- gsub("n_project\\.", "", names(n_wide))
 row.names(n_wide) <- 1:nrow(n_wide)
 
-test <- data.frame(matrix(vector(), nrow = 1, ncol = 12, dimnames = list(c("1"), names(a_wide))), check.names = FALSE)
+test <- data.frame(matrix(vector(), nrow = 1, ncol = 12, dimnames = list(c("1"), names(ac_wide))), check.names = FALSE)
 test <- within(test, {
   mlrassoarea = "ALL MLRASSOAREA"
   projecttypename = "ALL PROJECTS"
@@ -187,7 +194,7 @@ ggplot(r_long, aes(x = value, y = p_fy, group = p_fy, color = acres)) +
   geom_point(cex = 2) +
   facet_wrap(~ mlrassoarea, scales = "free_y", ncol = 2) +
   theme(axis.text.x = element_text(angle=90, hjust=1, vjust=0.5)) + 
-  ylab("projectiid-fiscalyear") +
+  ylab("fiscalyear-projectiid") +
   ggtitle("Timeline of MLRA Projects")
 
 ```
