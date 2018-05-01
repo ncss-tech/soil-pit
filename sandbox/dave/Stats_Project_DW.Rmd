@@ -1,0 +1,836 @@
+---
+title: "Stats for SS Part 1 - Final Project"
+author: "Dave White"
+date: "February 7, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+# Introduction
+
+During FY15 the Las Cruces SSO was contacted by New Mexico State University and NM Department of Transportation, who were interested in dust mitigation for a large playa along interstate 10 near the AZ - NM border. The project area falls within the Hidalgo County Soil Survey (NM023). A majority of the playa was mapped as miscellaneous area "playa" components and  component, Hondale soils (Fine, mixed, superactive, thermic Typic Natrargids). During field reconnaissance in FY14 & 16, the survey crew determined that there was a new component that was previously un-described. This component classifies as a Fine-loamy, mixed, superactive, thermic Sodic Haplocalcids, and there are currently no soil OSD's that fit this classification within MLRA 41. It was determined during a field review that we needed to establish a new soil OSD to capture this component. 
+
+As the majority of my previous work in R focused in spatial data analysis and modeling, I decided that I would use this opportunity to work with the NASIS tabular data in R. This report contains my process of exploratory data analysis, to review the pedon data being used to create the Highlonesome soil OSD and it's relevant range in characteristics. I have also taken this opportunity to use R Markdown to knit an HTML document as my final product. 
+
+*note this document currently has the following options set: knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE). I did this to clean up the output of the final document. I have also commented out (#) specific lines where I was examining the structure of an object.
+
+## Review of pedon data for the creation of Highlonesome soil OSD
+
+Using the fetchNASIS function of the soilDB package to bring in pedon data from NASIS selected set. My selected set contains pedons collected during FY15 and FY16 for the Animas Valley Playa update soil survey project.
+```{r fetchNASIS}
+
+library(soilDB)
+
+# get pedons from NASIS
+p <- fetchNASIS() # no warning errors when loading pedons
+
+length(p) 
+# There are 42 pedons in the selected set
+
+# reviewing the SPC object p
+class(p)
+#str(p)
+
+# get list of site ids for reference puropsesx
+s.id <- p@site$site_id
+
+#print(s.id)
+```
+
+## Pedon Locations
+Creating a map of the pedon locations
+```{r Maps}
+library(sp)
+library(maps)
+
+# subsetting WGS84 decimal degree corrdinates from p SPC
+p.locations <- site(p)[, c('site_id', 'x_std', 'y_std')]
+
+# initialize coordinates in an SPDF
+coordinates(p.locations) <- ~ x_std + y_std
+
+# define coordinate system
+proj4string(p.locations) <- '+proj=longlat +datum=WGS84'
+
+# set plot margins
+par(mar=c(1,1,1,1))
+
+# plot county boundaries for all of NM
+map('county', 'new mexico')
+
+# add pedon data locations
+points(p.locations, cex = 0.5, pch = 3, col = 'red')
+
+# all of the pedons fall within Hidalgo County, need to zoom in to map
+
+# get extent from p.locations
+
+p.locations@bbox # used this as a rough quide for extent of map
+
+# set up custom xy coordinates for new map extent
+xmin <- p.locations@bbox[1,1]-.04
+xmax <- p.locations@bbox[1,2]*-1 +.1
+ymin <- p.locations@bbox[2,1]-.1
+ymax <- p.locations@bbox[2,2]-.3
+
+xlim <- c(xmin, xmax)
+ylim <- c(ymin, ymax)
+
+# create new map
+map('county', 'New Mexico', xlim=xlim, ylim=ylim)
+
+#add pedon data locations, not the symbol styling
+points(p.locations, cex = 1, pch = 3, col = 'red')
+box()
+
+# write points to shape file for future use
+library(rgdal)
+
+writeOGR(p.locations, dsn = "C:/workspace1", layer = "highlonesome.shp", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+```
+
+
+## Adding Pedon Horizon Lab Results Data
+Our office collects pH and EC in the field, using hand held digital meters. The current data structure of NASIS only allows us to populate EC in the pedon horizon lab results table. I realized that the SPC does not contain the pedon horizon lab results. The following was my work around. I have since realized that there is another way to do this utilizing the fetchNASISLabData() function or if using fetchNASIS(lab = TRUE).
+
+
+```{r adddata}
+# We are interested in seeing the range of EC values for the surface horizon, since we populate these values in the pedon horizon lab results, I will need to bring in the data as a csv and join to the SPC
+
+library(readr)
+# bringing in csv file containg ec data for every horizon
+ec <- read_csv("C:/workspace1/ec.csv")
+
+# inspecting ec object
+head(ec)
+#str(ec)
+#head(p)
+
+# changing column names
+names(ec) <- c('peiid', 'phiid', 'name', 'top', 'bottom', 'ec')
+
+# convert to data frame
+ec.df <- as.data.frame(ec)
+
+class(ec.df)
+head(ec)
+
+# set up new data frame ith only phiid and ec
+ec.df <- as.data.frame(ec[, c(2,6)])
+
+# extract horizon data from p
+h <- horizons(p)
+
+#str(h)
+
+# add ec data to h 
+h1 <- merge(h, ec.df, by = 'phiid')
+
+#head(h1)
+
+# create new SPC p1 from p and replace horizons with h1
+p1 <- p
+horizons(p1) <- h1
+#str(p1)
+
+
+```
+
+
+# Review of pedons
+Highlonesome is a Fine-loamy, mixed, superactive, thermic, Sodic Haplocalcids soil formed in lacustrine and alluvial deposits of playa lakes found typically around the margins in playa steps.
+
+
+## Review of Landform data
+```{r geomorphreview}
+
+library(Hmisc)# required for plot
+
+# create lf object 
+lf <- sort(table(p1$landform_string), decreasing = TRUE)
+
+# plot of landforms
+dotchart2(lf, col = 'black', xlim = c(0, max(lf)), cex.labels = 0.75)
+
+# note 3 pedons should be reviewed one has fan piedmont, one has fan skirt, and one is swale, review in ArcGIS and fix in NASIS or remove from selected profiles
+head(lf)
+#print(lf)
+lf.rm <- lf[c(7:9)]
+names(lf.rm)
+
+
+# create an index with landforms to review
+lf.idx <- which(p1$landform_string == 'swale' | p1$landform_string == 'fan piedmont' | p1$landform_string == 'fan skirt & playa step')
+
+lf1 <- p1[lf.idx, ]
+
+# site ids to review landforms on
+print(lf1$site_id)
+
+#> print(lf1$site_id)
+#[1] "2015NM023001" "2015NM023147" "2016NM023017"
+```
+
+
+## Review of Textures
+Due to the nature of these soils, rock fragments may be present but at less than 15 percent.
+```{r texturereview}
+# looking into soil textures
+sort(table(p$texture), decreasing=TRUE)
+
+# there are seversal gravelly and very gravelly textured pedons in NASIS, I want to remove them because Highlonesome sould have < 15% gravels
+
+# inspecting data slots of SPC object p
+#p$texture
+#p$texture_class
+#p$fragvoltot
+
+# create an index for gravelly textures
+# idx <- which(p$fragvoltot > 15)
+#p2 <- p[idx, ]
+#p2
+# this method was not working for me used subsetProfiles below
+
+p2 <- subsetProfiles(p, h = 'fragvoltot > 15')
+
+table(p2$texture)
+#table(p2$fragvoltot)
+
+
+# plot profiles that have rock fragments
+par(mar=c(0,0,2,1))
+plot(p2, label='site_id')
+
+# get site_id's for pedons with any horizon that has >% RF
+print(p2$site_id)
+
+#> print(p2$site_id)
+#[1] "2015NM023074" "2015NM023147" "2015NM023034"
+# I changed these to Highlonesome family in NASIS
+
+# I want to remove the profiles with > 15% RF from any further analysis
+p1@site$pedon_id
+
+# creating new spc objects without the pedons above
+p3 <- p1[2:28]
+p4 <- p1[30:36]
+p5 <- p1[38:42]
+
+length(p1) 
+# original number of pedons
+
+# combining subset spcs into new spc called p1
+p1 <- rbind(p3, p4, p5)
+
+length(p1)
+# new number of pedons
+
+
+# creating soil profile plots to look graphically look at the clay contents
+
+par(mar=c(0,0,3,0)) # tighter figure margins
+plot(p1[1:19, ], label = 'site_id', color = 'clay')
+
+# note 2016NM023006 dosn't appear to be fine-loamy, review in NASIS
+# this pedon is coarse-loamy remove from spc
+p1@site$pedon_id
+
+# removing specific record
+p1 <- p1[-10, ]
+
+# verifying pedon id's
+p1@site$pedon_id
+
+
+par(mar=c(0,0,3,0)) # tighter figure margins
+plot(p1[20:38, ], label = 'site_id', color = 'clay')
+```
+
+
+# Range in Characteristics
+
+## Site Data
+```{r shdata}
+library(plyr)
+library(soilReports)
+library(reshape2)
+library(knitr)
+
+# get horizon and site level data from the SPC
+h <- horizons(p1)
+s <- site(p1)
+```
+
+
+## Elevation, Slope, Aspect
+```{r elev}
+# creating a vector of variables to use below
+vars <- c('elev_field', 'slope_field')
+
+# extracting elevation and slope from the site data
+elev.slp <- subset(s, select = vars)
+
+# not necessary, but renaiming variables
+colnames(elev.slp) <- c("Elevation", "Slope")
+
+# convert data from wide format to long for the plyr package
+elev.slp <- melt(elev.slp)
+
+# create a table with the ric
+elev.slp.t <- ddply(elev.slp, .(variable), summarize, range = prettySummary(value))
+
+# aspect - have to treat data differently since it is circular data
+# creating a vector of which variable to select
+vars <- c("aspect_field")
+
+# extracting aspect data from site data
+aspect <- subset(s, select = vars)
+
+# renaming column
+colnames(aspect) <- c("Aspect")
+
+# converting data from wide format to long
+aspect <- melt(aspect)
+
+library(circular)# necessary for circular data
+# extracting aspect values and replacing with circular data
+aspect$value <- circular(aspect$value, template="geographic", units="degrees", modulo="2pi")
+
+# create table with summarized ric
+aspect.t <- ddply(aspect, .(variable), summarize, range = prettySummary(value))
+
+# combined Elev, Slp, and Aspect using the rbind below
+kable(rbind(elev.slp.t, aspect.t), caption = "Elevation, Slope, Aspect (min, 25th, median, 75th, max)(n)", align = 'c')
+```
+ 
+
+## Slope Shape
+```{r slopeshape}
+# inspecting slope shape
+s$shapedown
+s$shapeacross
+
+# creating a vector of variables
+vars <- c('shapedown', 'shapeacross')
+
+# subsetting site data selecting only variables
+ss <- subset(s, select = vars)
+
+# inspecting slope shape data table
+#ss.t <- table(ss)
+
+# dropping un-used data levels
+ss.drop <- droplevels(ss)
+
+# creating data table with slope shape
+ss.t2 <- xtabs(~ shapedown + shapeacross, data = ss.drop, drop.unused.levels = TRUE)
+
+# inspecting frequency table
+ftable(ss.t2)
+
+kable(ss.t2, caption = "Slope Shape (counts)", align = 'c')
+```
+
+
+## Landform and Parent material
+```{r landparent}
+# review of gomorphic positions
+library(Hmisc)# required for plot
+
+# create lf object 
+lf <- sort(table(p1$landform_string), decreasing = TRUE)
+
+# plot of landforms
+dotchart2(lf, col = 'black', xlim = c(0, max(lf)), cex.labels = 0.75)
+
+## parent material vs landform
+
+# select variables
+vars <-  c('pmkind', 'landform_string')
+
+# subset data
+pm.l <- subset(s, select = vars)
+
+# drop levels
+pm.l <- droplevels(pm.l)
+
+# create table
+pm.l.t <- xtabs(~ pmkind + landform_string, data = pm.l)
+
+# inspecting frequency table
+ftable(pm.l.t)
+
+kable(pm.l.t, caption = "Parent Material vs. Landform (counts)", align = 'c')
+```
+
+
+## Drainage
+```{r Drainage}
+# select variables
+vars <- c('drainagecl')
+
+# subset data
+drain <- subset(s, select = vars)
+
+# rename cols
+colnames(drain) <- c('Drainage Class')
+
+# drop levels
+#drain <- droplevels(drain)
+
+# create table
+drain.t <- table(drain)
+
+drain.t # inspect table
+
+kable(drain.t, caption = "Drainage Class", align = 'c')
+```
+
+
+## Earth Cover Kind
+earth cover kind 1 is on the x-axis and earth cover kind 2 is on the y-axis
+```{r coverkind}
+# creating a vector of variables
+vars <- c('earthcovkind1', 'earthcovkind2')
+
+# subsetting data
+eck <- subset(s, select = vars)
+
+#eck #inspecting data element
+
+eck <- droplevels(eck) #removing other levels
+
+# create table
+eck.t <- xtabs(~ earthcovkind1 + earthcovkind2, data = eck)
+
+#eck.t #inspecting table
+
+kable(eck.t, caption = "Earth Cover Kind - earth cover kind 1 is on the x-axis and earth cover kind 2 is on the y-axis", align = 'c')
+```
+
+
+## Taxonomy
+```{r taxonomy}
+# create a vector of variables
+vars <- c('pedon_id', 'taxonname', 'taxpartsize', 'taxsubgrp')
+
+# selecting the subset of data
+tax <- subset(s, select = vars)
+
+# changing the col names
+colnames(tax) <- c('Pedon ID', 'Taxon Name', 'Particle Size Class', 'Subgroup')
+
+kable(tax, caption = 'Review of Pedon Taxonomy', align = 'c')
+```
+
+
+## Diagnostic features
+```{r diagfeat}
+# extract diagnostic data from spc
+d <- p1@diagnostic
+
+#d #inspecting data
+
+d <- d[, 2:4] # removing peiid col
+
+#d #inspecting data
+
+# using the transform function to add thickness
+d <- transform(d, 
+               thickness = featdepb - featdept,
+               featkind = as.character(featkind) 
+)
+
+#d #inspecting data
+
+# changing from wide to long format
+d <- melt(d, id.vars = 'featkind', measure.vars = c('featdept', 'featdepb', 'thickness'))
+
+#d #inspecting data
+
+# create a table with the ric
+d.t <- ddply(d, .(variable, featkind), summarize, range = prettySummary(value))
+
+# dcast used to aggregate data back to feature kind on x axis and depths and thick on y
+d.t <- dcast(d.t, featkind ~ variable, value.var = 'range')
+
+kable(d.t, caption = "Diagnostic Features", align = 'c')
+```
+
+
+## Surface Rock Fragments
+```{r surfrockfrag}
+# a direct copy from the Roecker reports
+
+# grabbing the data from the site object
+srf <- s[grepl("surface_", names(s))]
+
+# changing the names
+names(srf) <- gsub("surface_", "", names(srf))
+
+# adding total surface fragments
+srf <- within(srf, {
+  total_srf = gravel + cobbles + stones + boulders + flagstones + channers
+  gravel = gravel - fgravel
+})
+
+# creating a list of variables to select from
+vars <- c("total_srf", "fgravel", "gravel", "cobbles", "stones", "boulders", "channers", "flagstones")
+
+# transforming data from wide to long format
+srf.lo <- melt(srf, measure.vars = vars)
+
+# running statistical analysis
+srf.5n <- ddply(srf.lo, .(variable), summarize,
+                range = prettySummary(value)
+)
+
+kable(srf.5n, caption =  "Surface rock fragments (min, 25th, median, 75th, max)(n)", align = 'c')
+```
+
+
+## Generalized Horizon Designations
+```{r genhz}
+
+# viewing horizon designations
+sort(table(h$hzname), decreasing = TRUE)
+
+# generalized horizon labels
+n <- c("An",
+       "Bkn1",
+       "Bkn2",
+       "Cn")
+# REGEX rules
+r <- c("A",
+       "B",
+       "2|3|4|kk|^Bknz$",
+       "C")
+
+# Compute genhz labels and add to dataset
+h$genhz <- generalize.hz(h$hzname, n, r)
+
+p1$genhz <- generalize.hz(p1$hzname, n, r)
+```
+
+
+## Comparison of genhz and hzname pattern matching
+```{r genhzpattern}
+# select horizon names and gen hz lables
+hz_t <- addmargins(table(h$genhz, h$hzname))
+
+# create an index to limit the table size
+idx <- pIndex(hz_t, 10)
+
+# plot 10 horizon designations per row
+for (i in unique(idx)){
+  print(kable(hz_t[, c(idx == i)], align = 'c', digits = 0, caption = "Horizon designations vs generic horizon designations (counts)"))
+}
+```
+
+
+## Profile Plots
+```{r profileplots}
+library(RColorBrewer)
+
+cols <- brewer.pal(n = length(levels(p1$genhz)), name = "Set1") 
+hz.names <- levels(p1$genhz)
+
+# assign a color to each generalized horizon label
+p1$genhz.soil_color <- cols[match(p1$genhz, hz.names)]
+
+# create an index to limit the number of plots to print
+idx <- pIndex(p1, 10)
+
+# plot 10 profiles at a time
+for (i in unique(idx)){
+  plot(p1[idx == i], name = 'hzname', color = 'genhz.soil_color', label = 'pedon_id')
+  title("Soil profile plots")
+  legend('bottomleft', legend = hz.names, pt.bg = cols, pch = 22, horiz = TRUE, pt.cex = 2, text.width = 1)
+}
+```
+
+
+## General Horizon Depths
+```{r genhzdepths}
+
+# basically a direct copy from Roecker reports
+
+# transforming data from wide to long format
+genhz.lo <- melt(p1@horizons, id.vars="genhz", measure.vars = c('hzdept', 'hzdepb'))
+
+# creating thickness data from horizon depths
+genhz.thk <- ddply(p1@horizons, .(phiid, genhz), summarize, thickness=sum(hzdepb-hzdept))
+
+# transforming data wide to long
+genhz.lo2 <- melt(genhz.thk, id.vars = "genhz", measure.vars = 'thickness')
+
+# combining hzn depths and thickness 
+genhz.lo <- rbind(genhz.lo, genhz.lo2)
+
+# creating summary statistics
+genhz.5n <- ddply(genhz.lo, .(variable, genhz), summarize,
+                  range = prettySummary(value)
+)
+
+# dcast is changing the structure so that genhz is on the x acis and the variable is on the y
+kable(dcast(genhz.5n, genhz ~ variable, value.var = 'range'), align = 'c', caption = "Depths and thickness of generic horizons (min, 25th, median, 75th, max)(n)")
+```
+
+
+## Texture and Rock Frags
+```{r texture}
+# creating a vector of variable names
+vars <- c('clay', 'silt', 'sand', 'total_frags_pct')
+
+# getting data from variables and transforming it from wide to long format
+h.tex <- melt(p1@horizons, id.vars = "genhz", measure.vars = vars)
+
+# creating summary statistics
+h.tex <- ddply(h.tex, .(variable, genhz), summarize, range = prettySummary(value))
+
+# aggregating data by genetic horizon
+h.tex <- dcast(h.tex, genhz ~ variable, value.var = 'range')
+
+kable(h.tex, align = 'c', caption = "Particle size seperates by genetic horizon (min, 25th, median, 75th, max)(n)" )
+```
+
+
+## Texture Class
+```{r texclass}
+# pulling texture classes as its own table
+h.texcl <- h$texcl
+
+# inspecting the frequency table
+ftable(h.texcl)
+
+# generating count table of texture classes by genetic horizon
+hz_tex <- addmargins(xtabs(~ genhz + texture, data = p1@horizons))
+
+# inspecting texture table
+hz_tex
+
+# rearranging cols
+kable(hz_tex[, c(4,5,10,9,3,6,2,8,7,1)], caption = "Texture Class by genetic horizon (counts)", align = 'c')
+
+
+
+# create soil texture tiangle plots
+library(soiltexture)
+
+
+texture.df <- cbind.data.frame(p1@horizons$genhz, p1@horizons$sand, p1@horizons$silt, p1@horizons$clay)
+colnames(texture.df) <- c("genhz", "SAND", "SILT", "CLAY")
+
+# subset by gen hz
+h.text.a <- subset(texture.df, texture.df$genhz == 'An')
+h.text.b1 <- subset(texture.df, texture.df$genhz == 'Bkn1')
+h.text.b2 <- subset(texture.df, texture.df$genhz == 'Bkn2')
+h.text.c <- subset(texture.df, texture.df$genhz == 'Cn')
+
+
+#texture plots
+TT.plot( class.sys = "USDA-NCSS.TT",
+         tri.data = h.text.a, 
+         main = "Soil Texture for An horizons", 
+         col = "red", 
+         cex = .5, 
+         grid.show = FALSE,
+         cex.axis = .5,
+         cex.lab = .7)
+
+# kept getting an error in teh plot because the sums on some of the horizons were not totalling up to 100
+# reviewed nasis data and made changes
+#h.tex.b1$sum = h.tex.b1$SAND + h.tex.b1$SILT + h.tex.b1$CLAY
+
+# Texture plot
+TT.plot( class.sys = "USDA-NCSS.TT",
+         tri.data = h.text.b1, 
+         main = "Soil Texture for Bkn1 horizons", 
+         col = "red", 
+         cex = .5, 
+         grid.show = FALSE,
+         cex.axis = .5,
+         cex.lab = .7)
+
+
+
+#texture plot
+TT.plot( class.sys = "USDA-NCSS.TT",
+         tri.data = h.text.b2, 
+         main = "Soil Texture for Bkn2 horizons", 
+         col = "red", 
+         cex = .5, 
+         grid.show = FALSE,
+         cex.axis = .5,
+         cex.lab = .7)
+
+
+#texture plot
+TT.plot( class.sys = "USDA-NCSS.TT",
+         tri.data = h.text.c, 
+         main = "Soil Texture for Cn horizons", 
+         col = "red", 
+         cex = .5, 
+         grid.show = FALSE,
+         cex.axis = .5,
+         cex.lab = .7)
+
+
+
+```
+
+
+## Chemistry
+```{r chemistry}
+# vector containing which variables are being selected
+vars <- c('phfield', 'ec')
+
+# data transformation from wide to long format
+h.chem.1 <- melt(p1@horizons, id.vars = "genhz", measure.vars = vars)
+
+# summarize data values by genetic horizon
+h.chem <- ddply(h.chem.1, .(variable, genhz), summarize, range=prettySummary(value))
+
+# aggregate data back by genetic horizon
+h.chem <- dcast(h.chem, genhz ~ variable, value.var = 'range')
+
+kable(h.chem, align = 'c', caption = "Chemical properties by genetic horizon (min, 25th, median, 75th, max)(n)")
+
+library(lattice)
+library(latticeExtra)
+
+# checking out the distribution of ph and ec data by genetic horizon
+bwplot(genhz ~ value | variable, data = h.chem.1,
+       main = "Box Plots of pH and EC by genetic horizon",
+       scales=list(x="free"), axis = axis.grid,
+       as.table = TRUE, layout = c(2,1)
+       )
+```
+
+
+## Effervescence
+```{r effervescence}
+# changing name 
+p1@horizons$effervescence[p1@horizons$effclass == "very slight"] <- "very.slight"
+
+# storing levels as vector
+eff <- c(violent = "violent", strong = "strong", slight = "slight", very.slight = "very slight", none = "none", missing = "missing")
+
+# applying lables as a factor
+p1@horizons$effervescence <- eff[p1@horizons$effervescence]
+effclass <- factor(p1@horizons$effervescence, levels = eff)
+
+# create table of effervescence class by genetic horizon
+effclass.t <- xtabs(~ genhz + effclass, data = p1@horizons, drop.unused.levels = FALSE)
+
+# viewing table
+effclass.t
+
+# creating table with ordered cols
+kable(addmargins(effclass.t[, c(5,1,2,3,4)]), caption = "Effervescence by genetic horizon counts)", align = 'c')
+```
+
+
+## Salinity
+```{r Salinity}
+# assigning salinity class based on ec data directly to new saltclass slot
+
+p1@horizons$saltclass <- ifelse(
+  p1@horizons$ec < 2, "nonsaline",
+  ifelse(
+      p1@horizons$ec < 4, "very.slightly",
+      ifelse(
+          p1@horizons$ec <8, "slightly",
+          ifelse(
+              p1@horizons$ec < 16, "moderately",
+              ifelse(
+                  p1@horizons$ec >= 16, "strongly", 
+                  "na"
+                )
+            )
+        )
+    )
+)
+
+
+# vector containing salt classes
+salt <- c(nonsaline = "nonsaline", very.slightly = "very slightly", slightly = "slightly", moderately = "moderately", strongly = "strongly", na = "na")
+
+# applying names to salt class 
+p1@horizons$saltclass <- salt[p1@horizons$saltclass]
+saltclass <- factor(p1@horizons$saltclass, levels =salt)
+
+# create salt class table gy genetic horizon
+saltclass.t <- xtabs(~ genhz + saltclass, data = p1@horizons, drop.unused.levels = FALSE)
+
+# reorder table columns
+saltclass.t[ , c(2,5,3,1,4)]
+
+# final table with reorderd cols 
+kable(addmargins(saltclass.t[, c(2,5,3,1,4)]), caption = "Salinity Class by genetic horizon (counts)", align = 'c')
+```
+
+
+## Alkalinity (pH Class)
+```{r alkalinity}
+# converting ph values to class
+
+p1@horizons$phclass <- ifelse(
+    p1@horizons$phfield < 6.0, "moderately.acid",
+    ifelse(
+      p1@horizons$phfield < 6.5, "slightly.acid",
+      ifelse(
+        p1@horizons$phfield < 7.3, "neutral",
+        ifelse(
+          p1@horizons$phfield < 7.9, "slightly.alkaline",
+          ifelse(
+            p1@horizons$phfield < 8.4, "modeately.alkaline",
+            ifelse(
+              p1@horizons$phfield <= 9, "strongly.alkaline",
+              ifelse(
+                p1@horizons$phfield > 9, "very.strongly.alkaline",
+                "na"
+              )
+            )
+          )
+        )
+      )
+    )
+)
+
+
+
+# creating a vector of levels
+ph <- c(moderately.acid = "moderately acid", slightly.acid = "slightly acid", neutral = "neutral", slightly.alkaline = "slightly alkaline", moderately.alkaline = "moderately alkaline", strongly.alkaline = "strongly alkaline", very.strongly.alkaline = "very strongly alkaline", na = "none")
+
+# applying names
+p1@horizons$phclass <- ph[p1@horizons$phclass]
+phclass <- factor(p1@horizons$phclass, levels = ph)
+
+
+kable(addmargins(xtabs(~ genhz + phclass, data = p1@horizons, drop.unused.levels = TRUE)), digits = 0, caption = "pH Class by generic horizon", align = 'c')
+
+```
+
+
+## Color
+```{r color}
+
+# Hue
+kable(addmargins(xtabs(~ p1@horizons$genhz + p1@horizons$d_hue, data = p1@horizons, drop.unused.levels = TRUE)), digits = 0, caption = "Dry hue by generic horizon (counts)")
+
+kable(addmargins(xtabs(~ genhz + m_hue, data = p1@horizons, drop.unused.levels = TRUE)), digits = 0, caption = "Moist hue by generic horizon (counts)")
+
+# Value and Chroma
+vars <- c('d_value', 'd_chroma', 'm_value', 'm_chroma')
+
+h.col <- melt(p1@horizons, id.vars = "genhz", measure.vars = vars)
+h.col <- ddply(h.col, .(variable, genhz), summarize, range=prettySummary(value))
+h.col <- dcast(h.col, genhz ~ variable, value.var = 'range')
+
+kable(h.col, align = 'c', caption = "Color(Value and Chroma) by genetic horizon (min, 25th, median, 75th, max)(n)" )
+
+```
