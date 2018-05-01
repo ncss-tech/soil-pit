@@ -8,6 +8,9 @@ http://ncss-tech.github.io/soil-pit/sandbox/jacob/artifact_analysis/artifact_ana
 Marine and estuarine subaqeuous soil bulk density data exploration in MMA 12-TOL---
 http://ncss-tech.github.io/soil-pit/sandbox/jacob/sas_db_analysis/sas_satiated_Db_analysis_markdown.html
 
+Summary of Electrical Conductivity data for Subaqueous Soils in MMA 12-TOL---
+http://ncss-tech.github.io/soil-pit/sandbox/jacob/sas_EC_analysis/12_TOL_SAS_EC_analysis.html
+
 Analysis of selected Pedon-level soil properties for Wet Soils groupings---
 http://ncss-tech.github.io/soil-pit/sandbox/jacob/wet_soils/wet_soil_order_markdown.html
 
