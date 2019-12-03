@@ -1,0 +1,1248 @@
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\hypersetup{unicode=true,
+            pdftitle={Connecticut Three Farm Soil Health Sampling Project DRAFT},
+            pdfauthor={Megan McClellan, Abigail Phillips, Matt Snurkowski, Jim Hyde, Debbie Surabian, Jacob Isleib, Lisa Krall, Marissa Theve, Donald Parizek},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+%%% Use protect on footnotes to avoid problems with footnotes in titles
+\let\rmarkdownfootnote\footnote%
+\def\footnote{\protect\rmarkdownfootnote}
+
+%%% Change title format to be more compact
+\usepackage{titling}
+
+% Create subtitle command for use in maketitle
+\newcommand{\subtitle}[1]{
+  \posttitle{
+    \begin{center}\large#1\end{center}
+    }
+}
+
+\setlength{\droptitle}{-2em}
+
+  \title{Connecticut Three Farm Soil Health Sampling Project DRAFT}
+    \pretitle{\vspace{\droptitle}\centering\huge}
+  \posttitle{\par}
+    \author{Megan McClellan, Abigail Phillips, Matt Snurkowski, Jim Hyde, Debbie
+Surabian, Jacob Isleib, Lisa Krall, Marissa Theve, Donald Parizek}
+    \preauthor{\centering\large\emph}
+  \postauthor{\par}
+      \predate{\centering\large\emph}
+  \postdate{\par}
+    \date{March 11, 2019}
+
+
+\begin{document}
+\maketitle
+
+{
+\setcounter{tocdepth}{2}
+\tableofcontents
+}
+\section{Background}\label{background}
+
+\textbf{DRAFT} \emph{This markdown reflects an in-progress data
+analysis.}
+
+From October 2014 to September 2016, staff from USDA-NRCS Connecticut
+and the Eastern Connecticut Soil and Water Conservation District sampled
+soils and vegetation on three partnering farms in the northeastern part
+of the state. The three farms were existing NRCS cooperators and had
+started implementing soil health-related practices on their managed crop
+lands.
+
+\section{Objective}\label{objective}
+
+Establish baseline soil health indicator data across land uses typical
+in dairy production farms in Connecticut.
+
+\section{Methods}\label{methods}
+
+Field type was used to stratify sampling, with silage corn, hay, and
+forested woodlots being categories. Surface horizons of soils at all the
+sites were sampled and sent to Cornell University for Cornell Assessment
+of Soil Health (CASH) analysis. Soil health indicators measured include
+Available Water Capacity (AWC), surface hardness, subsurface hardness,
+aggregate stability, organic matter, ACE protein index, respiration,
+active Carbon, pH, Phosphorus, Potassium, Magnesium, Iron, Manganese,
+Zinc, particle size analysis (sand, silt, clay, and USDA textural
+classification), and overall CASH quality score. Additionally,
+penetration resistance (at 0-6" and 6-18``), soil temperature (at every
+inch within upper 3'') and infiltration (0-1" and 1-2``; double-ring
+method) were measured in field.
+
+In corn fields, plant population density was measured by counting number
+of plants within 50-sq-ft plot. Results were also converted to plants
+per acre. Corn Stalk Nitrate Test (CSNT) and Pre-Sidedress N testing
+(PSNT) were analyzed at University of Connecticut (number of reps vary
+at each site).
+
+In hay fields, average plant height was recorded.
+
+Forested woodlots were not characterized in terms of forestry
+mensuration metrics or vegetation plot data.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{### load data and data preparation}
+
+\KeywordTok{setwd}\NormalTok{(}\StringTok{"S:/NRCS/Technical_Soil_Services/Soil Health Initiative/3 Farm Sampling Plan FY15"}\NormalTok{)}
+\KeywordTok{getwd}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "S:/NRCS/Technical_Soil_Services/Soil Health Initiative/3 Farm Sampling Plan FY15"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{soil <-}\StringTok{ }\KeywordTok{read.csv}\NormalTok{(}\StringTok{'soil_testing.csv'}\NormalTok{)}
+\NormalTok{soil2 <-}\StringTok{ }\NormalTok{soil[,}\KeywordTok{c}\NormalTok{(}\DecValTok{1}\OperatorTok{:}\DecValTok{26}\NormalTok{, }\DecValTok{29}\NormalTok{)]}
+\NormalTok{soil2}\OperatorTok{$}\NormalTok{all_fields <-}\StringTok{ "all field types"}
+\NormalTok{soil.num <-}\StringTok{ }\NormalTok{soil[, }\KeywordTok{c}\NormalTok{(}\DecValTok{8}\OperatorTok{:}\DecValTok{26}\NormalTok{)]}
+\NormalTok{soil.num[(}\DecValTok{2}\OperatorTok{:}\DecValTok{19}\NormalTok{)] <-}\StringTok{ }\KeywordTok{lapply}\NormalTok{(soil.num[(}\DecValTok{2}\OperatorTok{:}\DecValTok{19}\NormalTok{)], as.numeric)}
+\NormalTok{soil.num2 <-}\StringTok{ }\NormalTok{soil.num[}\KeywordTok{complete.cases}\NormalTok{(soil.num),]}
+\end{Highlighting}
+\end{Shaded}
+
+\section{Cornell Assessment of Soil Health
+data}\label{cornell-assessment-of-soil-health-data}
+
+Use correlation matrix (Pearson's correlation coefficient) and related
+plots to explore CASH data
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{corr.matrix <-}\StringTok{ }\KeywordTok{as.data.frame}\NormalTok{(}\KeywordTok{cor}\NormalTok{(soil.num))}
+\NormalTok{corr.matrix}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##                          Available.Water.Capacity Surface.Hardness
+## Available.Water.Capacity                1.0000000       -0.5539445
+## Surface.Hardness                       -0.5539445        1.0000000
+## Subsurface.Hardness                    -0.4523309        0.7585165
+## Aggregate.Stability                     0.4791683       -0.2554636
+## Organic.Matter                          0.6656133       -0.7261205
+## ACE.Soil.Protein.Index                  0.2229837       -0.5240970
+## Respiration                             0.5908734       -0.4656209
+## Active.Carbon                           0.1411337       -0.2342551
+## pH                                     -0.4755566        0.4844388
+## P                                      -0.1637707        0.1243420
+## K                                      -0.2609158        0.1335164
+## Mg                                     -0.3900091        0.4709443
+## Fe                                      0.5851142       -0.5938671
+## Mn                                      0.6361390       -0.5867904
+## Zn                                     -0.4465346        0.3150540
+## overall.quality                         0.4021091       -0.6281591
+## Sand                                   -0.6791290        0.4533916
+## Silt                                    0.6434522       -0.3820994
+## Clay                                    0.5181295       -0.3948010
+##                          Subsurface.Hardness Aggregate.Stability
+## Available.Water.Capacity         -0.45233088           0.4791683
+## Surface.Hardness                  0.75851648          -0.2554636
+## Subsurface.Hardness               1.00000000          -0.4506783
+## Aggregate.Stability              -0.45067831           1.0000000
+## Organic.Matter                   -0.77718340           0.3998237
+## ACE.Soil.Protein.Index           -0.65694612           0.2121981
+## Respiration                      -0.56587506           0.4848530
+## Active.Carbon                    -0.09419751          -0.2115238
+## pH                                0.76078594          -0.6546554
+## P                                 0.38148213          -0.4281860
+## K                                 0.51136527          -0.5909745
+## Mg                                0.70036395          -0.4948690
+## Fe                               -0.69180346           0.3528148
+## Mn                               -0.57231709           0.3335255
+## Zn                                0.55187651          -0.6737006
+## overall.quality                  -0.57973111           0.0321349
+## Sand                              0.63964277          -0.6126106
+## Silt                             -0.51667542           0.5840588
+## Clay                             -0.68425870           0.5926931
+##                          Organic.Matter ACE.Soil.Protein.Index Respiration
+## Available.Water.Capacity      0.6656133             0.22298371   0.5908734
+## Surface.Hardness             -0.7261205            -0.52409695  -0.4656209
+## Subsurface.Hardness          -0.7771834            -0.65694612  -0.5658751
+## Aggregate.Stability           0.3998237             0.21219811   0.4848530
+## Organic.Matter                1.0000000             0.52259783   0.6816854
+## ACE.Soil.Protein.Index        0.5225978             1.00000000   0.4815010
+## Respiration                   0.6816854             0.48150103   1.0000000
+## Active.Carbon                 0.4283916             0.38101622   0.2979176
+## pH                           -0.7140887            -0.41122125  -0.5155118
+## P                            -0.2080111            -0.05668465  -0.2379870
+## K                            -0.3265514            -0.13928341  -0.3227833
+## Mg                           -0.5396156            -0.33045673  -0.2800560
+## Fe                            0.7566573             0.67285184   0.5634015
+## Mn                            0.6656882             0.14457290   0.4753685
+## Zn                           -0.4358634            -0.26464585  -0.4623571
+## overall.quality               0.6558646             0.54473035   0.5614034
+## Sand                         -0.7399279            -0.39019557  -0.6604401
+## Silt                          0.6240705             0.27496832   0.5473286
+## Clay                          0.7070695             0.47613566   0.6849703
+##                          Active.Carbon          pH           P          K
+## Available.Water.Capacity    0.14113367 -0.47555658 -0.16377067 -0.2609158
+## Surface.Hardness           -0.23425513  0.48443883  0.12434201  0.1335164
+## Subsurface.Hardness        -0.09419751  0.76078594  0.38148213  0.5113653
+## Aggregate.Stability        -0.21152383 -0.65465537 -0.42818596 -0.5909745
+## Organic.Matter              0.42839163 -0.71408873 -0.20801113 -0.3265514
+## ACE.Soil.Protein.Index      0.38101622 -0.41122125 -0.05668465 -0.1392834
+## Respiration                 0.29791757 -0.51551182 -0.23798704 -0.3227833
+## Active.Carbon               1.00000000  0.09266299  0.49591548  0.3734904
+## pH                          0.09266299  1.00000000  0.54027305  0.7950207
+## P                           0.49591548  0.54027305  1.00000000  0.7613601
+## K                           0.37349040  0.79502066  0.76136010  1.0000000
+## Mg                          0.31786008  0.85763323  0.58330387  0.7080557
+## Fe                          0.23370161 -0.69968739 -0.34641188 -0.4194841
+## Mn                          0.12611015 -0.51002543 -0.09846475 -0.1991397
+## Zn                          0.28034979  0.63272867  0.75336430  0.7484298
+## overall.quality             0.45907802 -0.16131235 -0.13377890  0.1006912
+## Sand                       -0.06233264  0.68030270  0.37888199  0.4354967
+## Silt                       -0.01613103 -0.58946900 -0.33972580 -0.3839293
+## Clay                        0.16256224 -0.71062417 -0.36494675 -0.4996403
+##                                   Mg         Fe          Mn         Zn
+## Available.Water.Capacity -0.39000910  0.5851142  0.63613905 -0.4465346
+## Surface.Hardness          0.47094431 -0.5938671 -0.58679036  0.3150540
+## Subsurface.Hardness       0.70036395 -0.6918035 -0.57231709  0.5518765
+## Aggregate.Stability      -0.49486896  0.3528148  0.33352547 -0.6737006
+## Organic.Matter           -0.53961556  0.7566573  0.66568821 -0.4358634
+## ACE.Soil.Protein.Index   -0.33045673  0.6728518  0.14457290 -0.2646458
+## Respiration              -0.28005601  0.5634015  0.47536853 -0.4623571
+## Active.Carbon             0.31786008  0.2337016  0.12611015  0.2803498
+## pH                        0.85763323 -0.6996874 -0.51002543  0.6327287
+## P                         0.58330387 -0.3464119 -0.09846475  0.7533643
+## K                         0.70805574 -0.4194841 -0.19913973  0.7484298
+## Mg                        1.00000000 -0.6593094 -0.41500351  0.5525370
+## Fe                       -0.65930943  1.0000000  0.29751709 -0.4518155
+## Mn                       -0.41500351  0.2975171  1.00000000 -0.3195131
+## Zn                        0.55253699 -0.4518155 -0.31951310  1.0000000
+## overall.quality          -0.06852092  0.4034353  0.44114853 -0.2203288
+## Sand                      0.57137298 -0.5692371 -0.62692051  0.5230901
+## Silt                     -0.50778803  0.4086360  0.57103368 -0.4680421
+## Clay                     -0.54574066  0.6997136  0.51475854 -0.5472209
+##                          overall.quality        Sand        Silt
+## Available.Water.Capacity      0.40210915 -0.67912897  0.64345217
+## Surface.Hardness             -0.62815910  0.45339158 -0.38209937
+## Subsurface.Hardness          -0.57973111  0.63964277 -0.51667542
+## Aggregate.Stability           0.03213490 -0.61261061  0.58405884
+## Organic.Matter                0.65586464 -0.73992785  0.62407052
+## ACE.Soil.Protein.Index        0.54473035 -0.39019557  0.27496832
+## Respiration                   0.56140344 -0.66044011  0.54732861
+## Active.Carbon                 0.45907802 -0.06233264 -0.01613103
+## pH                           -0.16131235  0.68030270 -0.58946900
+## P                            -0.13377890  0.37888199 -0.33972580
+## K                             0.10069119  0.43549669 -0.38392929
+## Mg                           -0.06852092  0.57137298 -0.50778803
+## Fe                            0.40343531 -0.56923706  0.40863595
+## Mn                            0.44114853 -0.62692051  0.57103368
+## Zn                           -0.22032876  0.52309014 -0.46804215
+## overall.quality               1.00000000 -0.47644418  0.40877005
+## Sand                         -0.47644418  1.00000000 -0.95398060
+## Silt                          0.40877005 -0.95398060  1.00000000
+## Clay                          0.35796911 -0.74729456  0.52543055
+##                                Clay
+## Available.Water.Capacity  0.5181295
+## Surface.Hardness         -0.3948010
+## Subsurface.Hardness      -0.6842587
+## Aggregate.Stability       0.5926931
+## Organic.Matter            0.7070695
+## ACE.Soil.Protein.Index    0.4761357
+## Respiration               0.6849703
+## Active.Carbon             0.1625622
+## pH                       -0.7106242
+## P                        -0.3649468
+## K                        -0.4996403
+## Mg                       -0.5457407
+## Fe                        0.6997136
+## Mn                        0.5147585
+## Zn                       -0.5472209
+## overall.quality           0.3579691
+## Sand                     -0.7472946
+## Silt                      0.5254305
+## Clay                      1.0000000
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(corrplot)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning: package 'corrplot' was built under R version 3.5.2
+\end{verbatim}
+
+\begin{verbatim}
+## corrplot 0.84 loaded
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{corrplot}\NormalTok{(}\KeywordTok{cor}\NormalTok{(soil.num2), }\DataTypeTok{type =} \StringTok{"upper"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{3farm_soil_health_sampling_files/figure-latex/unnamed-chunk-2-1.pdf}
+
+\section{Merge Corn Count data with CASH
+results}\label{merge-corn-count-data-with-cash-results}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{plant <-}\StringTok{ }\KeywordTok{read.csv}\NormalTok{(}\StringTok{'plant_data.csv'}\NormalTok{, }\DataTypeTok{na.strings =} \KeywordTok{c}\NormalTok{(}\StringTok{''}\NormalTok{, }\StringTok{'na'}\NormalTok{))}
+\NormalTok{plant.corn <-}\StringTok{ }\NormalTok{plant[}\KeywordTok{which}\NormalTok{(plant}\OperatorTok{$}\NormalTok{field_type}\OperatorTok{==}\StringTok{'corn field'}\NormalTok{), }\KeywordTok{c}\NormalTok{(}\DecValTok{1}\OperatorTok{:}\DecValTok{9}\NormalTok{, }\DecValTok{19}\OperatorTok{:}\DecValTok{20}\NormalTok{)]}
+\NormalTok{plant.corn <-}\StringTok{ }\NormalTok{plant.corn[}\KeywordTok{complete.cases}\NormalTok{(plant.corn), ]}
+\KeywordTok{library}\NormalTok{(plyr)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning: package 'plyr' was built under R version 3.5.2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{### Summarize corn count data using mean}
+
+\NormalTok{plant.corn.sum <-}\StringTok{ }\KeywordTok{ddply}\NormalTok{(plant.corn, }\OperatorTok{~}\NormalTok{site_id, summarise, }\DataTypeTok{num_plant.mean=}\KeywordTok{mean}\NormalTok{(Number.of.Plants...}\FloatTok{50.}\NormalTok{ft2), }
+                        \DataTypeTok{plants_per_acre.mean =} \KeywordTok{mean}\NormalTok{(Plants...Acre))}
+
+\NormalTok{### Merge corn and soil data}
+
+\NormalTok{soil.corn.merge <-}\StringTok{ }\KeywordTok{merge}\NormalTok{(}\DataTypeTok{x=}\NormalTok{soil, }\DataTypeTok{y=}\NormalTok{plant.corn.sum, }\DataTypeTok{by=}\StringTok{"site_id"}\NormalTok{, }\DataTypeTok{all.y =} \OtherTok{TRUE}\NormalTok{)}
+\NormalTok{soil.corn.merge2 <-}\StringTok{ }\NormalTok{soil.corn.merge[, }\KeywordTok{c}\NormalTok{(}\DecValTok{8}\OperatorTok{:}\DecValTok{26}\NormalTok{, }\DecValTok{30}\OperatorTok{:}\DecValTok{31}\NormalTok{)]}
+\end{Highlighting}
+\end{Shaded}
+
+Again, use correlation matrix and plots to explore data
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{soil.corn.corrmatrix <-}\StringTok{ }\KeywordTok{as.data.frame}\NormalTok{(}\KeywordTok{cor}\NormalTok{(soil.corn.merge2))}
+\NormalTok{soil.corn.corrmatrix}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##                          Available.Water.Capacity Surface.Hardness
+## Available.Water.Capacity               1.00000000      -0.52241687
+## Surface.Hardness                      -0.52241687       1.00000000
+## Subsurface.Hardness                    0.20124411       0.28169120
+## Aggregate.Stability                    0.18066657       0.18952449
+## Organic.Matter                         0.44387906      -0.46550117
+## ACE.Soil.Protein.Index                 0.61299276      -0.52886598
+## Respiration                            0.72938706      -0.51437659
+## Active.Carbon                          0.55274821      -0.34425288
+## pH                                     0.49567824      -0.58689012
+## P                                      0.41711967      -0.18777222
+## K                                      0.46654770      -0.54276861
+## Mg                                     0.62167554      -0.58115080
+## Fe                                    -0.11530922      -0.22621852
+## Mn                                     0.55329486      -0.44241474
+## Zn                                    -0.01227620      -0.22229765
+## overall.quality                        0.47548617      -0.65498994
+## Sand                                  -0.26205184      -0.05932687
+## Silt                                   0.28374477       0.01727323
+## Clay                                   0.03597909       0.35507993
+## num_plant.mean                         0.15383781       0.21743151
+## plants_per_acre.mean                   0.15383781       0.21743151
+##                          Subsurface.Hardness Aggregate.Stability
+## Available.Water.Capacity          0.20124411         0.180666573
+## Surface.Hardness                  0.28169120         0.189524489
+## Subsurface.Hardness               1.00000000         0.182854260
+## Aggregate.Stability               0.18285426         1.000000000
+## Organic.Matter                    0.39454081        -0.266636323
+## ACE.Soil.Protein.Index            0.38159216        -0.213310872
+## Respiration                       0.28078637         0.005404556
+## Active.Carbon                     0.31401250        -0.261076891
+## pH                                0.11838027        -0.426647945
+## P                                 0.47553967        -0.127375745
+## K                                 0.32599266        -0.261526719
+## Mg                                0.28590107        -0.229536421
+## Fe                                0.07870630        -0.218697597
+## Mn                                0.06812266         0.016648629
+## Zn                                0.29228254        -0.445590946
+## overall.quality                  -0.13745702        -0.406226122
+## Sand                              0.16244912        -0.598925105
+## Silt                             -0.27031055         0.440934792
+## Clay                              0.16699540         0.823955144
+## num_plant.mean                    0.08466338         0.876876928
+## plants_per_acre.mean              0.08466338         0.876876928
+##                          Organic.Matter ACE.Soil.Protein.Index
+## Available.Water.Capacity      0.4438791              0.6129928
+## Surface.Hardness             -0.4655012             -0.5288660
+## Subsurface.Hardness           0.3945408              0.3815922
+## Aggregate.Stability          -0.2666363             -0.2133109
+## Organic.Matter                1.0000000              0.9302429
+## ACE.Soil.Protein.Index        0.9302429              1.0000000
+## Respiration                   0.7478290              0.8311385
+## Active.Carbon                 0.8811154              0.9059016
+## pH                            0.7114241              0.6862081
+## P                             0.6623713              0.6651379
+## K                             0.9216111              0.8411030
+## Mg                            0.9134551              0.9155966
+## Fe                            0.1367351              0.1607916
+## Mn                            0.5445616              0.6006689
+## Zn                            0.5200863              0.5004055
+## overall.quality               0.6063673              0.6094956
+## Sand                          0.2560823              0.1470618
+## Silt                         -0.2260861             -0.1225172
+## Clay                         -0.3365083             -0.2820065
+## num_plant.mean               -0.3543400             -0.2889252
+## plants_per_acre.mean         -0.3543400             -0.2889252
+##                           Respiration Active.Carbon          pH
+## Available.Water.Capacity  0.729387062    0.55274821  0.49567824
+## Surface.Hardness         -0.514376591   -0.34425288 -0.58689012
+## Subsurface.Hardness       0.280786372    0.31401250  0.11838027
+## Aggregate.Stability       0.005404556   -0.26107689 -0.42664795
+## Organic.Matter            0.747829046    0.88111538  0.71142407
+## ACE.Soil.Protein.Index    0.831138536    0.90590164  0.68620808
+## Respiration               1.000000000    0.83696527  0.62628551
+## Active.Carbon             0.836965269    1.00000000  0.62634447
+## pH                        0.626285508    0.62634447  1.00000000
+## P                         0.686350003    0.76956997  0.38615389
+## K                         0.757091301    0.80463822  0.82978290
+## Mg                        0.805265453    0.86305942  0.85556107
+## Fe                        0.117856521    0.05778896 -0.06298477
+## Mn                        0.801678471    0.71202033  0.31805793
+## Zn                        0.428315784    0.54128941  0.15158371
+## overall.quality           0.510896291    0.50606381  0.82827747
+## Sand                      0.029381053    0.09600397  0.36830435
+## Silt                     -0.046902286   -0.03705094 -0.23456509
+## Clay                     -0.012470043   -0.24694070 -0.62731330
+## num_plant.mean           -0.022555138   -0.31188367 -0.54995926
+## plants_per_acre.mean     -0.022555138   -0.31188367 -0.54995926
+##                                    P          K          Mg          Fe
+## Available.Water.Capacity  0.41711967  0.4665477  0.62167554 -0.11530922
+## Surface.Hardness         -0.18777222 -0.5427686 -0.58115080 -0.22621852
+## Subsurface.Hardness       0.47553967  0.3259927  0.28590107  0.07870630
+## Aggregate.Stability      -0.12737575 -0.2615267 -0.22953642 -0.21869760
+## Organic.Matter            0.66237134  0.9216111  0.91345513  0.13673509
+## ACE.Soil.Protein.Index    0.66513792  0.8411030  0.91559657  0.16079165
+## Respiration               0.68635000  0.7570913  0.80526545  0.11785652
+## Active.Carbon             0.76956997  0.8046382  0.86305942  0.05778896
+## pH                        0.38615389  0.8297829  0.85556107 -0.06298477
+## P                         1.00000000  0.6792130  0.65607248 -0.17635012
+## K                         0.67921301  1.0000000  0.91869873  0.01404090
+## Mg                        0.65607248  0.9186987  1.00000000 -0.06592196
+## Fe                       -0.17635012  0.0140409 -0.06592196  1.00000000
+## Mn                        0.50052488  0.4831524  0.53304958  0.33969542
+## Zn                        0.67951505  0.4811479  0.33317251  0.44939293
+## overall.quality           0.01577628  0.6206653  0.66258705  0.21701908
+## Sand                      0.19416693  0.2424799  0.21744098  0.13277174
+## Silt                     -0.16398926 -0.1902240 -0.13779599 -0.27051851
+## Clay                     -0.11542665 -0.3864006 -0.38962740 -0.03135906
+## num_plant.mean           -0.13542658 -0.3863484 -0.31672571 -0.24284962
+## plants_per_acre.mean     -0.13542658 -0.3863484 -0.31672571 -0.24284962
+##                                   Mn          Zn overall.quality
+## Available.Water.Capacity  0.55329486 -0.01227620      0.47548617
+## Surface.Hardness         -0.44241474 -0.22229765     -0.65498994
+## Subsurface.Hardness       0.06812266  0.29228254     -0.13745702
+## Aggregate.Stability       0.01664863 -0.44559095     -0.40622612
+## Organic.Matter            0.54456159  0.52008625      0.60636732
+## ACE.Soil.Protein.Index    0.60066893  0.50040554      0.60949563
+## Respiration               0.80167847  0.42831578      0.51089629
+## Active.Carbon             0.71202033  0.54128941      0.50606381
+## pH                        0.31805793  0.15158371      0.82827747
+## P                         0.50052488  0.67951505      0.01577628
+## K                         0.48315242  0.48114793      0.62066531
+## Mg                        0.53304958  0.33317251      0.66258705
+## Fe                        0.33969542  0.44939293      0.21701908
+## Mn                        1.00000000  0.44669729      0.38423005
+## Zn                        0.44669729  1.00000000      0.01747152
+## overall.quality           0.38423005  0.01747152      1.00000000
+## Sand                     -0.14990265  0.37605871      0.17412406
+## Silt                      0.10210351 -0.40268516     -0.07078204
+## Clay                      0.14968622 -0.23885062     -0.54171892
+## num_plant.mean            0.02901118 -0.41826275     -0.50432520
+## plants_per_acre.mean      0.02901118 -0.41826275     -0.50432520
+##                                 Sand        Silt        Clay
+## Available.Water.Capacity -0.26205184  0.28374477  0.03597909
+## Surface.Hardness         -0.05932687  0.01727323  0.35507993
+## Subsurface.Hardness       0.16244912 -0.27031055  0.16699540
+## Aggregate.Stability      -0.59892510  0.44093479  0.82395514
+## Organic.Matter            0.25608234 -0.22608610 -0.33650827
+## ACE.Soil.Protein.Index    0.14706184 -0.12251716 -0.28200650
+## Respiration               0.02938105 -0.04690229 -0.01247004
+## Active.Carbon             0.09600397 -0.03705094 -0.24694070
+## pH                        0.36830435 -0.23456509 -0.62731330
+## P                         0.19416693 -0.16398926 -0.11542665
+## K                         0.24247993 -0.19022397 -0.38640060
+## Mg                        0.21744098 -0.13779599 -0.38962740
+## Fe                        0.13277174 -0.27051851 -0.03135906
+## Mn                       -0.14990265  0.10210351  0.14968622
+## Zn                        0.37605871 -0.40268516 -0.23885062
+## overall.quality           0.17412406 -0.07078204 -0.54171892
+## Sand                      1.00000000 -0.94791784 -0.55951880
+## Silt                     -0.94791784  1.00000000  0.31412559
+## Clay                     -0.55951880  0.31412559  1.00000000
+## num_plant.mean           -0.52468701  0.33947033  0.90241365
+## plants_per_acre.mean     -0.52468701  0.33947033  0.90241365
+##                          num_plant.mean plants_per_acre.mean
+## Available.Water.Capacity     0.15383781           0.15383781
+## Surface.Hardness             0.21743151           0.21743151
+## Subsurface.Hardness          0.08466338           0.08466338
+## Aggregate.Stability          0.87687693           0.87687693
+## Organic.Matter              -0.35434001          -0.35434001
+## ACE.Soil.Protein.Index      -0.28892519          -0.28892519
+## Respiration                 -0.02255514          -0.02255514
+## Active.Carbon               -0.31188367          -0.31188367
+## pH                          -0.54995926          -0.54995926
+## P                           -0.13542658          -0.13542658
+## K                           -0.38634844          -0.38634844
+## Mg                          -0.31672571          -0.31672571
+## Fe                          -0.24284962          -0.24284962
+## Mn                           0.02901118           0.02901118
+## Zn                          -0.41826275          -0.41826275
+## overall.quality             -0.50432520          -0.50432520
+## Sand                        -0.52468701          -0.52468701
+## Silt                         0.33947033           0.33947033
+## Clay                         0.90241365           0.90241365
+## num_plant.mean               1.00000000           1.00000000
+## plants_per_acre.mean         1.00000000           1.00000000
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{corrplot}\NormalTok{(}\KeywordTok{cor}\NormalTok{(soil.corn.merge2), }\DataTypeTok{type =} \StringTok{"upper"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{3farm_soil_health_sampling_files/figure-latex/unnamed-chunk-4-1.pdf}
+
+\section{Select covariates with Pearson's coef \textgreater{}
+0.70}\label{select-covariates-with-pearsons-coef-0.70}
+
+From the correlation table above, select only covariates with a
+Pearson's coefficient \textgreater{} 0.70, to reduce the size of data
+used to generate a scatterplot matrix and second correlation plot.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(reshape2)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning: package 'reshape2' was built under R version 3.5.2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{soil.corn.corrmatrix.melt <-}\StringTok{ }\KeywordTok{subset}\NormalTok{(}\KeywordTok{melt}\NormalTok{(}\KeywordTok{cor}\NormalTok{(soil.corn.merge2)), value }\OperatorTok{>}\StringTok{ }\NormalTok{.}\DecValTok{70}\NormalTok{)}
+\NormalTok{soil.corn.corrmatrix.melt[(}\DecValTok{1}\OperatorTok{:}\DecValTok{2}\NormalTok{)] <-}\StringTok{ }\KeywordTok{lapply}\NormalTok{(soil.corn.corrmatrix.melt[(}\DecValTok{1}\OperatorTok{:}\DecValTok{2}\NormalTok{)], as.character)}
+\NormalTok{select <-}\StringTok{ }\OperatorTok{!}\NormalTok{(soil.corn.corrmatrix.melt}\OperatorTok{$}\NormalTok{Var1 }\OperatorTok{==}\StringTok{ }\NormalTok{soil.corn.corrmatrix.melt}\OperatorTok{$}\NormalTok{Var2)}
+\NormalTok{soil.corn.corrmatrix.melt <-}\StringTok{ }\NormalTok{soil.corn.corrmatrix.melt[select, ]}
+\NormalTok{soil.corn.corrmatrix.melt[}\KeywordTok{rev}\NormalTok{(}\KeywordTok{order}\NormalTok{(soil.corn.corrmatrix.melt}\OperatorTok{$}\NormalTok{value)),]}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##                         Var1                     Var2     value
+## 440           num_plant.mean     plants_per_acre.mean 1.0000000
+## 420     plants_per_acre.mean           num_plant.mean 1.0000000
+## 110           Organic.Matter   ACE.Soil.Protein.Index 0.9302429
+## 90    ACE.Soil.Protein.Index           Organic.Matter 0.9302429
+## 215           Organic.Matter                        K 0.9216111
+## 95                         K           Organic.Matter 0.9216111
+## 242                        K                       Mg 0.9186987
+## 222                       Mg                        K 0.9186987
+## 237   ACE.Soil.Protein.Index                       Mg 0.9155966
+## 117                       Mg   ACE.Soil.Protein.Index 0.9155966
+## 236           Organic.Matter                       Mg 0.9134551
+## 96                        Mg           Organic.Matter 0.9134551
+## 153   ACE.Soil.Protein.Index            Active.Carbon 0.9059016
+## 113            Active.Carbon   ACE.Soil.Protein.Index 0.9059016
+## 418                     Clay           num_plant.mean 0.9024137
+## 398           num_plant.mean                     Clay 0.9024137
+## 439                     Clay     plants_per_acre.mean 0.9024137
+## 399     plants_per_acre.mean                     Clay 0.9024137
+## 152           Organic.Matter            Active.Carbon 0.8811154
+## 92             Active.Carbon           Organic.Matter 0.8811154
+## 424      Aggregate.Stability     plants_per_acre.mean 0.8768769
+## 403      Aggregate.Stability           num_plant.mean 0.8768769
+## 84      plants_per_acre.mean      Aggregate.Stability 0.8768769
+## 83            num_plant.mean      Aggregate.Stability 0.8768769
+## 239            Active.Carbon                       Mg 0.8630594
+## 159                       Mg            Active.Carbon 0.8630594
+## 240                       pH                       Mg 0.8555611
+## 180                       Mg                       pH 0.8555611
+## 216   ACE.Soil.Protein.Index                        K 0.8411030
+## 116                        K   ACE.Soil.Protein.Index 0.8411030
+## 154              Respiration            Active.Carbon 0.8369653
+## 134            Active.Carbon              Respiration 0.8369653
+## 132   ACE.Soil.Protein.Index              Respiration 0.8311385
+## 112              Respiration   ACE.Soil.Protein.Index 0.8311385
+## 219                       pH                        K 0.8297829
+## 179                        K                       pH 0.8297829
+## 324                       pH          overall.quality 0.8282775
+## 184          overall.quality                       pH 0.8282775
+## 382      Aggregate.Stability                     Clay 0.8239551
+## 82                      Clay      Aggregate.Stability 0.8239551
+## 238              Respiration                       Mg 0.8052655
+## 138                       Mg              Respiration 0.8052655
+## 218            Active.Carbon                        K 0.8046382
+## 158                        K            Active.Carbon 0.8046382
+## 280              Respiration                       Mn 0.8016785
+## 140                       Mn              Respiration 0.8016785
+## 197            Active.Carbon                        P 0.7695700
+## 157                        P            Active.Carbon 0.7695700
+## 217              Respiration                        K 0.7570913
+## 137                        K              Respiration 0.7570913
+## 131           Organic.Matter              Respiration 0.7478290
+## 91               Respiration           Organic.Matter 0.7478290
+## 127 Available.Water.Capacity              Respiration 0.7293871
+## 7                Respiration Available.Water.Capacity 0.7293871
+## 281            Active.Carbon                       Mn 0.7120203
+## 161                       Mn            Active.Carbon 0.7120203
+## 173           Organic.Matter                       pH 0.7114241
+## 93                        pH           Organic.Matter 0.7114241
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{corr.columns <-}\StringTok{ }\KeywordTok{as.character}\NormalTok{(soil.corn.corrmatrix.melt}\OperatorTok{$}\NormalTok{Var1)}
+\NormalTok{corr.columns <-}\StringTok{ }\KeywordTok{unique}\NormalTok{(corr.columns)}
+
+\NormalTok{soil.corn.merge2.select <-}\StringTok{ }\NormalTok{soil.corn.merge2[, corr.columns]}
+
+\NormalTok{### Evaluate relationships using scatterplot matrix}
+\KeywordTok{library}\NormalTok{(car)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning: package 'car' was built under R version 3.5.2
+\end{verbatim}
+
+\begin{verbatim}
+## Loading required package: carData
+\end{verbatim}
+
+\begin{verbatim}
+## Warning: package 'carData' was built under R version 3.5.2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{scatterplotMatrix}\NormalTok{(soil.corn.merge2.select, }\DataTypeTok{col=}\KeywordTok{c}\NormalTok{(}\StringTok{'black'}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{3farm_soil_health_sampling_files/figure-latex/unnamed-chunk-5-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#soil.corn.merge2.select <- soil.corn.merge2[ setdiff(names(soil.corn.merge2), corr.columns)]}
+
+\KeywordTok{corrplot}\NormalTok{(}\KeywordTok{cor}\NormalTok{(soil.corn.merge2), }\DataTypeTok{type =} \StringTok{"upper"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{3farm_soil_health_sampling_files/figure-latex/unnamed-chunk-5-2.pdf}
+
+\section{Bartlett's Test / ANOVA/ Box plots of individual Soil Health
+Indicators by Field
+Type}\label{bartletts-test-anova-box-plots-of-individual-soil-health-indicators-by-field-type}
+
+Subject each variable to Bartlett's test of Homogeneity of variance. If
+result rejects null hypothesis that variance is the same for all
+treatment groups, pool groups for one-way Analysis of Variance.
+
+Summarize individual variable with box plot, either by field type groups
+or across the entire study for variables that fail Bartlett's test.
+
+\subsection{Reference Sample size by Field
+type}\label{reference-sample-size-by-field-type}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(dplyr)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning: package 'dplyr' was built under R version 3.5.2
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## Attaching package: 'dplyr'
+\end{verbatim}
+
+\begin{verbatim}
+## The following object is masked from 'package:car':
+## 
+##     recode
+\end{verbatim}
+
+\begin{verbatim}
+## The following objects are masked from 'package:plyr':
+## 
+##     arrange, count, desc, failwith, id, mutate, rename, summarise,
+##     summarize
+\end{verbatim}
+
+\begin{verbatim}
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+\end{verbatim}
+
+\begin{verbatim}
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{sample.size <-}\StringTok{ }\KeywordTok{ddply}\NormalTok{(soil2, }\OperatorTok{~}\NormalTok{field_type, summarise, }\DataTypeTok{n =} \KeywordTok{n}\NormalTok{())}
+\NormalTok{sample.size}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   field_type  n
+## 1 corn field 18
+## 2  hay field  9
+## 3    woodlot  9
+\end{verbatim}
+
+\subsection{Surface Hardness}\label{surface-hardness}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{bartlett.test}\NormalTok{(Surface.Hardness }\OperatorTok{~}\StringTok{ }\NormalTok{field_type, }\DataTypeTok{data =}\NormalTok{ soil2)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##  Bartlett test of homogeneity of variances
+## 
+## data:  Surface.Hardness by field_type
+## Bartlett's K-squared = 4.0698, df = 2, p-value = 0.1307
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{### p-value > 0.05; cannot reject the null hypothesis that the variance is the same for all treatment groups.}
+\KeywordTok{boxplot}\NormalTok{( Surface.Hardness }\OperatorTok{~}\StringTok{ }\NormalTok{all_fields, }\DataTypeTok{data =}\NormalTok{ soil2, }\DataTypeTok{main =} \StringTok{"Surface Hardness by Field type"}\NormalTok{, }\DataTypeTok{xlab =} \StringTok{"Field type"}\NormalTok{, }\DataTypeTok{ylab =} \StringTok{"Surface Hardness (psi)"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{3farm_soil_health_sampling_files/figure-latex/unnamed-chunk-7-1.pdf}
+
+\subsection{Subsurface Hardness}\label{subsurface-hardness}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{bartlett.test}\NormalTok{(Subsurface.Hardness }\OperatorTok{~}\StringTok{ }\NormalTok{field_type, }\DataTypeTok{data =}\NormalTok{ soil2)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##  Bartlett test of homogeneity of variances
+## 
+## data:  Subsurface.Hardness by field_type
+## Bartlett's K-squared = 14.726, df = 2, p-value = 0.0006343
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{### p-value < 0.05; variance appears different between field type groups}
+\NormalTok{aov.subsurf <-}\StringTok{ }\KeywordTok{aov}\NormalTok{(Subsurface.Hardness }\OperatorTok{~}\StringTok{ }\NormalTok{field_type, }\DataTypeTok{data =}\NormalTok{ soil2)}
+\NormalTok{aov.subsurf}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Call:
+##    aov(formula = Subsurface.Hardness ~ field_type, data = soil2)
+## 
+## Terms:
+##                 field_type Residuals
+## Sum of Squares    55062.25  14874.50
+## Deg. of Freedom          2        33
+## 
+## Residual standard error: 21.2307
+## Estimated effects may be unbalanced
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{summary}\NormalTok{(aov.subsurf)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##             Df Sum Sq Mean Sq F value   Pr(>F)    
+## field_type   2  55062   27531   61.08 8.08e-12 ***
+## Residuals   33  14874     451                     
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{print}\NormalTok{(}\KeywordTok{model.tables}\NormalTok{(aov.subsurf, }\StringTok{"effects"}\NormalTok{, }\DataTypeTok{se =} \OtherTok{TRUE}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Design is unbalanced - use se.contrast() for se's
+\end{verbatim}
+
+\begin{verbatim}
+## Tables of effects
+## 
+##  field_type 
+##     corn field hay field woodlot
+##          28.42     9.583  -66.42
+## rep      18.00     9.000    9.00
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{boxplot}\NormalTok{( Subsurface.Hardness }\OperatorTok{~}\StringTok{ }\NormalTok{field_type, }\DataTypeTok{data =}\NormalTok{ soil2, }\DataTypeTok{main =} \StringTok{"Subsurface Hardness by Field type"}\NormalTok{, }\DataTypeTok{xlab =} \StringTok{"Field type"}\NormalTok{, }\DataTypeTok{ylab =} \StringTok{"Subsurface Hardness (psi)"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{3farm_soil_health_sampling_files/figure-latex/unnamed-chunk-8-1.pdf}
+
+\subsection{Aggregate Stability}\label{aggregate-stability}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{bartlett.test}\NormalTok{(Aggregate.Stability }\OperatorTok{~}\StringTok{ }\NormalTok{field_type, }\DataTypeTok{data =}\NormalTok{ soil2)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##  Bartlett test of homogeneity of variances
+## 
+## data:  Aggregate.Stability by field_type
+## Bartlett's K-squared = 16.755, df = 2, p-value = 0.00023
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{### p-value < 0.05; variance appears different between field type groups}
+\NormalTok{aov.aggstab <-}\StringTok{ }\KeywordTok{aov}\NormalTok{(Aggregate.Stability }\OperatorTok{~}\StringTok{ }\NormalTok{field_type, }\DataTypeTok{data =}\NormalTok{ soil2)}
+\NormalTok{aov.aggstab}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Call:
+##    aov(formula = Aggregate.Stability ~ field_type, data = soil2)
+## 
+## Terms:
+##                 field_type Residuals
+## Sum of Squares    6344.978  9777.272
+## Deg. of Freedom          2        33
+## 
+## Residual standard error: 17.21281
+## Estimated effects may be unbalanced
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{summary}\NormalTok{(aov.aggstab)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##             Df Sum Sq Mean Sq F value   Pr(>F)    
+## field_type   2   6345    3172   10.71 0.000261 ***
+## Residuals   33   9777     296                     
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{print}\NormalTok{(}\KeywordTok{model.tables}\NormalTok{(aov.aggstab, }\StringTok{"effects"}\NormalTok{, }\DataTypeTok{se =} \OtherTok{TRUE}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Design is unbalanced - use se.contrast() for se's
+\end{verbatim}
+
+\begin{verbatim}
+## Tables of effects
+## 
+##  field_type 
+##     corn field hay field woodlot
+##         -13.26     12.22   14.29
+## rep      18.00      9.00    9.00
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{boxplot}\NormalTok{( Aggregate.Stability }\OperatorTok{~}\StringTok{ }\NormalTok{field_type, }\DataTypeTok{data =}\NormalTok{ soil2, }\DataTypeTok{main =} \StringTok{"Aggregate Stability by Field type"}\NormalTok{, }\DataTypeTok{xlab =} \StringTok{"Field type"}\NormalTok{, }\DataTypeTok{ylab =} \StringTok{"Aggregate Stability (%)"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{3farm_soil_health_sampling_files/figure-latex/unnamed-chunk-9-1.pdf}
+
+\subsection{Organic Matter}\label{organic-matter}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{bartlett.test}\NormalTok{(Organic.Matter }\OperatorTok{~}\StringTok{ }\NormalTok{field_type, }\DataTypeTok{data =}\NormalTok{ soil2)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##  Bartlett test of homogeneity of variances
+## 
+## data:  Organic.Matter by field_type
+## Bartlett's K-squared = 11.145, df = 2, p-value = 0.003802
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{### p-value < 0.05; variance appears different between field type groups}
+\NormalTok{aov.om <-}\StringTok{ }\KeywordTok{aov}\NormalTok{(Organic.Matter }\OperatorTok{~}\StringTok{ }\NormalTok{field_type, }\DataTypeTok{data =}\NormalTok{ soil2)}
+\NormalTok{aov.om}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Call:
+##    aov(formula = Organic.Matter ~ field_type, data = soil2)
+## 
+## Terms:
+##                 field_type Residuals
+## Sum of Squares    91.96306  20.32667
+## Deg. of Freedom          2        33
+## 
+## Residual standard error: 0.7848309
+## Estimated effects may be unbalanced
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{summary}\NormalTok{(aov.om)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##             Df Sum Sq Mean Sq F value   Pr(>F)    
+## field_type   2  91.96   45.98   74.65 5.66e-13 ***
+## Residuals   33  20.33    0.62                     
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{print}\NormalTok{(}\KeywordTok{model.tables}\NormalTok{(aov.om, }\StringTok{"effects"}\NormalTok{, }\DataTypeTok{se =} \OtherTok{TRUE}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Design is unbalanced - use se.contrast() for se's
+\end{verbatim}
+
+\begin{verbatim}
+## Tables of effects
+## 
+##  field_type 
+##     corn field hay field woodlot
+##         -1.125   -0.4806   2.731
+## rep     18.000    9.0000   9.000
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{boxplot}\NormalTok{( Organic.Matter }\OperatorTok{~}\StringTok{ }\NormalTok{field_type, }\DataTypeTok{data =}\NormalTok{ soil2, }\DataTypeTok{main =} \StringTok{"Organic Matter Content by Field type"}\NormalTok{, }\DataTypeTok{xlab =} \StringTok{"Field type"}\NormalTok{, }\DataTypeTok{ylab =} \StringTok{"Organic Matter (%)"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{3farm_soil_health_sampling_files/figure-latex/unnamed-chunk-10-1.pdf}
+
+\subsection{Active carbon}\label{active-carbon}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{bartlett.test}\NormalTok{(Active.Carbon }\OperatorTok{~}\StringTok{ }\NormalTok{field_type, }\DataTypeTok{data =}\NormalTok{ soil2)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##  Bartlett test of homogeneity of variances
+## 
+## data:  Active.Carbon by field_type
+## Bartlett's K-squared = 0.79316, df = 2, p-value = 0.6726
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{### p-value > 0.05; cannot reject the null hypothesis that the variance is the same for all treatment groups.}
+\KeywordTok{boxplot}\NormalTok{( Active.Carbon }\OperatorTok{~}\StringTok{ }\NormalTok{all_fields, }\DataTypeTok{data =}\NormalTok{ soil2, }\DataTypeTok{main =} \StringTok{"Active Carbon by Field type"}\NormalTok{, }\DataTypeTok{xlab =} \StringTok{"Field type"}\NormalTok{, }\DataTypeTok{ylab =} \StringTok{"Active Carbon (ppm)"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{3farm_soil_health_sampling_files/figure-latex/unnamed-chunk-11-1.pdf}
+
+\subsection{Autoclaved Citrate Extractable (ACE) Soil Protein
+Index}\label{autoclaved-citrate-extractable-ace-soil-protein-index}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{bartlett.test}\NormalTok{(ACE.Soil.Protein.Index }\OperatorTok{~}\StringTok{ }\NormalTok{field_type, }\DataTypeTok{data =}\NormalTok{ soil2)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##  Bartlett test of homogeneity of variances
+## 
+## data:  ACE.Soil.Protein.Index by field_type
+## Bartlett's K-squared = 21.48, df = 2, p-value = 2.166e-05
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{### p-value < 0.05; variance appears different between field type groups}
+\NormalTok{aov.ACE <-}\StringTok{ }\KeywordTok{aov}\NormalTok{(ACE.Soil.Protein.Index }\OperatorTok{~}\StringTok{ }\NormalTok{field_type, }\DataTypeTok{data =}\NormalTok{ soil2)}
+\NormalTok{aov.ACE}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Call:
+##    aov(formula = ACE.Soil.Protein.Index ~ field_type, data = soil2)
+## 
+## Terms:
+##                 field_type Residuals
+## Sum of Squares      397.68    653.74
+## Deg. of Freedom          2        33
+## 
+## Residual standard error: 4.450877
+## Estimated effects may be unbalanced
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{summary}\NormalTok{(aov.ACE)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##             Df Sum Sq Mean Sq F value   Pr(>F)    
+## field_type   2  397.7  198.84   10.04 0.000393 ***
+## Residuals   33  653.7   19.81                     
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{print}\NormalTok{(}\KeywordTok{model.tables}\NormalTok{(aov.ACE, }\StringTok{"effects"}\NormalTok{, }\DataTypeTok{se =} \OtherTok{TRUE}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Design is unbalanced - use se.contrast() for se's
+\end{verbatim}
+
+\begin{verbatim}
+## Tables of effects
+## 
+##  field_type 
+##     corn field hay field woodlot
+##         -2.156    -1.422   5.733
+## rep     18.000     9.000   9.000
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{boxplot}\NormalTok{( ACE.Soil.Protein.Index }\OperatorTok{~}\StringTok{ }\NormalTok{field_type, }\DataTypeTok{data =}\NormalTok{ soil2, }\DataTypeTok{main =} \StringTok{"ACE Soil Protein Index by Field type"}\NormalTok{, }\DataTypeTok{xlab =} \StringTok{"Field type"}\NormalTok{, }\DataTypeTok{ylab =} \StringTok{"ACE Soil Protein Index (mg/g-soil)"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{3farm_soil_health_sampling_files/figure-latex/unnamed-chunk-12-1.pdf}
+
+\subsection{Microbial Respiration}\label{microbial-respiration}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{bartlett.test}\NormalTok{(Respiration }\OperatorTok{~}\StringTok{ }\NormalTok{field_type, }\DataTypeTok{data =}\NormalTok{ soil2)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##  Bartlett test of homogeneity of variances
+## 
+## data:  Respiration by field_type
+## Bartlett's K-squared = 5.6731, df = 2, p-value = 0.05863
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{### p-value is slightly above 0.05; variance may be different between field type groups}
+\NormalTok{aov.resp <-}\StringTok{ }\KeywordTok{aov}\NormalTok{(Respiration }\OperatorTok{~}\StringTok{ }\NormalTok{field_type, }\DataTypeTok{data =}\NormalTok{ soil2)}
+\NormalTok{aov.resp}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Call:
+##    aov(formula = Respiration ~ field_type, data = soil2)
+## 
+## Terms:
+##                 field_type Residuals
+## Sum of Squares    1.147072  0.848450
+## Deg. of Freedom          2        33
+## 
+## Residual standard error: 0.1603453
+## Estimated effects may be unbalanced
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{summary}\NormalTok{(aov.resp)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##             Df Sum Sq Mean Sq F value   Pr(>F)    
+## field_type   2 1.1471  0.5735   22.31 7.44e-07 ***
+## Residuals   33 0.8484  0.0257                     
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{print}\NormalTok{(}\KeywordTok{model.tables}\NormalTok{(aov.resp, }\StringTok{"effects"}\NormalTok{, }\DataTypeTok{se =} \OtherTok{TRUE}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Design is unbalanced - use se.contrast() for se's
+\end{verbatim}
+
+\begin{verbatim}
+## Tables of effects
+## 
+##  field_type 
+##     corn field hay field woodlot
+##        -0.1767    0.1406  0.2128
+## rep    18.0000    9.0000  9.0000
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{boxplot}\NormalTok{( Respiration }\OperatorTok{~}\StringTok{ }\NormalTok{field_type, }\DataTypeTok{data =}\NormalTok{ soil2, }\DataTypeTok{main =} \StringTok{"Microbial respiration by Field type, 4-day incubation"}\NormalTok{, }\DataTypeTok{xlab =} \StringTok{"Field type"}\NormalTok{, }\DataTypeTok{ylab =} \StringTok{"Microbial respiration (mg)"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{3farm_soil_health_sampling_files/figure-latex/unnamed-chunk-13-1.pdf}
+
+
+\end{document}
