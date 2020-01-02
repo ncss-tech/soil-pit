@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ---
 title: "Connecticut Three Farm Soil Health Sampling Project"
 author: Jim Hyde, Megan McClellan, Jacob Isleib, Debbie Surabian
@@ -496,3 +497,503 @@ More soil health and dynamic soil property sampling and analysis is needed to de
 #Acknowledgements
 
 This study would not have been possible without the dilligent field-work from Abigail Phillips, Matt Snurkowski, Lisa Krall, Marissa Theve, and Donald Parizek.
+=======
+---
+title: "Connecticut Three Farm Soil Health Sampling Project"
+author: Jim Hyde, Megan McClellan, Jacob Isleib, Debbie Surabian
+date: "March 11, 2019"
+output:
+  html_document:
+    keep_md: yes
+    toc: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: no
+  pdf_document:
+    toc: yes
+  word_document:
+    toc: yes
+---
+
+#Background
+
+From October 2014 to September 2016, staff from USDA-NRCS Connecticut and the Eastern Connecticut Soil and Water Conservation District sampled soils and vegetation on three partnering farms in the northeastern part of the state.  The three farms were existing NRCS cooperators and had started implementing soil health-related practices on their managed crop lands.
+
+#Objective
+Establish baseline soil health indicator data across land uses typical in dairy production farms in Connecticut.
+
+#Methods
+Field type was used to stratify sampling, with silage corn, hay, and forested woodlots being categories.  Surface horizons of soils at all the sites were sampled using a composite sampling method (multiple samples within plot area were mixed and subsample taken) and sent to Cornell University for Cornell Assessment of Soil Health (CASH) analysis. Soil health indicators measured include Available Water Capacity (AWC), surface hardness, subsurface hardness, aggregate stability, organic matter, ACE protein index, respiration, active Carbon, pH, Phosphorus, Potassium, Magnesium, Iron, Manganese, Zinc, particle size analysis (sand, silt, clay, and USDA textural classification), and overall CASH quality score. Additionally, penetration resistance (at 0-6" and 6-18"), soil temperature (at every inch within upper 3") and infiltration (0-1" and 1-2"; double-ring method) were measured in field.
+
+In corn fields, plant population density was measured by counting number of plants within 50-sq-ft plot. Results were also converted to plants per acre.  Corn Stalk Nitrate Test (CSNT) and Pre-Sidedress N testing (PSNT) were analyzed at University of Connecticut (number of reps vary at each site).
+
+In hay fields, average plant height was recorded.
+
+Forested woodlots were not characterized in terms of forestry mensuration metrics or vegetation plot data.
+
+#Locations
+
+```{r}
+
+### load data and data preparation
+
+setwd("S:/NRCS/Technical_Soil_Services/Soil Health Initiative/3 Farm Sampling Plan FY15")
+getwd()
+soil <- read.csv('soil_testing.csv')
+soil2 <- soil[,c(1:26, 29)]
+soil2$field_type.haycorn <- ifelse(soil2$field_type =='corn field', 'corn & hay',
+                            ifelse(soil2$field_type =='hay field', 'corn & hay',
+                                   ifelse(soil2$field_type =='woodlot', 'woodlot', 'NA'
+                                   )))
+
+soil2$field_type.haywood <- ifelse(soil2$field_type =='corn field', 'corn field',
+                                   ifelse(soil2$field_type =='hay field', 'hay & woodlot',
+                                          ifelse(soil2$field_type =='woodlot', 'hay & woodlot', 'NA'
+                                          )))
+
+
+soil2$all_fields <- "corn, hay, & woodlot"
+soil.num <- soil[, c(8:26)]
+soil.num[(2:19)] <- lapply(soil.num[(2:19)], as.numeric)
+soil.num2 <- soil.num[complete.cases(soil.num),]
+
+library(sp)
+soil2.sp <- soil
+attach(soil2.sp)
+library(leaflet)
+pal <- colorFactor(c("green", "navy", "red"), domain = c("corn field", "hay field", "woodlot"))
+
+m <- leaflet(soil2.sp) %>% setView(lng = -71.90, lat = 41.9669, zoom = 12)
+m %>% addProviderTiles(providers$Esri.WorldImagery) %>% 
+  addCircleMarkers(
+#    radius = ~ifelse(type == "field_type", 6, 10),
+    color = ~pal(field_type),
+    stroke = FALSE, fillOpacity = 0.5
+  ) %>%
+  addLegend("bottomright", pal = pal, values = ~field_type,
+            title = "Field type",
+#            labFormat = labelFormat(prefix = "$"),
+            opacity = 1
+  )
+```
+
+#Results
+
+##Cornell Assessment of Soil Health data
+
+Use correlation matrix (Pearson's correlation coefficient) and related plots to explore CASH data
+
+```{r}
+corr.matrix <- as.data.frame(cor(soil.num))
+corr.matrix
+
+library(corrplot)
+corrplot(cor(soil.num2), type = "upper")
+```
+
+###Merge Corn Count data with CASH results
+
+```{r}
+plant <- read.csv('plant_data.csv', na.strings = c('', 'na'))
+plant.corn <- plant[which(plant$field_type=='corn field'), c(1:9, 19:20)]
+plant.corn <- plant.corn[complete.cases(plant.corn), ]
+library(plyr)
+
+### Summarize corn count data using mean
+
+plant.corn.sum <- ddply(plant.corn, ~site_id, summarise, num_plant.mean=mean(Number.of.Plants...50.ft2), 
+                        plants_per_acre.mean = mean(Plants...Acre))
+
+### Merge corn and soil data
+
+soil.corn.merge <- merge(x=soil, y=plant.corn.sum, by="site_id", all.y = TRUE)
+soil.corn.merge2 <- soil.corn.merge[, c(8:26, 34:35)]
+```
+
+Again, use correlation matrix and plots to explore data
+
+```{r}
+
+soil.corn.corrmatrix <- as.data.frame(cor(soil.corn.merge2))
+soil.corn.corrmatrix
+
+corrplot(cor(soil.corn.merge2), type = "upper")
+```
+
+Corn count data may reflect plant and row spacing rather than soil health performance.
+
+###Select covariates with Pearson's coef > 0.70
+
+From the correlation table above, select only covariates with a Pearson's coefficient > 0.70, to reduce the size of data used to generate a scatterplot matrix and second correlation plot.
+
+```{r}
+library(reshape2)
+soil.corn.corrmatrix.melt <- subset(melt(cor(soil.corn.merge2)), value > .70)
+soil.corn.corrmatrix.melt[(1:2)] <- lapply(soil.corn.corrmatrix.melt[(1:2)], as.character)
+select <- !(soil.corn.corrmatrix.melt$Var1 == soil.corn.corrmatrix.melt$Var2)
+soil.corn.corrmatrix.melt <- soil.corn.corrmatrix.melt[select, ]
+soil.corn.corrmatrix.melt[rev(order(soil.corn.corrmatrix.melt$value)),]
+
+corr.columns <- as.character(soil.corn.corrmatrix.melt$Var1)
+corr.columns <- unique(corr.columns)
+
+soil.corn.merge2.select <- soil.corn.merge2[, corr.columns]
+
+### Evaluate relationships using scatterplot matrix
+library(car)
+#scatterplotMatrix(soil.corn.merge2.select, col=c('black'))
+
+#soil.corn.merge2.select <- soil.corn.merge2[ setdiff(names(soil.corn.merge2), corr.columns)]
+
+corrplot(cor(soil.corn.merge2.select), type = "upper")
+```
+
+## Evaluate ranges of soil textures between samples
+
+```{r}
+
+library(soiltexture)
+colnames(soil2)[24] <- "SAND"
+colnames(soil2)[25] <- "SILT"
+colnames(soil2)[26] <- "CLAY"
+
+attach(soil2)
+soil2.hay <- soil2[which(field_type == "hay field"), ]
+soil2.corn <- soil2[which(field_type == "corn field"), ]
+soil2.woodlot <- soil2[which(field_type == "woodlot"), ]
+
+plot.new()
+
+geo <- TT.plot(class.sys   = "USDA.TT",
+               tri.data    = soil2.hay,
+               main        = "Range of Particle Size Data for all samples",
+               col = "blue",
+               cex = .7,
+               cex.axis=.5,
+               cex.lab=.6,
+               lwd=.5,
+               lwd.axis=0.5,
+               lwd.lab=0.3)
+
+TT.points(tri.data = soil2.corn,
+          geo = geo,
+          col = "green",
+          cex = .1,
+          pch = 3)
+
+TT.points(tri.data = soil2.woodlot,
+          geo = geo,
+          #          dat.css.ps.lim  = c(0,2,63,2000),
+          #          css.transf      = TRUE,
+          col = "red",
+          cex = .2,
+          pch = 2)
+
+
+
+```
+**Legend**
+
+|Field type |color                                 |
+|-----------|--------------------------------------|
+|corn field |<span style="color:green">green</span>|
+|hay field  |<span style="color:blue">blue</span>  | 
+|woodlot    |<span style="color:red">red</span>    |
+
+
+
+## Bartlett's Test / ANOVA/ Box plots of individual Soil Health Indicators by Field Type
+
+Subject each variable to Bartlett's test of Homogeneity of variance.  If p suggests null hypothesis is true (i.e., that variance is the same for all treatment groups), pool groups for one-way Analysis of Variance. If variance is not same for groups, use Welch ANOVA and Kruskal-Wallis test (i.e., non-parametric test).
+
+If ANOVA/Welch ANOVA/Kruskal-Wallis test indicate difference in means, use pairwise t test to compare each treatment. Group treatments that meet null hypothesis of t test. Subject new groups (now limited to two treatments) to F test of variance.  Based on a results, use either ANOVA or Welch's ANOVA on new groups to compare means.
+
+Summarize individual variables with box plot, either by individual field type groups, partially-combined groups (based on t test results), or across the entire study for variables that fail null hypothesis of ANOVA.
+
+### Reference Sample size by Field type
+
+```{r}
+library(dplyr)
+sample.size <- ddply(soil2, ~field_type, summarise, n = n())
+sample.size
+```
+
+### Surface Hardness
+
+```{r}
+
+bartlett.test(Surface.Hardness ~ field_type, data = soil2)
+### p-value > 0.05; the variance is the same for all treatment groups.  Use one-way ANOVA to evaluate difference between means of the groups.
+aov.surf <- aov(Surface.Hardness ~ field_type, data = soil2)
+summary(aov.surf)
+```
+
+ANOVA p-value < 0.05; Means are different between groups.
+
+```{r}
+### Analyze means
+tapply(X = Surface.Hardness, INDEX = list(field_type), FUN = mean)
+### Pairwise comparisons of treatment groups
+pairwise.t.test(Surface.Hardness, field_type, p.adj = "holm")
+```
+
+Corn field and hay field treatments are not significantly different.  Woodlot treatments are different from both others.
+
+```{r}
+var.test(Surface.Hardness ~ field_type.haycorn, soil2, alternative = "two.sided")
+```
+
+F test suggests variance is not difference between new groups.
+
+```{r}
+summary(aov(Surface.Hardness ~ field_type.haycorn, data = soil2))
+```
+
+ANOVA of new groups suggests means are different.
+
+```{r}
+boxplot( Surface.Hardness ~ field_type.haycorn, data = soil2, main = "Surface Hardness by Field type", xlab = "Field type", ylab = "Surface Hardness (psi)")
+
+```
+
+### Subsurface Hardness
+
+```{r}
+
+bartlett.test(Subsurface.Hardness ~ field_type, data = soil2)
+```
+
+Bartlett p-value < 0.05; variance appears different between field type groups; used Welch's test to assess means
+
+```{r}
+oneway.test(Subsurface.Hardness ~ field_type, data=soil2, na.action=na.omit, var.equal=FALSE)
+kruskal.test(Subsurface.Hardness ~ field_type, soil2, na.action=na.omit)
+```
+
+Welch ANOVA p-value < 0.05; Means are different between groups using parametric test.  Kruskal-Wallis test also indicates difference between means.
+
+```{r}
+
+### Analyze means
+tapply(X = Subsurface.Hardness, INDEX = list(field_type), FUN = mean)
+### Pairwise comparisons of treatment groups
+pairwise.t.test(Subsurface.Hardness, field_type, p.adj = "holm")
+```
+
+All treatments are significantly different from one another
+
+```{r}
+boxplot( Subsurface.Hardness ~ field_type, data = soil2, main = "Subsurface Hardness by Field type", xlab = "Field type", ylab = "Subsurface Hardness (psi)")
+
+```
+
+### Aggregate Stability
+
+```{r}
+
+bartlett.test(Aggregate.Stability ~ field_type, data = soil2)
+```
+
+p-value < 0.05; variance appears different between field type groups
+
+```{r}
+oneway.test(Aggregate.Stability ~ field_type, data=soil2, na.action=na.omit, var.equal=FALSE)
+### 
+kruskal.test(Aggregate.Stability ~ field_type, soil2, na.action=na.omit)
+```
+
+Welch ANOVA p-value < 0.05; Means are different between groups using parametric test. Kruskal-Wallis test also indicates difference between means.
+
+```{r}
+### Analyze means
+tapply(X = Aggregate.Stability, INDEX = list(field_type), FUN = mean)
+### Pairwise comparisons of treatment groups
+pairwise.t.test(Aggregate.Stability, field_type, p.adj = "holm")
+```
+
+Hay field and woodlot treatments are not significantly different.  Corn field treatments are different from both others.
+
+```{r}
+var.test(Aggregate.Stability ~ field_type.haywood, soil2, alternative = "two.sided")
+```
+
+F-test suggests variance is different between new groups.
+
+```{r}
+oneway.test(Aggregate.Stability ~ field_type.haywood, data=soil2, na.action=na.omit, var.equal=FALSE)
+```
+
+Welch ANOVA suggests means are different between new groups.
+
+```{r}
+boxplot( Aggregate.Stability ~ field_type.haywood, data = soil2, main = "Aggregate Stability by Field type", xlab = "Field type", ylab = "Aggregate Stability (%)")
+
+```
+
+### Organic Matter
+
+```{r}
+
+bartlett.test(Organic.Matter ~ field_type, data = soil2)
+```
+
+p-value < 0.05; variance appears different between field type groups
+
+```{r}
+oneway.test(Organic.Matter ~ field_type, data=soil2, na.action=na.omit, var.equal=FALSE)
+kruskal.test(Organic.Matter ~ field_type, soil2, na.action=na.omit)
+```
+
+Welch ANOVA p-value < 0.05; Means are different between groups using parametric test.  Kruskal-Wallis test also indicates difference between means.
+
+```{r}
+### Analyze means
+tapply(X = Organic.Matter, INDEX = list(field_type), FUN = mean)
+### Pairwise comparisons of treatment groups
+pairwise.t.test(Organic.Matter, field_type, p.adj = "holm")
+```
+
+Corn field and hay field treatments are not significantly different.  woodlot treatments are different from both others.
+
+```{r}
+var.test(Organic.Matter ~ field_type.haycorn, soil2, alternative = "two.sided")
+```
+
+F-test suggests variance is not different between new groups.
+
+```{r}
+summary(aov(Organic.Matter ~ field_type.haycorn, data = soil2))
+```
+
+ANOVA of new groups suggests means are different.
+
+```{r}
+boxplot( Organic.Matter ~ field_type.haycorn, data = soil2, main = "Organic Matter Content by Field type", xlab = "Field type", ylab = "Organic Matter (%)")
+
+```
+
+### Active carbon
+
+```{r}
+
+bartlett.test(Active.Carbon ~ field_type, data = soil2)
+```
+
+p-value > 0.05; the variance is the same for all treatment groups.  Use one-way ANOVA to evaluate difference between means of the groups.
+
+```{r}
+aov.actC <- aov(Active.Carbon ~ field_type, data = soil2)
+summary(aov.actC)
+```
+
+Cannot reject null hypothesis that there is no difference between the means.
+
+```{r}
+boxplot( Active.Carbon ~ all_fields, data = soil2, main = "Active Carbon by Field type", xlab = "Field type", ylab = "Active Carbon (ppm)")
+
+```
+
+###  Autoclaved Citrate Extractable (ACE) Soil Protein Index
+
+```{r}
+
+bartlett.test(ACE.Soil.Protein.Index ~ field_type, data = soil2)
+```
+
+p-value < 0.05; variance appears different between field type groups
+
+```{r}
+oneway.test(ACE.Soil.Protein.Index ~ field_type, data=soil2, na.action=na.omit, var.equal=FALSE)
+kruskal.test(ACE.Soil.Protein.Index ~ field_type, soil2, na.action=na.omit)
+```
+
+Welch ANOVA p-value < 0.05; Means are different between groups using parametric test.  Kruskal-Wallis test also indicates difference between means.
+
+```{r}
+### Analyze means
+tapply(X = ACE.Soil.Protein.Index, INDEX = list(field_type), FUN = mean)
+### Pairwise comparisons of treatment groups
+pairwise.t.test(ACE.Soil.Protein.Index, field_type, p.adj = "holm")
+```
+
+Corn field and hay field treatments are not significantly different.  woodlot treatments are different from both others.
+
+```{r}
+var.test(ACE.Soil.Protein.Index ~ field_type.haycorn, soil2, alternative = "two.sided")
+```
+
+F-test suggests variance is different between new groups.
+
+```{r}
+oneway.test(ACE.Soil.Protein.Index ~ field_type.haycorn, data=soil2, na.action=na.omit, var.equal=FALSE)
+```
+
+Welch ANOVA suggests means are different between new groups.
+
+```{r}
+boxplot( ACE.Soil.Protein.Index ~ field_type.haycorn, data = soil2, main = "ACE Soil Protein Index by Field type", xlab = "Field type", ylab = "ACE Soil Protein Index (mg/g-soil)")
+
+```
+
+### Microbial Respiration
+
+```{r}
+
+bartlett.test(Respiration ~ field_type, data = soil2)
+```
+
+p-value > 0.05; the variance is the same for all treatment groups.  Use one-way ANOVA to evaluate difference between means of the groups.
+
+```{r}
+aov.resp <- aov(Respiration ~ field_type, data = soil2)
+summary(aov.resp)
+```
+
+ANOVA p-value < 0.05; Means are different between groups.
+
+```{r}
+### Analyze means
+tapply(X = Respiration, INDEX = list(field_type), FUN = mean)
+### Pairwise comparisons of treatment groups
+pairwise.t.test(Respiration, field_type, p.adj = "holm")
+```
+
+Hay field and woodlot treatments are not significantly different.  Corn field treatments are different from both others.
+
+```{r}
+var.test(Respiration ~ field_type.haywood, soil2, alternative = "two.sided")
+```
+
+F-test suggests variance is different between new groups.
+
+```{r}
+oneway.test(Respiration ~ field_type.haywood, data=soil2, na.action=na.omit, var.equal=FALSE)
+```
+
+Welch ANOVA suggests means are different between new groups.
+
+```{r}
+boxplot( Respiration ~ field_type.haywood, data = soil2, main = "Microbial respiration by Field type, 4-day incubation", xlab = "Field type", ylab = "Microbial respiration (mg)")
+
+```
+
+#Discussion
+The Connecticut Three Farm Soil Health study resulted in a small sample size and a more robust study would be needed to confirm relationships suggested by our data.  Despite this limitation, we were able to observe significant interactions between soil health indicators and the field type treatments.  Comparisons of soil health indicators using the CASH analyses yields contrasting similarities between some of the field type treatments.  As summarized in Table 1, for most soil health indicators, two of the field types were combined based on results of analysis of difference of treatment means and pairwise comparisons.  Active Carbon showed significant differences between all field types, and Subsurface hardness showed no significant difference between any of the field types.
+
+Table 1. Summary of results of pairwise comparisons between field types 
+
+|**All treatments different | Corn & Hay same; Woodlot diff | Hay & woodlot same; Corn different | All treatments same**|
+|--------------------------|-------------------------------|------------------------------------|---------------------|
+| Subsurface Hardness      | Surface Hardness              | Aggregate Stability                | Active Carbon       |
+|                          | Organic Matter                | Microbial Respiration              |                     |
+|                          | ACE Soil Protein Index        |                                    |                     |
+
+Of particular interest are differing combinations of field types for different soil health indicators that are often thought of as positively correlated.  For example, organic matter content between corn and hay fields was not significantly different based on our tests, yet aggregate stability was significantly different between these treatments.  This prompts the future research question: what soil properties are responsible for significantly higher aggregate stability in hay fields, if organic matter content is not significantly different?  Pearson's correlation coefficient value of 0.38 between organic matter and aggregate stability confirms this poorly correlated relationship.  Results from active carbon data comparisons suggests no significant different between treaments, so carbon activity/stability does not appear related to increases in aggregate stability. Pearson's correlation coefficient value of -0.21 between active carbon and aggregate stability confirms this poorly correlated relationship.  It is also interesting that significant difference of microbial respiration between treatments did not mirror that of active carbon. These two are also poorly correlated with a Pearson's correlation coefficient value of 0.30.
+
+More soil health and dynamic soil property sampling and analysis is needed to determine whether current CASH soil properties/indicators are meaningful metrics of soil health and whether others need to be added.  Further, *performance metrics*, such as crop yields, biomass amounts, and soil moisture measurement, are needed to evaluate whether soil health indicators correlate to outcomes that affect the farmer or land manager's bottom line.  Calibration of threshold values for indicators that are found to be correlated is the final step in demonstrating how soil health-building practices relate to desirable land management outcomes.
+
+
+#Acknowledgements
+
+This study would not have been possible without the dilligent field-work from Abigail Phillips, Matt Snurkowski, Lisa Krall, Marissa Theve, and Donald Parizek.
+>>>>>>> origin/master
