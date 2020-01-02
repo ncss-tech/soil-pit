@@ -1,24 +1,11 @@
-#Load required libraries
-
-library(RODBC)
 library(shinydashboard)
 library(shiny)
 library(data.table)
 library(plotly)
-library(soilDB)
-library(rnoaa)
-library(lubridate)
-library(ggplot2)
-library(plyr)
-library(dplyr)
-
-# Create a dashboard header
 
 header <- dashboardHeader(
   title = "Soil Moisture Data Processing App", titleWidth = 350
   )
-
-# Create a dashboard sidebar with menu items
 
 sidebar <- dashboardSidebar(
   sidebarMenu(
@@ -40,11 +27,6 @@ sidebar <- dashboardSidebar(
     icon = icon("map-pin")
   ),
   menuItem(
-    "Example",
-    tabName = "example",
-    icon = icon("map-pin")
-  ),
-  menuItem(
     "Soil Moisture Data Analysis",
     icon = icon("fighter-jet"),
     href = "https://hammerly.shinyapps.io/r11_sma_app/"
@@ -56,8 +38,6 @@ sidebar <- dashboardSidebar(
   )
  )
 )
-
-# Create a dashboard body
 
 body <- dashboardBody(
   
@@ -71,8 +51,6 @@ body <- dashboardBody(
   #styling for the validation errors
   
   tags$style(HTML(".shiny-output-error-validation {color: red; padding: 5px;}")),
-  
-# Tabs items  
   
   tabItems(
     #Home tab
@@ -153,12 +131,7 @@ body <- dashboardBody(
         )
       ),
     
-    #Example tab
-
-    tabItem(tabName="example",
-        includeHTML("example.html")
-        ),
-
+    
     #Analysis Report tab
     
     tabItem(
@@ -173,16 +146,13 @@ body <- dashboardBody(
             p("Inputs marked with an asterisk (*) are required."),
             p("Click submit button to begin processing."),
             uiOutput("sm_inputs"),
-            uiOutput("valref_c"),
             uiOutput("sm_units"),
             box(
               solidHeader = TRUE,
-              title = "Populate 2 of the 3 variables",
+              title = "Measurements already adjusted? Leave these blank",
               status = "primary",
-              tags$img(src="wells.png", width="100%"),
-              uiOutput("pipelength"),
-              uiOutput("sm_sensordepth"),
               uiOutput("pipebelow"),
+              uiOutput("pipelength"),
               width = 12
             ),
             uiOutput("sm_office"),
@@ -191,6 +161,7 @@ body <- dashboardBody(
             uiOutput("sm_projectid"),
             uiOutput("sm_sensor"),
             uiOutput("sm_bottomdepth"),
+            uiOutput("sm_sensordepth"),
             actionButton("submit", "Submit"),
             status = "primary",
             title = "Inputs",
@@ -203,21 +174,38 @@ body <- dashboardBody(
           width = 6,
           tags$h3("2. Review"),
           
-          tabBox(
-            title = "Input Data",
-            tabPanel("Plot", plotlyOutput("iniplot")),
-            tabPanel("Table", DT::dataTableOutput("mon_data")),
+          box(
+            plotlyOutput("iniplot"),
+            status = "primary",
+            title = "Input Plot",
+            solidHeader = TRUE,
+            collapsible = TRUE,
             width = 12
           ),
-          tabBox(
-            title = "Processed Data",
-            tabPanel("Plot", plotlyOutput("exportplot")),
-            tabPanel("Table", DT::dataTableOutput("exporttable")),
+          box(
+            DT::dataTableOutput("mon_data"),
+            status = "primary",
+            title = "Input Table",
+            solidHeader = TRUE,
+            collapsible = TRUE,
+            collapsed = TRUE,
             width = 12
           ),
-          tabBox(
-            title = "Precipitation and Water Level Plot",
-            tabPanel("Plot", plotlyOutput("doubleplot")),
+          box(
+            plotlyOutput("exportplot"),
+            status = "primary",
+            title = "Processed Plot",
+            solidHeader = TRUE,
+            collapsible = TRUE,
+            width = 12
+          ),
+          box(
+            DT::dataTableOutput("exporttable"),
+            status = "primary",
+            title = "Processed Table",
+            solidHeader = TRUE,
+            collapsible = TRUE,
+            collapsed = TRUE,
             width = 12
           )
         ),
@@ -364,9 +352,9 @@ server <- function(input, output, session) {
   
   output$sm_sensordepth <- renderUI({
     textInput("sensordepth",
-              "b (cm)",
+              "Sensor Depth (cm)",
               value = "",
-              placeholder = "157")
+              placeholder = "210")
     
   })
   
@@ -381,20 +369,9 @@ server <- function(input, output, session) {
     
   })
   
-  output$valref_c <- renderUI({
-    radioButtons(
-      "valref",
-      "Measurement Values are:*",
-      choices = c("positive", "negative"),
-      selected = "positive",
-      inline = TRUE
-    )
-    
-  })
-  
   output$pipebelow <- renderUI({
     textInput("pipeb",
-              "c (cm)",
+              "Calibration Point (cm)",
               value = "",
               placeholder = "79")
     
@@ -402,62 +379,19 @@ server <- function(input, output, session) {
   
   output$pipelength <- renderUI({
     textInput("pipel",
-              "a (cm)",
+              "Total Length (cm)",
               value = "",
               placeholder = "236")
     
   })
-
-  sitedata <- reactive({
-    source("https://github.com/ncss-tech/soil-pit/raw/master/sandbox/john/moisture_query/get_site_soilmoist_from_NASIS_db.R")
-    si<-get_site_soilmoist_from_NASIS_db()
-    return(si)
-  })
   
-  stationdata <- reactive({ input$submit
-    sited <- sitedata()
-    station_data<-read.csv("station_data.csv")
-    if(max(year(as.Date(sited$obs_date)))>max(station_data$last_year, na.rm=TRUE)) {station_data<-ghcnd_stations()}
-    return(station_data)
-  })
   
-  output$stationtable <-  DT::renderDataTable({withProgress(message="Loading weather station data", detail="Please Wait", value=1, {
-    station_data <- stationdata()
-    station_data
-  })
-  }, options = list(pageLength=10, scrollX="100%"))
   
-  near_station <- reactive({ input$submit
-    sited <- sitedata()
-    station_data <- stationdata()
-    # rename column to "id" so rnoaa understands
-    s_ids<-plyr::rename(sited, c("site_id"="id"))
-    
-    # Find nearby NOAA weather station  
-    nearest_station<-as.data.frame(meteo_nearby_stations(lat_lon_df=s_ids, lat_colname= "y_std", lon_colname="x_std", limit=1, station_data= station_data), col.names=NULL)
-    return(nearest_station)
-    
-  })
-  
-  stationsdat<-reactive({
-    sited<- sitedata()
-    nearest_station <-near_station()
-    stations<-meteo_pull_monitors(nearest_station[,1])
-    return(stations)
-  })
-  
-  stationfilt<-reactive({
-    sited<- sitedata()
-    stations<-stationsdat()
-    # Filter the dates of interest
-    station_filter<-stations %>% filter(date>= min(sited$obs_date)) %>% filter(date<= max(sited$obs_date))
-    return(station_filter)
-  })
   
   mon_data <- reactive({
     input$submit
     
-    withProgress(message="Processing Data", value=1,{
+
     
     if (is.null(isolate(input$mdatainput)))
       return(NULL)
@@ -474,7 +408,6 @@ server <- function(input, output, session) {
     colnames(subset_m_data) <- c("date", "time", "depth")
     
     return(subset_m_data)
-    })
   })
   
   output$mon_data <- DT::renderDataTable({
@@ -485,14 +418,11 @@ server <- function(input, output, session) {
   
   output$daily_data <- DT::renderDataTable({
     input$submit
-    
-    withProgress(message="Processing Data", value=1,{
-    
     monitor_data <- mon_data()
     
     #check if data is positive or negative reference
     
-    if (isolate(input$valref == "positive")) {
+    if (sum(monitor_data$depth) > 0) {
       monitor_data$depth <- monitor_data$depth * 1
     }
     else {
@@ -545,24 +475,20 @@ server <- function(input, output, session) {
     sitesoilmoist_table <- monitor_data_daily_convert
     
     sitesoilmoist_table
-    
-    })
   })
   
   sitesmoist <- reactive({
     input$submit
     
-    withProgress(message="Processing Data", value=1,{
-    
     monitor_data <- mon_data()
     
-    if (isolate(input$valref == "positive")) {
+    if (sum(monitor_data$depth) > 0) {
       monitor_data$depth <- monitor_data$depth * 1
     }
     else {
       monitor_data$depth <- monitor_data$depth * -1
     }
-
+    
     # Replace values less than zero
     monitor_data$depth[monitor_data$depth < 0] <- 0
     
@@ -618,8 +544,6 @@ server <- function(input, output, session) {
     sitesoilmoist_table <- monitor_data_daily_convert
     
     return(sitesoilmoist_table)
-    
-    })
   })
   
   output$iniplot <- renderPlotly({
@@ -633,9 +557,6 @@ server <- function(input, output, session) {
     
     else
       ({
-        
-        withProgress(message="Processing Data", value=1,{
-        
         s <- mon_data()
         # Plot all data
         rsmmd <-
@@ -644,14 +565,11 @@ server <- function(input, output, session) {
           labs(x = "Date (year)", y = "Sensor Measurement", title = "Input Soil Moisture Monitoring Data") +
           theme(plot.margin=unit(c(1,1,1,1),"cm"))
         ggplotly(rsmmd)
-        })
       })
   })
   
   finalsitesmoist <- reactive({
     input$submit
-    
-    withProgress(message="Processing Data", value=1,{
     
     sitesoilmoist_table <- sitesmoist()
     
@@ -702,7 +620,7 @@ server <- function(input, output, session) {
       as.character(sitesoilmoist_table$obsdate)
     
     return(sitesoilmoist_table)
-    })
+    
   })
   
   output$exporttable <- DT::renderDataTable({
@@ -728,62 +646,18 @@ server <- function(input, output, session) {
     else if (is.null(isolate(input$mdatainput)))
       return(NULL)
     
-    withProgress(message="Processing Data", value=1,{
-    
     sitesoiltable <- finalsitesmoist()
     
     # Plot all data
     sst <-
       ggplot(sitesoiltable, aes(x = as.Date(obsdate, format = "%Y-%m-%d"), y = soimoistdept)) + scale_colour_grey() +
       geom_line(cex = 0.5) + scale_y_reverse() + scale_x_date() +
-      labs(x = "Date (year)", y = "Water Level", title = "Processed Soil Moisture Monitoring Data") +
+      labs(x = "Date (year)", y = "Sensor Measurement", title = "Processed Soil Moisture Monitoring Data") +
       theme(plot.margin=unit(c(1,1,1,1),"cm"))
     ggplotly(sst)
-    })
+    
   })
   
-  output$doubleplot <- renderPlotly({
-    if (input$submit == 0) {
-      return()
-    }
-    
-    else if (is.null(isolate(input$mdatainput))) {
-      return(NULL)
-    }
-    
-    else
-      ({
-        
-        withProgress(message="Processing Data", value=1,{ 
-          
-          sited <-sitedata()
-          station_filter<-stationfilt()
-          
-          s <- mon_data()
-          
-          sitesoiltable <- finalsitesmoist()
-
-    rsmmd <- plot_ly() %>%
-      add_lines(x = as.Date(sitesoiltable$obsdate, format = "%Y-%m-%d"), y = sitesoiltable$soimoistdept, name = sited$site_id) %>%
-      add_bars(x = as.Date(station_filter$date, format = "%m/%d/%Y"), y = station_filter$prcp/100, name = station_filter$id, yaxis="y2") %>%
-      layout(
-        title = "Water Table and Precipitation",
-        yaxis2 = list(
-          overlaying = "y",
-          side = "right",
-          title = "Precipitation (cm)",
-          autorange= "reversed"),
-        # xaxis2 = list(
-        #   overlaying = "x",
-        #   side = "top",
-        #   title = "Date"),
-        xaxis = list(title="Date"),
-        yaxis = list(autorange = "reversed", title="Water Table Level (cm)"),
-        margin = list(l=50,r=0,b=0,t=75,pad=0)
-      )
-  })
- })
-})
   output$file <- downloadHandler(
     filename = function() {
       paste0("SiteSoilMoisture", Sys.Date(), ".xlsx")
@@ -846,7 +720,7 @@ server <- function(input, output, session) {
     tags$p("Click  download to save processed file for NASIS upload -")
     
   })
+  
 }
-
 
 shinyApp(ui = ui, server = server)

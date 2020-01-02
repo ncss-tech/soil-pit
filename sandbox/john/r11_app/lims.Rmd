@@ -14,7 +14,7 @@ Tracks MLRA Soil Survey Office (SSO) progress metrics by fiscal year, and projec
 * Acreage - sum of muacres, land category acres, acre goal, and reported acres
 * Count - total number (n) of projects, including approved, QCed, QAed, completed, areasymbol per project, nationalmusym per project, and spatial changes per project
 
-![](figures/progress_chart.png){width=750px}
+![](figures/progress_chart.png)
 
 
 ## [Project](https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=get_project_from_LIMS)
@@ -31,4 +31,4 @@ Tracks individual projects by MLRA Soil Survey Office (SSO) and fiscal year. Thi
 
 Tracks project correlation history by MLRA Soil Survey Office (SSO), fiscal year, and project name. This report can be used to track map unit changes (e.g. new vs. old musym) and flag map units that require spatial changes. This report is useful for constructing before and after maps, and tracking progress at the map unit level.
 
-![](figures/progress_map.png){width=750px}
+![](figures/progress_map.png)

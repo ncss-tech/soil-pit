@@ -89,7 +89,7 @@ sidebar<-dashboardSidebar( width = 250,
               menuItem("Long Range Plan", icon=icon("plane"),
                        menuSubItem("Report", tabName="lrp", icon=icon("calendar")),
                        textInput(inputId="lrpinput", label="Enter SSO Symbol -", "11"),
-                       actionButton("lrpsubmit", "Submit"), p(downloadLink("lrpdownload", "Save a copy of this Report")),br(),p()
+                       actionButton("lrpsubmit", "Submit"), br(),p()
               ),
               
               #Interpretations
@@ -133,18 +133,22 @@ body<-dashboardBody(
             titlePanel("Welcome to the Region 11 Web App"),
             verticalLayout(
               infoBox("About this App", "The Region 11 Web App is a tool for soil scientists, geographers, and ecologists to get soils information on the web.", width=12, icon=icon("users"), color="blue"),
-              box(includeHTML("home.html"), width=12),
+              box(p(tags$b("Get started using the Region 11 Web App by selecting a menu item on the left.")),
+                  p("If a menu has multiple sub-menu items, remember to choose a sub-menu item in order to view the results of a query.  The Water Table and Organic Matter have both plots and tables in separate sub-menu items."),
+                  p("Once the sub-menu item is active it will begin loading an example query unless you have already changed the query inputs."),
+                  p("The submit button can be used to submit another query after the sub-menu item has already been selected."),
+                  p("This application is viewed best in a browser such as Google Chrome or Mozilla Firefox"),
+                  p("Wildcards can be used in the project extent query.  Use a percent symbol % for office.  Use an asterisk * for the project name."),
+                  p("Maximum number of records returned from Soil Data Access is 100,000."),
+                  p("Project Extent query uses pattern matching.  Anchors (^ or $) may be needed if exact results are needed"),
+                  p("The Project Report can accept multiple projects.  Use the semicolon (;) as a separator."), width=12),
               box("This application was developed by John Hammerly, Stephen Roecker, and Dylan Beaudette.", width=12)
             )),
     
     #LIMS Reports
     
     tabItem(tabName="LIMS",
-            titlePanel("LIMS Reports"),
-            verticalLayout(
-              fluidRow(
-                box(tags$div(
-            includeHTML("lims.html"), style="width:100%; overflow-x: scroll"), width = 12)))),
+            includeHTML("lims.html")),
     
     
     #water table plot tab   
@@ -221,11 +225,38 @@ body<-dashboardBody(
     tabItem(tabName="help",
             titlePanel("Help"),
             fluidRow(
-            box(includeHTML("help.html"), width=12),
-            box("This application was developed by John Hammerly and Stephen Roecker.", width=12)
+              infoBox("About", box("This site is a set of web applications which use",
+                                   a(href="https://www.r-project.org/", "R"), "to query information from",
+                                   a(href="https://sdmdataaccess.nrcs.usda.gov/", "Soil Data Access"),
+                                   "or LIMS and assembles the data into a table, plots it graphically, or generates a report.",width=12),width=12, icon=icon("info"), color="yellow"),
+              infoBox("How to Use", box(
+                p("1.  Choose a data type by clicking on the corresponding menu item in the list on the sidebar to the left.  Currently there are 4 choices available to explore:  Water Table, Organic Matter, Project Report and Project Extent."),
+                p("2.  Choose how to view the data.  You can view either a plot or data table for the Water Table and Organic Matter choices.  The Project Report and Project extent only contain one option for each."),
+                p("3.  Choose a query method.  This is only needed if you choose the Water Table or Organic Matter choices.  You can query using any one of 3 methods:  Mapunit Key, National Mapunit Symbol, or Mapunit Name.  A choice list is provided."),
+                p("4.  Enter your query.  Be sure to enter the proper format.  Each of the previously mentioned methods has a unique set of criteria in order to return data without error."),
+                p("5.  Click the Submit button.  The query will not execute until this button is clicked."),width=12),width=12, icon=icon("life-ring"), color="purple"
+              )),
+            fluidRow(
+              infoBox("Water Table",
+                      box("Use this data to learn more about the moisture in the soil.  
+                          The plot shows depths at which different moisture status typically occur throughout the year.  
+                          You also have the option of viewing either flooding frequency or ponding frequency in the plot by clicking the radio buttons.", width=12),
+                      width=12, icon=icon("tint"), color="blue"),
+              infoBox("Organic Matter",
+                      box("Use this data to learn more about the organic matter in the soil.  The plot shows how organic matter changes with depth.  There are no additional options for viewing this data.", width=12),
+                      icon=icon("leaf"), color="green", width=12),
+              infoBox("Project",
+                      box("Use this data to compare project data with previously populated data.  There are no additional options for viewing this data.", width=12),
+                      icon=icon("file-text"), color="orange", width=12),
+              infoBox("Source Code",
+                      box("This menu item provides a link to a GitHub repository containing the computer code used in this application", width=12),
+                      width=12, icon=icon("file-code-o"), color="red"),
+              infoBox("Submit App Issues",
+                      box("This menu item provides a link to the GitHub Repository issues page of the web app.  Submit an issue if one does not already exist by clicking the the green new issue button.  You can also submit an issue by sending an email to john.hammerly@in.usda.gov.", width=12), width=12, icon=icon("bug"))
+              )
               )
 
-  )))
+  ))
 
 #combine the header, sidebar, and body into a complete page for the user interface
 ui <- dashboardPage(header, sidebar, body, title = "Region 11 Web App")
@@ -259,20 +290,6 @@ observeEvent(input$reportsubmit,{
       
       })
     })
-  
-  output$lrpdownload<- downloadHandler(      
-    filename = function() {input$lrpsubmit
-      paste("lrpreport", Sys.Date(), ".html", sep="")
-    },
-    content= function(file) {
-      lrptempReport <-file.path(tempdir(), "lrpreport.Rmd")
-      file.copy("r11_long_range_plan.Rmd", lrptempReport, overwrite=TRUE)
-      
-      withProgress(message="Preparing Report for Saving", detail="Please Wait", value=1, {
-        rmarkdown::render(lrptempReport, output_file=file, html_document(number_sections=FALSE, toc=FALSE, toc_float=FALSE))
-      }
-      )}
-  )  
   
   output$projectreportdownload<- downloadHandler(      
     filename = function() {input$reportsubmit

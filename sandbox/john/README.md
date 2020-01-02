@@ -3,7 +3,7 @@ Experimental Code Currently in Development
 Region 11 Web Application
 -----------------------
 
-This is a shiny app which uses R, USDA Soil Data Access and LIMS to create useful plots and reports for understanding soils.  The app can be found in the r11_app folder.  The app is also available online at https://usda.shinyapps.io/r11_app/.
+This is a shiny app which uses R, USDA Soil Data Access and LIMS to create useful plots and reports for understanding soils.  The app can be found in the r11_app folder.  The app is also available online at https://hammerly.shinyapps.io/r11_app/.
 
 Region 11 Soil Moisture Processing App
 ----------------------
