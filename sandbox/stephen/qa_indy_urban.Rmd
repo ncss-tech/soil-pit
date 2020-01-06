@@ -1,0 +1,1157 @@
+---
+title: "QA Indy Urban"
+author: "Stephen Roecker"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    number_sections: yes
+    toc: yes
+    toc_float:
+      collapseM: yes
+      smooth_scroll: no
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r load-pkg, include=FALSE}
+
+knitr::opts_chunk$set(warning=FALSE, message=FALSE, cache=TRUE)
+
+library(soilDB)
+library(sf)
+library(dplyr)
+library(ggplot2)
+
+```
+
+# Questions
+
+1. What is the minimum size map unit per areasymbol?
+2. Do the new data map units urban land component % RV and capture the range of the NLCD impreviousness layer?
+3. Do the new polygons match the old polygons, except for the addition of urban land?
+
+
+
+# Load data
+
+## NASIS
+
+```{r load-nasis}
+
+prj  <- "SPATIAL - MLRA 111A - Indianapolis Urban Update - Phase 1"
+pmu <- get_projectmapunit_from_NASISWebReport(prj)
+comp <- get_component_from_NASISWebReport(prj)
+
+pmu <- pmu %>%
+  mutate(musym_mis = ifelse(is.na(lmapunitiid), "missing", musym))
+pmu2 <- pmu %>% select(dmuiid, nationalmusym, muname) %>% filter(!duplicated(nationalmusym))
+
+mu <- get_mapunit_from_SDA(WHERE = "areasymbol IN ('IN011', 'IN057', 'IN059', 'IN063', 'IN081', 'IN097', 'IN109')")
+leg <- get_legend_from_SDA(WHERE = "areasymbol IN ('IN011', 'IN057', 'IN059', 'IN063', 'IN081', 'IN097', 'IN109')")
+
+```
+
+
+## Geodatabase
+
+```{r load-gdb}
+
+mukeys <- paste0(sort(unique(pmu$lmapunitiid)), collapse = "', '")
+asym   <- c("IN011", "IN057", "IN059", "IN063", "IN081", "IN095", "IN097", "IN109", "IN145")
+q1 <- paste0("SELECT * FROM MUPOLYGON WHERE MUKEY IN ('", mukeys, "') AND AREASYMBOL IN ('", paste0(asym, collapse = "', '"), "')")
+q2 <- paste0("SELECT * FROM MUPOLYGON WHERE AREASYMBOL IN ('", paste0(asym, collapse = "', '"), "')")
+
+
+# spatial edits
+edits <- read_sf("D:/geodata/project_data/FY2019_Review/Alena/RTSD_Region_11-IND_FY19_MUPOLYGON_20190806.gdb", layer = "MUPOLYGON", query = q2, precision = 0.1)
+# repair topology from reducing precision
+# edits <- lwgeom::st_make_valid(edits)
+idx <- which(! names(edits) %in% c("Shape"))
+names(edits)[idx] <- tolower(names(edits)[idx])
+edits <- as.data.frame(edits)
+
+# SSURGO
+mupol <- read_sf("M:/geodata/soils/SSURGO_R11_FY19.gdb", layer = "MUPOLYGON", fid_column_name = "OBJECTID", query = q1, precision = 0.1)
+sapol <- read_sf("M:/geodata/soils/SSURGO_R11_FY19.gdb", layer = "SAPOLYGON") 
+
+
+# intersection
+# this is quite fast in ArcPro if the precision is set to 0.1, but read_sf() won't import the intersected columns
+ei <- foreign::read.dbf("D:/geodata/project_data/FY2019_Review/Alena/mupolygon_intersect2_20190815.dbf", as.is = TRUE)
+names(ei) <- tolower(names(ei))
+
+ei_sum <- ei %>%
+  group_by(areasymbol, musym, musym_1, muname, muname_1) %>%
+  summarize(acres = round(sum(shape_area * 0.0002471), 1)) %>%
+  ungroup()
+
+```
+
+
+## Conversion legend
+
+```{r load-cl}
+
+cl <- read.csv("C:/Users/Stephen.Roecker/Nextcloud/projects/2019_indy_urban/Copy of INDY_URBAN_EXPORT_ACRES_MUNAME_8_16_2019.csv", stringsAsFactors = FALSE)
+names(cl)[1] <- "AREASYMBOL"
+names(cl) <- tolower(names(cl))
+cl <- within(cl, {
+  musym_mis  = ifelse(musym != orig_musym, "missing", orig_musym)
+  muname     = new.muname
+  new.muname = NULL 
+  new.symbol = NULL
+  })
+
+
+# compare cl with ei_sum
+idx <- ! with(cl, paste(areasymbol, musym, orig_musym)) %in% with(ei_sum, paste(areasymbol, musym, musym_1)) 
+View(cl[idx, ])
+
+cor_leg <- cl %>%
+  mutate(acres = NULL) %>%
+  # old map units
+  left_join(
+    filter(pmu, ! is.na(musym)) %>%
+      rename(muname_old = muname, musym_old = musym, nationalmusym_old = nationalmusym, dmuiid_old = dmuiid) %>%
+      select(areasymbol, musym_old, nationalmusym_old, muname_old, dmuiid_old, muacres),
+    by = c("areasymbol" = "areasymbol", "orig_musym" = "musym_old")
+    ) %>% # View()
+  # new map units
+  left_join(
+    # pmu %>%
+      # filter(pmu, is.na(musym)) %>%
+      # mutate(musym_mis = "missing") %>%
+      select(pmu, muname, nationalmusym, dmuiid_nonreps),
+    by = c("muname")
+    ) %>%
+  # mutate(musym_mis = NULL) %>%
+  select(areasymbol, orig_musym, musym, nationalmusym_old, nationalmusym, muname_old, dmuiid_old, dmuiid_nonreps, muname, muacres)
+
+
+mu_acres <- edits
+names(mu_acres) <- tolower(names(mu_acres))
+mu_acres <- mu_acres %>%
+  as.data.frame() %>%
+  group_by(areasymbol, musym) %>%
+  summarize(acres = round(sum(shape_area * 0.000247, na.rm = TRUE))) %>%
+  ungroup() %>%
+  full_join(cor_leg, by = c("areasymbol", "musym")) %>%
+  mutate(orig_musym = ifelse(is.na(orig_musym), musym, orig_musym)) %>%
+  filter(! duplicated(paste(areasymbol, musym)))
+
+leg_acres <- mu_acres %>%
+  group_by(areasymbol) %>%
+  summarize(water = sum(acres[musym == "W"], na.rm = TRUE),
+            acres = sum(acres, na.rm = TRUE) 
+            ) %>%
+  ungroup() %>%
+  inner_join(leg, by = "areasymbol") %>%
+  mutate(dif = areaacres - acres)
+
+mu_acres <- mu_acres %>%
+  inner_join(select(leg_acres, areasymbol, dif), by = "areasymbol") %>%
+  # substract NRI acres difference from water
+  mutate(acres = ifelse(musym == "W", acres + dif, acres)) %>%
+  left_join(select(mu, areasymbol, musym, nationalmusym, muname) %>% rename(natsym = nationalmusym, muname2 = muname), by = c("areasymbol", "musym")) %>%
+  mutate(nationalmusym_old = ifelse(is.na(nationalmusym_old), natsym, nationalmusym_old),
+         natsym      = NULL,
+         muname_old  = ifelse(is.na(muname_old), muname2, muname_old),
+         muname2     = NULL
+         ) %>%
+  select(areasymbol, orig_musym, musym, acres, nationalmusym_old, nationalmusym, muname_old, muname)
+
+
+asym <- "IN109"
+mu_nwr <- get_mapunit_from_NASISWebReport(asym)
+
+# convert to additional or remove from the legend
+idx <- which(! mu_nwr$musym %in% subset(mu_acres, areasymbol == asym)$musym)
+View(mu_nwr[idx, ])
+
+# add to the legend
+idx <- which(! subset(mu_acres, areasymbol == asym)$musym %in% mu_nwr$musym)
+View(subset(mu_acres, areasymbol == asym)[idx, ])
+
+
+
+# NASIS acres
+# mu_acres[mu_acres$musym == "W", "musym"] <- 7578
+temp <- subset(mu_acres, 
+               areasymbol == asym 
+               & ! is.na(acres) 
+               , select = c(musym, acres)
+               )
+write.table(temp, "C:/temp/musymacres.txt", sep = "|", row.names = FALSE, col.names = FALSE, quote = FALSE)
+
+```
+
+
+
+# Intersect edits with SSURGO using R
+
+```{r r-intersect, eval=FALSE}
+
+es <- subset(edits, !is.na(Editor) | MUSYM != orig_musym | !is.na(Creator))
+
+int <- st_intersection(es, mupol) 
+
+```
+
+
+# Export to geopackage
+
+Note that ArcGIS will not open gpkg files with "." in the column OR row names.
+
+```{r export-geopkg}
+
+# example
+
+nc = st_read(system.file("shape/nc.shp", package="sf"))
+nc = st_transform(nc, crs = "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")
+
+test = st_intersection(nc, nc)
+# ArcGIS won't accept "." in row or column names
+names(test) = gsub("\\.", "_", names(test))
+row.names(test) = gsub("\\.", "_", row.names(test))
+
+test2 = st_collection_extract(test, type = "POLYGON")
+table(attributes(test2$geometry)$classes)
+
+test3 = st_cast(t, "POLYGON")
+test3 = st_transform(test2, "+init=epsg:4326")
+
+st_write(test3, dsn = file.path(getwd(), 'test5.gpkg'), layer = "test", layer_options = "OVERWRITE=YES")
+
+test_gdb <- as_Spatial(test2)
+fgdb_path <- file.path(tempdir(), "test4.gdb")
+arc.write(file.path(fgdb_path, "test4\\nc"), data=test_gdb, coords=c("x", "y", "elev"), shape_info=list(type='Polygon',hasZ=TRUE,WKID=5070))
+data(meuse.riv, package="sp")
+riv <- sp::SpatialPolygons(list(sp::Polygons(list(sp::Polygon(meuse.riv)),"meuse.riv")))
+
+```
+
+
+
+# 1. Evaluate minimum map unit size
+
+```{r min-mu}
+
+# filter polygons that touch soil survey boundary
+idx <- st_intersects(mupol, st_cast(sapol, "MULTILINESTRING"))
+idx2 <- unlist(lapply(idx, function(x) !is.na(x[1])))
+mupol2 <- mupol[!idx2, ]
+
+idx <- st_intersects(edits, st_cast(sapol, "MULTILINESTRING"))
+idx2 <- unlist(lapply(idx, function(x) !is.na(x[1])))
+es2 <- edits[!idx2, ]
+
+
+# polygon and map unit size
+ts <- mupol2 %>%
+  as.data.frame() %>%
+  mutate(acres = round(Shape_Area * 0.000247, 1))
+ts %>%
+  summarize(
+    a05 = sum(acres < 0.5),
+    a1  = sum(acres < 1),
+    a14 = sum(acres < 1.4)
+    )
+
+ts2 <- ts %>%
+  group_by(MUSYM, AREASYMBOL) %>%
+  summarize(acres = sum(acres, na = TRUE)) %>%
+  ungroup()
+ts2 %>%
+  summarize(
+    a2  = sum(acres < 2),
+    a10 = sum(acres < 10),
+    a100  = sum(acres < 100),
+    a200 = sum(acres < 200)
+    )
+
+es <- edits %>%
+  as.data.frame() %>%
+  mutate(acres = round(shape_area * 0.000247, 1)) %>%
+  group_by(musym, areasymbol) %>%
+  summarize(acres = sum(acres, na = TRUE)) %>%
+  ungroup()
+es %>%
+  summarize(
+    a2  = sum(acres < 2),
+    a10 = sum(acres < 10),
+    a100  = sum(acres < 100),
+    a200 = sum(acres < 200)
+    )
+
+```
+
+It appears that the number of map units less than a 10, 100 or 200 acres is the similar between the ssurgo and editted ssurrgo copies.
+
+
+
+# 2. Evaluate NRCS Urban land % vs USGS Imprevious %
+
+## Calculate NRCS Urban land %
+
+```{r nrcs-urban}
+
+data_nrcs <- comp %>%
+  inner_join(pmu2, by = "dmuiid") %>%
+  mutate(idx = grepl("Urban", compname)) %>%
+  group_by(nationalmusym, muname) %>%
+  summarize(pct_ul_l = sum(comppct_l[idx], na.rm = TRUE),
+            pct_ul_r = sum(comppct_r[idx], na.rm = TRUE),
+            pct_ul_h = sum(comppct_h[idx], na.rm = TRUE)
+            # n_ul   = sum(idx, na.rm = TRUE)
+            ) %>%
+  mutate(source = "NRCS")
+
+```
+
+
+## Sample USGS NLCD and Imperviousness using R
+
+This is slow best to use ArcPro.
+
+```{r usgs-urban, eval=FALSE}
+
+# create samples
+mu_sub <- within(edits, {
+  idx    = 1:nrow(edits)
+  acres  = shape_area * 0.000247
+  samp_n = ifelse(acres < 1, 1, round(acres / 1))
+})
+mu_sub <- mu_sub[!st_is_empty(mu_sub) & mu_sub$musym %in% cl$musym, ]
+
+mu_samp <- {
+  split(mu_sub, mu_sub$idx) ->.;
+  lapply(., function(x) {
+    mu_samp = st_sample(x, x$samp_n, type = "random")
+    coords  = as.data.frame(st_coordinates(mu_samp))
+    #
+    test = data.frame(
+      x = coords$X,
+      y = coords$Y,
+      idx = x$idx[1],
+      musym = x$musym[1],
+      areasymbol = x$areasymbol[1],
+      acres = x$acres[1],
+      stringsAsFactors = FALSE
+      )
+    return(test)
+    })}
+mu_samp2 <- do.call("rbind", mu_samp)
+coordinates(mu_samp2) <- ~ x + y
+proj4string(mu_samp2) <- CRS("+init=epsg:5070")
+
+
+# USGS impervious layer
+nlcd_2011 <- stack(list(
+  nlcd_2011    = "M:/geodata/land_use_land_cover/nlcd_2011_landcover_2011_edition_2014_03_31.img",
+  nlcd_2011_pct_imp = "M:/geodata/land_use_land_cover/nlcd_2011_impervious_2011_edition_2014_10_10/nlcd_2011_impervious_2011_edition_2014_10_10.img"
+  ))
+nlcd_2016 <- stack(list(
+  nlcd_2016    = "M:/geodata/land_use_land_cover/NLCD_2016_Impervious_L48_20190405.img",
+  nlcd_2016_pct_imp = "M:/geodata/land_use_land_cover/NLCD_2016_Impervious_L48_20190405.img"
+  ))
+
+
+# Extract data
+nlcd_2011_e <- extract(nlcd_2011, mu_samp2, sp = TRUE)@data
+nlcd_2016_e <- extract(nlcd_2016, mu_samp2)
+data <- cbind(nlcd_2011_e, nlcd_2016_e)
+
+write.csv(data, file = "C:/Users/Stephen.Roecker/Nextcloud/projects/2019_indy_urban/mupolygon_zonal_nlcd2011_R.csv", row.names = FALSE)
+
+
+# Calculate the USGS Imperviousness %
+# data <- read.csv(file = "C:/Users/Stephen.Roecker/Nextcloud/projects/2019_indy_urban/mupolygon_zonal_nlcd2011_R.csv", stringsAsFactors = FALSE)
+# 
+# # cl not in edits, 135 vs 134, IN109 YmeB
+# idx <- which(! paste(cl$areasymbol, cl$musym) %in% paste(edits$areasymbol, edits$musym))
+# test <- cl[idx, ]
+# 
+# data_usgs <- data %>%
+#   group_by(areasymbol, musym, idx) %>%
+#   summarize(nlcd_2011_pct_imp = mean(nlcd_2011_pct_imp, na.rm = TRUE),
+#             nlcd_2016_pct_imp = mean(nlcd_2016_pct_imp, na.rm = TRUE)
+#             ) %>%
+#   left_join(cl, by = c("musym", "areasymbol")) %>%
+#   left_join(dplyr::select(pmu, muname, nationalmusym, musym_mis), by = c("muname")) %>%
+#   group_by(nationalmusym, muname) %>%
+#   summarize(
+#     # nlcd_2011_pct_ul_l = round(min(nlcd_2011_pct_imp, na.rm = TRUE)),
+#     # nlcd_2011_pct_ul_r = round(mean(nlcd_2011_pct_imp, na.rm = TRUE)),
+#     # nlcd_2011_pct_ul_h = round(max(nlcd_2011_pct_imp, na.rm = TRUE)),
+#     pct_ul_l = round(min(nlcd_2016_pct_imp, na.rm = TRUE)),
+#     pct_ul_r = round(mean(nlcd_2016_pct_imp, na.rm = TRUE)),
+#     pct_ul_h = round(max(nlcd_2016_pct_imp, na.rm = TRUE))
+#             ) %>%
+#    mutate(source = "USGS")
+# 
+# vars <- c("musym", "areasymbol", "muname", "nationalmusym")
+# data_mu <- merge(data_mu, pmu[vars], by = vars[1:2], all.x = TRUE)
+# data2 <- within(data2, {
+#   musym_mis <- ifelse(is.na(muname), "missing", musym)
+#   })
+# vars <- c("musym", "muname", "musym_mis")
+# data_mu <- merge(data2, cl[vars], by = vars, all.x = TRUE)
+
+# vars <- c("nationalmusym", "areasymbol", "musym")
+# data_dmu <- merge(comp_sub, data2[vars], by = vars[1], all.x = TRUE)
+
+```
+
+
+
+## Compare NRCS Urban land % vs USGS Imperviousness %
+
+```{r compare-urbans}
+
+edits2 <- read.csv("C:/Users/Stephen.Roecker/Nextcloud/projects/2019_indy_urban/edits.txt", stringsAsFactors = FALSE)
+idx <- which(! names(edits2) %in% c("OBJECTID", "Shape"))
+names(edits2)[idx] <- tolower(names(edits2)[idx])
+edits2$OBJECTID <- as.integer(edits2$OBJECTID)
+
+acres <- edits
+names(acres) <- tolower(names(acres))
+acres <- acres %>%
+  as.data.frame() %>%
+  left_join(select(cor_leg, nationalmusym, areasymbol, musym), by = c("areasymbol", "musym")) %>%
+  group_by(nationalmusym) %>%
+  summarize(acres = sum(shape_area * 0.000247, na.rm = TRUE)) %>%
+  ungroup()
+
+# data_usgs from ArcPro Zonal Statistics as Table
+data_usgs <- foreign::read.dbf("C:/Users/Stephen.Roecker/Nextcloud/projects/2019_indy_urban/mupolygon_zonal_2016_v5.dbf")
+
+data_usgs <- data_usgs %>%
+  inner_join(select(edits2, OBJECTID, objectid_2, areasymbol, musym), by = "OBJECTID") %>%
+  left_join(cl, by = c("musym", "areasymbol")) %>%
+  left_join(
+    select(pmu, muname, nationalmusym, musym_mis),
+    by = c("muname", "musym_mis")
+    ) %>%
+  mutate(pct_ul = MEAN) %>%
+  select(OBJECTID, objectid_2, areasymbol, musym, nationalmusym, muname, pct_ul, acres, AREA, COUNT) %>% 
+  filter(!is.na(nationalmusym))
+
+data_usgs <- within(data_usgs, {
+  rank = NA
+  rank = ifelse(pct_ul > 5, "Suburban", rank)
+  rank = ifelse(grepl("Urban", muname), "Residental", rank)
+  rank = ifelse(grepl("^Urban", muname), "Industrial", rank)
+})
+
+# Export for spot checking
+data_usgs2 <- data_usgs %>%
+  left_join(data_nrcs, by = "nationalmusym")
+write.csv(data_usgs2, file = "indy_urban_usgs_vs_nrcs_polygons.csv", row.names = FALSE)
+
+data_usgs <- data_usgs %>%
+  # Alena digitized an additional 18K acres vs 306k recogized by USGS, so an extra 5%
+  filter(grepl("Urban", muname) & pct_ul > 10) %>%
+  # count how many extra acres Alena digitized
+  # summarize(sum(AREA * 0.000247))
+  group_by(nationalmusym, muname) %>%
+  summarize(
+    pct_ul_l = round(min(pct_ul, na.rm = TRUE)),
+    pct_ul_r = round(weighted.mean(pct_ul, w = AREA, na.rm = TRUE)),
+    pct_ul_h = round(max(pct_ul, na.rm = TRUE)),
+    acres    = round(sum(COUNT) * (30 * 30) * 0.000247)
+            ) %>%
+   mutate(source = "USGS") %>%
+  left_join(acres, by = "nationalmusym")
+  
+
+# Combine NRCS and USGS
+test <- rbind(data_nrcs, data_usgs)
+test <- within(test, {
+  nationalmusym = factor(nationalmusym)
+  nationalmusym = reorder(nationalmusym, pct_ul_r)
+  rank = NA
+  rank = ifelse(pct_ul_r > 0, "Suburban", rank)
+  rank = ifelse(grepl("Urban", muname), "Urban land 2nd named component (aka Residental)", rank)
+  rank = ifelse(grepl("^Urban", muname), "Urban land 1st named component (aka Industrial)", rank)
+})
+# write.csv(test, file = "indy_urban_usgs_vs_nrcs_mapunits.csv", row.names = FALSE)
+
+levs <- c("Industrial", "Residental", "Suburban")
+
+test %>%
+  filter(pct_ul_r > 1) %>% # & rank %in% levs) %>%
+  ggplot(aes(x = nationalmusym, y = pct_ul_r, group = source, col = source)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = pct_ul_l, ymax = pct_ul_h)) + 
+  facet_wrap(~ rank, scale = "free_y") +
+  ylab("% urbanland") + xlab("nationalmusym") +
+  ggtitle("Urban land vs Imperviousness") +
+  coord_flip() +
+  scale_y_continuous(breaks = seq(0, 100, 10))
+
+test_t <- test %>%
+  ungroup() %>%
+  as.data.frame() %>%
+  # mutate(acres2 = factor(paste("t", as.character(acres))),
+  #        pct_ul_r = as.character(pct_ul_r)
+  #        ) %>%
+  dplyr::select(nationalmusym, muname, rank, pct_ul_r, source) %>%
+  tidyr::spread(source, pct_ul_r) 
+test_t$dif <- with(test_t, NRCS - USGS)
+
+group_by(test_t, rank) %>%
+  summarize(
+    NRCS_RV = round(mean(NRCS, na.rm = TRUE)),
+    USGS_RV = round(mean(USGS, na.rm = TRUE))
+    )
+
+
+View(subset(test_t, dif > 9))
+
+reshape(test_t[c("nationalmusym", "source", "pct_ul_r")],
+        direction = "wide", 
+        idvar = c("nationalmusym"), 
+        timevar = "source",
+        v.names = "pct_ul_r"
+        ) %>% 
+  as.data.frame() %>% head()
+
+# RMSE
+with(test_t, sqrt(mean((USGS - NRCS)^2, na.rm = TRUE)))
+
+```
+
+
+## Issues to address
+
+The following issues need to be addressed sequentionally
+
+1. Some polygons don't fall within the Urban land component % range listed within NASIS.
+    - Some polygons with 'Urban land' listed as the 1st major component (e.g. Urban land-Brookston) have < 50% USGS Imperviousness. See that attached tables. Identify the offending polygons and remedy so that they meet the concept of the map unit (e.g. fall within the range of Urban land component % range).
+    - Some polygons with 'Urban land' listed as the 2nd major component (e.g. Brookston-Urban land) have >50% USGS Imperviousness and <10% USGS Imperviousness. See that attached tables. Identify the offending polygons and remedy so that they meet the concept of the map unit (e.g. fall within the range of Urban land component % range).
+2. Overall the new urban map units Urban land component % RV > USGS Imperviousness % RV by ~18% overall. See the attached figures and tables. After the polygons in bullet 1 have been addressed, recalculate the zonal statistics and adjust the Urban land component % RV and range accordingly (within ~5-10% of the USGS Impervious % RV and range).
+3. Not sure why some map units in the figures don't have a corresponding USGS estimate. This is probably because they were left off the correlation legend.
+4. Add the nationalmusym to your correlation legend.
+5. Recalculate the acres in the correlation legend.
+
+
+## Not fixed
+
+```{r}
+
+test <- data_usgs2
+test_sub <- subset(test, pct_ul < 50 & rank == "Industrial")
+
+# View(table(test_sub$muname.x))
+View(table(test_sub$musym))
+
+writeClipboard(paste(test_sub$OBJECTID, collapse = ', '))
+
+View(cl)
+
+# missing from correlation legend
+leg <- get_mapunit_from_NASISWebReport( c("IN011", "IN057", "IN059", "IN063", "IN081", "IN095", "IN097", "IN109", "IN145"))
+
+test <- subset(edits2, !duplicated(paste(areasymbol, musym)))
+test <- subset(test, 
+               ! paste(areasymbol, musym) %in% paste(cl$areasymbol, cl$musym) &
+               ! paste(areasymbol, musym) %in% paste(leg$areasymbol, leg$musym)
+               )
+View(test)
+
+```
+
+
+# 3. Compare old to new polygons
+
+```{r old-vs-new}
+
+ei <- subset(ei, musym != musym_1 | !is.na(editor))
+
+ei_sum <- ei %>%
+  filter(musym != musym_1) %>%
+  group_by(areasymbol, musym, musym_1, muname, muname_1) %>%
+  summarize(acres = round(sum(shape_area * 0.0002471), 1)
+            # musym_new = paste0(sort(unique(musym)), collapse = ", ")
+            ) %>%
+  ungroup() %>%
+  # quantile(ei_sum$acres, p = seq(0, 1, 0.1))
+  filter(acres >= 40) %>%
+  left_join(cl, by = c("areasymbol", "musym")) %>%
+  left_join(select(pmu, nationalmusym, musym_mis, muname), by = c("muname.y" = "muname", "musym_mis")) %>%
+  select(nationalmusym, musym, musym_1, muname.y, muname_1) %>% #(areasymbol, 
+  .[!duplicated(.), ]
+
+ei_sum$test <- sapply(ei_sum$muname_1, function(x) strsplit(x, " ")[[1]][1])
+
+ei_sum$idx <- row.names(ei_sum)
+split(ei_sum, ei_sum$idx) ->.;
+lapply(., function(x) {
+  test = data.frame(
+    idx = as.numeric(x$idx[1]),
+    test2 = grepl(x$test, x$muname.y)
+    )}) ->.;
+do.call("rbind", .) ->.;
+.[order(.$idx), ] ->.;
+       
+check <- subset(ei_sum, ! .$test2 & ! grepl(c("Water|Pits"), muname_1))
+View(check)
+
+write.csv(check, file = "C:/workspace2/qa_indy_urban_mismatch_v2.csv", row.names = FALSE)
+
+```
+
+## Notes
+
+- Approximately 50% of changes are < 3 acres.
+- Alena remapped a bunch of water and pits.
+
+
+## Issues
+
+- Looks like some conversions might be missing. For example, Miami -> Martinsville. Some might be filtered out based on limited extent. Many appear to be pits and water.
+- Map unit urban land complex can't include surface texture in the name (e.g. Miami silt loam-Urban land complex). You also can't have Urban land-Miami silt loam complex.
+---
+title: "QA Indy Urban"
+author: "Stephen Roecker"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    number_sections: yes
+    toc: yes
+    toc_float:
+      collapseM: yes
+      smooth_scroll: no
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r load-pkg, include=FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE, cache=TRUE)
+
+library(soilDB)
+library(raster)
+library(sf)
+library(sp)
+library(dplyr)
+library(ggplot2)
+
+```
+
+# Questions
+
+1. What is the minimum size map unit per areasymbol?
+2. Do the new data map units urban land component % RV and capture the range of the NLCD impreviousness layer?
+3. Do the new polygons match the old polygons, except for the addition of urban land?
+
+
+
+# Load data
+
+## NASIS
+
+```{r load-nasis}
+
+prj  <- "SPATIAL - MLRA 111A - Indianapolis Urban Update - Phase 1"
+pmu <- get_projectmapunit_from_NASISWebReport(prj)
+comp <- get_component_from_NASISWebReport(prj)
+
+pmu <- pmu %>%
+  mutate(musym_mis = ifelse(is.na(lmapunitiid), "missing", musym))
+pmu2 <- pmu %>% select(dmuiid, nationalmusym, muname) %>% filter(!duplicated(nationalmusym))
+
+```
+
+
+## Conversion legend
+
+```{r load-cl}
+
+cl <- read.csv("C:/Users/Stephen.Roecker/Nextcloud/projects/2019_indy_urban/Copy of INDY_URBAN_EXPORT_ACRES_MUNAME_8_9_2019.csv", stringsAsFactors = FALSE)
+names(cl) <- tolower(names(cl))
+cl <- within(cl, {
+  musym_mis  = ifelse(musym != orig_musym, "missing", "orig_musym")
+  muname     = new.muname
+  new.muname = NULL 
+  new.symbol = NULL
+  areasymbol.1 = NULL
+  })
+
+
+cor_leg <- cl %>%
+  # old map units
+  left_join(
+    filter(pmu, ! is.na(musym)) %>%
+      rename(muname_old = muname, musym_old = musym, nationalmusym_old = nationalmusym, dmuiid_old = dmuiid) %>%
+      select(areasymbol, musym_old, nationalmusym_old, muname_old, dmuiid_old, muacres),
+    by = c("areasymbol" = "areasymbol", "orig_musym" = "musym_old")
+    ) %>% # View()
+  # new map units
+  left_join(
+    filter(pmu, is.na(musym)) %>%
+      mutate(musym_mis = "missing") %>%
+      select(muname, nationalmusym, musym_mis, dmuiid_nonreps),
+    by = c("muname", "musym_mis")
+    ) %>%
+  mutate(musym_mis = NULL, acres = round(acres)) %>%
+  select(areasymbol, orig_musym, musym, nationalmusym_old, nationalmusym, muname_old, dmuiid_old, dmuiid_nonreps, muname, muacres, acres)
+
+```
+
+
+## Geodatabase
+
+```{r load-gdb}
+
+mukeys <- paste0(sort(unique(pmu$lmapunitiid)), collapse = "', '")
+asym   <- c("IN011", "IN057", "IN059", "IN063", "IN081", "IN095", "IN097", "IN109", "IN145")
+q1 <- paste0("SELECT * FROM MUPOLYGON WHERE MUKEY IN ('", mukeys, "') AND AREASYMBOL IN ('", paste0(asym, collapse = "', '"), "')")
+q2 <- paste0("SELECT * FROM MUPOLYGON WHERE AREASYMBOL IN ('", paste0(asym, collapse = "', '"), "') AND (MUSYM <> orig_musym OR Editor IS NOT NULL)")
+
+
+# spatial edits
+edits <- read_sf("M:/geodata/project_data/FY2019_Review/RTSD_Region_11-IND_FY19.gdb", layer = "MUPOLYGON", query = q2, precision = 0.1)
+# repair topology from reducing precision
+edits <- lwgeom::st_make_valid(edits)
+idx <- which(! names(edits) %in% c("OBJECTID", "Shape"))
+names(edits)[idx] <- tolower(names(edits)[idx])
+edits$OBJECTID <- as.integer(edits$OBJECTID)
+
+
+# SSURGO
+mupol <- read_sf("M:/geodata/soils/SSURGO_R11_FY19.gdb", layer = "MUPOLYGON", fid_column_name = "OBJECTID", query = q1, precision = 0.1)
+sapol <- read_sf("M:/geodata/soils/SSURGO_R11_FY19.gdb", layer = "SAPOLYGON") 
+
+
+# intersection
+# this is quite fast in ArcPro if the precision is set to 0.1, but read_sf() won't import the intersected columns
+ei <- read.csv("C:/Users/Stephen.Roecker/Nextcloud/projects/2019_indy_urban/edits_ssurgo_intersect_v3.txt", stringsAsFactors = FALSE)
+names(ei) <- tolower(names(ei))
+ei <- subset(ei, musym != musym_1 | !is.na(editor))
+
+```
+
+
+
+# Intersect edits with SSURGO using R
+
+```{r r-intersect, eval=FALSE}
+
+es <- subset(edits, !is.na(Editor) | MUSYM != orig_musym | !is.na(Creator))
+
+int <- st_intersection(es, mupol) 
+
+```
+
+
+# Export to geopackage
+
+Note that ArcGIS will not open gpkg files with "." in the column OR row names.
+
+```{r export-geopkg}
+
+# example
+
+nc = st_read(system.file("shape/nc.shp", package="sf"))
+nc = st_transform(nc, crs = "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")
+
+test = st_intersection(nc, nc)
+# ArcGIS won't accept "." in row or column names
+names(test) = gsub("\\.", "_", names(test))
+row.names(test) = gsub("\\.", "_", row.names(test))
+
+test2 = st_collection_extract(test, type = "POLYGON")
+table(attributes(test2$geometry)$classes)
+
+test3 = st_cast(t, "POLYGON")
+test3 = st_transform(test2, "+init=epsg:4326")
+
+st_write(test3, dsn = file.path(getwd(), 'test5.gpkg'), layer = "test", layer_options = "OVERWRITE=YES")
+
+test_gdb <- as_Spatial(test2)
+fgdb_path <- file.path(tempdir(), "test4.gdb")
+arc.write(file.path(fgdb_path, "test4\\nc"), data=test_gdb, coords=c("x", "y", "elev"), shape_info=list(type='Polygon',hasZ=TRUE,WKID=5070))
+data(meuse.riv, package="sp")
+riv <- sp::SpatialPolygons(list(sp::Polygons(list(sp::Polygon(meuse.riv)),"meuse.riv")))
+
+```
+
+
+
+# 1. Evaluate minimum map unit size
+
+```{r min-mu}
+
+# filter polygons that touch soil survey boundary
+idx <- st_intersects(mupol, st_cast(sapol, "MULTILINESTRING"))
+idx2 <- unlist(lapply(idx, function(x) !is.na(x[1])))
+mupol2 <- mupol[!idx2, ]
+
+idx <- st_intersects(edits, st_cast(sapol, "MULTILINESTRING"))
+idx2 <- unlist(lapply(idx, function(x) !is.na(x[1])))
+es2 <- edits[!idx2, ]
+
+
+# polygon and map unit size
+ts <- mupol2 %>%
+  as.data.frame() %>%
+  mutate(acres = round(Shape_Area * 0.000247, 1))
+ts %>%
+  summarize(
+    a05 = sum(acres < 0.5),
+    a1  = sum(acres < 1),
+    a14 = sum(acres < 1.4)
+    )
+
+ts2 <- ts %>%
+  group_by(MUSYM, AREASYMBOL) %>%
+  summarize(acres = sum(acres, na = TRUE)) %>%
+  ungroup()
+ts2 %>%
+  summarize(
+    a2  = sum(acres < 2),
+    a10 = sum(acres < 10),
+    a100  = sum(acres < 100),
+    a200 = sum(acres < 200)
+    )
+
+es <- edits %>%
+  as.data.frame() %>%
+  mutate(acres = round(shape_area * 0.000247, 1)) %>%
+  group_by(musym, areasymbol) %>%
+  summarize(acres = sum(acres, na = TRUE)) %>%
+  ungroup()
+es %>%
+  summarize(
+    a2  = sum(acres < 2),
+    a10 = sum(acres < 10),
+    a100  = sum(acres < 100),
+    a200 = sum(acres < 200)
+    )
+
+```
+
+It appears that the number of map units less than a 10, 100 or 200 acres is the similar between the ssurgo and editted ssurrgo copies.
+
+
+
+# 2. Evaluate NRCS Urban land % vs USGS Imprevious %
+
+## Calculate NRCS Urban land %
+
+```{r nrcs-urban}
+
+data_nrcs <- comp %>%
+  inner_join(pmu2, by = "dmuiid") %>%
+  mutate(idx = grepl("Urban", compname)) %>%
+  group_by(nationalmusym, muname) %>%
+  summarize(pct_ul_l = sum(comppct_l[idx], na.rm = TRUE),
+            pct_ul_r = sum(comppct_r[idx], na.rm = TRUE),
+            pct_ul_h = sum(comppct_h[idx], na.rm = TRUE)
+            # n_ul   = sum(idx, na.rm = TRUE)
+            ) %>%
+  mutate(source = "NRCS")
+
+```
+
+
+## Sample USGS NLCD and Imperviousness using R
+
+This is slow best to use ArcPro.
+
+```{r usgs-urban, eval=FALSE}
+
+# create samples
+mu_sub <- within(edits, {
+  idx    = 1:nrow(edits)
+  acres  = shape_area * 0.000247
+  samp_n = ifelse(acres < 1, 1, round(acres / 1))
+})
+mu_sub <- mu_sub[!st_is_empty(mu_sub) & mu_sub$musym %in% cl$musym, ]
+
+mu_samp <- {
+  split(mu_sub, mu_sub$idx) ->.;
+  lapply(., function(x) {
+    mu_samp = st_sample(x, x$samp_n, type = "random")
+    coords  = as.data.frame(st_coordinates(mu_samp))
+    #
+    test = data.frame(
+      x = coords$X,
+      y = coords$Y,
+      idx = x$idx[1],
+      musym = x$musym[1],
+      areasymbol = x$areasymbol[1],
+      acres = x$acres[1],
+      stringsAsFactors = FALSE
+      )
+    return(test)
+    })}
+mu_samp2 <- do.call("rbind", mu_samp)
+coordinates(mu_samp2) <- ~ x + y
+proj4string(mu_samp2) <- CRS("+init=epsg:5070")
+
+
+# USGS impervious layer
+nlcd_2011 <- stack(list(
+  nlcd_2011    = "M:/geodata/land_use_land_cover/nlcd_2011_landcover_2011_edition_2014_03_31.img",
+  nlcd_2011_pct_imp = "M:/geodata/land_use_land_cover/nlcd_2011_impervious_2011_edition_2014_10_10/nlcd_2011_impervious_2011_edition_2014_10_10.img"
+  ))
+nlcd_2016 <- stack(list(
+  nlcd_2016    = "M:/geodata/land_use_land_cover/NLCD_2016_Impervious_L48_20190405.img",
+  nlcd_2016_pct_imp = "M:/geodata/land_use_land_cover/NLCD_2016_Impervious_L48_20190405.img"
+  ))
+
+
+# Extract data
+nlcd_2011_e <- extract(nlcd_2011, mu_samp2, sp = TRUE)@data
+nlcd_2016_e <- extract(nlcd_2016, mu_samp2)
+data <- cbind(nlcd_2011_e, nlcd_2016_e)
+
+write.csv(data, file = "C:/Users/Stephen.Roecker/Nextcloud/projects/2019_indy_urban/mupolygon_zonal_nlcd2011_R.csv", row.names = FALSE)
+
+
+# Calculate the USGS Imperviousness %
+# data <- read.csv(file = "C:/Users/Stephen.Roecker/Nextcloud/projects/2019_indy_urban/mupolygon_zonal_nlcd2011_R.csv", stringsAsFactors = FALSE)
+# 
+# # cl not in edits, 135 vs 134, IN109 YmeB
+# idx <- which(! paste(cl$areasymbol, cl$musym) %in% paste(edits$areasymbol, edits$musym))
+# test <- cl[idx, ]
+# 
+# data_usgs <- data %>%
+#   group_by(areasymbol, musym, idx) %>%
+#   summarize(nlcd_2011_pct_imp = mean(nlcd_2011_pct_imp, na.rm = TRUE),
+#             nlcd_2016_pct_imp = mean(nlcd_2016_pct_imp, na.rm = TRUE)
+#             ) %>%
+#   left_join(cl, by = c("musym", "areasymbol")) %>%
+#   left_join(dplyr::select(pmu, muname, nationalmusym, musym_mis), by = c("muname")) %>%
+#   group_by(nationalmusym, muname) %>%
+#   summarize(
+#     # nlcd_2011_pct_ul_l = round(min(nlcd_2011_pct_imp, na.rm = TRUE)),
+#     # nlcd_2011_pct_ul_r = round(mean(nlcd_2011_pct_imp, na.rm = TRUE)),
+#     # nlcd_2011_pct_ul_h = round(max(nlcd_2011_pct_imp, na.rm = TRUE)),
+#     pct_ul_l = round(min(nlcd_2016_pct_imp, na.rm = TRUE)),
+#     pct_ul_r = round(mean(nlcd_2016_pct_imp, na.rm = TRUE)),
+#     pct_ul_h = round(max(nlcd_2016_pct_imp, na.rm = TRUE))
+#             ) %>%
+#    mutate(source = "USGS")
+# 
+# vars <- c("musym", "areasymbol", "muname", "nationalmusym")
+# data_mu <- merge(data_mu, pmu[vars], by = vars[1:2], all.x = TRUE)
+# data2 <- within(data2, {
+#   musym_mis <- ifelse(is.na(muname), "missing", musym)
+#   })
+# vars <- c("musym", "muname", "musym_mis")
+# data_mu <- merge(data2, cl[vars], by = vars, all.x = TRUE)
+
+# vars <- c("nationalmusym", "areasymbol", "musym")
+# data_dmu <- merge(comp_sub, data2[vars], by = vars[1], all.x = TRUE)
+
+```
+
+
+
+## Compare NRCS Urban land % vs USGS Imperviousness %
+
+```{r compare-urbans}
+
+edits <- read.csv("C:/Users/Stephen.Roecker/Nextcloud/projects/2019_indy_urban/edits.txt", stringsAsFactors = FALSE)
+idx <- which(! names(edits) %in% c("OBJECTID", "Shape"))
+names(edits)[idx] <- tolower(names(edits)[idx])
+edits$OBJECTID <- as.integer(edits$OBJECTID)
+
+
+# data_usgs from ArcPro Zonal Statistics as Table
+data_usgs <- foreign::read.dbf("C:/Users/Stephen.Roecker/Nextcloud/projects/2019_indy_urban/mupolygon_zonal_2016_v5.dbf")
+
+data_usgs <- data_usgs %>%
+  inner_join(select(edits, OBJECTID, objectid_2, areasymbol, musym), by = "OBJECTID") %>%
+  left_join(cl, by = c("musym", "areasymbol")) %>%
+  left_join(
+    select(pmu, muname, nationalmusym, musym_mis),
+    by = c("muname", "musym_mis")
+    ) %>%
+  mutate(pct_ul = MEAN) %>%
+  select(OBJECTID, objectid_2, areasymbol, musym, nationalmusym, muname, pct_ul, acres, AREA, COUNT) %>% 
+  filter(!is.na(nationalmusym))
+
+data_usgs <- within(data_usgs, {
+  rank = NA
+  rank = ifelse(pct_ul > 5, "Suburban", rank)
+  rank = ifelse(grepl("Urban", muname), "Residental", rank)
+  rank = ifelse(grepl("^Urban", muname), "Industrial", rank)
+})
+
+# Export for spot checking
+data_usgs2 <- data_usgs %>%
+  left_join(data_nrcs, by = "nationalmusym")
+write.csv(data_usgs2, file = "indy_urban_usgs_vs_nrcs_polygons.csv", row.names = FALSE)
+
+data_usgs <- data_usgs %>%
+  # Alena digitized an additional 18K acres vs 306k recogized by USGS, so an extra 5%
+  filter(grepl("Urban", muname) & pct_ul > 10) %>%
+  # count how many extra acres Alena digitized
+  # summarize(sum(AREA * 0.000247))
+  group_by(nationalmusym, muname) %>%
+  summarize(
+    pct_ul_l = round(min(pct_ul, na.rm = TRUE)),
+    pct_ul_r = round(weighted.mean(pct_ul, w = AREA, na.rm = TRUE)),
+    pct_ul_h = round(max(pct_ul, na.rm = TRUE))
+            ) %>%
+   mutate(source = "USGS")
+  
+
+# Combine NRCS and USGS
+test <- rbind(data_nrcs, data_usgs)
+test <- within(test, {
+  nationalmusym = factor(nationalmusym)
+  nationalmusym = reorder(nationalmusym, pct_ul_r)
+  rank = NA
+  rank = ifelse(pct_ul_r > 0, "Suburban", rank)
+  rank = ifelse(grepl("Urban", muname), "Urban land 2nd named component (aka Residental)", rank)
+  rank = ifelse(grepl("^Urban", muname), "Urban land 1st named component (aka Industrial)", rank)
+})
+# write.csv(test, file = "indy_urban_usgs_vs_nrcs_mapunits.csv", row.names = FALSE)
+
+levs <- c("Industrial", "Residental", "Suburban")
+
+test %>%
+  filter(pct_ul_r > 1) %>% # & rank %in% levs) %>%
+  ggplot(aes(x = nationalmusym, y = pct_ul_r, group = source, col = source)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = pct_ul_l, ymax = pct_ul_h)) + 
+  facet_wrap(~ rank, scale = "free_y") +
+  ylab("% urbanland") + xlab("nationalmusym") +
+  ggtitle("Urban land vs Imperviousness") +
+  coord_flip() +
+  scale_y_continuous(breaks = seq(0, 100, 10))
+
+test_t <- test %>%
+  dplyr::select(nationalmusym, muname, rank, pct_ul_r, source) %>%
+  tidyr::spread(source, pct_ul_r)
+# RMSE
+with(test_t, sqrt(mean((USGS - NRCS)^2, na.rm = TRUE)))
+
+```
+
+
+## Issues to address
+
+The following issues need to be addressed sequentionally
+
+1. Some polygons don't fall within the Urban land component % range listed within NASIS.
+    - Some polygons with 'Urban land' listed as the 1st major component (e.g. Urban land-Brookston) have < 50% USGS Imperviousness. See that attached tables. Identify the offending polygons and remedy so that they meet the concept of the map unit (e.g. fall within the range of Urban land component % range).
+    - Some polygons with 'Urban land' listed as the 2nd major component (e.g. Brookston-Urban land) have >50% USGS Imperviousness and <10% USGS Imperviousness. See that attached tables. Identify the offending polygons and remedy so that they meet the concept of the map unit (e.g. fall within the range of Urban land component % range).
+2. Overall the new urban map units Urban land component % RV > USGS Imperviousness % RV by ~18% overall. See the attached figures and tables. After the polygons in bullet 1 have been addressed, recalculate the zonal statistics and adjust the Urban land component % RV and range accordingly (within ~5-10% of the USGS Impervious % RV and range).
+3. Not sure why some map units in the figures don't have a corresponding USGS estimate. This is probably because they were left off the correlation legend.
+4. Add the nationalmusym to your correlation legend.
+5. Recalculate the acres in the correlation legend.
+
+
+## Not fixed
+
+```{r}
+
+test <- data_usgs2
+test_sub <- subset(test, pct_ul < 50 & rank == "Industrial")
+
+# View(table(test_sub$muname.x))
+View(table(test_sub$musym))
+
+writeClipboard(paste(test_sub$OBJECTID, collapse = ', '))
+
+View(cl)
+
+# missing from correlation legend
+leg <- get_mapunit_from_NASISWebReport( c("IN011", "IN057", "IN059", "IN063", "IN081", "IN095", "IN097", "IN109", "IN145"))
+
+test <- subset(edits, !duplicated(paste(areasymbol, musym)))
+test <- subset(test, 
+               ! paste(areasymbol, musym) %in% paste(cl$areasymbol, cl$musym)
+               & ! paste(areasymbol, musym) %in% paste(leg$areasymbol, leg$musym)
+               )
+View(test)
+
+```
+
+
+# 3. Compare old to new polygons
+
+```{r old-vs-new}
+
+ei_sum <- ei %>%
+  filter(musym != musym_1 & round(shape_area * 0.00247) > 2) %>%
+  group_by(areasymbol, musym, musym_1, muname, muname_1) %>%
+  summarize(acres = round(sum(shape_area * 0.0002471), 1)
+            # musym_new = paste0(sort(unique(musym)), collapse = ", ")
+            ) %>%
+  ungroup() %>%
+  # quantile(ei_sum$acres, p = seq(0, 1, 0.1))
+  filter(musym != "W" & musym_1 != "W") %>%
+  left_join(cl, by = c("areasymbol", "musym")) %>%
+  left_join(select(pmu, nationalmusym, musym_mis, muname), by = c("muname.y" = "muname", "musym_mis")) %>%
+  select(acres.x, nationalmusym, musym, musym_1, muname.y, muname_1) %>% #(areasymbol, 
+  .[!duplicated(.), ]
+
+ei_sum$test <- sapply(ei_sum$muname_1, function(x) strsplit(x, " ")[[1]][1])
+
+ei_sum$idx <- row.names(ei_sum)
+split(ei_sum, ei_sum$idx) ->.;
+lapply(., function(x) {
+  test = data.frame(
+    idx = as.numeric(x$idx[1]),
+    test2 = grepl(x$test, x$muname.y)
+    )}) ->.;
+do.call("rbind", .) ->.;
+.[order(.$idx), ] ->.;
+
+View(ei_sum[! .$test2, ])
+
+```
+
+## Notes
+
+- Approximately 50% of changes are < 3 acres.
+- Alena remapped a bunch of water and pits.
+
+
+## Issues
+
+- Looks like some conversions might be missing. For example, Miami -> Martinsville. Some might be filtered out based on limited extent. Many appear to be pits and water.
+- Map unit urban land complex can't include surface texture in the name (e.g. Miami silt loam-Urban land complex). You also can't have Urban land-Miami silt loam complex.
+
+
+
+# 4. Create the Correlation Legend
+
+```{r}
+
+cor_leg$test <- sapply(cor_leg$muname_old[1], function(x) strsplit(x, " ")[[1]][1])
+
+# match munames
+cor_leg$idx <- row.names(cor_leg)
+split(cor_leg, cor_leg$idx) ->.;
+lapply(., function(x) {
+  test = data.frame(
+    idx = as.numeric(x$idx[1]),
+    test2 = grepl(x$test, x$muname)
+    )}) ->.;
+do.call("rbind", .) ->.;
+.[order(.$idx), ] ->.;
+
+View(cor_leg[! .$test2, ])
+
+# match dmuiid
+cor_leg$idx <- row.names(cor_leg)
+split(cor_leg, cor_leg$idx) ->.;
+lapply(., function(x) {
+  test = data.frame(
+    idx = as.numeric(x$idx[1]),
+    test2 = grepl(x$dmuiid_old, x$dmuiid_nonreps)
+    )}) ->.;
+do.call("rbind", .) ->.;
+subset(., ! is.na(.$test2)) ->.;
+
+View(cor_leg[! row.names(cor_leg) %in% .$idx & !is.na(cor_leg$muname_old) & duplicated(cor_leg$nationalmusym_old), ])
+# perfect match!
+
+```

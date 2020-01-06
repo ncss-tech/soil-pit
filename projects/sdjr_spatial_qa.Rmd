@@ -1,114 +1,203 @@
+---
+title: "SSURGO QA Report"
+author: "`r Sys.getenv('USERNAME')`"
+date: "`r Sys.Date()`"
+output: html_document
+params:
+  fy:          !r as.numeric(2018)
+  region:      !r as.numeric(11)
+  ssoffice:    !r as.character("11-FIN;12-GRR") # 11-AUR;11-ATL;11-FIN;11-GAL;11-IND;11-JUE;11-MAN;11-UNI;11-SPR;11-WAV")
+  projectname: !r as.character("%")
+  mupolygon:   !r as.character("G:geodata/project_data/FY2018_EXPORT/mupolygon_11FIN_edit_v2.dbf")
+  owners:      !r as.character("C:/workspace2/github/SSURGO-QA/trunk/SSURGO_Soil_Survey_Area.gdb")
+  ownCloud:    !r as.character("C:/Users/stephen.roecker/ownCloud/data/lims_data/")
+  local:       !r as.logical(FALSE)
+editor_options: 
+  chunk_output_type: console
+---
+
+
 # Report of changes requiring SSURGO recertification
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
+```{r parameters, echo=FALSE, warning=FALSE, message=FALSE}
+
 # These figures don't compare with Alena's spreadsheets. Her spreadsheets have additional counties that aren't captured in the Project Record.
 # This assumes no changes have been made to the ORIG columns, could run Alena's qa against an unedited copy.
 
-options(stringsAsFactors = FALSE)
+library(soilDB)
+library(dplyr)
+library(DT)
 
-library(foreign)
-library(knitr)
-library(tidyverse)
-library(RCurl)
-library(XML)
+# params <- data.frame(
+#   fy          =  2018,
+#   region      =  11,
+#   ssoffice    = "11-FIN;12-FLI",  # 11-AUR;11-ATL;11-FIN;11-GAL;11-IND;11-JUE;11-MAN;11-UNI;11-SPR;11-WAV");
+#   projectname = "%",
+#   mupolygon   = "M:geodata/project_data/FY2018/mupolygon_11MAN_edit.dbf",
+#   owners      = "C:/workspace2/github/SSURGO-QA/trunk/SSURGO_Soil_Survey_Area.gdb",
+#   ownCloud    = "C:/Users/stephen.roecker/ownCloud/data/lims_data/",
+#   local       = FALSE,
+#   stringsAsFactors = FALSE
+#   )
 
-source("C:/workspace2/github/soil-pit/trunk/queries/kssl_queries.R")
+attach(params)
+ssoffice <- unlist(strsplit(params$ssoffice, ";"))
 
-ownCloud <- "C:/Users/stephen.roecker/ownCloud/data/lims_data/"
-
-fy <- 2017
-region <- 11
-office <- c("11-WAV")
-mupolygon <- foreign::read.dbf("C:/Users/stephen.roecker/ownCloud/r11_wav_spatial3.dbf", as.is = TRUE)
+mupolygon <- foreign::read.dbf(mupolygon, as.is = TRUE)
 names(mupolygon) <- tolower(names(mupolygon))
-owners <- read.csv("M:/geodata/soils/SSA_Regional_Ownership_MASTER_fy17.csv")
-
-# data(state)
-# st <- paste0(tolower(state.abb), "%25")
-st <- paste0(toupper(c("ia", "il", "in", "ks", "ky", "mi", "mn", "mo", "ne", "oh", "ok", "sd", "wi")), "%25")
-# ssa <- readOGR(dsn = "M:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs", encoding = "ESRI Shapefile")@data
-# st <- sort(unique(substr(ssa$areasymbol, 1, 2)))
-
-# goals <- goals_report(fy, paste0(region, "-%25"))
-goals <- read.csv(paste0(ownCloud, "lims_goals_fy17_2017_09_05.csv"))
-
-# corr <- sdjr_correlation(asymbol, project_id, start_date, finish_date)
-corr <- read.csv(paste0(ownCloud, "lims_correlation_fy2017_IA%25_WI%25_2017_09_12.csv"))
-
-# legend <- legends_report("mi%25")
-legends <- read.csv(paste0(ownCloud, "report_legends_2017_09_12.csv"))
+owners <- sf::read_sf(dsn = owners, layer = "SSA_Regional_Ownership_Master", stringsAsFactors = FALSE)
+class(owners) <- "data.frame"
 ```
+
+```{r load-goals, echo=FALSE, warning=FALSE, message=FALSE}
+
+# project goals
+
+p <- expand.grid(mlrassoarea      = ssoffice,
+                 fy               = fy,
+                 stringsAsFactors = FALSE
+                 )
+prj <- {
+  split(p, list(p$mlrassoarea, p$fy), drop = TRUE) ->.;
+  lapply(., function(x) {
+    cat("procressing", paste(x$mlrassoarea, x$fy), "\n")
+    get_project_from_NASISWebReport(x$mlrassoarea, x$fy)
+    }) ->.;
+  do.call("rbind", .) ->.;
+  row.names(.) <- 1:nrow(.)
+  . ->.;
+  }
+
+# fname <- paste0(ownCloud, "nwr_project_fy", fy, "_2018_08_21.csv")
+# write.csv(prj, file = fname, row.names = FALSE)
+# prj <- read.csv(file = fname, stringsAsFactors = FALSE)
+```
+
+
+```{r load-pcor, echo=FALSE, warning=FALSE, message=FALSE}
+# project correlation
+
+p <- expand.grid(mlrassoarea = ssoffice,
+                 fy          = fy,
+                 projectname = projectname,
+                 stringsAsFactors = FALSE
+                 )
+pcor <- {
+  split(p, p[c("mlrassoarea", "fy", "projectname")], drop = TRUE) ->.;
+  lapply(., function(x) {
+    cat("getting the project correlation for ", x$mlrassoarea, "and", x$fy, "from NASISWebReport \n")
+    get_project_correlation_from_NASISWebReport(x$mlrassoarea, x$fy, x$projectname)
+  }) ->.;
+  do.call("rbind", .) ->.;
+  row.names(.) <- 1:nrow(.)
+  . ->.;
+  }
+
+# fname <- paste0(ownCloud, "nwr_project_correlation_fy", fy, "_2018_08_15.csv")
+# write.csv(pcor, fname, row.names = FALSE)
+# pcor <- read.csv(fname, stringsAsFactors = FALSE)
+```
+
+```{r load-legends, echo=FALSE, warning=FALSE, message=FALSE}
+# correlated mapunits (aka legend)
+
+asym <- subset(owners, AREASYMBOL %in% sort(unique(pcor$areasymbol[pcor$mlrassoarea %in% ssoffice])), select = AREASYMBOL)
+
+if (local == TRUE) {
+         leg  <- get_mapunit_from_NASIS(SS = FALSE)
+  } else leg  <- get_mapunit_from_NASISWebReport(asym$AREASYMBOL)
+
+# fname <- paste0(ownCloud, "nwr_mapunits_fy", fy, "_2018_08_15.csv")
+# write.csv(leg, fname, row.names = FALSE)
+# leg <- read.csv(fname, stringsAsFactors = FALSE)
+
+```
+
 
 ```{r, summarize geodatabase tabular changes, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
 
 # WEB-MLRA_Goals_Progress
 
-goals_summary <- goals %>%
-  filter(ssoffice %in% office) %>%
-  group_by(ssoffice) %>%
+goals_summary <- prj %>%
+  filter(mlrassoarea %in% ssoffice &
+         acre_goal > 0
+         ) %>%
+  group_by(mlrassoarea, projecttypename) %>%
   summarise(
-    n_projects = length(unique(projectname)),
-    goaled = sum(goaled), 
-    claimed = sum(reported),
-    progress = claimed / goaled * 100
+    n_projects    = length(unique(projectname)),
+    acre_goal     = sum(acre_goal, na.rm = TRUE), 
+    acre_progress = sum(acre_progress, na.rm = TRUE),
+    pct_progress  = round(acre_progress/ acre_goal * 100)
     )
-kable(goals_summary, caption = "Table 1: Number or SDJR projects per SS Office")
+datatable(goals_summary, caption = "Table 1: Number or SDJR projects per SS Office")
 
 
 # Correlation report (completed spatial changes in NASIS)
 
+pcor_sub <-subset(pcor, mlrassoarea %in% ssoffice & (!is.na(new_musym) | pmu_seqnum == 2018))
 
-corr_sub <-corr[corr$office %in% office, ]
-
-corr_summary <- corr_sub %>%
-  filter(!is.na(new_musym)) %>%
-  group_by(office) %>%
+pcor_summary <- pcor_sub %>%
+  group_by(mlrassoarea, projecttypename) %>%
   summarise(
     n_projects = length(unique(projectiid)),
-    acres = sum(muacres) * 0.2
+    acre_goal  = ifelse(unique(projecttypename) == "EVAL", 
+                        sum(muacres, na.rm = TRUE) * 0.5,
+                        sum(muacres, na.rm = TRUE)
+                        )
     )
-kable(corr_summary, caption = "Table 2: Number of completed SDJR changes")
+datatable(pcor_summary, caption = "Table 2: Completed EVAL & MLRA Summary")
 
 
-corr_summary <- corr_sub %>%
+pcor_summary <- pcor_sub %>%
   filter(
-    !is.na(new_musym) &
     spatial_change == TRUE
     ) %>%
-  group_by(office) %>%
+  group_by(mlrassoarea, projecttypename) %>%
   summarise(
-    n_projects = length(unique(projectiid)),
-    acres = sum(muacres) * 0.2
+    n_projects   = length(unique(projectiid)),
+    n_areasymbol = length(unique(areasymbol)),
+    n_mukey      = length(unique(mukey)),
+    acre_goal  = ifelse(unique(projecttypename) == "EVAL", 
+                        sum(muacres, na.rm = TRUE) * 0.5,
+                        sum(muacres, na.rm = TRUE)
+                        ),
+    acre_goal  = ifelse(unique(projecttypename) == "SPATIAL EDIT",
+                        sum(muacres) * 0.25,
+                        muacres
+                        )
     )
-kable(corr_summary, caption = "Table 3: Number of completed spatial changes")
+datatable(pcor_summary, caption = "Table 3: Completed EVAL & MLRA Summary with Spatial Changes")
 
-corr_sub <- subset(corr_sub,
-                   !is.na(new_musym) &
-                   (spatial_change == TRUE | pmu_seqnum == 2017)
-                   )
 
-vars <- c("office", "projectname", "areasymbol", "new_musym")
-nasis_qa1 <- {by(corr_sub,
-                corr_sub[, vars],
-                function(x) with(x, data.frame(
-                  x[1, vars],
-                  n_musym = length(unique(musym)),
-                  musym_c = paste0(unique(musym), collapse=", ")
-                  ))) ->.;
-               do.call("rbind", .)
-               }
-nasis_qa2 <- {by(corr_sub,
-                corr_sub[, vars],
-                function(x) data.frame(
-                  x[1 , vars],
-                  musym = unique(x$musym)
-                )) ->.;
-              do.call("rbind", .)
-              }
+pcor_sub2 <- subset(pcor_sub,
+                    spatial_change == TRUE | pmu_seqnum == 2018
+                    )
+
+pcor_sub2$musym <- pcor_sub2$orig_musym
+vars <- c("mlrassoarea", "projectname", "areasymbol", "new_musym", "new_nationalmusym")
+nasis_qa1 <- {
+  split(pcor_sub2, pcor_sub2[vars], drop = TRUE) ->.;
+  lapply(., function(x) {
+    data.frame(x[1, vars],
+               n_musym = length(unique(x$musym)),
+               musym_c = paste0(unique(x$musym), collapse=", "),
+               nationalmusym_c = paste0(unique(x$nationalmusym), collapse=", ")
+               )}) ->.;
+  do.call("rbind", .)
+  }
+nasis_qa2 <- {
+  split(pcor_sub2, pcor_sub2[vars], drop = TRUE) ->.;
+  lapply(., function(x) {
+    data.frame(x[1 , vars],
+               musym         = unique(x$musym)
+               )}) ->.;
+  do.call("rbind", .)
+  }
 nasis_qa <- merge(nasis_qa2, nasis_qa1, 
-                  by = c("office", "projectname", "areasymbol", "new_musym"), 
+                  by = vars, 
                   all = TRUE
                   )
+
 
 
 # Geodatabase report (completed spatial changes in geodatabase)
@@ -116,7 +205,7 @@ nasis_qa <- merge(nasis_qa2, nasis_qa1,
 idx <- names(mupolygon) %in% c("musym", "orig_musym", "editor_fie")
 names(mupolygon)[which(idx)] <- c("new_musym", "musym", "editor")
 
-mupolygon_edits <- subset(mupolygon, (musym != new_musym & musym != "") | editor != "ALENA.STEPHENS")
+mupolygon_edits <- subset(mupolygon, (musym != new_musym & musym != "") | !is.na(editor))
 
 geo_qa1 <- mupolygon_edits %>%
   group_by(areasymbol, new_musym) %>%
@@ -126,21 +215,30 @@ geo_qa1 <- mupolygon_edits %>%
     n_musym = length(unique(musym)),
     musym_c = paste0(unique(musym), collapse=", ")
     )
-vals <- c("areasymbol", "new_musym")
-geo_qa2 <- {by(mupolygon_edits, mupolygon_edits[, vals], function(x)  data.frame(
-  x[1, vals], 
-  musym = unique(x$musym)
-  )) ->.; do.call("rbind", .)}
+
+vars <- c("areasymbol", "new_musym")
+geo_qa2 <- {
+  split(mupolygon_edits, mupolygon_edits[, vars], drop = TRUE) ->.;
+  lapply(., function(x) {
+    data.frame(
+      x[1, vars], 
+      musym = unique(x$musym)
+    )}) ->.; 
+  do.call("rbind", .) ->.;
+  row.names(.) <- 1:nrow(.)
+  .->.;
+  }
+
 geo_qa <- left_join(geo_qa2, geo_qa1, by = c("areasymbol", "new_musym"))
 
-write.csv(geo_qa, 
-          paste0(
-            "C:/workspace2/report_spatial_geo_qa_", 
-            office, 
-            "_", 
-            format(Sys.time(), "%Y_%m_%d"), 
-            ".csv"), 
-          row.names = FALSE)
+# write.csv(geo_qa, 
+#           paste0(
+#             "C:/workspace2/report_spatial_geo_qa_", 
+#             ssoffice, 
+#             "_", 
+#             format(Sys.time(), "%Y_%m_%d"), 
+#             ".csv"), 
+#           row.names = FALSE)
 ```
 
 ```{r, QA checks, echo=FALSE}
@@ -149,8 +247,8 @@ write.csv(geo_qa,
 
 qa <- merge(nasis_qa, geo_qa, by = c("areasymbol", "musym", "new_musym"), all = TRUE) # match geo_qa2 to nasis_qa2
 
-leg_key <- with(legends, paste0(mapunit_symbol, "_", area_symbol))
-qa_key <- with(qa, paste0(new_musym, "_", areasymbol))
+leg_key <- with(leg, paste0(areasymbol, "_", musym))
+qa$qa_key  <- with(qa,  paste0(areasymbol, "_", new_musym))
 
 qa <- transform(qa,
                 in_project = !is.na(projectname),
@@ -169,18 +267,18 @@ qa_geo <- filter(qa_sub, in_geodatabase == FALSE)
 qa_leg <- filter(qa, in_legend == FALSE)
 
 if (dim(qa_project)[1] != 0) {
-  kable(qa_project, caption = "Table 4: Geodatabase changes missing from NASIS - Missing values (NA) need to be either added/removed from NASIS or the RTSD geodatabase, Otherwise they maybe splits that need to be relinked to a new additional mapunit.")
+  datatable(qa_project, caption = "Table 4: Geodatabase changes missing from NASIS - Missing values (NA) need to be either added/removed from NASIS or the RTSD geodatabase, Otherwise they maybe splits that need to be relinked to a new additional mapunit.")
 } else cat("SDJR Projects in NASIS match the Geodatabase")
 
 if (dim(qa_geo)[1] != 0) {
-  kable(qa_geo, caption = "Table 5: NASIS changes missing from the Geodatabase - Missing values (NA) need to be either added/removed from NASIS or the RTSD geodatabase, Otherwise they maybe splits that need to be relinked to a new additional mapunit.")
+  datatable(qa_geo, caption = "Table 5: NASIS changes missing from the Geodatabase - Missing values (NA) need to be either added/removed from NASIS or the RTSD geodatabase, Otherwise they maybe splits that need to be relinked to a new additional mapunit.")
 } else cat("Geodatabase matches the SDJR Projects in NASIS")
 
 if (dim(qa_leg)[1] != 0) {
-  kable(qa_leg, caption = "Table 6: Geodatabase musym missing from the legend")
+  datatable(qa_leg, caption = "Table 6: Geodatabase musym missing from the legend")
   } else cat("Legends in NASIS match the Geodatabase")
 
-write.csv(qa, paste0("C:/workspace2/report_spatial_qa_", office, "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
+# write.csv(qa, paste0("C:/workspace2/report_spatial_qa_", ssoffice, "_", format(Sys.time(), "%Y_%m_%d"), ".csv"))
 
 # id <- match(nasis_qa2$key, geo_qa2$key, incomparables=TRUE)
 # nasis_mis <- unique(nasis_qa2$key[is.na(id)]) # key present in NASIS, but missing from the geodatabase
@@ -194,15 +292,15 @@ write.csv(qa, paste0("C:/workspace2/report_spatial_qa_", office, "_", format(Sys
 
 ```{r, adjacent regions, echo=FALSE}
 # Changes to adjacent regions
-corr_owners <- merge(qa, owners, by.x = "areasymbol", by.y = "AREASYMBOL", all.x = TRUE)
+pcor_owners <- merge(qa, owners, by.x = "areasymbol", by.y = "AREASYMBOL", all.x = TRUE)
 
-idx <- !(corr_owners$Region %in% region)
-vars <- c("Region", "office", "areasymbol", "projectname", "new_musym", "musym", "n_polygons", "acres", "in_legend")
-outside <- corr_owners[idx, vars]
+idx <- !(pcor_owners$Region %in% region)
+vars <- c("Region", "mlrassoarea", "areasymbol", "projectname", "new_musym", "musym", "n_polygons", "acres", "in_legend")
+outside <- pcor_owners[idx, vars]
 
 if (dim(outside)[1] != 0) {
-  kable(outside, caption = "Table 7: MUSYM that need updating outside of Region")
-  } else cat(c("No changes from", office, "to surrounding MLRA offices"))
+  datatable(outside, caption = "Table 7: MUSYM that need updating outside of Region")
+  } else cat(c("No changes from", mlrassoarea, "to surrounding MLRA offices"))
 
 
 # Need Check for changes from other regions
@@ -210,13 +308,13 @@ if (dim(outside)[1] != 0) {
 
 # Changes from adjacent offices
 # For some reason this is catching a lot of spatial changes from adjacent Regions
-idx <- corr$office == office
-corr_in  <- corr[idx, ]
-corr_out <- corr[! idx, ]
-corr_out  <- merge(corr_out, owners, by.x = "areasymbol", by.y = "AREASYMBOL", all.x = TRUE)
+idx <- pcor$mlrassoarea == ssoffice
+pcor_in  <- pcor[idx, ]
+pcor_out <- pcor[! idx, ]
+pcor_out  <- merge(pcor_out, owners, by.x = "areasymbol", by.y = "AREASYMBOL", all.x = TRUE)
 
-idx2 <- corr_out$areasymbol %in% corr_in$areasymbol & corr_out$Region == 11 & ! corr_out$projecttypename %in% c("MLRA", "SDJR") & (corr_out$spatial_change == TRUE | is.na(corr_out$spatial_change) | corr_out$pmu_seqnum %in% fy) & grepl("11", corr_out$office)
+idx2 <- pcor_out$areasymbol %in% pcor_in$areasymbol & pcor_out$Region == 11 & ! pcor_out$projecttypename %in% c("MLRA", "SDJR") & (pcor_out$spatial_change == TRUE | is.na(pcor_out$spatial_change) | pcor_out$pmu_seqnum %in% fy) & grepl("11", pcor_out$mlrassoarea)
 if (any(idx2 == TRUE)) {
- kable(corr_out[idx, ], caption = "Overlapping changes from adjacent offices")
- } else cat(c("No changes to", office, "from surround MLRA Offices")) 
+ datatable(pcor_out[idx, ], caption = "Overlapping changes from adjacent offices")
+ } else cat(c("No changes to", ssoffice, "from surround MLRA Offices")) 
 ```

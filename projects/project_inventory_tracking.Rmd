@@ -1,0 +1,391 @@
+---
+title: "Project Map Unit Tracking"
+author: "Stephen Roecker"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    number_sections: yes
+    toc: yes
+    toc_float:
+      collapseM: yes
+      smooth_scroll: no
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+
+library(soilDB)
+library(dplyr)
+
+```
+
+
+# Load NASIS Web Reports
+
+```{r load-nwr}
+Nextcloud <- "C:/Users/stephen.roecker/Nextcloud/data/"
+
+p <- expand.grid(mlrassoarea = "11-JUE",
+                 # mlrassoarea = c("5-LIN", "5-SAL", "6-HOT", "6-OWN", "6-MAT","6-SPR", "7-MIL", "9-STW", "10-%", "11-%", "12-GRR"),
+                 # mlrassoarea = c("11-UNI", "11-AUR", "11-MAN", "11-SPR"),
+                 fy          = 2020:2029,
+                 projectname = "%",
+                 stringsAsFactors = FALSE
+                 )
+
+pmu <- {
+  split(p, p[c("mlrassoarea", "fy", "projectname")], drop = TRUE) ->.;
+  lapply(., function(x) {
+    cat("getting the projectmapunit for", x$mlrassoarea, "and", x$fy, "from NASISWebReport \n")
+    get_projectmapunit2_from_NASISWebReport(x$mlrassoarea, x$fy, x$projectname)
+    # get_projectmapunit2_from_NASISWebReport(x$mlrassoarea, x$fy, x$projectname)
+  }) ->.;
+  do.call("rbind", .) ->.;
+  row.names(.) <- 1:nrow(.)
+  . ->.;
+  }
+test <- read.csv("test.csv", stringsAsFactors = FALSE)
+idx <- pmu$nationalmusym %in% test$nationalmusym
+pmu_sub <- subset(pmu, 
+                  ! idx
+                  & projecttypename == "EVAL"
+                  & pmu$fiscalyear > 2020 
+                  # & ! pmu$projecttypename %in% c("MLRA", "ES", "PES") 
+                  # & mustatus == "Correlated"
+                  )
+table(pmu_sub$mlrassoarea)
+
+
+pcor <- {
+  split(p, p[c("mlrassoarea", "fy", "projectname")], drop = TRUE) ->.;
+  lapply(., function(x) {
+    cat("getting the project correlation for", x$mlrassoarea, "and", x$fy, "from NASISWebReport \n")
+    get_project_correlation_from_NASISWebReport(x$mlrassoarea, x$fy, x$projectname)
+    # get_projectmapunit2_from_NASISWebReport(x$mlrassoarea, x$fy, x$projectname)
+  }) ->.;
+  do.call("rbind", .) ->.;
+  row.names(.) <- 1:nrow(.)
+  . ->.;
+  }
+pcor <- within(pcor, {
+  region = sapply(mlrassoarea, function(x) unlist(strsplit(x, "-")[[1]][1]))
+  region = as.character(region)
+  acre_diff = muacres - new_muacres
+  })
+fname <- paste0(Nextcloud, "nwr_project_correlation_fy2019_20190822.csv")
+# write.csv(pcor, fname, row.names = FALSE)
+pcor   <- read.csv(fname, stringsAsFactors = FALSE)
+
+owners <- sf::read_sf(dsn = "C:/workspace2/github/ncss-tech/SSURGO-QA/trunk/SSURGO_Soil_Survey_Area.gdb", layer = "SSA_Regional_Ownership_Master", stringsAsFactors = FALSE)
+class(owners) <- "data.frame"
+
+```
+
+
+
+# Inventory Changes
+
+- Create matrix of areasymbol by mlrassoarea with sum of spatial changes
+- Identifies areasymbol with overlapping spatial changes from adjacent mlrassoarea
+
+```{r create-matrix}
+
+sc <- filter(pcor, spatial_change == TRUE) %>%
+  group_by(mlrassoarea, areasymbol) %>%
+  summarize(n = sum(spatial_change)
+  ) %>%
+  spread(mlrassoarea, n)
+idx <- apply(sc[2:ncol(sc)], 1, function(x) sum(!is.na(x)) > 1)
+idx2 <- sapply(sc[idx, ], function(x) !all(is.na(x)))
+test <- sc[idx, idx2]
+write.csv(test, "spatial_overlap.csv", row.names = FALSE)
+
+```
+
+
+
+# Changes in Region 11
+
+```{r changes-in-R11}
+
+in_11 <- subset(pcor, 
+                (spatial_change == TRUE | !is.na(pmu_seqnum)) & 
+                !projecttypename %in% c("ES", "PES (Obsolete)") & 
+                !is.na(new_mukey) &
+                areasymbol %in% owners$AREASYMBOL[owners$Region == 11]
+                )
+in_11 <- merge(in_11, owners[c("AREASYMBOL", "Region")], by.x = "areasymbol", by.y = "AREASYMBOL", all.x = TRUE)
+
+vars <- c("mlrassoarea", "projectname", "areasymbol", "musym", "new_musym", "muacres", "new_muacres")
+View(in_11[vars])
+
+group_by(in_11, mlrassoarea) %>% 
+  summarize(
+    n_areasymbol = length(unique(areasymbol)),
+    n_musym = length(unique(new_musym))
+  )
+
+```
+
+
+
+# Changes in shared areasymbol from Region 11 and Neighbors
+
+```{r shared-changes}
+
+shared <- subset(pcor, 
+                (spatial_change == TRUE | !is.na(pmu_seqnum)) & 
+                !projecttypename %in% c("ES", "PES (Obsolete)") & 
+                !is.na(new_mukey) &
+                areasymbol %in% owners$AREASYMBOL[owners$Region == 11] &
+                areasymbol %in% areasymbol[! grepl("11-", mlrassoarea)]
+)
+shared <- merge(shared, owners[c("AREASYMBOL", "Region")], by.x = "areasymbol", by.y = "AREASYMBOL", all.x = TRUE)
+
+vars <- c("mlrassoarea", "projectname", "areasymbol", "musym", "new_musym", "muacres", "new_muacres")
+View(shared[vars])
+
+test = group_by(shared, areasymbol) %>% 
+  summarize(
+    sso11 = paste0(sort(unique(mlrassoarea[grepl("11-", mlrassoarea)])), collapse = ", "),
+    sso_n = paste0(sort(unique(mlrassoarea[!grepl("11-", mlrassoarea)])), collapse = ", ")
+    # n_areasymbol = length(unique(areasymbol)),
+    # n_musym = length(unique(new_musym))
+  ) %>%
+  filter(sso_n != "" & sso11 != "")
+
+```
+
+
+
+# Changes from neighbors
+
+```{r changes-from-neigbhors}
+
+from_n <- subset(pcor, 
+                 !grepl("11-", mlrassoarea) & 
+                 (spatial_change == TRUE | !is.na(pmu_seqnum)) & 
+                 !projecttypename %in% c("ES", "PES (Obsolete)") & 
+                 !is.na(new_mukey) &
+                 areasymbol %in% owners$AREASYMBOL[owners$Region == 11]
+                 )
+from_n <- merge(from_n, owners[c("AREASYMBOL", "Region")], by.x = "areasymbol", by.y = "AREASYMBOL", all.x = TRUE)
+
+
+vars <- c("mlrassoarea", "projectname", "areasymbol", "musym", "new_musym", "muacres", "new_muacres")
+View(from_n[vars])
+
+group_by(from_n, region) %>% 
+  summarize(
+    n_areasymbol = length(unique(areasymbol)),
+    n_musym = length(unique(new_musym))
+    )
+
+write.csv(from_n, "region11_spatial_changes_from_neighbors_v2.csv", row.names = FALSE)
+
+```
+
+
+
+# Changes to neighbors
+
+```{r changes-to-neighbors}
+
+to_n <- subset(pcor, 
+               grepl("11-", mlrassoarea) & 
+               (spatial_change == TRUE | !is.na(pmu_seqnum)) & 
+               !projecttypename %in% c("ES", "PES (Obsolete)") & 
+               !is.na(new_mukey) &
+               areasymbol %in% owners$AREASYMBOL[owners$Region != 11] 
+               )
+to_n <- merge(to_n, owners[c("AREASYMBOL", "Region")], by.x = "areasymbol", by.y = "AREASYMBOL", all.x = TRUE)
+
+View(subset(to_n, select = c(mlrassoarea, projectname, areasymbol, musym, new_musym, muacres, new_muacres)))
+
+group_by(to_n, Region) %>% 
+  summarize(
+    n_areasymbol = length(unique(areasymbol)),
+    n_musym = length(unique(new_musym))
+    )
+
+write.csv(to_n, "region11_spatial_changes_to_neighbors_v2.csv", row.names = FALSE)
+
+```
+
+
+
+```{r nonmlra}
+
+library(soilDB)
+library(dplyr)
+library(tidyr)
+library(sf)
+
+owners <- sf::read_sf(dsn = "C:/workspace2/github/ncss-tech/SSURGO-QA/trunk/SSURGO_Soil_Survey_Area.gdb", layer = "SSA_Regional_Ownership_Master", stringsAsFactors = FALSE)
+class(owners) <- "data.frame"
+
+asym <- sort(unique(subset(owners, Region %in% c(10, 11))$AREASYMBOL))
+st   <- unique(substr(asym, 1, 2))
+
+# mu <- get_mapunit_from_NASISWebReport(paste0(st, "%"))
+# write.csv(mu, "C:/Users/Stephen.Roecker/Nextcloud/data/nwr_data/mapunits_20191025_r11.csv", row.names = FALSE)
+mu <- read.csv("C:/Users/Stephen.Roecker/Nextcloud/data/nwr_data/mapunits_20191025_r11.csv", stringsAsFactors = FALSE)
+mu <- transform(mu, lmapunitii = as.character(lmapunitii))
+
+lo <- lapply(st, function(x) {
+  cat("getting", x, as.character(Sys.time()), "\n")
+  get_lmuaoverlap_from_SDA(WHERE = paste0("legend.areasymbol LIKE '", x, "%'"))
+  })
+lo <- do.call("rbind", lo)
+write.csv(lo, "C:/Users/Stephen.Roecker/Nextcloud/data/nwr_data/lmuoaoverlap_20191025_r11.csv", row.names = FALSE)
+
+lo <- read.csv("C:/Users/Stephen.Roecker/Nextcloud/data/nwr_data/lmuoaoverlap_20191025_r11.csv", stringsAsFactors = FALSE)
+
+
+mu2 <- mu %>%
+  group_by(grpname, nationalmu, muname, mukind, mutype) %>% #, mustatus, dmuinvesin, farmlndcl, pct_compon, pct_hydric, n_componen, n_majcompf) %>%
+  summarize(muacres = sum(muacres, na.rm = TRUE),
+            n_areasymbol = length(areasymbol)
+            ) # %>%
+  # filter(!duplicated(nationalmu))
+
+# questions:
+# 1. how many MLRAs is a nationalmusym linked too
+
+lo2 <- lo %>%
+  filter(lao_areatypename == "MLRA") %>%
+  group_by(areasymbol, nationalmusym) %>%
+  summarize(lao_areasymbol = ifelse(all(!is.na(lao_areasymbol)), lao_areasymbol[which.max(muao_areaovacres)], NA),
+            muacre = ifelse(all(!is.na(muacres)), muacres[which.max(muao_areaovacres)], NA),
+            muao_areaovacres = sum(muao_areaovacres, na.rm = TRUE)
+            )
+
+
+# compute % mlra map units by mlrassoarea
+test <- xtabs(~ grpname + mutype, data = mu2, addNA = TRUE)
+test <- test %>%
+  as.data.frame() %>% 
+  pivot_wider(id_cols = grpname, names_from = mutype, values_from = Freq) %>%
+  filter(grepl("^10-|^11-", grpname))
+names(test) <- tolower(make.names(names(test)))
+View(test)
+
+test <- mu2 %>%
+  group_by(grpname, mutype) %>%
+  summarize(n_nationalmusym = length(nationalmu),
+            acres  = sum(muacres, na.rm = TRUE)  
+            ) %>%
+  filter(grepl("^10-|^11-", grpname)) %>%
+  # switch values_from to n_nationalmusym or acres
+  pivot_wider(id_cols = grpname, names_from = mutype, values_from = acres)
+names(test) <- tolower(make.names(names(test)))
+
+test %>%
+  mutate(pct_nonmlra = 1 - round(mlra.map.unit / (mlra.map.unit + non.mlra.map.unit + na.), 2),
+         non.mlra.map.unit = non.mlra.map.unit + na.
+         ) %>%
+  select(- na.) %>%
+  View()
+
+
+# Dissolve on map unit ownership grpname
+mlrassoarea <- paste0(11, "-", c("ATL", "AUR", "CLI", "FIN", "GAL", "JUE", "MAN", "SPR", "UNI", "WAV"))
+
+# Fix topology
+# lapply(mlrassoarea, function(x) {
+#   
+#   cat("processing", x, Sys.time(), "\n")
+#   temp = read_sf(dsn = paste0("D:/geodata/soils/FY2020/RTSD_Region_", x, "_FY20.gdb"), layer = "MUPOLYGON", precision = 0.1)
+#   # temp2 = temp[temp$AREASYMBOL == "NE021", ]
+#   temp = left_join(temp, mu2, by = c("NATMUSYM" = "nationalmu"))
+#   temp = lwgeom::st_make_valid(temp)
+#   save(temp, file = paste0("R", x, ".RData"))
+#   
+#   })
+  
+# Dissolve polygons
+lapply(mlrassoarea[2:length(mlrassoarea)], function(x) {
+  
+  load(paste0("R", x, ".RData"))
+  
+  asym = sort(unique(temp$AREASYMBOL))
+  
+  temp = lapply(asym, function(x2) {
+    test = subset(temp, AREASYMBOL == x2)
+    
+    cat("dissolving", x2, "from", x, as.character(Sys.time()), "\n")
+    
+    test = st_collection_extract(test, type = "POLYGON")
+    test = group_by(test, grpname, AREASYMBOL) %>%
+      summarize() %>%
+      ungroup()
+    # test = aggregate(test, list(test$grpname))
+
+    })
+  temp = do.call("rbind", temp)
+  # temp2 = mapedit:::combine_list_of_sf(temp2)
+  
+  temp = st_collection_extract(temp, type = "POLYGON")
+  # cat("simplifying", x, as.character(Sys.time()), "\n")
+  # temp = rmapshaper::ms_simplify(temp2)
+  
+  write_sf(temp, dsn = paste0("R", x, ".shp"), layer = "grpname", driver = "ESRI Shapefile")
+  })
+
+
+# merge grpname files
+temp <- lapply(mlrassoarea, function(x) {
+  cat("reading", x, "\n")
+  read_sf(dsn = paste0("D:/R", x, ".shp"))
+  })
+temp <- do.call("rbind", temp)
+
+write_sf(temp, dsn = "R11.shp", layer = "grpname", driver = "ESRI Shapefile")
+
+
+# Dissolve on map unit by mlra, grpname, mutype and areasymbol
+
+lapply(mlrassoarea, function(x) {
+  
+  load(paste0("D:/R", x, ".RData"))
+  
+  asym = sort(unique(temp$AREASYMBOL))
+  
+  temp = lapply(asym, function(x2) {
+    
+    cat("dissolving", x2, "from", x, as.character(Sys.time()), "\n")
+    
+    test = filter(temp, AREASYMBOL == x2) %>%
+      left_join(lo2, by = c("AREASYMBOL" = "areasymbol", "NATMUSYM" = "nationalmusym")) %>%
+      # st_snap(test, tolerance = 0.1) %>%
+      # lwgeom::st_make_valid() %>%
+      # st_collection_extract(type = "POLYGON") %>%
+      # group_by(grpname, AREASYMBOL, lao_areasymbol) %>% #, mutype) %>%
+      # summarize(st_union(.)) %>%
+      # ungroup()
+      mutate(field = paste(grpname, AREASYMBOL, lao_areasymbol, sep = "  "))
+    test = as_Spatial(test)
+    test = rgeos::gUnaryUnion(test, id = test$field)
+    df   = as.data.frame(do.call("rbind", (strsplit(row.names(test), "  "))), stringsAsFactors = FALSE)
+    names(df) = c("grpname", "AREASYMBOL", "lao_areasymbol")
+    row.names(df) = row.names(test)
+    test = SpatialPolygonsDataFrame(test, df)
+    # test = rmapshaper::ms_dissolve(as_Spatial(test), field = "grpname") #, copy_fields = c("grpname", "AREASYMBOL", "lao_areasymbol"))
+    test = st_as_sf(test) 
+    # test = aggregate(test, list(test$grpname, test$AREASYMBOL, test$lao_areasymbol, test$mutype))
+
+    })
+  temp = do.call("rbind", temp)
+  # temp2 = mapedit:::combine_list_of_sf(temp2)
+  
+  # temp = st_collection_extract(temp, type = "POLYGON")
+  # cat("simplifying", x, as.character(Sys.time()), "\n")
+  # temp = rmapshaper::ms_simplify(temp2)
+  
+  write_sf(temp, dsn = paste0("D:/R", x, "_mlra.shp"), layer = "grpname", driver = "ESRI Shapefile", delete_dsn = TRUE)
+  })
+
+
+
+```

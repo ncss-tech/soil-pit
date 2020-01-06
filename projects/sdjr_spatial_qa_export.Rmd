@@ -1,0 +1,140 @@
+---
+title: "SDJR Spatial QA Export"
+author: "Stephen Roecker"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    number_sections: yes
+    toc: yes
+    toc_float:
+      collapseM: yes
+      smooth_scroll: no
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+
+library(dplyr)
+
+```
+
+
+
+# Load Data
+
+```{r}
+
+r11  <- 11
+project_folder <- "D:/geodata/project_data/FY2019_Review/"
+
+owners <- sf::read_sf(dsn = "C:/workspace2/github/ncss-tech/SSURGO-QA/trunk/SSURGO_Soil_Survey_Area.gdb", layer = "SSA_Regional_Ownership_Master", stringsAsFactors = FALSE)
+class(owners) <- "data.frame"
+R11 <- subset(owners, Region == r11)
+names(R11) <- tolower(names(R11))
+
+# Summmarize export list
+vars <- c("areasymbol", "musym", "orig_musym")
+
+files <- c("mupolygon_11ATL_edit_v1.dbf",
+           "mupolygon_11AUR_edit_v1.dbf",
+           "mupolygon_11CLI_edit_v1.dbf",
+           "mupolygon_11MAN_edit_v3.dbf",
+           "mupolygon_11SPR_edit_v1.dbf",
+           "mupolygon_11UNI_edit_v1.dbf",
+           "mupolygon_11WAV_edit_v1.dbf"
+           )
+edits <- lapply(files[1], function(x) {
+  tmp = foreign::read.dbf(paste0(project_folder, x), as.is = TRUE)
+  names(tmp) = tolower(names(tmp))
+  
+  mlrassoarea = strsplit(x, "_")[[1]][2]
+  mlrassoarea = paste0(substr(mlrassoarea, 1, 2), "-", substr(mlrassoarea, 3, 5))
+  
+  tmp = cbind(mlrassoarea, 
+              state = substr(tmp$areasymbol, 1, 2), 
+              tmp[vars]
+              )
+  return(tmp)
+  })
+edits <- do.call("rbind", edits)
+
+```
+
+
+
+# Spatial Changes to Region 11 (requiring an export to the Staging Server)
+
+```{r}
+
+edits_R11 <- subset(edits, areasymbol %in% R11$areasymbol)
+
+corr <- edits_R11 %>%
+  group_by(mlrassoarea, state, areasymbol) %>%
+  summarize(n_musym = length(unique(musym)), 
+            musym     = paste(sort(unique(musym)), collapse = ", "), 
+            old_musym = paste(sort(unique(orig_musym)), collapse = ", ")
+            )
+sso_dup <- corr %>%
+  group_by(areasymbol) %>%
+  summarize(mlrassoarea = paste(mlrassoarea, collapse = ", ")
+            )
+corr2 <- left_join(corr, sso_dup, by = "areasymbol") %>%
+  select(state, mlrassoarea.x, mlrassoarea.y, areasymbol, n_musym, musym, old_musym) %>%
+  arrange(areasymbol)
+
+# corr2$dom <- ifelse(corr2$mlrassoarea.y == "11ATL, 11GAL", "11ATL", NA)
+
+def calc(field1, field2):
+  if field2 != None :
+  return field2
+else:
+  return field1
+
+```
+
+
+# Spatial Changes to Region 11 Neighbors (requiring an export to the Staging Server)
+
+```{r}
+
+edits_ne <- subset(edits, areasymbol %in% owners[owners$Region != 11, ]$AREASYMBOL)
+
+corr <- edits_ne %>%
+  group_by(mlrassoarea, state, areasymbol) %>%
+  summarize(n_musym = length(unique(musym)), 
+            musym     = paste(sort(unique(musym)), collapse = ", "), 
+            old_musym = paste(sort(unique(orig_musym)), collapse = ", ")
+            )
+sso_dup <- corr %>%
+  group_by(areasymbol) %>%
+  summarize(mlrassoarea = paste(mlrassoarea, collapse = ", ")
+            )
+corr2 <- left_join(corr, sso_dup, by = "areasymbol") %>%
+  select(state, mlrassoarea.x, mlrassoarea.y, areasymbol, n_musym, musym, old_musym) %>%
+  arrange(areasymbol)
+
+```
+
+
+
+# Changes sitting on the staging server
+
+```{r}
+
+ss <- read.csv("staging_server_2016_09_15.csv") # web scrape file
+names(ss) <- "survey"
+ss$areasymbol <- substr(ss[, 1], 1, 5)
+ss$spatial <- !grepl("tabular", ss[, 1])
+
+ss_r11 <- subset(ss, areasymbol %in% R11$areasymbol & spatial == TRUE)
+ss_recalled <- subset(ss_r11, !ss_r11$areasymbol %in% test$areasymbol)
+ss_missing <- subset(test, !areasymbol %in% ss$areasymbol & areasymbol %in% R11$areasymbol)
+ss_missing_neighbors <- subset(test, !areasymbol %in% ss$areasymbol & !areasymbol %in% R11$areasymbol)
+
+
+ss_neighbors <- merge(test["areasymbol"], ss, by = "areasymbol", all.x = TRUE)
+ss_neighbors <- merge(ss_neighbors, ownership[c("areasymbol", "region")], by.x = "areasymbol", by.y = "areasymbol", all.x = TRUE)
+ss_neighbors_missing <- subset(ss_neighbors, Region != 11)
+
+```
