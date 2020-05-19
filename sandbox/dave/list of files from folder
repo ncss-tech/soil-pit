@@ -1,0 +1,13 @@
+Simple way to create a .txt file that contains a list of files found in a directory
+
+Open up a file explorer window
+Navigate to and open your covariate folder
+In the address bar type: cmd and hit enter- this will open a command prompt in your covariates folder
+Then type the following command:
+dir /b *tif > listtif.txt 
+*note you can change the *tif to whatever file extension your covariates are in
+hit enter
+if successful this will write the covariate names to a text file located within your covariate folder called listtif.txt
+
+if you are interested in other ways you can use the dir command type dir /? into the command prompt
+
