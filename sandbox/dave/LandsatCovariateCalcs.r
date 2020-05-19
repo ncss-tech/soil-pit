@@ -1,7 +1,6 @@
-### Landsat 8 covariate development
-# For the 2020 Florida Field Week
+### Landsat covariate development
 
-# Dave White 11/08/2019
+# Dave White 05/19/2020
 # 
 
 # The landsat data was dounloaded using the USFS implementations in google earth engine. The following is a link to those modules : https://earthengine.googlesource.com/users/USFS_GTAC/modules/+/master. To represent dry periods of time Jan 1 to Feb 28th was used from 2015 to 2019. To represent wet periods of time July 1st to Sept 30th was used from 2015 to 2019. Time buffer was set to 2, weights was set to 1,2,3,2,1, median and SR was selected for each season. This algorithim calculates the median values for each date range. The final band combonations reflect those of Landsat 7.
