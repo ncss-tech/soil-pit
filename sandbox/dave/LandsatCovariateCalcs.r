@@ -5,7 +5,13 @@
 
 # The landsat data was dounloaded using the USFS implementations in google earth engine. The following is a link to those modules : https://earthengine.googlesource.com/users/USFS_GTAC/modules/+/master. To represent dry periods of time Jan 1 to Feb 28th was used from 2015 to 2019. To represent wet periods of time July 1st to Sept 30th was used from 2015 to 2019. Time buffer was set to 2, weights was set to 1,2,3,2,1, median and SR was selected for each season. This algorithim calculates the median values for each date range. The final band combonations reflect those of Landsat 7.
 
-
+# For reference, the bands in the calculations below correspond to the following:
+# 1)	Blue
+# 2)	Green
+# 3)	Red
+# 4)	NIR
+# 5)	SWIR1
+# 6)	SWIR2
 
 
 ## Load packages
@@ -15,7 +21,6 @@ new.packages <- required.packages[!(required.packages %in% installed.packages()[
 if(length(new.packages)) install.packages(new.packages)
 lapply(required.packages, require, character.only=T)
 rm(required.packages, new.packages)
-
 
 # If using a laptop this section of code may be usefull for memory handling
 ## Increase actuve memory useable by raster package
