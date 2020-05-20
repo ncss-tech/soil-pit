@@ -53,7 +53,7 @@ Las Cruces Soil Survey Office
 760 Stern Drive, Suite 124   
 Las Cruces, NM 88005   
 575-522-8775x136 (Phone)   
-david.white@nm.usda.gov(email)   
+david.white@usda.gov(email)   
 
 
 
