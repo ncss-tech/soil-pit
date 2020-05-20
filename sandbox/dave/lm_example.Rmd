@@ -1,0 +1,186 @@
+---
+title: "LM"
+author: "Dave White"
+date: "December 7, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r lm}
+library(aqp)     # specialized soil classes and functions
+library(soilDB)  # NASIS and SDA import functions
+library(raster)  # guess
+library(rgdal)   # spatial import
+library(ggplot2) # graphing
+library(tidyr)   # data manipulation
+library(dplyr)  
+
+
+
+
+githubURL <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/ch7_data.Rdata"
+load(url(githubURL))
+
+train <- data
+train <- subset(train, frags > 0 & frags < 100, select = - c(pedon_id, taxonname, landform.string, x_std, y_std, argillic.horizon, describer2)) # exclude frags greater than 100 and less than 1, and exclude some of the extra columns
+
+# Create custom transform functions
+logit <- function(x) log(x / (1 - x)) # logit transform
+ilogit <- function(x) exp(x) / (1 + exp(x)) # inverse logit transform
+
+# Transform
+train$fragst <- logit(train$frags / 100)
+
+# Create list of predictor names
+terrain1 <- c("slope", "solar", "mrrtf", "mrvbf")
+terrain2 <- c("twi", "z2str", "ch")
+climate <- c("elev", "precip", "precipsum", "temp")
+ls <- paste0("ls_", 1:6)
+pc <- paste0("pc_", 1:6)
+tc <- paste0("tc_", 1:3)
+rad <- c("k", "th", "u")
+
+# Compute correlation matrices
+round(cor(train[c("fragst", terrain1)], use = "pairwise"), 2)
+
+
+
+train <- train[c("fragst", "frags", "cluster2", terrain1, terrain2, climate, pc, tc, rad)]
+
+full <- lm(fragst ~ . - frags, data = train) # "~ ." includes all columns in the data set, "-" removes variables
+null <- lm(fragst ~ 1, data = train) # "~ 1" just includes an intercept
+add1(null, full, test = "F")
+
+
+
+# model one selecting lowest AIC at each iteration
+
+
+lm <- lm(fragst ~ cluster2, data = train)
+summary(lm)
+add1(lm, full, test = "F")
+
+
+
+lm <- lm(fragst ~ cluster2 + pc_2, data = train)
+summary(lm)
+add1(lm, full, test = "F")
+
+
+lm <- lm(fragst ~ cluster2 + pc_2 + twi, data = train)
+summary(lm)
+add1(lm, full, test = "F")
+
+lm <- lm(fragst ~ cluster2 + pc_2 + twi + pc_5, data = train)
+summary(lm)
+add1(lm, full, test = "F")
+
+lm <- lm(fragst ~ cluster2 + pc_2 + twi + pc_5 + pc_3, data = train)
+summary(lm)
+add1(lm, full, test = "F")
+
+lm <- lm(fragst ~ cluster2 + pc_2 + twi + pc_5 + pc_3 + pc_4, data = train)
+summary(lm)
+add1(lm, full, test = "F")
+
+
+summary(lm)
+
+plot(lm)
+
+termplot(lm, partial.resid = TRUE)
+
+sqrt(car::vif(lm))
+
+
+
+# Adjusted R2
+summary(lm)$adj.r.squared
+
+
+# Generate predictions
+train$predict <- ilogit(predict(lm, train)) * 100 # apply reverse transform
+
+# Root mean square error (RMSE)
+with(train, sqrt(mean((frags - predict)^2, na.rm = T)))
+
+
+# Mean absolute error
+with(train, mean(abs(frags - predict), na.rm = T))
+
+# Plot the observed vs predicted values
+plot(train$frags, train$predict, xlim = c(0, 100), ylim = c(0, 100))
+abline(0, 1)
+
+
+
+ilogit(lm$coefficients) * 100
+
+anova(lm)
+
+### second model without using cluster2 
+
+
+lm2 <- lm(fragst ~ pc_2, data = train)
+summary(lm2)
+add1(lm2, full, test = "F")
+
+lm2 <- lm(fragst ~ pc_2 + tc_1, data = train)
+summary(lm2)
+add1(lm2, full, test = "F")
+
+lm2 <- lm(fragst ~ pc_2 + tc_1 + twi + elev, data = train)
+summary(lm2)
+add1(lm2, full, test = "F")
+
+lm2 <- lm(fragst ~ pc_2 + tc_1 + twi + elev + pc_5, data = train)
+summary(lm2)
+add1(lm2, full, test = "F")
+
+lm2 <- lm(fragst ~ pc_2 + tc_1 + twi + elev + pc_5 + precipsum + solar, data = train)
+summary(lm2)
+add1(lm2, full, test = "F")
+
+
+summary(lm2)
+plot(lm2)
+
+termplot(lm2, partial.resid = TRUE)
+
+sqrt(car::vif(lm2))
+
+
+
+# Adjusted R2
+summary(lm2)$adj.r.squared
+
+
+# Generate predictions
+train$predict <- ilogit(predict(lm2, train)) * 100 # apply reverse transform
+
+# Root mean square error (RMSE)
+with(train, sqrt(mean((frags - predict)^2, na.rm = T)))
+
+
+# Mean absolute error
+with(train, mean(abs(frags - predict), na.rm = T))
+
+# Plot the observed vs predicted values
+plot(train$frags, train$predict, xlim = c(0, 100), ylim = c(0, 100))
+abline(0, 1)
+
+
+
+ilogit(lm2$coefficients) * 100
+
+anova(lm2)
+
+
+
+```
+

@@ -1,0 +1,1077 @@
+---
+title: "Introduction to Digital Soili Mapping"
+subtitle: "Post-course Project: Predicting Soil Classes"
+author: "Dave White"
+date: "May 3, 2018"
+output: "html_document"
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+knitr::opts_knit$set(root.dir = "C:/Essex/modeling")
+```
+
+   
+### 1. Objective  
+   
+   
+##### My objective is to: (describe specific aim of project and the target soil classes) *You may choose to explore your data in Steps 2 and 3 below before deciding on a final objective*
+   
+My objective for this project is to use random forest to predictively model soil classes for the Essex County, VT data set. I will explorer the data provided, and create additional data as needed. I will then evaluate statistical data reduction techniques by evaluating model performance in an iterative approach to try and maximize model accuracy and minimize OOB estimates of error. Once a final selection of covariates is made, I will use the selected covariates to employ a cost- constrained cLHS to generate a set of sampling points. Finally, I will make model predictions and analyze the outputs.   
+   
+   
+* note - throughout this document some lines of code were commented out using #, to reduce the length of the final document. These lines of code are mostly reviewing and inspecting data objects.
+```{r setupenvironment}
+# Setting up the r environment
+# Load the required libraries
+library(sp)
+library(maps)
+library(rgdal)
+library(raster)
+library(caret)
+library(maptools)
+library(doParallel)
+library(googleVis)
+library(psych)
+library(clhs)
+library(ggplot2)
+library(gridExtra)
+library(grid)
+library(corrplot)
+
+# Set working directory
+setwd("C:/Essex/modeling")
+```
+### 2. Data Provided  
+   
+   
+|  Point Data  |  Raster Data  |  Other Data  |
+|--------------|---------------|--------------|
+| Essex_field_points:<br> -soil class<br>-depth to redox (cm)<br>-depth to densic (cm)<br>-location (x,y)<br><br>Pre-split training/test data:<br>-Training data pedons<br>-Test/Validation data pedons|Terrain Derivatives:<br>-Hillshade and Shaded Relief for visualization<br>-Elevation<br>-Slope(percent) 30 and 60m neighborhood<br>-Profile curvature<br>-Planform curvature<br>-Tangent curvature<br>-Curvature<br>-Min curvature<br>-Max Curvature<br>-Multipath wetness index smoothed<br>-Total solar insolation<br>-Multiresolution valley bottom flatness<br>-Terrain ruggedness index<br>-Depression cost surface<br>-Surface area factor<br><br>Spectral Derivatives:<br>-none|Soil OSDs for reference           |
+   
+   
+   
+I decided to pull in the field points and view them on a Google map to familiarize myself with the project area.   
+```{r pointData, results='asis'}
+# setting options for google map plot
+options(gvis.plot.tag = 'chart')
+
+# load pedon data and inspect locations
+comp <- readShapePoints("comp.shp")
+
+# inspecting shapefile
+head(comp)
+summary(comp)
+names(comp)
+
+# look up coordinate system - empty
+comp@proj4string
+
+# prj2epsg.org - used this site to find the CRS code for the projection listed in ArcGIS
+
+# Assign projection
+proj4string(comp) <- CRS("+init=epsg:32145")
+
+# inspect proojection
+comp@proj4string
+
+# convert projection to use with google maps
+comp.2 <- spTransform(comp, CRS('+proj=longlat +datum=WGS84'))
+
+# convert to data frame
+comp.3 <- as.data.frame(comp.2)
+
+# organizing lat and long for the google map 
+latlong <- paste(comp.3$coords.x2, comp.3$coords.x1, sep = ":")
+class <- comp.3$FEATURE
+comp.4 <- cbind.data.frame(class, latlong)
+
+# create google map and store to object
+sites <- gvisMap(comp.4, locationvar = "latlong", tipvar = "class", 
+                 options = list(mapType = 'terrain', useMapTypeControl = TRUE,
+                                enableScrollWheel = TRUE, 
+                                width = "900px", height = "500px"))
+# plot google map
+plot(sites)
+```
+```{r gc, echo=FALSE, include=FALSE}
+gc()
+```
+   
+   
+   
+   
+### 3. Covariates   
+
+##### Covariates - Identify the characteristics of the study area that can be represented by spectral, terrain, or other ancillary data. Use the SCORPAN framework to organize important study area characteristics and existing data layers that might be used to represent these characteristics. Depending on your objective, it may not be necessary to consider all SCORPAN factors.   
+   
+   
+|    SCORPAN<br>Covariate    |    Soil-Landscape Characteristics    |    Existing Data Layers<br>that Represent<br> Soil-Landscape Characteristics|
+|----------------------------|--------------------------------------|--------------------------------|
+|Soil|Soils with redox features|multipath wetness index smoothed|
+|Climate|Moist Environment|-Total Solar insolation<br>-Multipath Wetness Index|
+|Organisms|-Substantial Vegetation coverage<br>-Soils high in organic matter|-none listed|
+|Relief| -Glacial till<br>-Drumlins<br>-hills, mountains - uplands and lowlands|DEM Derivatives:<br>-Elevation<br>-Slope<br>-Curvatures(all)<br>-Multipath wetness index<br>-Multiresolution valley bottom flatness<br>-Terrain ruggedness index<br>-Depression cost raster<br>-Surface Area Factor|
+|Parent Material| Glacial till| -none listed|
+|Age|-Geologic maps<br>-Geomorphic surfaces| -none listed|
+|Location| Inherent within the data sets||
+   
+   
+   
+### 4. Covariates - Deriving Raster Layers
+##### Do you need to create any additional data layers to represent the biophysical characteristics identified in question 3? If so, list the data layer and the biophysical characteristic it represents. 
+|    Soil-Landscape Characteristic    |    New Data Layer    |  Steps to Create New Data Layer  |
+|-------------------------------------|----------------------|----------------------------------|
+|Vegetation Density| - NDVI|-Download Landsat8 surface reflectance scene<br>-Compute NDVI in ERDAS|
+|Organics and redox features|-Stream Power Index<br>-SAGA wetness index|-Use DEM to create covariates in SAGA GIS with default settings|
+|soil mineralogy, redder surfaces, lighter darker surfaces|-clay mineralogy<br>-Fe Oxide index<br>-Mineralogy Index(3band)| - Download Landsat8 surface reflectance scene <br>-Compute indices in ERDAS|
+   
+The final step in processing was to set all rasters to the same size (resolution), pixel alignment, and extent. This was accomplished using a batch project function in ArcGIS, with snap raster, mask, extent, projection and cell size set to match the 5m DEM provided. Batch project was utilized because during review of the covariate data, MRVBF was found to have some projection issues, not allowing it to be combined in a raster stack in R.   
+   
+   
+   
+### 5. Covariate Selection
+##### Based on the SCORPAN factors and data listed above, what covariate set did you choose for modeling? Did you use a particular covariate selection method? List covariates and describe selection method below. *You may choose to use your expert knowledge and understanding of soil-landscape relationships in lieu of a quantitative method because those weren't comprehensively covered in this intro course* 
+   
+   
+Random forest models are fairly robust, thus initial modeling was accomplished by including all of the provided covariates plus the additional covariates created. Then several statistical techniques were used to filter down the covariates to increase model accuracy and decrease the out of bag error rate.   
+   
+   
+Statistical Covariate Reduction Methods:   
+   
+   
+Near Zero Variance:
+This method computes the variance of each covariate and returns those that are very near or equal to zero, thus removing data that does not have a high degree of variability. The selected covariates are then removed from the list.   
+   
+   
+Correlation Reduction:
+This method generates a correlation matrix of the covariate set. A threshold is selected representing the degree of correlation allowed between the covariates. Those covariates with correlation higher than the selected threshold are removed from the list.   
+   
+   
+Recursive Feature Elimination:
+This method runs multiple random forest models and keeps track of the variable importance during each iteration. The covariates that are repeatedly selected as "most" important are returned. 
+
+   
+   
+   
+Model 1: This model serves as a baseline. All of the components are modeled within the Essex_field_points shapefile using all developed covariates.  
+```{r covariateReduction1}
+# load Raster Data as a Raster Stack
+
+# read in raster layers to create raster stack for random forest prediction
+r.list=list.files(getwd(), pattern="tif$", full.names = FALSE)
+r.list
+
+#create raster stack
+r.stack <- stack(r.list)
+
+#remove files from working environment keeping only the raster stack and shapefile pedon locations (memory management)
+
+to.remove <- ls()
+matches <- c("r.stack", "comp$")
+to.remove <- c(to.remove[!grepl(paste0(matches, collapse = "|"), to.remove)], "to.remove")
+rm(list=to.remove)
+#gc()
+
+
+# set up dataframe for modeling
+# first extract raster values from the raster stack by the points
+
+# extract values from r.stack.all and set up a new dataframe
+all.df <- extract(r.stack, comp, df=T, na.rm=TRUE)   
+
+# inspect dataframe
+#head(all.df)
+#names(all.df)
+#summary(all.df)
+#describe(all.df) # nice method for looking at stats including skewness from library(psych)
+
+# add component information to the dataframe
+all.df$class <- comp@data$FEATURE
+
+# inspect dataframe
+#head(all.df)
+#names(all.df)
+
+# prepare data for  model training
+
+# drop column ID, and Move colum Class to front
+# get number of colums from dataframe
+#length(all.df)
+
+# output from above
+#> length(all.df)
+#[1] 26
+
+# dropping column ID. use the length from above for the first number, subtract 1 for the second
+comp.rf <- cbind(all.df[ ,26], data.frame(all.df[ ,2:25]))
+
+# inspect comp
+#names(comp.rf)
+
+# rename first column
+names(comp.rf)[c(1)] <- c('class')
+
+# inspect comp, class should be the first column, followed by the 25 covariates
+#names(comp.rf)
+#summary(comp.rf)
+
+# inspect naming convention for components
+#unique(comp.rf$class)
+
+# need to convert the component names so that there are no spaces
+comp.rf$class <- make.names(comp.rf$class)
+
+#unique(comp.rf$class)
+
+# check the data type of the class field
+#data.class(comp.rf$class)
+
+# class is a charactor vector needs to be a factor 
+# converting class to a factor
+comp.rf$class <- factor(comp.rf$class)
+
+#data.class(comp.rf$class)
+
+
+# Modeling the soil components by class using the Caret Package
+
+
+#The following code allows you to set the seed to run RF from the caret pckage in parallel and get reproducable results
+
+#The simulation will fit models with subset sizes of 50, 49...1
+subsets <- c(1:50)
+
+# set seeds to get reporducable results when running the process in parallel
+set.seed(12)
+seeds <- vector(mode = "list", length=76)
+for(i in 1:75) seeds[[i]] <- sample.int(1000, length(subsets) + 1)
+seeds[[76]] <- sample.int(1000, 1)
+
+# in the Train control you can set up the number of folds and repeats, as well as the data splitting, in this instance I have p set to .7, 70 percent of the data will be used for training and 30 percent used for testing.
+
+# set up the train control 
+# this is the only instance of fitControl, since it is used over and over keep in working environment
+fitControl <- trainControl(method = "repeatedcv", 
+                           number = 15,
+                           repeats = 5,
+                           p = 0.7, #30% used for test set, 70% used for training set
+                           selectionFunction = 'best', 
+                           classProbs = T,
+                           savePredictions = T, 
+                           returnResamp = 'final',
+                           search = "random",
+                           seeds = seeds)
+
+
+# Random Forest - Parallel process, highlight and run from c1 to stopCluster(c1)
+c1 <- makeCluster(detectCores()-1, type='PSOCK')# utilizes all but 1 core
+registerDoParallel(c1)
+set.seed(48)
+rfFit = train(class ~ ., data = comp.rf,
+              "rf", 
+              trControl = fitControl, 
+              ntree = 500, #number of trees default is 500, which seems to work best anyway. 
+              tuneLength=10, 
+              metric = 'Kappa', 
+              na.action=na.pass,
+              keep.forest=TRUE, # added this line and the next for partial dependance plots
+              importance=TRUE)
+stopCluster(c1)
+#gc()
+
+
+# inspect rfFit
+rfFit
+
+# accuracy 0.5606323
+
+# Get print out of final model
+rfFit$finalModel
+
+#OOB estimate of  error rate: 44.86%
+```
+```{r gc1, echo=FALSE, include=FALSE}
+gc()
+```
+   
+   
+Exploration of the data revealed water features within the modeling area. Random forest will try to fit the soil components to the water features. To reduce class error and increase model performance, training points with the class of water were added to the training data set. This was accomplished by editing the Essex_field_points shapefile in ArcGIS using Landsat8 imagery to visually locate the water features and add training points in those locations. This method works best for those components, typically miscellaneous areas, which are easily mapped using imagery.       
+   
+   
+Model 2: This model is the same as the previous one, but with water features included.
+```{r covariateReduction2}
+# load component data including water component
+comp2 <- readShapePoints("comp2.shp")
+
+# inspecting shapefile
+#head(comp2)
+#summary(comp2)
+#names(comp2)
+
+# look up coordinate system
+#comp2@proj4string
+
+# prj2epsg.org
+
+# Assign projection
+proj4string(comp2) <- CRS("+init=epsg:32145")
+
+# inspect proojection
+#comp2@proj4string
+
+# set up data frame for modeling
+# first extract raster values from the raster stack by the points
+
+# extract values from r.stack.all and set up a new dataframe
+all.df2 <- extract(r.stack, comp2, df=T, na.rm=TRUE)   
+
+# inspect dataframe
+#head(all.df2)
+#names(all.df2)
+#summary(all.df2)
+#describe(all.df2) # nice method for looking at stats including skewness
+
+# Add component information to the dataframe
+all.df2$class <- comp2@data$FEATURE
+
+# inspect dataframe
+#head(all.df2)
+#names(all.df2)
+
+# prepare data for model training
+
+# drop column ID, and Move colum class to front
+# get number of colums from dataframe
+#length(all.df2)
+
+# output from above
+#> length(all.df2)
+#[1] 26
+
+# dropping column ID. use the length from above for the first number, subtract 1 for the second
+comp.rf2 <- cbind(all.df2[ ,26], data.frame(all.df2[ ,2:25]))
+
+# inspect comp
+#names(comp.rf2)
+
+# rename first column
+names(comp.rf2)[c(1)] <- c('class')
+
+# inspect comp, class should be the first column, followed by the 25 covariates
+#names(comp.rf2)
+#summary(comp.rf2)
+
+# inspect naming convention for components
+#unique(comp.rf2$class)
+
+# need to convert the component names so that there are no spaces.
+comp.rf2$class <- make.names(comp.rf2$class)
+#unique(comp.rf2$class)
+
+# check the data type of the class field
+#data.class(comp.rf2$class)
+
+# class is a charactor vector needs to be a factor 
+# converting class to a factor
+comp.rf2$class <- factor(comp.rf2$class)
+
+#data.class(comp.rf2$class)
+
+
+# Modeling the soil components by class using the Caret Package
+
+# Random Forest - Parallel process, highlight and run from c1 to stopCluster(c1)
+c1 <- makeCluster(detectCores()-1, type='PSOCK')# utilizes all but 1 core
+registerDoParallel(c1)
+set.seed(48)
+rfFit2 = train(class ~ ., data = comp.rf2,
+              "rf", 
+              trControl = fitControl, 
+              ntree = 500, #number of trees default is 500, which seems to work best anyway. 
+              tuneLength=10, 
+              metric = 'Kappa', 
+              na.action=na.pass,
+              keep.forest=TRUE, # added this line and the next for partial dependance plots
+              importance=TRUE)
+stopCluster(c1)
+#gc()
+
+
+# Inspect rfFit
+rfFit2
+
+# accuracy 0.5827957 
+
+# Get print out of final model
+rfFit2$finalModel
+
+#OOB estimate of  error rate: 44.33%
+```
+```{r gc2, echo=FALSE, include=FALSE}
+gc()
+```
+Model performance increased slightly with the addition of the water components. The next step is to optimize model performance with the implementation of covariate reduction.   
+   
+   
+   
+Model 3: This model is the same as the previous one, with the addition of covariate reduction by statistical means. The two methods that follow include near zero variance filtering and correlation reduction.
+```{r covariateReduction3}
+
+# convert raster stack to a data frame
+stack.df <- as.data.frame(r.stack, na.rm=TRUE)
+
+length(stack.df) # the number of covariates we have in the raster stack
+
+# 1: Near Zero Variance Filtering
+
+# find covaraiates with near zero variance
+# 
+# removes covariates whose variance is near or equal to zero
+# this process is parallelized to enable faster processing
+cl <- makeCluster(detectCores()-1) # makes a cluster using all but 1 cpu cores
+registerDoParallel(cl)
+# the actual zeroVar function, creates a vector containing which covariates should be removed
+zeroVar <- nearZeroVar(stack.df, foreach = TRUE, allowParallel = TRUE)
+stopCluster(cl)
+
+# removing unused items from memory
+#gc()
+
+# check the zeroVar object
+head(zeroVar)
+# *note if integer(0), means that there are no covariates to be removed
+
+# remove covariates with zeroVar
+stack.df <- if(length(zeroVar) > 0){
+  stack.df[, -zeroVar]
+} else {
+  stack.df
+}
+
+length(stack.df) # the new number of covariates, zeroVar removed 1 covariate
+
+# nearZero removed one covariate
+names(stack.df) # curvature was removed
+
+
+# 2. Correlation Reduction
+
+# find correlations within covariates
+# a correlation matrix is determined and covariates with high degree of correlation are returned
+
+# create correlation matrix
+cor.mat <- cor(stack.df)
+
+# visually examin the correlation matrix
+#print(cor.mat)
+corrplot(cor.mat)
+
+# many of the curverature covariates and slope derivatives are highly correlated
+
+# I don't want to remove too many variables so I will set the threshold for highly correlated covariates high
+
+# find high degree of correlation, cutoff is the threshold to set. If cutoff = 0.8 then covariates > or = 80 correlated are removed
+highCorr <- findCorrelation(cor.mat, cutoff = 0.95)
+
+# remove covariates with high degree of correlation
+stack.df <- if(length(highCorr) > 0){
+  stack.df[, -highCorr]
+} else {
+  stack.df
+}
+
+length(stack.df) # number of covariates left, corr reduction removed 3 covariates
+names(stack.df)
+
+# Model with remaining covairates
+
+# Try running the model again with the the 20 covariates remaining
+# set up data frame for modeling
+
+# create a subset of the original raster stack
+r.stack.2 <- subset(r.stack, names(stack.df))
+
+names(r.stack.2)
+
+# extract values from r.stack.2 and set up a new dataframe
+all.df3 <- extract(r.stack.2, comp2, df=T, na.rm=TRUE)
+
+# inspect dataframe
+#head(all.df3)
+#names(all.df3)
+#describe(all.df3)
+#summary(all.df3)
+
+# add component information to the dataframe
+all.df3$class <- comp2@data$FEATURE
+
+# inspect dataframe
+#head(all.df3)
+#names(all.df3)
+
+# prepare data for model training
+
+# drop column ID, and Move colum class to front
+# get number of colums from dataframe
+#length(all.df3)
+
+# output from above
+#> length(all.df.2)
+#[1] 22
+
+# dropping column ID. use the length from above for the first number, subtract 1 for the second
+comp.rf3 <- cbind(all.df3[ ,22], data.frame(all.df3[ ,2:21]))
+
+# inspect comp
+#names(comp.rf3)
+
+# add class as the first column
+names(comp.rf3)[c(1)] <- c('class')
+
+# inspect comp, Class should be the first column, followed by the 43 covariates
+#names(comp.rf3)
+#describe(comp.rf3)   
+#summary(comp.rf3)
+
+# need to convert the component names so that there are no spaces.
+
+comp.rf3$class <- make.names(comp.rf3$class)
+
+#data.class(comp.rf3$class)
+
+# class is a charactor vector needs to be a factor 
+# converting class to a factor
+comp.rf3$class <- factor(comp.rf3$class)
+#data.class(comp.rf3$class)
+
+
+# Modeling the soil components by class using the Caret Package
+
+# Random Forest - Parallel process, highlight and run from c1 to stopCluster(c1)
+c1 <- makeCluster(detectCores()-1, type='PSOCK')
+registerDoParallel(c1)
+set.seed(48)
+rfFit3 = train(class ~ ., data = comp.rf3,
+              "rf", 
+              trControl = fitControl, 
+              ntree = 500, #number of trees default is 500, which seems to work best anyway. 
+              tuneLength=10, 
+              metric = 'Kappa', 
+              na.action=na.pass,
+              keep.forest=TRUE, # added this line and the next for partial dependance plots
+              importance=TRUE)
+stopCluster(c1)
+#gc()
+
+
+# 5.1.2 Inspect rfFit
+rfFit3
+
+# accuracy 0.5918594 
+
+# Get print out of final model
+rfFit3$finalModel
+
+#OOB estimate of  error rate: 42.27%
+```
+```{r gc3, echo=FALSE, include=FALSE}
+gc()
+```
+In model 3, the accuracy increased and OOB error rate decreased. There are several other methods for filtering down covariates. Next, Recursive Feature Elimination will be used to further reduce the covariate set.   
+   
+   
+   
+Model 4: This model is the same as above, but with Recursive Feature Elimination (RFE) implemented.
+```{r rfe}
+#  If data include levels that have only 1 cases,  it does not work... 
+#  Gives  Error in { : task 3 failed - "Can't have empty classes in y."
+#  So, for RFE we will only use those classes that have more than one case per class
+
+#  Select levels that have more than 1 cases to proceed with the rfe 
+subset(table(comp.rf3$class), table(comp.rf3$class) > 1)
+names(subset(table(comp.rf3$class), table(comp.rf3$class) > 1))
+
+# Use this to get names of factors that have more than one case
+cat(paste(shQuote(names(subset(table(comp.rf3$class), table(comp.rf3$class) > 1)), type="cmd"), collapse=", "))
+
+# manually paste the result here and add the 'c(' and the ')' to bookend the list
+# manually paste the new list here for subsetting the dataframe
+comp.sub <- subset(comp.rf3, class %in% c("Brayton", "Cabot", "Colonel", "Dixfield", "Skerry", "water", "Wilmington"))
+
+nrow(comp.sub)
+
+# CRITICAL STEP! You must assign the new subset as a factor for this to work
+comp.sub$class <- factor(comp.sub$class)
+
+#data.class(comp.sub$class)
+```
+   
+Run Recursive Feature Elimination. This selects the covariates that will build the best RF model
+```{r rfe2}
+# This process is setup to run as a parallel process. Set you number of cpu cores
+# in the make cluster function. This example uses detect cores to use all available. To set
+# the number of cores just type the number in place of detect cores(). Next, change the subsets
+
+
+#The simulation will fit models with subset sizes of 43, 42, 41.....1. 
+subsets <- c(1:50)
+
+# set seeds to get reporducable results when running the process in parallel
+set.seed(12)
+seeds <- vector(mode = "list", length=76)
+for(i in 1:75) seeds[[i]] <- sample.int(1000, length(subsets) + 1)
+seeds[[76]] <- sample.int(1000, 1)
+
+# set up the rfe control
+ctrl.RFE <- rfeControl(functions = rfFuncs,
+                       method = "repeatedcv",
+                       number = 15,
+                       repeats = 5,
+                       seeds = seeds, 
+                       verbose = FALSE)
+
+## highlight and run everything from c1 to stopCluster(c1) to run RFE
+#gc()
+c1 <- makeCluster(detectCores()-1, type='PSOCK')
+registerDoParallel(c1)
+set.seed(9)
+rf.RFE <- rfe(x = comp.sub[,-1],
+              y = comp.sub$class,
+              sizes = subsets,
+              rfeControl = ctrl.RFE,
+              allowParallel = TRUE
+)
+stopCluster(c1)              
+#gc()
+
+# Look at the results
+rf.RFE
+plot(rf.RFE, metric="Accuracy", main='RFE Accuracy')
+
+# See list of predictors
+predictors(rf.RFE)
+
+# get list of covariates from rfe
+predictors(rf.RFE)
+
+
+# Create a Random Forest model utilizing the covariates selected using RFE
+
+
+# create new raster stack to for model development from the predictors above
+
+r.stack.rfe <- subset(r.stack.2, predictors(rf.RFE))
+names(r.stack.rfe)
+
+# extract data data from raster stack
+# set up data frame for modeling
+# first extract raster values from the raster stack by the points
+
+# extract values from r.stack.all and set up a new dataframe
+all.df4 <- extract(r.stack.rfe, comp2, df=T, na.rm=TRUE)   
+
+# inspect dataframe
+#head(all.df4)
+#names(all.df4)
+#summary(all.df4)
+#describe(all.df4) # nice method for looking at stats including skewness
+
+# add component information to the dataframe
+all.df4$class <- comp2@data$FEATURE
+
+# inspect dataframe
+#head(all.df4)
+#names(all.df4)
+
+# prepare data for feature selection and model training
+
+# drop column ID, and Move colum class to front
+# get number of colums from dataframe
+#length(all.df4)
+
+# output from above
+#> length(all.df4)
+#[1] 21
+
+# dropping column ID. use the length from above for the first number, subtract 1 for the second
+comp.rf4 <- cbind(all.df4[ ,21], data.frame(all.df4[ ,2:20]))
+
+# inspect comp
+#names(comp.rf4)
+
+# rename first column
+names(comp.rf4)[c(1)] <- c('class')
+
+# inspect comp, class should be the first column, followed by the 25 covariates
+#names(comp.rf4)
+
+# inspect naming convention for components
+#unique(comp.rf4$class)
+
+# need to convert the component names so that there are no spaces.
+comp.rf4$class <- make.names(comp.rf4$class)
+#unique(comp.rf4$class)
+
+# check the data type of the class field
+#data.class(comp.rf4$class)
+
+# class is a charactor vector needs to be a factor 
+# converting Class to a factor
+comp.rf4$class <- factor(comp.rf4$class)
+#data.class(comp.rf4$class)
+
+
+# Modeling the soil components by class using the Caret Package
+
+# The following code allows you to set the seed to run RF from the caret pckage in parallel and get reproducable results
+
+#The simulation will fit models with subset sizes of 50, 49.....1. 
+subsets <- c(1:50)
+
+# set seeds to get reporducable results when running the process in parallel
+set.seed(12)
+seeds <- vector(mode = "list", length=76)
+for(i in 1:75) seeds[[i]] <- sample.int(1000, length(subsets) + 1)
+seeds[[76]] <- sample.int(1000, 1)
+
+# in the Train control you can set up the number of folds and repeats, as well as the data splitting, in this instance I have p set to .7, 70 percent of the data will be used for training and 30 percent used for testing.
+
+# set up the train control
+fitControl <- trainControl(method = "repeatedcv", 
+                           number = 15,
+                           repeats = 5,
+                           p = 0.7, #30% used for test set, 70% used for training set
+                           selectionFunction = 'best', 
+                           classProbs = T,
+                           savePredictions = T, 
+                           returnResamp = 'final',
+                           search = "random",
+                           seeds = seeds)
+
+
+#Random Forest - Parallel process, highlight and run from c1 to stopCluster(c1)
+c1 <- makeCluster(detectCores()-1, type='PSOCK')# utilizes all but 1 core
+registerDoParallel(c1)
+set.seed(48)
+rfFit4 = train(class ~ ., data = comp.rf4,
+               "rf", 
+               trControl = fitControl, 
+               ntree = 500, #number of trees default is 500, which seems to work best anyway. 
+               tuneLength=10, 
+               metric = 'Kappa', 
+               na.action=na.pass,
+               keep.forest=TRUE, # added this line and the next for partial dependance plots
+               importance=TRUE)
+stopCluster(c1)
+#gc()
+
+
+# inspect rfFit
+rfFit4
+
+# accuracy 0.6006291 
+
+# get print out of final model
+rfFit4$finalModel
+
+#OOB estimate of  error rate: 43.3%
+```
+```{r gc4, echo=FALSE, include=FALSE}
+gc()
+```
+   
+   
+   
+Covariate reduction methods such as nearZero variance, correlation reduction, and recursive feature elimination provide useful means to narrowing a list of covariates to those that contribute the most amount of information without being redundant. A combination of these methods helped to reduce class confusion, and increase overall model accuracy. However, this project could use more sample locations, to improve model accuracy. There may be components not yet described. Some of the components with only one location, may need additional sampling, or correlation to another component.
+   
+   
+   
+### 6. Sampling
+Use the selected set of covariates from Step (5) above and run conditioned Latin hypercube sampling (cLHS) in the TEUI toolkit as in Exercise 3.4. Display output cLHS points in a map and submit with project material.   
+   
+   
+At this point in the project, it appears that additional sampling points are necessary to boost model performance. cLHS will be used to accomplish the task of generating additional sampling points. Additionally, cost constrained cLHS will be used to target sampling areas to those where the model performs poorly. This will be accomplished by generating a probability raster from Model 4, above to use as a cost raster for cLHS.
+```{r clhs}
+# utilize the best RF model to generate a probability raster
+ess.prob <- predict(r.stack.rfe, rfFit4, type = "prob")
+                    #, progress = "text")
+
+# plot prbability raster
+par(mar = c(1,1,1,1))
+plot(ess.prob, axes = FALSE, 
+     main = "Init Samples on Probability / Cost Raster")
+points(comp2, col = 'red', pch = 19)
+
+# we will use the ess.prob layer as our cost raster it needs to be added to the raster stack
+# change name of prob raster and add to stack
+r.stack.rfe$cost <- ess.prob
+names(r.stack.rfe)
+
+# convert the raster stack to a SpatialPointsDataFrame   
+# during this process every pixel becomes a point in a dataframe. WARINING: if you have a very large dataset this might not be appropriate as it could take a long time.
+s <- rasterToPoints(r.stack.rfe, spatial = TRUE)
+
+set.seed(10) # for reproducability
+s.clhs <- clhs(s, size = 185, progress = FALSE, iter = 1500, cost = 'cost', simple = FALSE)
+
+# diagnostic plots
+plot(s.clhs, mode = c("obj"))#, "box", "dens")) # we can plot the box plots and density plots too
+
+# extract indices
+subset.idx <- s.clhs$index_samples
+
+
+# plot points to inspect and save to shp fil
+# check visually on the sagawi raster
+par(mar = c(1,1,1,1))
+plot(r.stack.rfe$sagawi, axes = FALSE, pch = 19, 
+     main = "cLHS points plotted on SAGA Wetness Index")
+points(s[subset.idx, ], col = 'blue')
+
+# check visualy on the cost raster
+par(mar = c(1,1,1,1))
+plot(r.stack.rfe$cost, axes=FALSE, 
+     main = "cLHS vs Initial Sample Points on Cost Raster")
+points(s[subset.idx, ], col = 'blue', pch = 19 )
+points(comp2, col = 'red', pch = 19 )
+legend("topleft", inset = c(0.25, 0.01), legend = c("cLHS", "Initial Sample"), col = c("blue", "red"), pch = 19, cex = 0.8, title = "sample type", text.font = 4)
+
+# save cLHS points to shp
+writeOGR(s[subset.idx, ], dsn = 'C:/Essex', layer = 'clhs_points_cost', driver = 'ESRI Shapefile', overwrite_layer = TRUE)
+```
+```{r gc5, echo=FALSE, include=FALSE}
+gc()
+```
+   
+   
+   
+### 7. Prepare Training data for modeling
+Note - I accomplished this task above in section 5.
+   
+   
+   
+### 8. Sampling/Data Exploration
+Use the training point data output from Step (7) and plot it against a covariate distribution using this R script. Do the same for the cLHS point output from Step (7). Submit density and box plots with your project results. Which points seem to represent the distribution of the covariate better, cLHS or provided points? Discuss why.
+```{r dataExploration}
+# data exploration: compare your cLHS point output and your training point data to a covariate layer using density and box plots
+
+# setup
+
+#checking to see what the most important variables were for RF
+rfIMP <- varImp(rfFit4, scale = FALSE)
+plot(rfIMP)
+
+
+# seting up data
+raster_data <- as.data.frame(r.stack.rfe)
+#names(raster_data)
+raster_data <- raster_data[, -20]
+raster_data$pt.type <- rep("Raster", nrow(raster_data))
+#names(raster_data)
+
+clHS_points <- as.data.frame(s[subset.idx, ])
+#names(clHS_points)
+clHS_points <- clHS_points[, -c(20:22)]
+#names(clHS_points)
+clHS_points$pt.type <- rep("cLHS", nrow(clHS_points))
+
+
+init_points <- extract(r.stack.rfe, comp, df = TRUE, na.rm = TRUE)
+#names(init_points)
+init_points <- init_points[, -c(1,21)]
+#names(init_points)
+init_points$pt.type <- rep("Init", nrow(init_points))
+
+# set up new data frame for density and box plots
+plt.dat <- rbind(raster_data, clHS_points, init_points)
+
+# save data in workspace
+save.image(file = "data.RData")
+
+# remove files from working environment keeping only the raster stack and shapefile pedon locations(memory handling)
+to.remove <- ls()
+matches <- c("plt.dat")
+to.remove <- c(to.remove[!grepl(paste0(matches, collapse = "|"), to.remove)], "to.remove")
+rm(list=to.remove)
+#gc()
+```
+```{r gc6, echo=FALSE, include=FALSE}
+gc()
+```
+```{r plots}
+# create density plots
+fill <- plt.dat$pt.type
+fill.f <- as.factor(plt.dat$pt.type)
+line <- "#1F3552"
+
+# MRVBF Density Plot
+mrvbf.den <- ggplot(data = plt.dat, aes(x = esx_mrvbf))+
+  stat_density(aes(ymax = ..density.., ymin = -..density.., 
+                   fill = pt.type, color = pt.type), 
+               geom = "ribbon", alpha = 0.6, position = "identity")+
+  facet_grid(. ~pt.type)+
+  scale_x_continuous(name = "Covariate : MRVBF",
+                     breaks = seq(0, 6, 2), 
+                     limits = c(0,6))+
+  scale_y_continuous(name = "Density", 
+                     breaks = seq(-1,1,1), 
+                     limits = c(-1,1)) +
+  ggtitle("Volcano Density Plot Comprisons")+
+  theme(plot.title = element_text(hjust = 0.5), 
+        axis.text.x = element_text(face = "bold"), legend.position = "none")+
+  coord_flip()
+
+# Wetness Index Density Plot
+wet.den <- ggplot(data = plt.dat, aes(x = esx_mpwetsm))+
+  stat_density(aes(ymax = ..density.., ymin = -..density.., 
+                   fill = pt.type, color = pt.type), 
+               geom = "ribbon", alpha = 0.6, position = "identity")+
+  facet_grid(. ~pt.type)+
+  scale_x_continuous(name = "Covariate : MPWETSM",
+                     breaks = seq(0, 10, 2), 
+                     limits = c(0,10))+
+  scale_y_continuous(name = "Density", 
+                     breaks = seq(-.5,.5,.5), 
+                     limits = c(-.5,.5)) +
+  ggtitle("")+
+  theme(plot.title = element_text(hjust = 0.5), 
+        axis.text.x = element_text(face = "bold"), legend.position = "none")+
+  coord_flip()
+
+# Slope60 Density Plot
+slp60.den <- ggplot(data = plt.dat, aes(x = esx_slope60))+
+  stat_density(aes(ymax = ..density.., ymin = -..density.., 
+                   fill = pt.type, color = pt.type), 
+               geom = "ribbon", alpha = 0.6, position = "identity")+
+  facet_grid(. ~pt.type)+
+  scale_x_continuous(name = "Covariate : Slope60",
+                     breaks = seq(-5, 50, 10), 
+                     limits = c(-5, 50))+
+  scale_y_continuous(name = "Density", 
+                     breaks = seq(-2,2,.2), 
+                     limits = c(-.3,.3)) +
+  ggtitle("")+
+  theme(plot.title = element_text(hjust = 0.5), 
+        axis.text.x = element_text(face = "bold"), legend.position = "none")+
+  coord_flip()
+
+
+# create box plots
+
+# MRVBF box plot
+mrvbf.box <- ggplot(plt.dat, aes(x = plt.dat$pt.type, y= plt.dat$esx_mrvbf, fill = plt.dat$pt.type))+
+  geom_boxplot(alpha = 0.6)+
+  ggtitle("Box Plot Comparisons")+
+  theme(plot.title = element_text(hjust = 0.5), 
+        legend.position = "none")+
+  xlab("")+
+  ylab("")
+
+# wetness index box plot
+wet.box <- ggplot(plt.dat, aes(x = plt.dat$pt.type, y= plt.dat$esx_mpwetsm, fill = plt.dat$pt.type))+
+  geom_boxplot(alpha = 0.6)+
+  ggtitle("")+
+  theme(plot.title = element_text(hjust = 0.5), 
+        legend.position = "none")+
+  xlab("")+
+  ylab("")
+
+# slope 60 box plot
+slp60.box <- ggplot(plt.dat, aes(x = plt.dat$pt.type, y= plt.dat$esx_slope60, fill = plt.dat$pt.type))+
+  geom_boxplot(alpha = 0.6)+
+  ggtitle("")+
+  theme(plot.title = element_text(hjust = 0.5), 
+        legend.position = "none")+
+  xlab("")+
+  ylab("")
+  
+
+# combine all of the plots into one figure
+grid.arrange(mrvbf.den, mrvbf.box, 
+             wet.den, wet.box, 
+             slp60.den, slp60.box, 
+             nrow = 3, 
+             top = "Visualizing Distributions")
+```
+
+```{r gc7, echo=FALSE, include=FALSE}
+# Clear Workspace and bring back in other data
+rm(list = ls())
+gc()
+
+load("data.RData")
+
+to.remove <- ls()
+matches <- c("r.stack.rfe", "rfFit4", "ess.prob", "ess.comp")
+to.remove <- c(to.remove[!grepl(paste0(matches, collapse = "|"), to.remove)], "to.remove")
+rm(list=to.remove)
+gc()
+```
+   
+When you look at the population distributions of cLHS generated points and already (Init.) sampled locations vs the total population of the covariates, it is noticeable that the cLHS points more closely represent the distribution of the overall covariate distribution. This is because, cLHS is stratified random sampling scheme, designed to select random samples in the feature space along the distribution of every covariate. The initial sampled locations mostly appear to be in the form of traditional transects and specific site observations. Although they don't appear to be too far away from the distributions of the covariates, the cLHS sample points mimic the distribution better.
+   
+   
+   
+### 9. Model Predictions   
+Soil classes were predictively modeled using random forest from the caret package. Random forest was chosen because it can model multiple classes with many different covariates all within one predictive model. Knowledge based models such as ArcSIE are good if there is a firm understanding of each environmental covariate and the relationship to the class being predicted. Random forest speeds up the process by finding these relationships within the data.
+```{r randomForest}
+# making model predictions
+# probability predicition
+ess.prob <- predict(r.stack.rfe, rfFit4, type = "prob")#, progress = "text")
+plot(ess.prob,
+     main = "Class Probabilities")
+#gc()
+# class predicition
+ess.comp <- predict(r.stack.rfe, rfFit4)#, progress = "text")
+plot(ess.comp, 
+     main = "Predicted Soil Classes", col = rainbow(9))
+#gc()
+
+```
+```{r gc8, include=FALSE, echo=FALSE}
+gc()
+```
+
+   
+   
+   
+### 10 Accuracy Assessmnet
+```{r accuracy}
+
+plot.rf <- print(rfFit4)
+pt.1 <- plot(rfFit4, main = "Random Forest Accuracy")
+pt.1
+
+layout(matrix(c(1,0,1,0), 1))
+pt.1
+pushViewport(viewport(x=.25, y=.45,height=.5))
+grid.table(plot.rf)
+
+# Extract confusion matrix and inspect
+grid.newpage()
+confusion.mat <- as.data.frame(rfFit4$finalModel$confusion)
+grid.table(confusion.mat)
+
+# print confusion matrix
+print(confusion.mat)
+```
+The final model had an accuracy of 0.60 and kappa of 0.47, with an OOB error rate of 43.3, which tells me that the model is working but could use improvement. The confusion matrix shows differences between observed classes and predicted classes. It can tell us some interesting things about the model even if we feel accuracy and other statistics are acceptable. For instance, Brayton did not get modeled correctly at all. This could be that we don't have the correct covariates, or we need to figure out why it is getting confused with Cabot and Colonel. Brayton and Cabot are both Loamy aquepts. The difference between the two is the thickness of the O horizons. We would need to figure out a way to separate these classes further. One potential option would be to create a raster with surface O horizon thickness to add to the list of covariates. The other two classes with the highest error were Peacham and Skerry.swpd. This is likely due to only having one instance of each of these classes. We would need to determine if these components were important enough to model. This would be followed with some correlation decisions as to whether or not you could model them as similar soils to other soil components. If it was decided to keep them, then we would need to collect more samples of each component.
+   
+   
+   
+### 11 Project Summary
+![Final Model Map.](c:/Essex/Untitled2.png)
+
+   
+I was able to create a working model of the soil components with the data provided. Additional data was created as no spectral data was provided, and the miscellaneous area component, water, was missing. Overall model accuracy was not terrible but could be improved. However individual class errors were poor. Given the data used in this project, the overall objective of making a predictive soil model utilizing random forest and making accuracy assessments was met.   
+   
+   
+Initial inspection of the predictive modeling soil classification map looks good. The majority of the hills are mapped as Dixfield and Colonel, These are soils that are found on glacial uplands with steeper slopes. Wilmington and Cabot seem to be found on the lower relief areas. The water component that I added is picking out areas of water, but also seems to be over fitting that component, particularly in the northwestern part of the modeled area where there are few points to begin with. I would review the points that I selected as water, remove any that looked poorly placed and rerun the model. The Skerry components also appear to be in the correct locations of uplands. Interestingly the Skerry.swpd component has Skerry modeled around it.   
+   
+   
+Random forest provides a quick method for predictive modeling that can model multiple classes with many different covariates. Model performance is greatly impacted by the number of cases per class and class imbalance. Overcoming these issues tends to be tricky with soil components, however for the number of cases per class, we could use additional sampling locations, or correlation decisions to maybe model the components as similar soil, or decide to not model the component at all. Furthermore, covariates and their relation to soil classes have a big impact. Combining methods of covariate selection may prove to be useful for boosting model performance. Using both knowledge based decisions as well as automatic feature selection methods. Knowledge based modeling strategies are a good approach when the Soil Scientist has a firm knowledge of soil-landscape-covariate relationships. Random Forest predictive modeling is a great strategy for all aspects of an iterative modeling approach. However, there may be instances when a model just cannot distinguish between several components. In this instance I would look into other options for modeling those components. Either, knowledge based (ArcSIE), or other predictive models (SVM, NNET.).   
+   
+   
+Visual inspection coupled with initial model statistics show that random forest prediction of soil classes performed fairly well. However, closer inspection of the confusion matrix reveals that several soil classes are not being modeled adequately enough. The next step for me would be to go and collect some more samples. As I showed in section 6, I would generate a set of cost-constrained cLHS points, where my cost layer was derived from the probability output of the current model. In this way we can target areas where the model is performing poorly. Additionally, I would think about correlating the skerry.swmpd component to Skerry, if it has no ecological or interpretive importance. During our second sampling campaign, I would investigate Peacham to see if there is enough of it to actually model out, or if it should just be considered an inclusion of minor significance. All the while keeping in mind that if I find new components, I will need to make the same determinations. Once this task is completed. I would then re-model the area. Investigate model statistics and the confusion matrix. If everything is acceptable, then I would take my independent test set to validate the final model. Hopefully, at this point we would be finished. However, if it is still unacceptable, I might try to run another sampling campaign. If time does not permit, then I would look into modeling individual components to try and minimize class error. Furthermore, I may employ the use of other modeling strategies where random forest poorly predicts individual soil classes.
+  
