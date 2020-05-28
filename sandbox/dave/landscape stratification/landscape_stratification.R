@@ -14,7 +14,8 @@ library(rgdal)
 library(caret)
 library(corrplot)
 library(factoextra)
-
+library(snowfall)
+library(ggplot2)
 
 # set working directory
 setwd("C:avp_cov")
@@ -38,12 +39,36 @@ rstack30m <- aggregate(rstack, fact=3, fun=mean, na.rm = TRUE)
 res(rstack30m)
 length(rstack30m)# roughly 200 million cells
 
+
 # generate a regular sample of points representative of the geographic region
 beginCluster()
-georegion.df <- sampleRegular(rstack30m, size = 5000000)
+reg.samp <- sampleRegular(rstack30m$aspect, size = 5000000, sp=T)
 endCluster()
 
-georegion.df <- na.omit(as.data.frame(georegion.df))
+
+# convert raster stack to list of single raster layers
+rstack30m.list <- unstack(rstack30m)
+names(rstack30m.list) <- names(rstack30m)
+
+## Parallelized extract: (larger datasets)
+sfInit(parallel=TRUE, cpus=parallel:::detectCores()-1)
+sfLibrary(raster)
+sfLibrary(rgdal)
+
+# run parallelized 'extract' 
+e.df <- sfSapply(rstack30m.list, extract, y=reg.samp)
+sfStop()
+
+gc()
+# convert to dataframe a
+georegion.df <- na.omit(as.data.frame(e.df))
+names(georegion.df) = tools::file_path_sans_ext(basename(names(rstack30m.list)))
+names(georegion.df)
+head(georegion.df)
+
+gc()
+
+
 
 # bring in piedmont shapefile
 pied.shp <- readOGR("piedmont_buffer.shp")
@@ -60,10 +85,32 @@ pied.stk <- crop(rstack30m, pied.shp)
 # how big is it
 length(pied.stk)
 beginCluster()
-pied.df <- sampleRegular(pied.stk, size = 500000)
+reg.samp <- sampleRegular(pied.stk, size = 5000000, sp=T)
 endCluster()
 
-pied.df <- na.omit(as.data.frame(pied.df))
+
+# convert raster stack to list of single raster layers
+pied.stk.list <- unstack(pied.stk)
+names(pied.stk.list) <- names(pied.stk)
+
+## Parallelized extract: (larger datasets)
+sfInit(parallel=TRUE, cpus=parallel:::detectCores()-1)
+sfLibrary(raster)
+sfLibrary(rgdal)
+
+# run parallelized 'extract' 
+e.df <- sfSapply(pied.stk.list, extract, y=reg.samp)
+sfStop()
+
+gc()
+# convert to dataframe a
+pied.df <- na.omit(as.data.frame(e.df))
+names(pied.df) = tools::file_path_sans_ext(basename(names(pied.stk.list)))
+names(pied.df)
+head(pied.df)
+
+gc()
+
 
 
 # bring in basin shapefile
@@ -74,22 +121,48 @@ rstack30m@crs
 
 basin.shp <- spTransform(basin.shp, crs(rstack30m@crs))
 basin.stk <- crop(rstack30m, basin.shp)
+
+
 length(basin.stk)
 beginCluster()
-basin.df <- sampleRegular(basin.stk, size = 500000)
+reg.samp <- sampleRegular(basin.stk, size = 5000000, sp=T)
 endCluster()
-basin.df <- na.omit(as.data.frame(basin.df))
 
 
-# we have 3 data.frames lets compare some of the covariates
-# subset the dataframes to a few selected covariates
+# convert raster stack to list of single raster layers
+basin.stk.list <- unstack(basin.stk)
+names(basin.stk.list) <- names(basin.stk)
+
+## Parallelized extract: (larger datasets)
+sfInit(parallel=TRUE, cpus=parallel:::detectCores()-1)
+sfLibrary(raster)
+sfLibrary(rgdal)
+
+# run parallelized 'extract' 
+e.df <- sfSapply(basin.stk.list, extract, y=reg.samp)
+sfStop()
+
+gc()
+# convert to dataframe a
+basin.df <- na.omit(as.data.frame(e.df))
+names(basin.df) = tools::file_path_sans_ext(basename(names(basin.stk.list)))
+names(basin.df)
+head(basin.df)
+
+save.image("C:/avp_cov/land_strat_data.RData")
+
+gc()
+
+
+# subset the data frames to check out some covariates
 names(georegion.df)
 
 
-#compare.df <- as.data.frame(rbind(method = "georegion", georegion.df, method = "piedmont", pied.df,  method = "basin", basin.df))
+geo.sub <- subset(georegion.df[,c(1,5,81,90)])
+pied.sub <- subset(pied.df[,c(1,5,81,90)])
+basin.sub <- subset(basin.df[,c(1,5,81,90)])
 
+cov.comp <- rbind(data.frame(landscape = "georegion", geo.sub), data.frame(landscape="piedmont", pied.sub), data.frame(landscape="basin", basin.sub))
 
-
-
-
-
+names(cov.comp)
+ggplot(cov.comp, aes(x = landscape, y = sagawi, color = landscape)) + geom_boxplot(cex = 1)
