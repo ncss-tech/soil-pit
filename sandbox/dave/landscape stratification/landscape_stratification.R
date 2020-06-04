@@ -15,29 +15,29 @@ library(caret)
 library(corrplot)
 library(factoextra)
 library(snowfall)
-library(ggplot2)
+#library(ggplot2)
 
 # set working directory
 setwd("C:avp_cov")
 
 # load in raster data
 # read in raster layers names from modeling folder and create list
-rlist=list.files(getwd(), pattern="tif$", full.names = FALSE)
+rlist=list.files(getwd(), pattern="D.tif$", full.names = FALSE)
 rlist
 
 # create raster stack
-rstack <- stack(rlist)
-names(rstack)
-str(rstack)
-length(rstack)# almots 2 billion cells
-length(rstack@layers)# number of covariates
-res(rstack)#10m resolution
+rstackDEM <- stack(rlist)
+names(rstackDEM)
+
+length(rstackDEM)# almots 2 billion cells
+length(rstackDEM@layers)# number of covariates
+res(rstackDEM)#10m resolution
 
 
 # change resolution from 10m to 30m for faster processing times
-rstack30m <- aggregate(rstack, fact=3, fun=mean, na.rm = TRUE)
-res(rstack30m)
-length(rstack30m)# roughly 200 million cells
+rsDEM30 <- aggregate(rstackDEM, fact=3, fun=mean, na.rm = TRUE)
+res(rsDEM30)
+length(rsDEM30)# roughly 200 million cells
 
 
 # generate a regular sample of points representative of the geographic region
