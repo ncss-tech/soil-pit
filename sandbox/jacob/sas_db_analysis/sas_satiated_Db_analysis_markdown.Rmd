@@ -1,0 +1,579 @@
+---
+title: "Marine and estuarine subaqeuous soil bulk density data exploration in MMA 12-TOL"
+author: Jacob Isleib and Dave Zimmermann
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    keep_md: yes
+    toc: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: no
+---
+
+# Objective
+
+Explore existing SAS soil property data to determine statistically significant groupings of soil properties that explain the variability in bulk density.  We will only use SAS data from marine and estuarine areas and will exclude freshwater SAS data.
+
+# Research question
+To explain variability in bulk density, should SAS data be summarized by individual USDA texture classes or groupings of texture classes?
+
+# Introduction
+
+"Bulk density, satiated" (*p*bsat) is the oven-dry weight of the less than 2 mm soil material per unit volume of soil at a water tension of 0 bar. The measurement is only used for subaqueous soils. (NSSH Part 618.9)  With increased interest in carbon stocks in coastal ecosystems (termed *coastal blue carbon*), it is neccesary to provide as accurate bulk density data as possible to allow subaqueous soil carbon stocks to be calculated along with measured soil organic carbon content.  The majority of available organic carbon data in soil survey management area 12-TOL (i.e., southern New England area and eastern New York) comes from Dr. Mark Stolt's lab at the University of Rhode Island and is available through National Cooperative Soil Survey and MapCoast partnership projects.  A small amount of data is available from samples measured at the USDA-NRCS Kellogg Soil Survey Laboratory in Lincoln NE.
+
+# R Analysis
+
+## Bulk Density, satiated
+
+### Exploratory Analysis
+
+```{r}
+setwd("C:/workspace/sandbox/jacob/sas_db_analysis")
+
+library(ggplot2)
+library(car)
+
+# load csv of available SAS Db data
+data <- read.csv("C:/workspace/sas_db_analysis/sas_db_analysis.csv")
+
+# subset data to hzn_bot, texture class, total sand/silt/clay, satiated Db, and SOC%
+# and only include mineral or mucky mineral textures
+data1 <- subset(data[ which(data$oc_qc!="organic"),c(7, 9:14)])
+## subset data1 for complete cases
+datacomplete <- data1[complete.cases(data1),]
+
+# Create scatterplot matrix of subset data
+spm(datacomplete)
+```
+  
+*Figure 1 Scatter plot matrix of all covariates in data frame "datacomplete"*
+  
+One question prompted by this scatter plot matrix is whether horizon depth should be used to subset data.  Depth seems to have a positive linear relationship to bulk density to a depth of ~75cm, after which depth does not appear to explain variability in bulk density values.
+
+```{r}
+# Run prcomp, sca, and correlation matrix
+
+## run pca (exclude texture class FACTOR data)
+datacomplete.cont <- datacomplete[, c(3:7)]
+datacomplete.cat <- datacomplete[, c(2)]
+
+datapca <- prcomp(datacomplete.cont, scale = TRUE)
+print(datapca)
+summary(datapca)
+x <- predict(datapca, datacomplete.cont)
+```
+
+### Summary statistics by USDA texture class
+
+```{r}
+library(plyr)
+library(dplyr)
+datacomplete2 <- datacomplete[, c(2,3:7)]
+data.tex.sum <- ddply(datacomplete2, ~texture, summarise, 
+                      n=n(),
+                      min=min(db_satiated), 
+                      min2sigma=round(((mean(db_satiated))-(2*(sd(db_satiated)))), 2),
+                      sd=sd(db_satiated, 2),
+                      mean=round(mean(db_satiated), 2),
+                      median=median(db_satiated),
+                      max2sigma=round(((mean(db_satiated))+(2*(sd(db_satiated)))), 2),
+                      max=max(db_satiated),
+                      range=((max(db_satiated))-(min(db_satiated))))
+data.tex.sum
+```
+  
+*Table 1 Summary statistics of samples by USDA texture class.*
+  
+Some of the texture groups have very low sample numbers as indicated in the n column.
+
+### Evaluate Db distribution by texture group
+```{r}
+## Basic histogram from the vector "db_satiated".
+# Draw with black outline, white fill
+
+ggplot(datacomplete2, aes(x=db_satiated)) +
+  geom_histogram(binwidth=.05,
+                 colour="black", fill="white") +
+  facet_wrap(~ texture)
+```
+  
+*Figure 2 Histogram matrix of Db, satiated value counts by USDA texture class*
+  
+```{r}
+# Histogram overlaid with kernel density curve
+
+# Find the mean of each group
+library(plyr)
+cdat <- ddply(datacomplete2, "texture", summarise, db_satiated.mean=mean(db_satiated))
+
+# plot with vertical mean line
+ggplot(datacomplete2, aes(x=db_satiated)) + 
+  geom_histogram(aes(y=..density..),      # Histogram with density instead of count on y-axis
+                 binwidth=.05,
+                 colour="black", fill="white") +
+  geom_density(alpha=.2, fill="#FF6666") +   # Overlay with transparent density plot
+  facet_wrap(~ texture) +
+  geom_vline(data=cdat, aes(xintercept=db_satiated.mean,  colour=texture),
+             linetype="dashed", size=1)
+```
+  
+*Figure 3 Histogram matrix of Db, satiated kernal density estimates by USDA texture class.  Mean Db, satiated values are indicated for each texture class with a vertical dashed line.*
+
+The majority of distribution curves that appear to be bimodal are also texture groups that have very low number of samples.
+
+### Principle Components Analysis
+
+Data exploration for combinations of texture groups or other kinds of data subsets.
+
+```{r fig4, fig.height = 7, fig.width = 7}
+# PCA biplot
+library(devtools)
+#install_github("vqv/ggbiplot")
+library(ggbiplot)
+g <- ggbiplot(datapca, obs.scale = 1, var.scale = 1, 
+              groups = datacomplete.cat, ellipse = TRUE, 
+              labels = datacomplete.cat, circle = FALSE)
+g <- g + scale_color_discrete(name = '')
+g <- g + theme(legend.direction = 'horizontal', 
+               legend.position = 'top')
+print(g)
+```
+  
+*Figure 4 Principal components analysis biplot with normal probability ellipses for each USDA texture class*
+
+The 4 or 5 groups of overlapping ellipses appear to be mostly associated with texture groups with similar sand/silt ranges.  The shape of the ellipses illustrates the variability in Db ranges by texture class.
+
+```{r}
+# Create correlation matrix
+round(cor(datacomplete[,-2]), 2)
+round(cor(datacomplete[,-2], method= "spearman"), 2)
+```
+  
+The correlation matrix shows that sand and silt have an extremely high correlation coefficient, suggesting that one could be dropped. 
+
+Another important note from this correlation matrix is the low corr coefficient between oc and hzn_bot.  We suggest not developing oc subsets of db_satiated data as component horizon data should maintain a full oc range regardless of depth.
+
+The total sand and clay data approach what is considered "strong" value of |0.7|.   Organic carbon is strong at |0.71|.
+
+### Clustering
+
+```{r}
+# Perform hard clustering and evaluate silhouette widths to aid in determining appropriate number of clusters
+library(cluster)
+library(factoextra)
+data.std <- data.frame(datacomplete.cont, scale(datacomplete.cont))
+fviz_nbclust(data.std, pam, method = "silhouette")
+
+```
+  
+*Figure 5 Plot of silhouette width against number of clusters*
+
+The mean silhouette width is a useful index of "cluster compactness" relative to neighbor clusters (P. Rousseeuw 1987). Larger silhouette widths suggest tighter grouping
+
+```{r}
+
+# Explore scatterplots with cluster groups
+
+library(ape)
+library(RColorBrewer)
+
+# nice colors for later
+col.set <- brewer.pal(9, 'Set1')
+
+# remove texture class and silt columns
+datacomplete3 <- datacomplete[, c(-2, -4)]
+datacomplete4 <- datacomplete[, c(-2)]
+
+# check structure
+str(datacomplete3)
+
+# k medoid, k=2
+par(mfrow=c(2,3), mar=c(1,1,1,1))
+
+for(i in 2:7) {
+  cl <- clara(datacomplete3, k = 2, stand = TRUE)
+  plot(datacomplete3, col = col.set[cl$clustering])
+  grid()
+  points(cl$medoids, col = col.set, pch = 0, cex = 2, lwd=2)
+  #  box()
+  }
+```
+  
+*Figure 6 Scatterplot matrix of all numeric covariates with 2 clusters labeled by color*
+  
+Covariates on this k=2 plot with the clearest vertical separation of clusters along the value range (in respect to db_satiated) are oc (at ~ 2%) and clay_tot (at ~8 percent)
+  
+```{r}
+# k medoid, k=3
+
+par(mfrow=c(2,3), mar=c(1,1,1,1))
+
+for(i in 2:7) {
+  cl <- clara(datacomplete3, k = 5, stand = TRUE)
+  plot(datacomplete3, col = col.set[cl$clustering])
+  grid()
+  points(cl$medoids, col = col.set, pch = 0, cex = 2, lwd=2)
+  #  box()
+}
+```
+  
+*Figure 7 Scatterplot matrix of all numeric covariates with 3 clusters labeled by color*
+
+At k=3, the 3rd cluster is comingled with the 2nd for most covariates except hzn_bot, suggesting that depth is the largest factor in this 3rd cluster.  The cluster depth change point is at ~ 100cm.
+
+k medoids for k=4:6 were evaluated, however the only non-comingled groups plot on the hzn_bot ~ db_satiated scatterplot, but do not change at a break on the hzn_bot axis suggesting they are clusters of bulk densities that may be explained by another covariate not accounted for in the scatterplot matrix.
+
+```{r}
+# subset data by horizon depth, break at 100cm
+
+data.upper <- subset(datacomplete, hzn_bot <100)
+data.lower <- subset(datacomplete, hzn_bot >=100)
+```
+
+### Subset Silty textures by clay content
+
+Tacit knowledge suggests that bulkdensity for silty textures may be very dependent upon horizon depth.  Very fluid (low bulk density) horizons are generally found higher in the soil profile.
+
+```{r}
+# evaluate silt textured horizons
+
+silty <- c("si","sic","sicl","sil")
+data.silty <- datacomplete[datacomplete$texture %in% silty, ]
+round(cor(data.silty[, -2]), 2)
+spm(data.silty[, -2])
+```
+
+*Figure 10 Scatter plot matrix of all covariates in data frame "data.silty".  Scatter plot of clay_tot against db_satiated emphasized with green rectangle.*
+
+The corr coefficient betwee db_satiated ~ hzn_bot is 0.40.  The correlation coefficient between db_satiated and clay_tot is 0.51 and the plot suggests there is a change point at around ~15%.  
+
+```{r}
+
+data.silty.lowclay <- subset(data.silty, clay_tot <15)
+data.silty.highclay <- subset(data.silty, clay_tot >=15)
+
+# generate correlation matrix of silty subset data
+round(cor(data.silty.lowclay[, -2]), 2)
+round(cor(data.silty.highclay[, -2]), 2)
+
+# Add new grouped-texture variables to account for low sample size in lvfs, vfs, and cosl textures
+
+lfs.lvfs <- c("lfs","lvfs")
+fs.vfs <- c("fs", "vfs")
+sl.cosl <- c("sl", "cosl")
+
+library(dplyr)
+datamutant <- mutate(datacomplete, texgrp = ifelse(texture %in% silty & clay_tot <15, "silty.lowclay",
+                              ifelse(texture %in% silty & clay_tot >=15, "silty.highclay",
+                              ifelse(texture %in% lfs.lvfs, "lfs.lvfs",
+                              ifelse(texture %in% fs.vfs, "fs.vfs",
+                              ifelse(texture %in% sl.cosl, "sl.cosl",
+                              as.character(texture))))))) 
+
+datamutant.summary <- ddply(datamutant, ~texgrp, summarise, 
+                            n=n(),
+                            min=min(db_satiated), 
+                            min2sigma=round(((mean(db_satiated))-(2*(sd(db_satiated)))), 2),
+                            sd=sd(db_satiated, 2),
+                            mean=round(mean(db_satiated), 2),
+                            median=median(db_satiated),
+                            max2sigma=round(((mean(db_satiated))+(2*(sd(db_satiated)))), 2),
+                            max=max(db_satiated))
+
+datamutant.summary
+```
+  
+*Table 2 Summarized satiated bulk density data by new texture groups.*
+
+```{r}
+# plot histograms to analyze distribution by new texture groups
+
+cdat <- ddply(datamutant, "texgrp", summarise, db_satiated.mean=mean(db_satiated))
+ggplot(datamutant, aes(x=db_satiated)) + 
+  geom_histogram(aes(y=..density..),      # Histogram with density instead of count on y-axis
+                 binwidth=.05,
+                 colour="black", fill="white") +
+  geom_density(alpha=.2, fill="#FF6666") +   # Overlay with transparent density plot
+  facet_wrap(~ texgrp) +
+  geom_vline(data=cdat, aes(xintercept=db_satiated.mean,  colour=texgrp),
+             linetype="dashed", size=1)
+```
+  
+*Figure 11 Density histogram of new texture groups*
+
+### ANOVA and Tukey Range test
+```{r}
+#ANOVA and Tukey Honest Significant Differences will be used to evaluate potential groupings of texture classes 
+
+amod <- aov(db_satiated ~ texgrp, data=datamutant)
+amod
+summary(amod)
+print(model.tables(amod, "effects", se = TRUE))
+tukey <- TukeyHSD(amod, "texgrp")
+hsd.table <- as.data.frame(tukey$texgrp)
+hsd.table
+```
+  
+*Table 4 Tukey Honestly Significant Differences (HSD) table*
+
+Adjusted p values higher than 0.05 will be combined into new texture groups.
+
+grp1           |grp2     |grp3 |grp4          |
+---------------|---------|-----|--------------|
+l              |lfs.lvfs |s    |vfsl          |
+silty.highclay |lcos     |     |silty.lowclay |
+-              |fs.vfs   |     |sl.cosl       |
+-              |ls       |     |fsl*          |
+-              |cos      |     |              |
+
+*fsl texture also had a high p value along with grp2 textures; it is assigned to grp4 manually
+
+All groups will be named by concatenating their consituent texture group names for easy referencing.
+
+*Table 5 New texture groups of statistically insignificant pairings*
+
+```{r}
+write.csv(hsd.table, file="hsdtable.csv", row.names = TRUE)
+
+# standard error table
+test0 <- lm(db_satiated ~ texgrp, data=datamutant, contrasts = list(texgrp = contr.treatment))
+anova(test0)
+par(mfrow=c(2,2))
+plot(test0)
+summary(test0)
+contr.treatment(unique(datamutant$texgrp)) # for reference
+
+# Create new texture groups based on ANOVA
+l.silty.highclay <- c("l", "silty.highclay")
+lfs.lvfs.lcos.fs.vfs.ls.cos <- c("lfs.lvfs", "lcos", "fs.vfs", "ls", "cos")
+vfsl.silty.lowclay.sl.cosl.fsl <- c("vfsl", "silty.lowclay", "sl.cosl", "fsl")
+
+datamutant2 <- mutate(datamutant, texgrp2 = 
+                  ifelse(texgrp %in% l.silty.highclay, "l.silty.highclay",
+                  ifelse(texgrp %in% lfs.lvfs.lcos.fs.vfs.ls.cos, "lfs.lvfs.lcos.fs.vfs.ls.cos",
+                  ifelse(texgrp %in% vfsl.silty.lowclay.sl.cosl.fsl, "vfsl.silty.lowclay.sl.cosl.fsl",
+                  as.character(texgrp))))) 
+
+datamutant2.summary <- ddply(datamutant2, ~texgrp2, summarise, 
+                            n=n(),
+                            min=min(db_satiated),
+                            fifth=quantile(db_satiated, .05),
+                            min2sigma=round(((mean(db_satiated))-(2*(sd(db_satiated)))), 2),
+                            sd=sd(db_satiated, 2),
+                            mean=round(mean(db_satiated), 2),
+                            median=median(db_satiated),
+                            ninetyfifth=quantile(db_satiated, .95),
+                            max2sigma=round(((mean(db_satiated))+(2*(sd(db_satiated)))), 2),
+                            max=max(db_satiated))
+
+datamutant2.summary
+```
+  
+*Table 6 Summary statistics of Db satiated by new texture groups.*
+
+```{r}
+
+# plot histograms to analyse distribution by new texture groups
+
+cdat2 <- ddply(datamutant2, "texgrp2", summarise, db_satiated.mean=mean(db_satiated))
+ggplot(datamutant2, aes(x=db_satiated)) + 
+  geom_histogram(aes(y=..density..),      # Histogram with density instead of count on y-axis
+                 binwidth=.05,
+                 colour="black", fill="white") +
+  geom_density(alpha=.2, fill="#FF6666") +   # Overlay with transparent density plot
+  facet_wrap(~ texgrp2) +
+  geom_vline(data=cdat2, aes(xintercept=db_satiated.mean,  colour=texgrp2),
+             linetype="dashed", size=1)
+
+```
+  
+Figure 12. Density histograms of updated texture groups.
+
+### Add depth groups
+
+Evaluate whether subsetting the new texture group data by depth groups creates significant texture*depth groups.
+
+```{r}
+
+# add a depth factor to data for 2x2 ANOVA; 0-50, 50-100, and 100+cm will be used at depth groups for exploratory analysis
+datamutant3 <- mutate(datamutant2, depth_cl = 
+                        ifelse(hzn_bot < 50, "0to<50cm",
+                        ifelse(hzn_bot >=50 & hzn_bot<100, "50to<100cm",
+                        ifelse(hzn_bot >=100, "100to200+cm",
+                        hzn_bot)))) 
+
+amod2 <- aov(db_satiated ~ texgrp2 * depth_cl, data=datamutant3)
+amod2
+summary(amod2)
+print(model.tables(amod2, "means", se = TRUE))
+tukey2 <- TukeyHSD(amod2, "depth_cl")
+tukey2.1 <- TukeyHSD(amod2, "texgrp2:depth_cl")
+hsd.table2 <- as.data.frame(tukey2$`depth_cl`)
+hsd.table2.1 <- as.data.frame(tukey2.1$`texgrp2:depth_cl`)
+write.csv(hsd.table2.1, file="hsdtable2.1.csv", row.names = TRUE)
+hsd.table2
+hsd.table2.1
+
+# P values suggest statistically insignificant pairings between the 50-100cm and 100-200+cm groups, and that they can be combined
+
+datamutant4 <- mutate(datamutant3, depth_cl2 = 
+                        ifelse(hzn_bot < 50, "0to<50cm",
+                               ifelse(hzn_bot >=50, "50to200+cm",
+                                      hzn_bot)))
+
+amod3 <- aov(db_satiated ~ texgrp2 * depth_cl2, data=datamutant4)
+#amod3 <- anova(lm(db_satiated ~ texgrp2 * depth_cl2, data=datamutant4))
+summary(amod3)
+
+# Note: Depth group p value was improved
+
+# The following means can be used according to depth group and texture group
+
+tukey3 <- TukeyHSD(amod3, "texgrp2")
+tukey3
+tukey4 <- TukeyHSD(amod3, "texgrp2:depth_cl2")
+tukey4
+hsd.table4 <- as.data.frame(tukey4$`texgrp2:depth_cl2`)
+write.csv(hsd.table4, file="hsdtable4.csv", row.names = TRUE)
+hsd.table4
+
+```
+  
+*Table 8. Tukey HSD of texture groups and depth groups*
+
+The s and lfs.lvfs.lcos.fs.vfs.ls.cos groups have P values that do not support assigning db_satiated values by depth group.
+
+```{r}
+
+print(model.tables(amod3, "means", se = TRUE))
+
+# Assemble median Db values by texture groups and depth groups
+
+datamutant.0_50 <- ddply(datamutant4[datamutant4$depth_cl2 == '0to<50cm', ], ~texgrp2, summarise, 
+                             n.0_50cm=n(),
+                             median.0_50cm=round(median(db_satiated), 2))
+datamutant.50plus <- ddply(datamutant4[datamutant4$depth_cl2 == '50to200+cm', ], ~texgrp2, summarise, 
+                         n.50pluscm=n(),
+                         median.50pluscm=round(median(db_satiated), 2))
+datamutant.final <- merge(x = datamutant.0_50, y = datamutant.50plus, by = "texgrp2")
+datamutant.final
+```
+  
+*Table 9. Summary of median Db satiated by texture groups and depth groups*
+
+```{r}
+
+# Attempting to tabulate Standard Error
+
+test1 <- lm(db_satiated ~ texgrp2 * depth_cl2, data=datamutant4, contrasts = list(texgrp2 = contr.treatment, depth_cl2 = contr.treatment))
+anova(test1)
+par(mfrow=c(2,2))
+plot(test1)
+
+summary(test1)
+
+# the following constrast matrices show which texture and depth groups correspond to the left-most column in the Standard Error table
+
+contr.treatment(unique(datamutant4$texgrp2))
+contr.treatment(unique(datamutant4$depth_cl2))
+```
+
+## Estimated Organic matter content
+
+OM% will be estimated from measured OC using Van bemmelen factor
+
+```{r}
+datamutant5 <- mutate(datamutant4, om = oc* 1.724)  #Van bemmelen factor
+
+datamutant.OM.0_50 <- ddply(datamutant5[datamutant5$depth_cl2 == '0to<50cm', ], ~texgrp2, summarise, 
+                         n.OM.0_50cm=n(),
+                         fifth.OM.0_50cm=round(quantile(om, 0.05), 1),
+                         median.OM.0_50cm=round(median(om), 1),
+                         ninetyfifth.OM.0_50cm=round(quantile(om, 0.95), 1))
+datamutant.OM.50plus <- ddply(datamutant5[datamutant5$depth_cl2 == '50to200+cm', ], ~texgrp2, 
+                              summarise, 
+                           n.OM.50pluscm=n(),
+                           fifth.OM.50pluscm=round(quantile(om, 0.05), 1),
+                           median.OM.50pluscm=round(median(om), 1),
+                           ninetyfifth.OM.50pluscm=round(quantile(om, 0.95), 1))
+datamutant.OM.final <- merge(x = datamutant.OM.0_50, y = datamutant.OM.50plus, by = "texgrp2")
+
+datamutant.OM.nodepth <- ddply(datamutant5, ~texgrp2, summarise, 
+                            n.OM.nodepth=n(),
+                            fifth.OM.nodepth=round(quantile(om, 0.05), 1),
+                            median.OM.nodepth=round(median(om), 1),
+                            ninetyfifth.OM.nodepth=round(quantile(om, 0.95), 1))
+datamutant.OM.final
+datamutant.OM.nodepth
+
+```
+  
+### ANOVA / Tukey HSD on OM summaries
+
+Evaluate whether using texture & depth groups creates significant groups of data.
+
+```{r}
+amod4 <- aov(om ~ texgrp2 * depth_cl2
+             , data=datamutant5)
+summary(amod4)
+#tukey5 <- TukeyHSD(amod4, "texgrp")
+tukey5 <- TukeyHSD(amod4, "texgrp2:depth_cl2")
+tukey5
+#hsd.table5 <- as.data.frame(tukey5$texgrp)
+hsd.table5 <- as.data.frame(tukey5$`texgrp2:depth_cl2`)
+write.csv(hsd.table5, file="hsdtable5.csv", row.names = TRUE)
+
+# Tukey HSD suggests that depth groups should only be used for the vfsl.silty.lowclay.sl.cosl.fsl texture group
+
+test2 <- lm(om ~ texgrp2 * depth_cl2, data=datamutant5, contrasts = list(texgrp2 = contr.treatment, depth_cl2 = contr.treatment))
+#test2 <- lm(om ~ texgrp2, data=datamutant5, contrasts = list(texgrp2 = contr.treatment))
+anova(test2)
+par(mfrow=c(2,2))
+plot(test2)
+
+summary(test2)
+contr.treatment(unique(datamutant4$texgrp2)) # for reference
+contr.treatment(unique(datamutant4$depth_cl2)) # for reference
+```
+
+# Discussion
+
+The data used in this study is limited to the southern New England area and consists of 499 pedon horizon samples. 
+
+## Bulk Density
+
+The highest correlation coefficient between satiated bulk density (Db satiated) any other covariates in this subaqueous bulk density dataset is found with organic carbon (oc).  This relationship holds true for the complete dataset as well as subsets created for silty and silty, low-clay and silty, high- clay samples.  If attempts are made in the future to model Db satiated values, oc should be used as a variable.
+
+We propose using the summarized data in Tables 13 (below) for assigning Db satiated data to existing and new subaqueous Component Horizon data in SSURGO.  L and H values will be assigned according to the 5th and 95th percentile values from Table 6.  RV values will be assigned according to the medians taken from Tables 6 and 9, according to whether the depth group was found to be significant.  All values are rounded to the nearest 0.05 g/cm3.
+
+*Table 13 Db_satiated summary table. Values rounded to nearest 0.05 g/cm3*
+
+texgrp2                       |L   |RV_0_50cm|RV_50_200+cm|H   |
+------------------------------|----|---------|------------|----|
+l.silty.highclay              |0.20|0.35     |0.55        |0.90|
+lfs.lvfs.lcos.fs.vfs.ls.cos   |0.80|1.25     |1.25        |1.70|
+s                             |1.15|1.50     |1.50        |1.95|
+vfsl.silty.lowclay.sl.cosl.fsl|0.30|0.75     |0.95        |1.70|
+
+*Note: from the analysis above, the break between "low clay silty" and "high clay silty" textures is 15-percent clay.*
+
+## Organic Matter
+
+Organic matter will be populated using the texture groups determined from the bulk density analysis, for data consistency.  Summarized OM data from Tables 10 and 11 will be used according to Tukey HSD results in Table 12 suggesting whether or not depth groups should also be used to subset data summaries.  Data will be populated according to Table 14 and 15 below.
+
+*Table 14 Summarized OM data for texture groups that showed insignificance between depth group with texture group held constant. Data rounded to nearest tenth.*
+
+texgrp2                       |L OM.nodepth|RV OM.nodepth|H OM.nodepth|
+------------------------------|------------|-------------|------------|
+l.silty.highclay              |2.8         |6.4          |13.1        |
+lfs.lvfs.lcos.fs.vfs.ls.cos   |0.2         |0.7          |3.0         |
+s                             |0.2         |0.4          |1.2         |
+
+*Table 15 Summarized OM data for texture groups that showed significance between depth group with texture group held constant. Data rounded to nearest tenth.*
+
+texgrp2                       |L OM.0_50cm|RV OM.0_50cm|H OM.0_50cm|L OM.50+cm|RV OM.50+cm|H OM.50+cm|
+------------------------------|-----------|------------|-----------|----------|-----------|----------|
+vfsl.silty.lowclay.sl.cosl.fsl|0.7        |4.4         |13.1*      |0.4       |2.4        |6.6       |
+
+*14.2 is the 95th percentile value of vfsl.silty.lowclay.sl.cosl.fsl from 0 to 50cm, but we are capping the value at 13.1 to not exceed that of the l.silty.highclay group.  We suspect the relatively low sample size of 46 horizons may skew the 95th percentile value higher than expected.
