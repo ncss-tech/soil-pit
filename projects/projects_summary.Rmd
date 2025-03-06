@@ -19,9 +19,10 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```{r}
 suppressWarnings( {
   library(soilDB)
-  library(tidyverse)
+  library(dplyr)
+  library(tidyr)
   library(viridis)
-  library(sp)
+  # library(sp)
   library(sf)
   library(knitr)
   })
@@ -31,14 +32,17 @@ suppressWarnings( {
 ```{r load}
 options(stringsAsFactors = FALSE)
 
-ownCloud <- "C:/Users/stephen.roecker/ownCloud/data/lims_data/"
-ro <- 11
-ptypes <- c("CORR (Obsolete)", "DSP", "ES", "EVAL", "INITIAL", "JOIN (Obsolete)", "MLRA", "NEON", "SCS (Obsolete)", "SDJR (Obsolete)",  "SH (Obsolete)", "SPATIAL EDIT", "SPECIAL", "TABULAR EDIT", "TRADITIONAL (Obsolete)")
+ownCloud <- "C:/Users/Stephen.Roecker/OneDrive - USDA/data/nwr_data/"
+ro <- c("AK", "NC", "NE", "NW", "SC", "SE", "SP", "SS", "SW", "3", "7")
+ptypes <- c("ALL PROJECTS", "CORR (Obsolete)", "DSP", "DYNAMIC SOIL PROPERTY INVENTORY", 
+"ECOLOGICAL SITE INVENTORY", "ES", "EVAL", "INITIAL", "MLRA", 
+"MONITORING", "NULL", "RESEARCH", "SDJR (Obsolete)", "SOIL INVENTORY", 
+"SPATIAL EDIT", "SPECIAL", "TABULAR EDIT")
   
 
 # progress
-p <- expand.grid(mlrassoarea      = paste0(1:12, "-%"),
-                 fy               = 2012:2017,
+p <- expand.grid(mlrassoarea      = paste0(ro, "-%"),
+                 fy               = 2014:2024,
                  projecttypename  = "%25",
                  stringsAsFactors = FALSE
                  )
@@ -46,32 +50,31 @@ prg <- {
   split(p, list(p$mlrassoarea, p$fy, p$projecttypename), drop = TRUE) ->.;
   lapply(., function(x) {
     cat("procressing", paste(x$mlrassoarea, x$fy, x$projecttypename), "\n")
-    get_progress_from_LIMS(x$mlrassoarea, x$fy, x$projecttypename)
+    get_progress_from_NASISWebReport(x$mlrassoarea, x$fy, x$projecttypename)
     }) ->.;
   do.call("rbind", .)
   }
 
-fname <- paste0(ownCloud, "lims_goal_", "2017-12-20_us_2012_2017", ".csv")
+fname <- paste0(ownCloud, "lims_goal_", "2024-12-12_us_2014_2024", ".csv")
 # write.csv(prg, file = fname, row.names = FALSE)
 prg <- read.csv(file = fname)
 
 
 # project
-
-p <- expand.grid(mlrassoarea      = paste0(1:12, "-%"),
-                 fy               = 2012:2027,
+p <- expand.grid(mlrassoarea      = paste0(ro, "-%"),
+                 fy               = 2014:2024,
                  stringsAsFactors = FALSE
                  )
 prj <- {
   split(p, list(p$mlrassoarea, p$fy), drop = TRUE) ->.;
   lapply(., function(x) {
     cat("procressing", paste(x$mlrassoarea, x$fy), "\n")
-    get_project_from_LIMS(x$mlrassoarea, x$fy)
+    get_project_from_NASISWebReport(x$mlrassoarea, x$fy)
     }) ->.;
   do.call("rbind", .)
   }
 
-fname <- paste0(ownCloud, "lims_project_", "2018-02-14_us_2012_2028", ".csv")
+fname <- paste0(ownCloud, "lims_project_", "2024-12-12_us_2014_2024.csv")
 # write.csv(prj, file = fname, row.names = FALSE)
 prj <- read.csv(file = fname, stringsAsFactors = FALSE)
 
@@ -79,9 +82,10 @@ prj <- read.csv(file = fname, stringsAsFactors = FALSE)
 # reverse correlation
 
 mlrassoarea <- paste0("11-", c("ATL", "AUR", "CLI", "FIN", "GAL", "IND", "JUE", "MAN", "SPR", "UNI", "WAV"))
+mlrassoarea <- prg$mlrassoarea |> unique() |> sort()
 
-p <- expand.grid(mlrassoarea = paste0(1:12, "-%"),
-                 fy          = 2012:2017,
+p <- expand.grid(mlrassoarea = mlrassoarea,
+                 fy          = 2019:2024,
                  projectname = "%",
                  stringsAsFactors = FALSE
                  )
@@ -89,15 +93,36 @@ rcor <- {
   split(p, list(p$mlrassoarea, p$fy, p$projectname), drop = TRUE) ->.;
   lapply(., function(x) {
     cat("procressing", paste(x$mlrassoarea, x$fy, x$projectname), "\n")
-    get_reverse_correlation_from_LIMS(x$mlrassoarea, x$fy, x$projectname)
+    get_project_correlation_from_NASISWebReport(x$mlrassoarea, x$fy, x$projectname)
     }) ->.;
   do.call("rbind", .)
   }
 
-fname <- paste0(ownCloud, "lims_reverse_correlation_fy_", "2017-12-20_us_2012_2017.csv")
+fname <- paste0(ownCloud, "lims_project_correlation_fy_", "2024-12-12_us_2024.csv")
 # write.csv(rcor, file = fname, row.names = FALSE)
 rcor <- read.csv(file = fname, stringsAsFactors = FALSE)
 
+
+# project mapunits
+mlrassoarea <- prg$mlrassoarea |> unique() |> sort()
+
+p <- expand.grid(mlrassoarea = mlrassoarea,
+                 fy          = 2019:2024,
+                 projectname = "%",
+                 stringsAsFactors = FALSE
+                 )
+pmu <- {
+  split(p, list(p$mlrassoarea, p$fy), drop = TRUE) ->.;
+  lapply(., function(x) {
+    cat("procressing", paste(x$mlrassoarea, x$fy, x$projectname), "\n")
+    get_projectmapunit2_from_NASISWebReport(x$mlrassoarea, x$fy, "%")
+    }) ->.;
+  do.call("rbind", .)
+  }
+
+fname <- paste0(ownCloud, "lims_projectmapunit_fy_", "2024-12-12_us_2019-2024.csv")
+# write.csv(rcor, file = fname, row.names = FALSE)
+rcor <- read.csv(file = fname, stringsAsFactors = FALSE)
 ```
 
 
@@ -357,10 +382,13 @@ ggplot(aes(x = n_nationalmusym, y = n_areasymbol)) +
 
 ```{r map_as, fig.height=10, fig.width=8, eval=TRUE}
 
+
+
+
 # correct muacres for goal percent = acre_progress / acre_landcat
-vars <- c("projectiid", "fiscalyear", "acre_landcat", "acre_progress")
-rcor2 <- left_join(rcor, prj[vars], by = c("projectiid", "fiscalyear")) %>%
-  filter(musym != "NOTCOM")
+vars <- c("projectiid", "fiscalyear_goaled", "acre_landcat", "acre_progress")
+rcor2 <- left_join(rcor, prj[vars], by = join_by(projectiid == projectiid, fiscalyear == fiscalyear_goaled)) %>%
+  filter(musym != "NOTCOM" & fiscalyear %in% 2019:2024 &)
 rcor3 <- mutate(rcor2,
                 muacres  = ifelse(is.na(muacres), new_muacres, muacres),
                 acre_pct = acre_progress / acre_landcat,
@@ -370,73 +398,92 @@ rcor3 <- mutate(rcor2,
                 )
 # filter out records for non-INITIAL projects
 rcor4 <- filter(rcor3, 
-                ! projecttypename %in% c("INITIAL", "TRADITIONAL (Obsolete)") &
+                # ! projecttypename %in% c("INITIAL", "TRADITIONAL (Obsolete)", "All PROJECTS") &
                 is.na(nonmlrassaarea)
                 )
 
 # aggregate muacres by areasymbol for non-INITIAL projects
 rcor_as1 <- rcor4 %>%
   filter(#grepl(ro, mlrassoarea) &
-         projecttypename %in% c("MLRA", "SDJR (Obsolete)") &
-         fiscalyear %in% 2012:2017
+         # ! projecttypename %in% c("INITIAL", "TRADITIONAL (Obsolete)", "All PROJECTS") &
+         fiscalyear %in% 2014:2024
          ) %>%
   group_by(mlrassoarea, projecttypename, fiscalyear, projectiid, projectname, areasymbol) %>%
   summarize(
     muacres     = sum(muacres2   , na.rm = TRUE),
     new_muacres = sum(new_muacres, na.rm = TRUE)
     ) %>%
-  group_by(fiscalyear, areasymbol) %>%
+  group_by(areasymbol) %>% # fiscalyear, 
   summarize(
     muacres     = sum(muacres    , na.rm = TRUE),
     new_muacres = sum(new_muacres, na.rm = TRUE)
     ) %>%
   as.data.frame()
+
 # INITIAL projects
 rcor_as2 <- filter(prj,
-                   projecttypename %in% c("INITIAL", "TRADITIONAL (Obsolete)") &
+                   # projecttypename %in% c("INITIAL", "TRADITIONAL (Obsolete)") &
+                   fiscalyear %in% 2014:2024,
                    ! is.na(nonmlrassaarea)
                    ) %>%
-  select(fiscalyear, nonmlrassaarea, acre_progress) %>%
+  select(fiscalyear_goaled, nonmlrassaarea, acre_progress) %>%
   rename(areasymbol = nonmlrassaarea, muacres = acre_progress) %>%
-  mutate(new_muacres = 0)
+  mutate(new_muacres = 0) %>%
+  group_by(areasymbol) %>%
+  summarize(muacres = sum(muacres, na.rm = TRUE),
+            new_muacres = sum(new_muacres, na.rm = TRUE)
+            ) %>%
+  ungroup()
+
 rcor_as <- rbind(rcor_as1, rcor_as2)
-rcor_as <- group_by(rcor_as, fiscalyear, areasymbol) %>%
+
+rcor_as <- group_by(rcor_as, areasymbol) %>% # , fiscalyear
   summarize(
     muacres     = sum(muacres    , na.rm = TRUE),
     new_muacres = sum(new_muacres, na.rm = TRUE)
     ) %>%
+  ungroup() %>%
   filter(areasymbol != "")
 
 rcor_as$acres <- cut(rcor_as$muacres, 
-                     breaks = c(0, 10000, 50000, 100000, 500000, 1000000), 
-                     labels = c("0-10k", "10-50k", "50-100k", "100-500k", "500k-1000k")
+                     breaks = c(0, 10000, 50000, 100000, 500000, 1000000, 10000000, 100000000), 
+                     labels = c("0-10k", "10-50k", "50-100k", "100-500k", "500k-1m", "1-10m", "10-100m")
                      )
 
-rcor_as_w <- select(rcor_as, fiscalyear, areasymbol, acres) %>% 
-  spread(fiscalyear, acres) # spread recycles non-grouping variables, so it needs to be combined with select, reshape() silently drops them but gives a warning if they vary
+rcor_as_w <- rcor_as %>%
+  select(fiscalyear, areasymbol, acres) %>% 
+  pivot_wider(names_from = fiscalyear, values_from = acres)
+  # spread(fiscalyear_goaled, acres) # spread recycles non-grouping variables, so it needs to be combined with select, reshape() silently drops them but gives a warning if they vary
 
-params <- expand.grid(fiscalyear = 2012:2017,
+params <- expand.grid(fiscalyear = 2014:2024,
                       areasymbol = sort(unique(rcor_as$areasymbol)),
                       stringsAsFactors = FALSE
                       )
-rcor_as_l <- left_join(params, rcor_as, by = c("fiscalyear", "areasymbol"))
+rcor_as_l <- left_join(params, rcor_as, by = c("areasymbol")) # "fiscalyear", 
 
 
 # load spatial data
-ssa_sf <- read_sf(dsn = "M:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs")
+ssa_sf <- read_sf(dsn = "D:/geodata/soils/gSSURGO_CONUS/gSSURGO_CONUS.gdb", layer = "SAPOLYGON")
 ssa_sf <- st_transform(ssa_sf, crs = "+init=epsg:5070")
 data(state)
 st <- state.abb[-c(11, 2)]
-ssa_sf$state <- substr(ssa_sf$areasymbol, 1, 2)
+ssa_sf$state <- substr(ssa_sf$AREASYMBOL, 1, 2)
 ssa_sf <- ssa_sf[ssa_sf$state %in% st, ]
 # ssa_sf <- read_sf(dsn = "M:/geodata/soils/SSURGO_CONUS_FY2016.gdb", layer = "SAPOLYGON")
 # names(ssa_sf)[c(1, 6)] <- c("areasymbol", "geometry")
 # st_crs(ssa_sf) <- "+init=epsg:5070"
-states <- read_sf(dsn = "M:/geodata/government_units/state_nrcs_a_mbr.shp", layer = "state_nrcs_a_mbr")
+states <- read_sf(dsn = "D:/geodata/government_units/GovernmentUnits_National_GPKG.gpkg", layer = "GU_StateOrTerritory")
 states <- st_transform(states, crs = "+init=epsg:5070")
 
-ssa_w <- inner_join(ssa_sf, rcor_as_w, by = "areasymbol")
-ssa_l <- inner_join(ssa_sf, rcor_as_l, by = "areasymbol")
+ssa_sf$st
+states <- ssa_sf |> 
+  group_by(state) |>
+  summarize(n_ssa = length(AREASYMBOL))
+
+
+
+ssa_w <- inner_join(ssa_sf, rcor_as_w, by = join_by(AREASYMBOL == areasymbol))
+ssa_l <- inner_join(ssa_sf, rcor_as_l, by = join_by(AREASYMBOL == areasymbol))
 
 save(ssa_l, states, rcor, file = paste0(ownCloud, "ssa_l_2012_2017.RData"))
 
@@ -445,14 +492,18 @@ save(ssa_l, states, rcor, file = paste0(ownCloud, "ssa_l_2012_2017.RData"))
 
 # acres_gg <- 
 # 
-acres_gg <- # filter(ssa_l, grepl("OH", areasymbol)) %>% 
-  ggplot(ssa_l) +
+nonCONUS <- c("Alaska", "Hawaii", "Commonwealth of the Northern Mariana Islands", "United States Virgin Islands", "Guam", "American Samoa")
+
+acres_gg <- ssa_l %>%
+  # filter(fiscalyear_goaled == 2024) %>% 
+  ggplot() +
   geom_sf(aes(fill = acres, linetype = NA)) +
-  scale_fill_viridis(discrete = TRUE) +
-  facet_wrap(~ fiscalyear) +
-  ggtitle("Time Series of ES Reported Acres by County")
+  scale_fill_viridis_d() +
+  # facet_wrap(~ fiscalyear_goaled) +
+  ggtitle("Last 5 Years of Reported Acres by County")
 acres_gg <- acres_gg +
-  geom_sf(data = states, aes(fill = NA))
+  geom_sf(data = filter(states, !STATE_NAME %in% nonCONUS), aes(fill = NA))
+print(acres_gg)
 
 png(file = "acres_gg2.png", width = 17, height = 11, units = "in", res = 400)
 plot(acres_gg)
